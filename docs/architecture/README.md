@@ -2,7 +2,10 @@
 
 ## Current status
 
-Not defined.
+- Initial stack proposed through [ADR 0001](../decisions/0001-select-application-stack.md).
+- Detailed architecture pending.
+
+The proposal is not approved while ADR 0001 remains `Proposed`.
 
 ## Topics to define
 

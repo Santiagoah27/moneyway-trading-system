@@ -17,4 +17,8 @@ Usar `NNNN-short-decision-title.md`.
 
 Ejemplo: `0001-select-application-stack.md`.
 
-Este directorio no contiene todavía decisiones reales.
+Las decisiones reales se registran y enumeran a continuación.
+
+## Decision index
+
+- [ADR 0001: Select application stack](0001-select-application-stack.md) — Status: `Proposed`.
