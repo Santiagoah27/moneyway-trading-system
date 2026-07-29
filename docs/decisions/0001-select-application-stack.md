@@ -2,7 +2,9 @@
 
 ## Status
 
-Proposed.
+Accepted.
+
+The decision was reviewed and approved as the initial application stack. Detailed implementation decisions remain deferred to subsequent ADRs.
 
 ## Date
 

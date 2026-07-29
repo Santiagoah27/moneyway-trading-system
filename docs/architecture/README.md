@@ -2,10 +2,9 @@
 
 ## Current status
 
-- Initial stack proposed through [ADR 0001](../decisions/0001-select-application-stack.md).
-- Detailed architecture pending.
-
-The proposal is not approved while ADR 0001 remains `Proposed`.
+- Initial application stack accepted through [ADR 0001](../decisions/0001-select-application-stack.md).
+- Detailed architecture and physical solution structure remain pending.
+- The next stage is to define the technical solution bootstrap.
 
 ## Topics to define
 
