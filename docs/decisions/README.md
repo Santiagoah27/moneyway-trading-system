@@ -22,3 +22,4 @@ Las decisiones reales se registran y enumeran a continuación.
 ## Decision index
 
 - [ADR 0001: Select application stack](0001-select-application-stack.md) — Status: `Accepted`.
+- [ADR 0002: Select bootstrap toolchain and physical solution structure](0002-select-bootstrap-toolchain.md) — Status: `Proposed`.

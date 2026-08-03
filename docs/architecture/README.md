@@ -2,9 +2,9 @@
 
 ## Current status
 
-- Initial application stack accepted through [ADR 0001](../decisions/0001-select-application-stack.md).
-- Detailed architecture and physical solution structure remain pending.
-- The next stage is to define the technical solution bootstrap.
+- [ADR 0001](../decisions/0001-select-application-stack.md) accepted the initial application stack.
+- [ADR 0002](../decisions/0002-select-bootstrap-toolchain.md) proposes the bootstrap toolchain and physical solution structure.
+- Technical bootstrap must not begin until ADR 0002 is `Accepted`.
 
 ## Topics to define
 
