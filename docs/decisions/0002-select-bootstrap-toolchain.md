@@ -2,7 +2,9 @@
 
 ## Status
 
-Proposed.
+Accepted.
+
+The decision was reviewed and approved as the technical bootstrap baseline. Exact patch versions will be selected and recorded during bootstrap, while deferred decisions remain outside its scope.
 
 ## Date
 
