@@ -33,7 +33,55 @@ Plataforma supervisada, auditable y versionada para analizar y evaluar las estra
 
 ## Repository status
 
-El repositorio está en etapa de bootstrap. Aún no se ha seleccionado ni generado el stack tecnológico.
+El repositorio contiene el bootstrap técnico aprobado. Todavía no implementa reglas de estrategia, persistencia, replay, backtesting ni ejecución.
+
+## Prerequisites
+
+- .NET SDK 10.0.302, recorded in `global.json`.
+- Node.js 24.19.0 LTS, recorded in `.nvmrc`.
+- npm 11.17.0, recorded in the frontend `packageManager` field.
+
+## Local development
+
+Backend validation:
+
+```powershell
+dotnet restore MoneyWay.sln
+dotnet build MoneyWay.sln --no-restore
+dotnet test MoneyWay.sln --no-build
+```
+
+Run the API at `http://localhost:5080`:
+
+```powershell
+dotnet run --project src/backend/MoneyWay.Api
+```
+
+Available bootstrap endpoints:
+
+- `GET http://localhost:5080/health`
+- `GET http://localhost:5080/api/system/status`
+- Development OpenAPI document at `http://localhost:5080/openapi/v1.json`
+
+Run the idle worker (execution remains disabled):
+
+```powershell
+dotnet run --project src/backend/MoneyWay.Worker
+```
+
+Frontend setup and validation:
+
+```powershell
+cd src/frontend/moneyway-web
+npm ci
+npm run format:check
+npm run lint
+npm run test:run
+npm run build
+npm run dev
+```
+
+Copy `.env.example` to a local `.env` only when the API URL must be customized. For a manual visual check, start the API and frontend in separate terminals, open `http://localhost:5173`, verify connected and disconnected states, and resize to 320 px. Do not enter credentials; this bootstrap has no broker or live configuration.
 
 ## Documentation map
 
