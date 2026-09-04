@@ -1,11 +1,13 @@
 using MoneyWay.Api;
 using MoneyWay.Api.Endpoints;
+using MoneyWay.Application.StrategyDefinitions;
 using MoneyWay.Application.StrategyEvaluation;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();
 builder.Services.AddSingleton<EvaluateStrategyUseCase>();
+builder.Services.AddSingleton<StrategyDefinitionCatalog>();
 
 if (builder.Environment.IsDevelopment())
 {
@@ -25,6 +27,7 @@ app.MapHealthChecks("/health");
 app.MapGet("/api/system/status", () => Results.Ok(new SystemStatusResponse(
     "MoneyWay Trading System", "bootstrap", "disabled", false)));
 app.MapStrategyEvaluationEndpoints();
+app.MapStrategyDefinitionEndpoints();
 
 app.Run();
 
