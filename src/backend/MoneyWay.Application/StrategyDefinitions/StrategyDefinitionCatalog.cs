@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using MoneyWay.Application.StrategyDefinitions.Forex;
+using MoneyWay.Application.StrategyDefinitions.Nasdaq;
 using MoneyWay.Domain.Strategies;
 
 namespace MoneyWay.Application.StrategyDefinitions;
@@ -10,7 +11,8 @@ namespace MoneyWay.Application.StrategyDefinitions;
 public sealed class StrategyDefinitionCatalog
 {
     private readonly IReadOnlyList<StrategyDefinition> definitions =
-        new ReadOnlyCollection<StrategyDefinition>([MoneyWayForexStrategyDefinition.Instance]);
+        new ReadOnlyCollection<StrategyDefinition>(
+            [MoneyWayForexStrategyDefinition.Instance, MoneyWayNasdaqStrategyDefinition.Instance]);
 
     public IReadOnlyList<StrategyDefinition> GetAll() => definitions;
 

@@ -100,6 +100,9 @@ export default function App() {
     const [definitionsState, setDefinitionsState] =
         useState<DefinitionsState>("loading");
     const [definitions, setDefinitions] = useState<StrategyDefinition[]>([]);
+    const hasNasdaqDefinition = definitions.some(
+        (definition) => definition.strategyId === "moneyway-nasdaq",
+    );
 
     useEffect(() => {
         const controller = new AbortController();
@@ -200,14 +203,16 @@ export default function App() {
                             definition={definition}
                         />
                     ))}
-                <article
-                    className="nasdaq-status"
-                    aria-labelledby="nasdaq-heading"
-                >
-                    <h3 id="nasdaq-heading">MoneyWay Nasdaq</h3>
-                    <p>Documentation available.</p>
-                    <p>Runtime definition: Not registered yet.</p>
-                </article>
+                {definitionsState === "success" && !hasNasdaqDefinition && (
+                    <article
+                        className="nasdaq-status"
+                        aria-labelledby="nasdaq-heading"
+                    >
+                        <h3 id="nasdaq-heading">MoneyWay Nasdaq</h3>
+                        <p>Documentation available.</p>
+                        <p>Runtime definition: Not registered yet.</p>
+                    </article>
+                )}
             </section>
             <aside aria-label="Safety notice">
                 No market analysis or order execution is available. Real-money

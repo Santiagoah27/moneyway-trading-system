@@ -41,6 +41,37 @@ const definitions = [
             },
         ],
     },
+    {
+        strategyId: "moneyway-nasdaq",
+        version: "nasdaq-0.1.0-draft",
+        displayName: "MoneyWay Nasdaq",
+        specificationReference:
+            "docs/strategies/nasdaq/strategy-specification.md",
+        ruleCount: 2,
+        requiredRuleCount: 1,
+        rules: [
+            {
+                ruleId: "NQ-H4-001",
+                name: "4H-first context",
+                stage: "4H",
+                sequence: 10,
+                isRequired: true,
+                definitionStatus: "Confirmed",
+                description: "Start analysis on 4H.",
+                sourceReference: "docs/strategies/nasdaq/rule-catalog.md",
+            },
+            {
+                ruleId: "NQ-RISK-002",
+                name: "Daily loss limit",
+                stage: "Risk",
+                sequence: 20,
+                isRequired: false,
+                definitionStatus: "Candidate",
+                description: "Preserve the daily limit as a candidate.",
+                sourceReference: "docs/strategies/nasdaq/rule-catalog.md",
+            },
+        ],
+    },
 ];
 
 function response(body: object, ok = true): Response {
@@ -132,20 +163,27 @@ describe("App", () => {
         ).toBeTruthy();
     });
 
-    it("shows Nasdaq as documented but not registered without invented rules", async () => {
+    it("renders Nasdaq as a runtime definition without a placeholder", async () => {
         vi.stubGlobal("fetch", endpointFetch());
         render(<App />);
 
         const nasdaq = await screen.findByRole("article", {
             name: "MoneyWay Nasdaq",
         });
+        expect(within(nasdaq).getByText("moneyway-nasdaq")).toBeTruthy();
+        expect(within(nasdaq).getByText("nasdaq-0.1.0-draft")).toBeTruthy();
+        expect(within(nasdaq).getByText("4H-first context")).toBeTruthy();
+        expect(within(nasdaq).getByText("Daily loss limit")).toBeTruthy();
+        expect(within(nasdaq).getByText("Confirmed")).toBeTruthy();
+        expect(within(nasdaq).getByText("Candidate")).toBeTruthy();
         expect(
-            within(nasdaq).getByText("Documentation available."),
-        ).toBeTruthy();
+            within(nasdaq).getAllByText(
+                "docs/strategies/nasdaq/rule-catalog.md",
+            ),
+        ).toHaveLength(2);
         expect(
-            within(nasdaq).getByText("Runtime definition: Not registered yet."),
-        ).toBeTruthy();
-        expect(within(nasdaq).queryByRole("table")).toBeNull();
+            screen.queryByText("Runtime definition: Not registered yet."),
+        ).toBeNull();
     });
 
     it("keeps definitions visible when system status fails", async () => {

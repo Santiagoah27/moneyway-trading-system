@@ -17,25 +17,46 @@ public sealed class StrategyDefinitionEndpointTests : IClassFixture<WebApplicati
     }
 
     [Fact]
-    public async Task GetAllReturnsTheSingleAuditedForexDefinition()
+    public async Task GetAllReturnsBothAuditedDefinitionsWithCoherentRules()
     {
         using var response = await client.GetAsync(CollectionEndpoint);
         var definitions = await response.Content.ReadFromJsonAsync<StrategyDefinitionResponse[]>();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var definition = Assert.Single(Assert.IsType<StrategyDefinitionResponse[]>(definitions));
-        Assert.Equal("moneyway-forex", definition.StrategyId);
-        Assert.Equal("forex-0.1.0-draft", definition.Version);
-        Assert.Equal("MoneyWay Forex", definition.DisplayName);
+        var result = Assert.IsType<StrategyDefinitionResponse[]>(definitions);
+        Assert.Equal(2, result.Length);
+        Assert.Equal(["moneyway-forex", "moneyway-nasdaq"], result.Select(item => item.StrategyId));
+        Assert.Equal(2, result.Select(item => item.StrategyId).Distinct().Count());
+
+        foreach (var definition in result)
+        {
+            Assert.True(definition.RuleCount > 0);
+            Assert.True(definition.RequiredRuleCount > 0);
+            Assert.Equal(definition.Rules.Count, definition.RuleCount);
+            Assert.Equal(definition.Rules.Count(rule => rule.IsRequired), definition.RequiredRuleCount);
+            Assert.Equal(definition.Rules.OrderBy(rule => rule.Sequence), definition.Rules);
+            Assert.Equal(definition.Rules.Count, definition.Rules.Select(rule => rule.RuleId).Distinct().Count());
+            Assert.Equal(definition.Rules.Count, definition.Rules.Select(rule => rule.Sequence).Distinct().Count());
+            Assert.DoesNotContain(definition.Rules, rule => rule.DefinitionStatus == "RejectedAiInference");
+        }
+    }
+
+    [Fact]
+    public async Task ExactNasdaqLookupReturnsVersionedOrderedDefinition()
+    {
+        using var response = await client.GetAsync(
+            "/api/strategy-definitions/moneyway-nasdaq/nasdaq-0.1.0-draft");
+        var definition = await response.Content.ReadFromJsonAsync<StrategyDefinitionResponse>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(definition);
+        Assert.Equal("moneyway-nasdaq", definition.StrategyId);
+        Assert.Equal("nasdaq-0.1.0-draft", definition.Version);
+        Assert.Equal("MoneyWay Nasdaq", definition.DisplayName);
         Assert.True(definition.RuleCount > 0);
-        Assert.True(definition.RequiredRuleCount > 0);
         Assert.Equal(definition.Rules.Count, definition.RuleCount);
         Assert.Equal(definition.Rules.Count(rule => rule.IsRequired), definition.RequiredRuleCount);
         Assert.Equal(definition.Rules.OrderBy(rule => rule.Sequence), definition.Rules);
-        Assert.Equal(definition.Rules.Count, definition.Rules.Select(rule => rule.RuleId).Distinct().Count());
-        Assert.Equal(definition.Rules.Count, definition.Rules.Select(rule => rule.Sequence).Distinct().Count());
-        Assert.DoesNotContain(definition.Rules, rule => rule.DefinitionStatus == "RejectedAiInference");
-        Assert.DoesNotContain(definitions, item => item.DisplayName.Contains("Nasdaq", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -55,6 +76,8 @@ public sealed class StrategyDefinitionEndpointTests : IClassFixture<WebApplicati
     [InlineData("/api/strategy-definitions/MoneyWay-Forex/forex-0.1.0-draft")]
     [InlineData("/api/strategy-definitions/moneyway-forex/unknown-version")]
     [InlineData("/api/strategy-definitions/unknown-strategy/forex-0.1.0-draft")]
+    [InlineData("/api/strategy-definitions/MoneyWay-Nasdaq/nasdaq-0.1.0-draft")]
+    [InlineData("/api/strategy-definitions/moneyway-nasdaq/unknown-version")]
     public async Task ValidButUnregisteredExactLookupReturnsNotFound(string endpoint)
     {
         using var response = await client.GetAsync(endpoint);

@@ -8,29 +8,36 @@ public sealed class StrategyDefinitionCatalogTests
     private readonly StrategyDefinitionCatalog catalog = new();
 
     [Fact]
-    public void GetAllReturnsOnlyMoneyWayForex()
+    public void GetAllReturnsForexThenNasdaqWithDistinctIdentifiers()
     {
-        var definition = Assert.Single(catalog.GetAll());
+        var definitions = catalog.GetAll();
 
-        Assert.Equal("moneyway-forex", definition.StrategyId.Value);
-        Assert.Equal("forex-0.1.0-draft", definition.Version.Value);
+        Assert.Equal(2, definitions.Count);
+        Assert.Equal(["moneyway-forex", "moneyway-nasdaq"], definitions.Select(item => item.StrategyId.Value));
+        Assert.Equal(["forex-0.1.0-draft", "nasdaq-0.1.0-draft"], definitions.Select(item => item.Version.Value));
+        Assert.Equal(2, definitions.Select(item => item.StrategyId).Distinct().Count());
     }
 
-    [Fact]
-    public void FindUsesExactStrategyAndVersion()
+    [Theory]
+    [InlineData("moneyway-forex", "forex-0.1.0-draft")]
+    [InlineData("moneyway-nasdaq", "nasdaq-0.1.0-draft")]
+    public void FindReturnsRegisteredExactDefinition(string strategyId, string version)
     {
-        var found = catalog.Find(new StrategyId("moneyway-forex"), new StrategyVersion("forex-0.1.0-draft"));
+        var found = catalog.Find(new StrategyId(strategyId), new StrategyVersion(version));
 
-        Assert.Same(catalog.GetAll().Single(), found);
-        Assert.Null(catalog.Find(new StrategyId("MoneyWay-Forex"), new StrategyVersion("forex-0.1.0-draft")));
-        Assert.Null(catalog.Find(new StrategyId("moneyway-forex"), new StrategyVersion("forex-0.1.0-DRAFT")));
+        Assert.NotNull(found);
+        Assert.Equal(strategyId, found.StrategyId.Value);
+        Assert.Equal(version, found.Version.Value);
     }
 
-    [Fact]
-    public void UnknownStrategyOrVersionHasNoFallback()
+    [Theory]
+    [InlineData("unknown", "nasdaq-0.1.0-draft")]
+    [InlineData("moneyway-nasdaq", "unknown")]
+    [InlineData("MoneyWay-Nasdaq", "nasdaq-0.1.0-draft")]
+    [InlineData("moneyway-nasdaq", "nasdaq-0.1.0-DRAFT")]
+    public void FindHasNoFallbackOrCaseNormalization(string strategyId, string version)
     {
-        Assert.Null(catalog.Find(new StrategyId("unknown"), new StrategyVersion("forex-0.1.0-draft")));
-        Assert.Null(catalog.Find(new StrategyId("moneyway-forex"), new StrategyVersion("unknown")));
+        Assert.Null(catalog.Find(new StrategyId(strategyId), new StrategyVersion(version)));
     }
 
     [Fact]
@@ -42,7 +49,7 @@ public sealed class StrategyDefinitionCatalogTests
         Assert.Same(first, catalog.GetAll());
         Assert.True(exposed.IsReadOnly);
         Assert.Throws<NotSupportedException>(() => exposed.Clear());
-        Assert.Single(catalog.GetAll());
+        Assert.Equal(2, catalog.GetAll().Count);
     }
 
     [Fact]
