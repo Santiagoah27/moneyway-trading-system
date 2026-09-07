@@ -1,0 +1,6 @@
+provider_id,symbol,timeframe_amount,timeframe_unit,open_time_utc,close_time_utc,open,high,low,close,volume
+historical-fixture,DEMO,5,Minute,2026-01-01T10:00:00Z,2026-01-01T10:05:00Z,100.00,101.00,99.50,100.50,1000
+historical-fixture,DEMO,5,Minute,2026-01-01T10:05:00Z,2026-01-01T10:10:00Z,100.50,101.50,100.00,101.00,1100
+historical-fixture,DEMO,5,Minute,2026-01-01T10:10:00Z,2026-01-01T10:15:00Z,101.00,102.00,100.50,101.50,
+historical-fixture,DEMO,5,Minute,2026-01-01T10:15:00Z,2026-01-01T10:20:00Z,101.50,102.50,101.00,102.00,1200
+historical-fixture,DEMO,5,Minute,2026-01-01T10:20:00Z,2026-01-01T10:25:00Z,102.00,103.00,101.50,102.50,1300
