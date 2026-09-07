@@ -18,7 +18,7 @@ public sealed class StrategyBacktestScenarioTests
         var run = new GenerateStrategyBacktestRunUseCase(new RunCandleReplayUseCase(), new([evaluator])).Execute(definition, new(provider, symbol, timeframe, candles));
         Assert.Equal(5, run.MarketReplay.ObservationCount); Assert.Equal(5, run.StrategyObservations.Count); Assert.Equal([1, 2, 3, 4, 5], run.StrategyObservations.Select(x => x.Step)); Assert.Equal([1, 2, 3, 4, 5], evaluator.Counts);
     }
-    private sealed class Fake : IReplayRuleEvaluator
+    private sealed class Fake : ISingleTimeframeReplayRuleEvaluator
     {
         public StrategyId StrategyId { get; } = new("test-strategy"); public StrategyVersion StrategyVersion { get; } = new("v1"); public RuleId RuleId { get; } = new("R-1"); public List<int> Counts { get; } = [];
         public ReplayRuleEvaluationDecision Evaluate(ReplayFrame frame) { Counts.Add(frame.AvailableCandles.Count); return new(RuleEvaluationResult.Passed, "Synthetic observation.", null); }

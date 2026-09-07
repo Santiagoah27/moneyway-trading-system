@@ -63,7 +63,7 @@ public sealed class GenerateStrategyOutcomeBacktestRunUseCaseTests
     [Fact]
     public void CompleteEvaluatorsPreserveWaitReadyNoTradeAndAreReproducible()
     {
-        var evaluators = new IReplayRuleEvaluator[]
+        var evaluators = new ISingleTimeframeReplayRuleEvaluator[]
         {
             new Fake("R-1", _ => RuleEvaluationResult.Passed),
             new Fake("R-2", frame => frame.Step switch { 1 => RuleEvaluationResult.Waiting, 2 => RuleEvaluationResult.Passed, _ => RuleEvaluationResult.Failed }),
@@ -77,8 +77,8 @@ public sealed class GenerateStrategyOutcomeBacktestRunUseCaseTests
         Assert.Equal(first.Outcomes.Select(item => (item.Step, item.AsOfUtc, item.Verdict)), second.Outcomes.Select(item => (item.Step, item.AsOfUtc, item.Verdict)));
     }
 
-    private static GenerateStrategyOutcomeBacktestRunUseCase UseCase(IEnumerable<IReplayRuleEvaluator> evaluators) => new(StrategyUseCase(evaluators), new());
-    private static GenerateStrategyBacktestRunUseCase StrategyUseCase(IEnumerable<IReplayRuleEvaluator> evaluators) => new(new RunCandleReplayUseCase(), new(evaluators));
+    private static GenerateStrategyOutcomeBacktestRunUseCase UseCase(IEnumerable<ISingleTimeframeReplayRuleEvaluator> evaluators) => new(StrategyUseCase(evaluators), new());
+    private static GenerateStrategyBacktestRunUseCase StrategyUseCase(IEnumerable<ISingleTimeframeReplayRuleEvaluator> evaluators) => new(new RunCandleReplayUseCase(), new(evaluators));
     private static StrategyDefinition Definition(bool twoRequired = false) => new(Strategy, Version, "Test", "test", twoRequired
         ? [Rule("R-1", 1, true), Rule("R-2", 2, true)]
         : [Rule("R-1", 1, true)]);
@@ -95,7 +95,7 @@ public sealed class GenerateStrategyOutcomeBacktestRunUseCaseTests
         return new CandleSeries(Provider, Symbol, Frame, candles);
     }
 
-    private sealed class Fake(string ruleId, Func<ReplayFrame, RuleEvaluationResult> result) : IReplayRuleEvaluator
+    private sealed class Fake(string ruleId, Func<ReplayFrame, RuleEvaluationResult> result) : ISingleTimeframeReplayRuleEvaluator
     {
         public StrategyId StrategyId => Strategy;
         public StrategyVersion StrategyVersion => Version;

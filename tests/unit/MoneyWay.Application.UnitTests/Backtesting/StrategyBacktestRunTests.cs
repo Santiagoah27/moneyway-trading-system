@@ -104,7 +104,7 @@ public sealed class StrategyBacktestRunTests
         Assert.Throws<ArgumentNullException>(() => useCase.Execute(Definition(), null!));
     }
 
-    private static GenerateStrategyBacktestRunUseCase UseCase(IEnumerable<IReplayRuleEvaluator> evaluators) => new(new(), new(evaluators));
+    private static GenerateStrategyBacktestRunUseCase UseCase(IEnumerable<ISingleTimeframeReplayRuleEvaluator> evaluators) => new(new(), new(evaluators));
     private static StrategyDefinition Definition() => new(Strategy, Version, "Test strategy", "test", [new(FakeEvaluator.Rule, "Rule", "stage", 10, true, RuleDefinitionStatus.Confirmed, "d", "s")]);
     private static BacktestRun MarketRun(Candle[] candles) => new(Provider, Symbol, Timeframe, candles.Select((c, i) => new BacktestObservation(i + 1, c.CloseTimeUtc, c)));
     private static List<StrategyReplayFrameObservation> StrategyObservations(Candle[] candles) => candles.Select((c, i) => Observation(i + 1, c, Strategy, Version)).ToList();
@@ -112,7 +112,7 @@ public sealed class StrategyBacktestRunTests
     private static Candle[] Candles(int count) => Enumerable.Range(0, count).Select(i => CandleAt(Start.AddMinutes(i * 5))).ToArray();
     private static Candle CandleAt(DateTimeOffset open) => new(Provider, Symbol, Timeframe, open, open.AddMinutes(5), 100, 101, 99, 100, null);
     private static Candle Clone(Candle c) => new(c.ProviderId, c.Symbol, c.Timeframe, c.OpenTimeUtc, c.CloseTimeUtc, c.Open, c.High, c.Low, c.Close, c.Volume);
-    private sealed class FakeEvaluator : IReplayRuleEvaluator
+    private sealed class FakeEvaluator : ISingleTimeframeReplayRuleEvaluator
     {
         public static readonly RuleId Rule = new("R-1"); public StrategyId StrategyId => Strategy; public StrategyVersion StrategyVersion => Version; public RuleId RuleId => Rule; public int Invocations { get; private set; }
         public ReplayRuleEvaluationDecision Evaluate(MoneyWay.Domain.MarketData.Replay.ReplayFrame frame) { Invocations++; return new(RuleEvaluationResult.Passed, $"Observed candles: {frame.AvailableCandles.Count}", null); }

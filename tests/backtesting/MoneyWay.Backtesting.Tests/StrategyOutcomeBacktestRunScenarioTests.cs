@@ -77,7 +77,7 @@ public sealed class StrategyOutcomeBacktestRunScenarioTests
         Assert.NotEqual(first.Outcomes[2].Verdict, second.Outcomes[2].Verdict);
     }
 
-    private static StrategyOutcomeBacktestRun Execute(StrategyDefinition definition, CandleSeries series, params IReplayRuleEvaluator[] evaluators)
+    private static StrategyOutcomeBacktestRun Execute(StrategyDefinition definition, CandleSeries series, params ISingleTimeframeReplayRuleEvaluator[] evaluators)
     {
         var strategyRun = new GenerateStrategyBacktestRunUseCase(new RunCandleReplayUseCase(), new(evaluators));
         return new GenerateStrategyOutcomeBacktestRunUseCase(strategyRun, new()).Execute(definition, series);
@@ -91,7 +91,7 @@ public sealed class StrategyOutcomeBacktestRunScenarioTests
         return new Candle(Provider, Symbol, Frame, open, open.AddMinutes(5), 100, Math.Max(101, close), Math.Min(99, close), close, null);
     }));
 
-    private sealed class Fake(string ruleId, Func<ReplayFrame, RuleEvaluationResult> result) : IReplayRuleEvaluator
+    private sealed class Fake(string ruleId, Func<ReplayFrame, RuleEvaluationResult> result) : ISingleTimeframeReplayRuleEvaluator
     {
         public StrategyId StrategyId => Strategy;
         public StrategyVersion StrategyVersion => Version;

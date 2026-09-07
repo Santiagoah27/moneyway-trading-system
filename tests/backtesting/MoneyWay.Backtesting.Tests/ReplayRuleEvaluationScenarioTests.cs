@@ -22,7 +22,7 @@ public sealed class ReplayRuleEvaluationScenarioTests
         Assert.Equal([1, 2, 3], evaluator.VisibleCounts);
         Assert.All(observations, x => Assert.Equal(x.AsOfUtc, Assert.Single(x.Evaluations).EvaluatedAtUtc));
     }
-    private sealed class Fake(StrategyId strategyId, StrategyVersion version, RuleId ruleId) : IReplayRuleEvaluator
+    private sealed class Fake(StrategyId strategyId, StrategyVersion version, RuleId ruleId) : ISingleTimeframeReplayRuleEvaluator
     {
         public StrategyId StrategyId { get; } = strategyId; public StrategyVersion StrategyVersion { get; } = version; public RuleId RuleId { get; } = ruleId;
         public List<int> VisibleCounts { get; } = [];

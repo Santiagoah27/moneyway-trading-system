@@ -102,7 +102,7 @@ public sealed class StrategyReplayTests
         var candles = Enumerable.Range(0, total).Select(i => new Candle(provider, symbol, timeframe, start.AddMinutes(i * 5), start.AddMinutes((i + 1) * 5), 100, 101, 99, 100, null)).ToArray();
         var cursor = new CandleReplayCursor(new(provider, symbol, timeframe, candles)); ReplayFrame? frame = null; for (var i = 0; i < step; i++) cursor.TryAdvance(out frame); return frame!;
     }
-    private sealed class Fake(StrategyId strategy, StrategyVersion version, RuleId rule, ReplayRuleEvaluationDecision? decision = default, Action? callback = null, Exception? exception = null, bool returnNull = false) : IReplayRuleEvaluator
+    private sealed class Fake(StrategyId strategy, StrategyVersion version, RuleId rule, ReplayRuleEvaluationDecision? decision = default, Action? callback = null, Exception? exception = null, bool returnNull = false) : ISingleTimeframeReplayRuleEvaluator
     {
         private readonly ReplayRuleEvaluationDecision? decision = decision is null && exception is null ? new(RuleEvaluationResult.Passed, "ok", null) : decision;
         public StrategyId StrategyId { get; } = strategy; public StrategyVersion StrategyVersion { get; } = version; public RuleId RuleId { get; } = rule;

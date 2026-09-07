@@ -43,7 +43,7 @@ public sealed class StrategyBacktestDiagnosticsScenarioTests
         Assert.NotEqual(first.Frames[2].Verdict, second.Frames[2].Verdict);
     }
 
-    private static StrategyBacktestDiagnosticsReport Pipeline(StrategyDefinition definition, CandleSeries series, params IReplayRuleEvaluator[] evaluators)
+    private static StrategyBacktestDiagnosticsReport Pipeline(StrategyDefinition definition, CandleSeries series, params ISingleTimeframeReplayRuleEvaluator[] evaluators)
     {
         var strategyRun = new GenerateStrategyBacktestRunUseCase(new RunCandleReplayUseCase(), new(evaluators));
         var outcomeRun = new GenerateStrategyOutcomeBacktestRunUseCase(strategyRun, new()).Execute(definition, series);
@@ -52,7 +52,7 @@ public sealed class StrategyBacktestDiagnosticsScenarioTests
     private static StrategyDefinition Definition(params StrategyRuleDefinition[] rules) => new(Strategy, Version, "Synthetic", "test", rules);
     private static StrategyRuleDefinition Rule(string id, int sequence) => new(new(id), id, "stage", sequence, true, RuleDefinitionStatus.Confirmed, "d", "s");
     private static CandleSeries Series(params decimal[] closes) => new(Provider, Symbol, Frame, closes.Select((close, index) => { var open = Start.AddMinutes(index * 5); return new Candle(Provider, Symbol, Frame, open, open.AddMinutes(5), 100, Math.Max(101, close), Math.Min(99, close), close, null); }));
-    private sealed class Fake(string id, Func<ReplayFrame, RuleEvaluationResult> result) : IReplayRuleEvaluator
+    private sealed class Fake(string id, Func<ReplayFrame, RuleEvaluationResult> result) : ISingleTimeframeReplayRuleEvaluator
     {
         public StrategyId StrategyId => Strategy; public StrategyVersion StrategyVersion => Version; public RuleId RuleId { get; } = new(id);
         public ReplayRuleEvaluationDecision Evaluate(ReplayFrame frame) => new(result(frame), "Synthetic.", null);

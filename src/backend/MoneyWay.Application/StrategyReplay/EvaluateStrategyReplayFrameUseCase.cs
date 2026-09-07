@@ -6,11 +6,11 @@ namespace MoneyWay.Application.StrategyReplay;
 /// <summary>Coordinates registered rule evaluators for one definition and frame without calculating a strategy verdict.</summary>
 public sealed class EvaluateStrategyReplayFrameUseCase
 {
-    private readonly IReadOnlyDictionary<EvaluatorKey, IReplayRuleEvaluator> evaluators;
-    public EvaluateStrategyReplayFrameUseCase(IEnumerable<IReplayRuleEvaluator> evaluators)
+    private readonly IReadOnlyDictionary<EvaluatorKey, ISingleTimeframeReplayRuleEvaluator> evaluators;
+    public EvaluateStrategyReplayFrameUseCase(IEnumerable<ISingleTimeframeReplayRuleEvaluator> evaluators)
     {
         ArgumentNullException.ThrowIfNull(evaluators);
-        var registry = new Dictionary<EvaluatorKey, IReplayRuleEvaluator>();
+        var registry = new Dictionary<EvaluatorKey, ISingleTimeframeReplayRuleEvaluator>();
         foreach (var evaluator in evaluators)
         {
             if (evaluator is null) throw new ArgumentException("Evaluators cannot contain null.", nameof(evaluators));

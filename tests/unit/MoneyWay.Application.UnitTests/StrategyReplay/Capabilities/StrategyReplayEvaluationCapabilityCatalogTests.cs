@@ -3,7 +3,6 @@ using MoneyWay.Application.StrategyDefinitions.Forex;
 using MoneyWay.Application.StrategyDefinitions.Nasdaq;
 using MoneyWay.Application.StrategyReplay;
 using MoneyWay.Application.StrategyReplay.Capabilities;
-using MoneyWay.Domain.MarketData.Replay;
 using MoneyWay.Domain.Strategies;
 
 namespace MoneyWay.Application.UnitTests.StrategyReplay.Capabilities;
@@ -61,6 +60,16 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
     }
 
     [Fact]
+    public void LegacyEvaluatorDoesNotCountAsCanonicalImplementation()
+    {
+        var required = Forex.Rules.First(x => x.IsRequired);
+        ISingleTimeframeReplayRuleEvaluator legacy = new LegacyFake(Forex.StrategyId, Forex.Version, required.RuleId);
+        Assert.NotNull(legacy);
+        var item = Catalog([], []).Find(Forex.StrategyId, Forex.Version)!.Rules.Single(x => x.RuleId == required.RuleId);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, item.CapabilityStatus);
+    }
+
+    [Fact]
     public void ExplicitDeclarationOverridesFallbackWithoutMappingDefinitionStatus()
     {
         var rule = Forex.Rules[0]; var declaration = new ReplayRuleEvaluationCapabilityDeclaration(Forex.StrategyId, Forex.Version, rule.RuleId, ReplayRuleEvaluationCapabilityStatus.HumanOnly, "Explicit audited limitation.", rule.SourceReference);
@@ -100,6 +109,11 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
     private sealed class Fake(StrategyId strategyId, StrategyVersion version, RuleId ruleId) : IReplayRuleEvaluator
     {
         public StrategyId StrategyId { get; } = strategyId; public StrategyVersion StrategyVersion { get; } = version; public RuleId RuleId { get; } = ruleId;
-        public ReplayRuleEvaluationDecision Evaluate(ReplayFrame frame) => new(RuleEvaluationResult.Passed, "Synthetic.", null);
+        public ReplayRuleEvaluationDecision Evaluate(StrategyReplayContext context) => new(RuleEvaluationResult.Passed, "Synthetic.", null);
+    }
+    private sealed class LegacyFake(StrategyId strategyId, StrategyVersion version, RuleId ruleId) : ISingleTimeframeReplayRuleEvaluator
+    {
+        public StrategyId StrategyId { get; } = strategyId; public StrategyVersion StrategyVersion { get; } = version; public RuleId RuleId { get; } = ruleId;
+        public ReplayRuleEvaluationDecision Evaluate(MoneyWay.Domain.MarketData.Replay.ReplayFrame frame) => new(RuleEvaluationResult.Passed, "Synthetic.", null);
     }
 }
