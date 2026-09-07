@@ -8,6 +8,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();
 builder.Services.AddSingleton<EvaluateStrategyUseCase>();
 builder.Services.AddSingleton<StrategyDefinitionCatalog>();
+builder.Services.AddSingleton<EvaluateRegisteredStrategyUseCase>();
 
 if (builder.Environment.IsDevelopment())
 {

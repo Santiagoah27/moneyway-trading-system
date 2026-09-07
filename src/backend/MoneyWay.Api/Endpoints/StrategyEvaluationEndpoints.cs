@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using MoneyWay.Api.Contracts.StrategyEvaluation;
 using MoneyWay.Application.StrategyEvaluation;
 using MoneyWay.Domain.Strategies;
@@ -19,20 +20,38 @@ public static class StrategyEvaluationEndpoints
                 "Calculates a verdict from manually determined rule evaluations. Ready only means all required "
                 + "evaluations supplied passed or were not applicable; it is not a signal or execution authorization.")
             .Produces<ManualStrategyEvaluationResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesValidationProblem(StatusCodes.Status400BadRequest);
 
         return endpoints;
     }
 
-    private static Results<Ok<ManualStrategyEvaluationResponse>, ValidationProblem> EvaluateManual(
+    private static Results<Ok<ManualStrategyEvaluationResponse>, ProblemHttpResult, ValidationProblem> EvaluateManual(
         ManualStrategyEvaluationRequest request,
-        EvaluateStrategyUseCase useCase)
+        EvaluateRegisteredStrategyUseCase useCase)
     {
         try
         {
             var applicationRequest = ToApplicationRequest(request);
             var result = useCase.Execute(applicationRequest);
-            return TypedResults.Ok(ToResponse(result));
+            return result.Status switch
+            {
+                StrategyEvaluationExecutionStatus.Success => TypedResults.Ok(ToResponse(result.Evaluation!)),
+                StrategyEvaluationExecutionStatus.StrategyNotFound => TypedResults.Problem(
+                    title: "Strategy definition not found",
+                    detail: "The requested strategy definition was not found.",
+                    statusCode: StatusCodes.Status404NotFound),
+                StrategyEvaluationExecutionStatus.ValidationFailed => TypedResults.Problem(
+                    title: "Strategy evaluation validation failed",
+                    statusCode: StatusCodes.Status400BadRequest,
+                    extensions: new Dictionary<string, object?>
+                    {
+                        ["errors"] = result.Issues.Select(static issue => new StrategyEvaluationValidationIssueResponse(
+                            issue.Code, issue.Message, issue.RuleId?.Value)).ToArray(),
+                    }),
+                _ => throw new InvalidOperationException("Unknown strategy evaluation execution status."),
+            };
         }
         catch (ArgumentException exception)
         {
