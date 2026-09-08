@@ -34,8 +34,13 @@ HH/LL trend review and the Breakout/Wickfill/Fakeout context alternatives are co
 |---|---|---|---|---|---|
 | NQ-Q-LQ-001 | ¿Qué prioridad existe entre Asia, London, 1H/4H, equal highs/lows and prior-day liquidity? | Determines which level can enable the setup. | `unresolved` | `semi_automatic_backtesting` | Ranked examples and explicit mentor rationale |
 | NQ-Q-LQ-002 | ¿Un nivel barrido expira, puede reutilizarse o cambia algo al barrer varios niveles? | Avoids invented validity/probability/risk rules. | `unresolved` | `semi_automatic_backtesting` | Repeated-level and multi-sweep cases with explicit outcomes |
-| NQ-Q-LQ-003 | ¿Cuáles son los límites exactos de las sesiones Asia y London? | `America/Bogota` resolves the strategy clock but does not define either liquidity session. | `unresolved` | `semi_automatic_backtesting` | Explicit session start/end definitions in `America/Bogota` |
 | NQ-Q-LQ-004 | ¿Qué algoritmo identifica puntos estructurales 1H/4H y qué tolerancia define que coinciden con un extremo de sesión? | Structural confluence is confirmed but not deterministic. | `human_validation_required` | `semi_automatic_backtesting` | Annotated structural points and boundary cases |
+
+### Resolved session-liquidity question
+
+| Question ID | Resolution | Current status | Evidence |
+|---|---|---|---|
+| NQ-Q-LQ-003 | For day `D`, Asia is `[D-1 17:00, D 02:00)` and London is `[D 02:00, D 07:00)` in `America/Bogota`, start-inclusive and end-exclusive. Completed 1H candles belong by local `OpenTime`; session High/Low are maximum `High`/minimum `Low`. | `confirmed` | Manual source-video re-verification |
 
 ## Session schedule
 
@@ -129,7 +134,7 @@ HH/LL trend review and the Breakout/Wickfill/Fakeout context alternatives are co
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-MD-001 | ¿Qué instrument, symbol, provider, session candles and timestamp normalization are authoritative? | Required for Asia/London levels, closes and replay; the strategy clock is already `America/Bogota`. | `unresolved` | `semi_automatic_backtesting` | Provider mapping, session definitions and candle comparisons |
+| NQ-Q-MD-001 | ¿Qué instrument, symbol, provider and timestamp normalization are authoritative, and how is missing session data reported? | Required for trustworthy Asia/London levels, closes and replay; timezone, session intervals and 1H membership are already confirmed. | `unresolved` | `semi_automatic_backtesting` | Provider mapping, timestamp comparisons and missing-data cases |
 
 ## Automation
 

@@ -23,7 +23,7 @@ Los resultados permitidos son `passed`, `failed`, `waiting`, `not_applicable`, `
 
 ## 4. Source coverage
 
-La documentación representa la evidencia actualmente auditada del video de 58:24, consolidada desde cinco intervalos y una re-verificación humana directa del video fuente. Esta re-verificación confirmó la secuencia de seis etapas, 08:00/08:30/11:30 en hora Colombia, la guía de Stop Loss 5M HL/LH y los targets en important highs/lows. No se inventan timestamps, URL ni líneas de transcript para esta corrección. Salvo `50:15` para riesgo máximo por operación, los timestamps de reglas individuales siguen siendo `null` cuando no fueron proporcionados.
+La documentación representa la evidencia actualmente auditada del video de 58:24, consolidada desde cinco intervalos y una re-verificación humana directa del video fuente. Esta re-verificación confirmó la secuencia de seis etapas, 08:00/08:30/11:30 en hora Colombia, las sesiones Asia/London y sus extremos 1H, la guía de Stop Loss 5M HL/LH y los targets en important highs/lows. No se inventan timestamps, URL ni líneas de transcript para esta corrección. Salvo `50:15` para riesgo máximo por operación, los timestamps de reglas individuales siguen siendo `null` cuando no fueron proporcionados.
 
 ## 5. Supported operating modes
 
@@ -57,9 +57,9 @@ The workflow is sequential. A later mandatory stage cannot be `passed` while an 
 |---:|---|---|---|---|---|---|
 | 1. 4H HH/LL context | `confirmed` + `human_validation_required` | 4H candles | Trend and context reviewed | Blocks all lower stages | Yes | HH/LL structural swing algorithm |
 | 2. Breakout/Wickfill/Fakeout | `confirmed` conceptually | 4H context and relevant level | One classification recorded | Unclassified context blocks | Yes | Exact geometries and tolerances |
-| 3. Relevant liquidity | `confirmed` + `human_validation_required` | Session levels and 1H/4H context | Asia/London extrema and structural coincidences recorded | Missing levels block sweep evaluation | Yes | Session boundaries, structural-point algorithm, coincidence tolerance |
-| 4. Asia High/Low | `confirmed` | Session candles | Both levels recorded | Missing data returns `data_unavailable` | No after session boundary known | Exact session boundary |
-| 5. London High/Low | `confirmed` | Session candles | Both levels recorded | Missing data returns `data_unavailable` | No after session boundary known | Exact session boundary |
+| 3. Relevant liquidity | `confirmed` + `human_validation_required` | Session levels and 1H/4H context | Asia/London extrema and structural coincidences recorded | Missing levels block sweep evaluation | Yes | Structural-point algorithm, coincidence tolerance and priority |
+| 4. Asia High/Low | `confirmed` | Completed 1H candles with local `OpenTime` in the Asia interval | Maximum `High` and minimum `Low` recorded | Missing required data returns `data_unavailable` | No | Data completeness policy for non-nominal sessions |
+| 5. London High/Low | `confirmed` | Completed 1H candles with local `OpenTime` in the London interval | Maximum `High` and minimum `Low` recorded | Missing required data returns `data_unavailable` | No | Data completeness policy for non-nominal sessions |
 | 6. Preparation | `confirmed` | Clock, context and levels | Preparation begins at 08:00 `America/Bogota` | Incomplete preparation blocks entry | Yes for analysis content | Calendar eligibility |
 | 7. Trading-window start | `confirmed` | Clock in `America/Bogota` | `waiting` before 08:30 | Entry prohibited before start | No for timezone/DST | None for timezone/DST |
 | 8. Liquidity sweep | `confirmed` conceptually | Marked high/low and price | Price exceeds the level; remaining details human-approved | Without an exceedance, remain `waiting` | Yes | Minimum penetration, rejection, pre-08:30 validity |
@@ -86,9 +86,9 @@ Solo se incluyen relaciones direccionales expresamente documentadas. No se compl
 |---:|---|---|---|---|---|---|
 | 1. 4H HH/LL context | `confirmed` + `human_validation_required` | 4H candles | Trend and context reviewed | Blocks all lower stages | Yes | HH/LL structural swing algorithm |
 | 2. Breakout/Wickfill/Fakeout | `confirmed` conceptually | 4H context and relevant level | One classification recorded | Unclassified context blocks | Yes | Exact geometries and tolerances |
-| 3. Relevant liquidity | `confirmed` + `human_validation_required` | Session levels and 1H/4H context | Asia/London extrema and structural coincidences recorded | Missing levels block sweep evaluation | Yes | Session boundaries, structural-point algorithm, coincidence tolerance |
-| 4. Asia High/Low | `confirmed` | Session candles | Both levels recorded | Missing data returns `data_unavailable` | No after session boundary known | Exact session boundary |
-| 5. London High/Low | `confirmed` | Session candles | Both levels recorded | Missing data returns `data_unavailable` | No after session boundary known | Exact session boundary |
+| 3. Relevant liquidity | `confirmed` + `human_validation_required` | Session levels and 1H/4H context | Asia/London extrema and structural coincidences recorded | Missing levels block sweep evaluation | Yes | Structural-point algorithm, coincidence tolerance and priority |
+| 4. Asia High/Low | `confirmed` | Completed 1H candles with local `OpenTime` in the Asia interval | Maximum `High` and minimum `Low` recorded | Missing required data returns `data_unavailable` | No | Data completeness policy for non-nominal sessions |
+| 5. London High/Low | `confirmed` | Completed 1H candles with local `OpenTime` in the London interval | Maximum `High` and minimum `Low` recorded | Missing required data returns `data_unavailable` | No | Data completeness policy for non-nominal sessions |
 | 6. Preparation | `confirmed` | Clock, context and levels | Preparation begins at 08:00 `America/Bogota` | Incomplete preparation blocks entry | Yes for analysis content | Calendar eligibility |
 | 7. Trading-window start | `confirmed` | Clock in `America/Bogota` | `waiting` before 08:30 | Entry prohibited before start | No for timezone/DST | None for timezone/DST |
 | 8. Liquidity sweep | `confirmed` conceptually | Marked high/low and price | Price exceeds the level; remaining details human-approved | Without an exceedance, remain `waiting` | Yes | Minimum penetration, rejection, pre-08:30 validity |
@@ -121,7 +121,25 @@ HH/LL and these three contexts are confirmed strategy concepts, not completed de
 
 Mark Asia High, Asia Low, London High and London Low. Also review structural points on 1H/4H, especially when they coincide with those session extrema. A liquidity level must be taken before searching for 5M inversion; the sweep alone is never an entry.
 
-The confirmed high-level sweep condition is that price exceeds an identified high or low. Minimum penetration, close-back, rejection, displacement, timing and invalidation remain unresolved; neither wick-only nor candle-close confirmation is inferred. Exact Asia/London session boundaries, structural-point detection, coincidence tolerance, priority, reuse after sweep, multiple sweeps, internal/external liquidity, equal levels, prior-day levels and pre-08:30 sweeps are also unresolved.
+For each trading/preparation day `D`, session membership is defined in local `America/Bogota` time by the 1H candle `OpenTime`:
+
+| Session | Interval | Included nominal 1H opens | Nominal count sanity check |
+|---|---|---|---:|
+| Asia | `[D-1 17:00, D 02:00)` | 17:00 through 23:00 on `D-1`, then 00:00 and 01:00 on `D` | 9 |
+| London | `[D 02:00, D 07:00)` | 02:00 through 06:00 on `D` | 5 |
+
+Intervals are start-inclusive and end-exclusive. Asia crosses midnight; London does not within this definition. Therefore, the 02:00 candle belongs to London, not Asia, and the 07:00 candle does not belong to London. The nominal intervals have neither overlap nor gap. The candle counts are sanity checks for complete, hourly-aligned data; they do not authorize synthesis of missing candles or assumptions about weekends, holidays or early closes.
+
+`NQ-LIQ-001` uses only completed, closed 1H candles whose local `OpenTime` belongs to the corresponding interval:
+
+- `AsiaHigh(D) = maximum Candle.High` among the relevant completed Asia candles.
+- `AsiaLow(D) = minimum Candle.Low` among the relevant completed Asia candles.
+- `LondonHigh(D) = maximum Candle.High` among the relevant completed London candles.
+- `LondonLow(D) = minimum Candle.Low` among the relevant completed London candles.
+
+These extrema do not use `Open`, `Close`, candle bodies, averages, pivots or future candles. No resampling, interpolation, forward fill or synthetic candle generation is permitted. Missing required session data must produce `data_unavailable`; a future implementation must define and test provider-specific data completeness without inventing calendar behavior. At the normal 08:00 `America/Bogota` preparation time, Asia has ended at 02:00 and London at 07:00, so all four references come from completed prior sessions; this observation does not add a new execution rule.
+
+These definitions make `NQ-LIQ-001` sufficiently specified for a future deterministic implementation, but no evaluator is implemented by this documentation change. Structural-point detection, coincidence tolerance, liquidity priority, reuse after sweep, multiple sweeps, internal/external liquidity, equal levels, prior-day levels and pre-08:30 sweeps remain unresolved or require human validation. The confirmed high-level sweep condition is only that price exceeds an identified high or low; minimum penetration, close-back, rejection, displacement, timing and invalidation remain unresolved, and neither wick-only nor candle-close confirmation is inferred.
 
 ## 11. Operating schedule
 
@@ -135,7 +153,7 @@ daylight_saving_adjustment: false
 
 Preparation/analysis starts at 08:00. The trading window starts at 08:30 and ends at 11:30. All three are local Colombia times governed normatively by `America/Bogota`, which does not apply seasonal DST adjustments to these limits.
 
-The strategy operates the New York market, but that market reference does not change its clock to `America/New_York`, EST or EDT. Allowed days, holidays, early closes, low-liquidity sessions and management of positions after 11:30 remain unresolved. The confirmed timezone also does not define the Asia or London session boundaries.
+The strategy operates the New York market, but that market reference does not change its clock to `America/New_York`, EST or EDT. The same confirmed timezone governs the Asia and London definitions in section 10. Allowed days, holidays, early closes, low-liquidity sessions and management of positions after 11:30 remain unresolved.
 
 ## 12. 5M inversion
 
@@ -249,7 +267,7 @@ The phrase similar to “if it takes you out, do not seek re-entry” lacks suff
 
 ## 21. Waiting states
 
-Return `waiting` before 08:30 `America/Bogota`, before liquidity is taken, while inversion or candle close is pending, without a continuation FVG, during the 1M correction, before realignment, or while required post-entry management evidence has not formed. Return `data_unavailable` for missing candles, unresolved session boundaries or timestamps. Return `human_validation_required` at subjective gates; later stages remain blocked.
+Return `waiting` before 08:30 `America/Bogota`, before liquidity is taken, while inversion or candle close is pending, without a continuation FVG, during the 1M correction, before realignment, or while required post-entry management evidence has not formed. Return `data_unavailable` for missing required closed 1H session candles, other missing candles or unavailable timestamps. Return `human_validation_required` at subjective gates; later stages remain blocked.
 
 ## 22. No-trade conditions
 
@@ -272,7 +290,7 @@ Human validation is required for 4H HH/LL swings, Breakout/Wickfill/Fakeout geom
 
 ## 24. Automation readiness
 
-The evidence supports assisted analysis, manual backtesting and supervised paper trading. Semi-automatic backtesting remains partial. The time-window ambiguity and prior Stop Loss reference contradiction are resolved conceptually, and directional target concepts are confirmed. Subjective FVG quality, swing algorithms, structural Stop Loss geometry, target-importance selection, unresolved news/reentries and incomplete risk controls still prohibit fully automatic backtesting and autonomous execution.
+The evidence supports assisted analysis, manual backtesting and supervised paper trading. Semi-automatic backtesting remains partial. The trading window, Asia/London session boundaries and extrema calculation are deterministically specified; the prior Stop Loss reference contradiction is resolved conceptually, and directional target concepts are confirmed. The session-liquidity evaluator is not yet implemented. Subjective FVG quality, swing algorithms, structural Stop Loss geometry, target-importance selection, unresolved news/reentries and incomplete risk controls still prohibit fully automatic backtesting and autonomous execution.
 
 ## 25. Traceability requirements
 

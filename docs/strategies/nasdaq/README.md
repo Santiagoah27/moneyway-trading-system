@@ -26,7 +26,7 @@ Real-money trading and autonomous execution are prohibited.
 ## Critical open variables
 
 - Exact HH/LL and structural swing detection.
-- Exact Asia and London session boundaries.
+- Liquidity priority, structural-point coincidence and sweep qualification beyond the confirmed session extrema.
 - Deterministic 5M HL/LH Stop Loss geometry.
 - Deterministic important-high/important-low target selection.
 - News policy.
