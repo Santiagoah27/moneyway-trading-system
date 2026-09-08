@@ -103,6 +103,46 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         }
     }
 
+    [Fact]
+    public void NasdaqTimingRulesUseNotImplementedFallbackAfterTimezoneReconciliation()
+    {
+        var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
+        var report = Catalog([], declarations).Find(Nasdaq.StrategyId, Nasdaq.Version)!;
+        var timingRuleIds = new[] { new RuleId("NQ-TIME-001"), new RuleId("NQ-TIME-002") };
+
+        Assert.DoesNotContain(declarations, declaration => timingRuleIds.Contains(declaration.RuleId));
+        foreach (var ruleId in timingRuleIds)
+        {
+            var capability = report.Rules.Single(rule => rule.RuleId == ruleId);
+            Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, capability.CapabilityStatus);
+            Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, capability.CapabilityReason);
+            Assert.Null(capability.CapabilitySourceReference);
+        }
+
+        Assert.Equal(
+            [new RuleId("NQ-M5-004"), new RuleId("NQ-SL-001"), new RuleId("NQ-TP-001")],
+            report.Rules
+                .Where(rule => rule.CapabilityStatus == ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification)
+                .Select(rule => rule.RuleId));
+
+        Assert.Equal(32, report.TotalRuleCount);
+        Assert.Equal(13, report.RequiredRuleCount);
+        Assert.Equal(0, report.ImplementedCount);
+        Assert.Equal(0, report.HumanOnlyCount);
+        Assert.Equal(29, report.NotImplementedCount);
+        Assert.Equal(3, report.BlockedByUnresolvedSpecificationCount);
+        Assert.Equal(0, report.RequiredImplementedCount);
+        Assert.Equal(13, report.RequiredEvaluatorGapCount);
+        Assert.False(report.HasFullRequiredEvaluatorRegistration);
+
+        var forex = Catalog([], declarations).Find(Forex.StrategyId, Forex.Version)!;
+        Assert.Equal((17, 15, 0, 0, 13, 4, 0, 15, false),
+            (forex.TotalRuleCount, forex.RequiredRuleCount, forex.ImplementedCount, forex.HumanOnlyCount,
+                forex.NotImplementedCount, forex.BlockedByUnresolvedSpecificationCount,
+                forex.RequiredImplementedCount, forex.RequiredEvaluatorGapCount,
+                forex.HasFullRequiredEvaluatorRegistration));
+    }
+
     private static StrategyDefinition Forex => MoneyWayForexStrategyDefinition.Instance;
     private static StrategyDefinition Nasdaq => MoneyWayNasdaqStrategyDefinition.Instance;
     private static StrategyReplayEvaluationCapabilityCatalog Catalog(IEnumerable<IReplayRuleEvaluator> evaluators, IEnumerable<ReplayRuleEvaluationCapabilityDeclaration> declarations) => new(new StrategyDefinitionCatalog(), evaluators, declarations);

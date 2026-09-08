@@ -12,11 +12,9 @@ public static class MoneyWayReplayEvaluationCapabilityDeclarations
         Blocked("moneyway-forex", "forex-0.1.0-draft", "FX-BO-001", "The deterministic breakout geometry remains unresolved.", ForexSource),
         Blocked("moneyway-forex", "forex-0.1.0-draft", "FX-RT-001", "The deterministic retest tolerance and invalidation rules remain unresolved.", ForexSource),
         Blocked("moneyway-forex", "forex-0.1.0-draft", "FX-TP-001", "The deterministic exit policy for the reference reward/risk ratio remains unresolved.", ForexSource),
-        Blocked("moneyway-nasdaq", "nasdaq-0.1.0-draft", "NQ-TIME-001", "The strategy timezone and daylight-saving basis remain unresolved.", NasdaqSource),
         Blocked("moneyway-nasdaq", "nasdaq-0.1.0-draft", "NQ-M5-004", "The deterministic IFVG geometry remains unresolved.", NasdaqSource),
-        Blocked("moneyway-nasdaq", "nasdaq-0.1.0-draft", "NQ-SL-001", "The Stop Loss selection rule remains contradictory and unresolved.", NasdaqSource),
-        Blocked("moneyway-nasdaq", "nasdaq-0.1.0-draft", "NQ-TP-001", "The general target and target-priority rules remain unresolved.", NasdaqSource),
-        Blocked("moneyway-nasdaq", "nasdaq-0.1.0-draft", "NQ-TIME-002", "The strategy timezone and daylight-saving basis remain unresolved.", NasdaqSource),
+        Blocked("moneyway-nasdaq", "nasdaq-0.1.0-draft", "NQ-SL-001", "Deterministic 5M HL/LH detection and structural invalidation geometry remain unresolved.", NasdaqSource),
+        Blocked("moneyway-nasdaq", "nasdaq-0.1.0-draft", "NQ-TP-001", "Deterministic important-high/important-low selection and target priority remain unresolved.", NasdaqSource),
     ];
 
     private static ReplayRuleEvaluationCapabilityDeclaration Blocked(string strategyId, string version, string ruleId, string reason, string source) =>
