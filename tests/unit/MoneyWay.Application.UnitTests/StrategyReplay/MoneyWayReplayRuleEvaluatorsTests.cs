@@ -61,6 +61,32 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
         Assert.Equal(Counts(forexBefore), Counts(forexAfter));
     }
 
+    [Fact]
+    public void SessionLiquidityMetadataReconciliationPreservesNotImplementedCapability()
+    {
+        var definition = MoneyWayNasdaqStrategyDefinition.Instance;
+        var sessionRule = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-001");
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
+        var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
+        var report = new StrategyReplayEvaluationCapabilityCatalog(
+            new StrategyDefinitionCatalog(), evaluators, declarations)
+            .Find(definition.StrategyId, definition.Version)!;
+        var capability = report.Rules.Single(rule => rule.RuleId == sessionRule.RuleId);
+
+        Assert.DoesNotContain(evaluators, evaluator =>
+            evaluator.StrategyId == definition.StrategyId &&
+            evaluator.StrategyVersion == definition.Version &&
+            evaluator.RuleId == sessionRule.RuleId);
+        Assert.DoesNotContain(declarations, declaration =>
+            declaration.StrategyId == definition.StrategyId &&
+            declaration.StrategyVersion == definition.Version &&
+            declaration.RuleId == sessionRule.RuleId);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, capability.CapabilityStatus);
+        Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, capability.CapabilityReason);
+        Assert.Null(capability.CapabilitySourceReference);
+        Assert.Equal((32, 13, 2, 0, 27, 3, 2, 11, false), Counts(report));
+    }
+
     private static (string StrategyId, string Version, string RuleId) Identity(IReplayRuleEvaluator evaluator) =>
         (evaluator.StrategyId.Value, evaluator.StrategyVersion.Value, evaluator.RuleId.Value);
 

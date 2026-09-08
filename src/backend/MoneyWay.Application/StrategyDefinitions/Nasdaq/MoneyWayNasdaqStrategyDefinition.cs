@@ -24,7 +24,7 @@ public static class MoneyWayNasdaqStrategyDefinition
             Rule("NQ-H4-004", "Fakeout classification", "4H", 40, false, RuleDefinitionStatus.HumanValidationRequired,
                 "Classify Fakeout through human validation without assigning automatic geometry."),
             Rule("NQ-LIQ-001", "Session liquidity levels", "Liquidity", 50, true, RuleDefinitionStatus.Confirmed,
-                "Mark Asia High, Asia Low, London High, and London Low without session priority."),
+                "Identify completed Asia and London session highs/lows from exact 1H candles selected by local America/Bogota OpenTime: Asia [D-1 17:00, D 02:00) and London [D 02:00, D 07:00). Each session high is the maximum Candle.High and each session low is the minimum Candle.Low."),
             Rule("NQ-LIQ-002", "Relevant liquidity", "Liquidity", 60, true, RuleDefinitionStatus.HumanValidationRequired,
                 "Review human-validated structural points on 1H and 4H, especially where they coincide with Asia or London extrema, without an invented hierarchy or tolerance."),
             Rule("NQ-LIQ-003", "Liquidity sweep required", "Sweep", 70, true, RuleDefinitionStatus.Confirmed,

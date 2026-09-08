@@ -135,13 +135,27 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
     }
 
     [Fact]
-    public void SessionLevelsAreOneRequiredMarkingRuleNotFourSweepRules()
+    public void SessionLiquidityMetadataMatchesAuditedSpecification()
     {
         var sessionRule = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-001");
         var requiredSweepRules = definition.Rules.Where(rule =>
             rule.IsRequired && rule.Stage == "Sweep").ToArray();
 
+        Assert.Equal("NQ-LIQ-001", sessionRule.RuleId.Value);
+        Assert.Equal("Session liquidity levels", sessionRule.Name);
+        Assert.Equal("Liquidity", sessionRule.Stage);
+        Assert.Equal(50, sessionRule.Sequence);
         Assert.True(sessionRule.IsRequired);
+        Assert.Equal(RuleDefinitionStatus.Confirmed, sessionRule.DefinitionStatus);
+        Assert.Equal("docs/strategies/nasdaq/rule-catalog.md", sessionRule.SourceReference);
+        Assert.Contains("exact 1H candles", sessionRule.Description, StringComparison.Ordinal);
+        Assert.Contains("local America/Bogota OpenTime", sessionRule.Description, StringComparison.Ordinal);
+        Assert.Contains("Asia [D-1 17:00, D 02:00)", sessionRule.Description, StringComparison.Ordinal);
+        Assert.Contains("London [D 02:00, D 07:00)", sessionRule.Description, StringComparison.Ordinal);
+        Assert.Contains("maximum Candle.High", sessionRule.Description, StringComparison.Ordinal);
+        Assert.Contains("minimum Candle.Low", sessionRule.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("America/New_York", sessionRule.Description, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("60m", sessionRule.Description, StringComparison.OrdinalIgnoreCase);
         Assert.Single(requiredSweepRules);
         Assert.Equal("NQ-LIQ-003", requiredSweepRules[0].RuleId.Value);
     }
