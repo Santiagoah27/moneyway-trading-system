@@ -8,6 +8,8 @@ No answer is proposed from external trading theory. `Blocking level` is the earl
 |---|---|---|---|---|---|
 | NQ-Q-H4-001 | ¿Qué swing es estructural y qué algoritmo, velas y tolerancias lo identifican? | Controls Break/Wick/Fake classification. | `human_validation_required` | `semi_automatic_backtesting` | Mentor definition plus annotated positive, negative and marginal examples |
 
+HH/LL trend review and the Breakout/Wickfill/Fakeout context alternatives are confirmed conceptually. This question concerns only their deterministic geometry.
+
 ## Break
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
@@ -32,25 +34,21 @@ No answer is proposed from external trading theory. `Blocking level` is the earl
 |---|---|---|---|---|---|
 | NQ-Q-LQ-001 | ¿Qué prioridad existe entre Asia, London, 1H/4H, equal highs/lows and prior-day liquidity? | Determines which level can enable the setup. | `unresolved` | `semi_automatic_backtesting` | Ranked examples and explicit mentor rationale |
 | NQ-Q-LQ-002 | ¿Un nivel barrido expira, puede reutilizarse o cambia algo al barrer varios niveles? | Avoids invented validity/probability/risk rules. | `unresolved` | `semi_automatic_backtesting` | Repeated-level and multi-sweep cases with explicit outcomes |
+| NQ-Q-LQ-003 | ¿Cuáles son los límites exactos de las sesiones Asia y London? | `America/Bogota` resolves the strategy clock but does not define either liquidity session. | `unresolved` | `semi_automatic_backtesting` | Explicit session start/end definitions in `America/Bogota` |
+| NQ-Q-LQ-004 | ¿Qué algoritmo identifica puntos estructurales 1H/4H y qué tolerancia define que coinciden con un extremo de sesión? | Structural confluence is confirmed but not deterministic. | `human_validation_required` | `semi_automatic_backtesting` | Annotated structural points and boundary cases |
 
 ## Session schedule
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-SC-001 | ¿Cuál es la hora exacta de preparación y qué días, feriados, cierres o sesiones se permiten? | Controls reproducibility and no-trade dates. | `unresolved` | `paper_trading` | Verified schedule policy and calendar examples |
+| NQ-Q-SC-001 | ¿Qué días, feriados, cierres o sesiones se permiten? | Preparation is confirmed at 08:00 `America/Bogota`, but calendar eligibility remains undefined. | `unresolved` | `paper_trading` | Verified calendar policy and examples |
 | NQ-Q-SC-002 | ¿Cómo se gestionan posiciones abiertas después de las 11:30? | 11:30 only confirms the latest new entry. | `unresolved` | `paper_trading` | Explicit open-position examples after cutoff |
-
-## Timezone and DST
-
-| Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
-|---|---|---|---|---|---|
-| NQ-Q-TZ-001 | ¿Qué timezone formal gobierna 08:30 y 11:30 y cómo se maneja DST? | `timezone: null` makes schedule automation unsafe. | `unresolved` | `semi_automatic_backtesting` | Original-video context plus explicit timezone/DST policy |
 
 ## Liquidity sweep
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-SW-001 | ¿Qué penetración, close-back, rechazo, desplazamiento, plazo e invalidación definen el sweep? | Sweep is mandatory before 5M inversion. | `human_validation_required` | `semi_automatic_backtesting` | Positive/negative/boundary sweeps with timestamps |
+| NQ-Q-SW-001 | ¿Qué penetración mínima, close-back, rechazo, desplazamiento, plazo e invalidación aplican después de superar el high/low? | Exceeding the identified high/low is confirmed, but boundary and lifecycle details remain open. | `human_validation_required` | `semi_automatic_backtesting` | Positive/negative/boundary sweeps with timestamps |
 | NQ-Q-SW-002 | ¿Puede utilizarse una toma anterior a 08:30? | Affects operating sequence. | `unresolved` | `paper_trading` | Explicit pre-open examples and mentor decision |
 
 ## 5M structure
@@ -85,8 +83,8 @@ No answer is proposed from external trading theory. `Blocking level` is the earl
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-SL-001 | ¿Qué versión selecciona sweep extreme versus 5M HL/LH para wide/short sweeps? | Contradictory evidence blocks automatic demo execution. | `unresolved` | `paper_trading` | Manual review of original timestamps and additional unambiguous examples |
-| NQ-Q-SL-002 | ¿Cómo se definen sweep size, body/wick, buffer, spread, maximum Stop and oversized-stop behavior? | Determines invalidation and risk. | `unresolved` | `paper_trading` | Approved quantitative policy and boundary cases |
+| NQ-Q-SL-001 | ¿Qué algoritmo identifica el structural 5M HL para buys y el structural 5M LH para sells? | The conceptual reference is confirmed, but deterministic swing selection is not. | `human_validation_required` | `semi_automatic_backtesting` | Annotated HL/LH selections and rejected alternatives |
+| NQ-Q-SL-002 | ¿Cómo se formaliza el punto donde el trade pierde sentido, incluidos body/wick, buffer, spread, maximum Stop and oversized-stop behavior? | Conceptual invalidation is confirmed but not quantitatively reproducible. | `unresolved` | `paper_trading` | Approved quantitative policy and boundary cases |
 
 ## Break Even
 
@@ -99,7 +97,7 @@ No answer is proposed from external trading theory. `Blocking level` is the earl
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-TP-001 | ¿Cuál es la general target rule and priority among session/important liquidity or higher-timeframe targets? | Take Profit remains unresolved. | `unresolved` | `paper_trading` | Explicit target-selection policy and counterexamples |
+| NQ-Q-TP-001 | ¿Qué algoritmo convierte un high en important para buys o un low en important para sells y cómo se priorizan varios candidatos? | Target direction is confirmed but exact selection remains unresolved. | `human_validation_required` | `paper_trading` | Annotated important/non-important levels and priority counterexamples |
 | NQ-Q-TP-002 | ¿Existe fixed RR, partials, trailing or manual close? | Required for reproducible results and management. | `unresolved` | `paper_trading` | Complete audited trades and explicit management statements |
 
 ## Risk
@@ -131,7 +129,7 @@ No answer is proposed from external trading theory. `Blocking level` is the earl
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-MD-001 | ¿Qué instrument, symbol, provider, session candles and timestamp normalization are authoritative? | Required for Asia/London levels, closes and replay. | `unresolved` | `semi_automatic_backtesting` | Provider mapping, timezone policy and candle comparisons |
+| NQ-Q-MD-001 | ¿Qué instrument, symbol, provider, session candles and timestamp normalization are authoritative? | Required for Asia/London levels, closes and replay; the strategy clock is already `America/Bogota`. | `unresolved` | `semi_automatic_backtesting` | Provider mapping, session definitions and candle comparisons |
 
 ## Automation
 

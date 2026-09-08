@@ -7,7 +7,7 @@ These cases preserve observed or conceptual evidence. They do not establish succ
 - Case ID: `NQ-CASE-001`.
 - Scenario: ideal conceptual sequence with liquidity sweep, 5M inversion, continuation FVG, 1M retracement, realignment and entry.
 - Rules demonstrated: mandatory stage order and the distinction between setup evidence and entry confirmation.
-- Rules not demonstrated: empirical success rate, exact swings, FVG threshold, order type, Stop Loss selection, Take Profit or complete risk sizing.
+- Rules not demonstrated: empirical success rate, exact swings, FVG threshold, order type, deterministic Stop Loss geometry, deterministic important-high/important-low selection or complete risk sizing.
 - Context-specific decisions: none promoted to a general rule.
 - Generalization risks: treating an ideal diagram as performance evidence or a deterministic detector.
 - Human-review notes: each subjective stage still requires validation.
@@ -37,17 +37,17 @@ These cases preserve observed or conceptual evidence. They do not establish succ
 - Human-review notes: `minimum_size_points: null`; assess clear/evident space manually.
 - Automation impact: blocks deterministic FVG-quality approval.
 
-## NQ-CASE-004 — Stop Loss ambiguity
+## NQ-CASE-004 — Stop Loss source reconciliation
 
 - Case ID: `NQ-CASE-004`.
-- Status: `unresolved_reference_case`.
-- Scenario: sweep extreme and structural 5M HL/LH were both reported as Stop Loss references, with opposing wide/short selection versions.
-- Rules demonstrated: both references exist and human validation is required.
-- Rules not demonstrated: which version is correct or any sweep-size threshold.
-- Context-specific decisions: neither version selected.
-- Generalization risks: forcing Stop always at wick or always at 5M HL/LH.
-- Human-review notes: verify original timestamps and obtain unambiguous cases.
-- Automation impact: blocks fully automatic demo execution.
+- Status: `clarified_reference_case`.
+- Scenario: an earlier interpretation treated the sweep extreme and structural 5M HL/LH as competing Stop Loss references.
+- Reconciliation: manual source-video re-verification resolved the conceptual rule in favor of the structural 5M HL for buys and structural 5M LH for sells.
+- Rules demonstrated: directional structural Stop Loss guidance and the requirement that the stop represent where the trade idea loses structural meaning.
+- Rules not demonstrated: deterministic HL/LH detection, structural swing geometry, buffer, spread or maximum-distance treatment.
+- Generalization risks: inventing a swing detector or a numeric buffer from the conceptual guidance.
+- Human-review notes: structural selection remains `human_validation_required` until its geometry is formally defined.
+- Automation impact: the prior source contradiction is resolved, but deterministic Stop Loss placement remains blocked.
 
 ## NQ-CASE-005 — News example
 
@@ -78,4 +78,4 @@ These cases preserve observed or conceptual evidence. They do not establish succ
 - No case supplies missing dates, prices, instruments, profits or losses.
 - No conceptual case is performance evidence.
 - Context-specific decisions remain non-universal.
-- Human validation is mandatory wherever thresholds, swing selection or contradictory evidence remain unresolved.
+- Human validation is mandatory wherever thresholds, geometry or swing selection remain unresolved.

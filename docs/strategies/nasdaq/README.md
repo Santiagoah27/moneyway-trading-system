@@ -3,7 +3,7 @@
 - Strategy: MoneyWay Nasdaq.
 - Specification version: `nasdaq-0.1.0-draft`.
 - Current status: audited draft; not approved for autonomous execution.
-- Source material: análisis completo y auditado del video de mentoría de 58:24, revisado en cinco intervalos.
+- Source material: análisis completo y auditado del video de mentoría de 58:24, incluida una re-verificación manual directa del video fuente.
 
 ## Available documents
 
@@ -25,12 +25,14 @@ Real-money trading and autonomous execution are prohibited.
 
 ## Critical open variables
 
-- Stop Loss selection.
-- Timezone and DST.
-- Take Profit.
+- Exact HH/LL and structural swing detection.
+- Exact Asia and London session boundaries.
+- Deterministic 5M HL/LH Stop Loss geometry.
+- Deterministic important-high/important-low target selection.
 - News policy.
 - Reentries.
 - FVG quality threshold.
-- Swing-detection algorithms.
+
+The preparation and trading-window times use `America/Bogota` and do not use DST. The confirmed conceptual Stop Loss and Take Profit references remain non-automatable until their structural-selection algorithms are defined.
 
 > No utilizar esta documentación para operación autónoma. Una regla `confirmed` puede seguir siendo no automatizable cuando su evaluación sea subjetiva.

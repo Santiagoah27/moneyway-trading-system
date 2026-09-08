@@ -7,7 +7,7 @@
 | Strategy | MoneyWay Nasdaq |
 | Specification version | `nasdaq-0.1.0-draft` |
 | Status | draft |
-| Source material | Complete audited analysis of the 58:24 mentorship video, reviewed in five intervals |
+| Source material | Complete audited analysis of the 58:24 mentorship video, including direct manual source-video re-verification |
 | Real-money trading | Prohibited |
 | Autonomous execution | Not approved |
 
@@ -23,7 +23,7 @@ Los resultados permitidos son `passed`, `failed`, `waiting`, `not_applicable`, `
 
 ## 4. Source coverage
 
-La documentación representa la evidencia actualmente auditada del video de 58:24, consolidada desde cinco intervalos con contradicciones y variables abiertas preservadas. Los timestamps críticos deberán verificarse manualmente contra el video original antes de habilitar ejecución demo. Salvo `50:15` para riesgo máximo por operación, los timestamps de reglas individuales son `null` cuando no fueron proporcionados.
+La documentación representa la evidencia actualmente auditada del video de 58:24, consolidada desde cinco intervalos y una re-verificación humana directa del video fuente. Esta re-verificación confirmó la secuencia de seis etapas, 08:00/08:30/11:30 en hora Colombia, la guía de Stop Loss 5M HL/LH y los targets en important highs/lows. No se inventan timestamps, URL ni líneas de transcript para esta corrección. Salvo `50:15` para riesgo máximo por operación, los timestamps de reglas individuales siguen siendo `null` cuando no fueron proporcionados.
 
 ## 5. Supported operating modes
 
@@ -40,28 +40,14 @@ La documentación representa la evidencia actualmente auditada del video de 58:2
 
 ## 6. High-level workflow
 
-1. Start 4H context analysis.
-2. Classify context using Break, Wick or Fake.
-3. Mark relevant liquidity levels.
-4. Mark Asia High and Asia Low.
-5. Mark London High and London Low.
-6. Prepare analysis before the operating start.
-7. Do not open entries before 08:30.
-8. Wait for a liquidity sweep.
-9. Move to 5M.
-10. Confirm inversion through traditional structural change `OR` IFVG.
-11. Require a 5M candle close to validate inversion.
-12. Require a continuation FVG on 5M.
-13. Move to 1M.
-14. Wait for a retracement against the new 5M move.
-15. Wait for 1M structural realignment.
-16. Require break and candle-body close beyond the corrective 1M swing.
-17. Execute only after 1M confirmation; order mechanics remain unresolved.
-18. Define Stop Loss through human validation because selection is unresolved.
-19. Manage Break Even using a distinct post-entry swing.
-20. Define Take Profit through human validation because its general rule is unresolved.
-21. Do not open new entries after 11:30.
-22. Apply approved risk controls.
+1. At 08:00 `America/Bogota`, prepare the market on 4H: determine HH/LL trend and identify Breakout, Wickfill or Fakeout context.
+2. Mark Asia High/Low and London High/Low, and review coincident structural points on 1H/4H.
+3. Wait for price to exceed an identified liquidity high or low.
+4. Move to 5M and identify inversion through structural change `OR` IFVG, whichever occurs first.
+5. Remain on 5M and require FVG confirmation/strength for the new direction.
+6. Move to 1M, wait for a counter-direction pullback, then require realignment with the sought direction before entry confirmation.
+
+Trading starts at 08:30 and ends at 11:30, always in `America/Bogota`. Entry order mechanics remain unresolved. For buys, the conceptual Stop Loss reference is the structural 5M HL and the target reference is an important high. For sells, the conceptual Stop Loss reference is the structural 5M LH and the target reference is an important low. Structural detection and target-importance algorithms remain unresolved and require human validation.
 
 The workflow is sequential. A later mandatory stage cannot be `passed` while an earlier stage is `failed`, `waiting`, `data_unavailable` or `human_validation_required`.
 
@@ -69,16 +55,16 @@ The workflow is sequential. A later mandatory stage cannot be `passed` while an 
 
 | Step | Rule status | Required inputs | Evaluation result | Blocking behavior | Human validation requirement | Open variables |
 |---:|---|---|---|---|---|---|
-| 1. 4H context | `confirmed` + `human_validation_required` | 4H candles | Context reviewed | Blocks all lower stages | Yes | Structural swing algorithm |
-| 2. Break/Wick/Fake | `confirmed` conceptually | 4H context and relevant level | One classification recorded | Unclassified context blocks | Yes for Wick/Fake and marginal Break | Exact Wick/Fake criteria, tolerances |
-| 3. Relevant liquidity | `confirmed` + `human_validation_required` | Context and marked levels | Levels recorded | Missing levels block sweep evaluation | Yes | Internal/external and structural priority |
-| 4. Asia High/Low | `confirmed` | Session candles | Both levels recorded | Missing data returns `data_unavailable` | No after session boundary known | Timezone/session boundary |
-| 5. London High/Low | `confirmed` | Session candles | Both levels recorded | Missing data returns `data_unavailable` | No after session boundary known | Timezone/session boundary |
-| 6. Preparation | `candidate` + `confirmed` intent | Context and levels before operations | Preparation recorded | Incomplete preparation blocks entry | Yes | Exact analysis-start time |
-| 7. Entry start | `confirmed` | Clock and timezone configuration | `waiting` before 08:30 | Entry prohibited before start | Yes while timezone is `null` | Timezone and DST |
-| 8. Liquidity sweep | `confirmed` conceptually | Marked high/low and price | Human-approved sweep | Without sweep, remain `waiting` | Yes | Penetration, rejection, pre-08:30 validity |
+| 1. 4H HH/LL context | `confirmed` + `human_validation_required` | 4H candles | Trend and context reviewed | Blocks all lower stages | Yes | HH/LL structural swing algorithm |
+| 2. Breakout/Wickfill/Fakeout | `confirmed` conceptually | 4H context and relevant level | One classification recorded | Unclassified context blocks | Yes | Exact geometries and tolerances |
+| 3. Relevant liquidity | `confirmed` + `human_validation_required` | Session levels and 1H/4H context | Asia/London extrema and structural coincidences recorded | Missing levels block sweep evaluation | Yes | Session boundaries, structural-point algorithm, coincidence tolerance |
+| 4. Asia High/Low | `confirmed` | Session candles | Both levels recorded | Missing data returns `data_unavailable` | No after session boundary known | Exact session boundary |
+| 5. London High/Low | `confirmed` | Session candles | Both levels recorded | Missing data returns `data_unavailable` | No after session boundary known | Exact session boundary |
+| 6. Preparation | `confirmed` | Clock, context and levels | Preparation begins at 08:00 `America/Bogota` | Incomplete preparation blocks entry | Yes for analysis content | Calendar eligibility |
+| 7. Trading-window start | `confirmed` | Clock in `America/Bogota` | `waiting` before 08:30 | Entry prohibited before start | No for timezone/DST | None for timezone/DST |
+| 8. Liquidity sweep | `confirmed` conceptually | Marked high/low and price | Price exceeds the level; remaining details human-approved | Without an exceedance, remain `waiting` | Yes | Minimum penetration, rejection, pre-08:30 validity |
 | 9. Move to 5M | `confirmed` | Approved sweep, 5M data | 5M review enabled | Blocks inversion without sweep | No | Data alignment |
-| 10. 5M inversion OR | `confirmed` | 5M structure/FVG evidence | Traditional change `OR` IFVG validated | Without either, `waiting` | Yes | Swing algorithm and IFVG geometry |
+| 10. 5M inversion OR | `confirmed` | 5M structure/FVG evidence | First occurring traditional change `OR` IFVG validated | Without either, `waiting` | Yes | Swing algorithm and IFVG geometry |
 | 11. 5M close | `confirmed` | 5M candle close | Close beyond required level validated | Wick alone is `failed`; open candle is `waiting` | Yes for marginal close | Minimum distance |
 | 12. Continuation FVG | `confirmed` + `human_validation_required` | Three 5M candles after inversion | Directional, clear FVG validated | Missing/weak FVG means `no_trade` | Yes | Minimum size and quality threshold |
 | 13. Move to 1M | `confirmed` | Approved FVG, 1M data | 1M review enabled | Blocks entry if data absent | No | Data alignment |
@@ -86,10 +72,10 @@ The workflow is sequential. A later mandatory stage cannot be `passed` while an 
 | 15. 1M realignment | `confirmed` + `human_validation_required` | Corrective microstructure | Candidate realignment identified | No realignment means no entry | Yes | Corrective swing algorithm |
 | 16. Corrective swing break | `confirmed` | Entry swing and closed 1M candle | Body closes beyond corrective swing | Wick/open candle does not pass | Yes for swing selection | Marginal close distance |
 | 17. Entry | `confirmed` + `unresolved` | All earlier stages approved | `human_validation_required` | No automatic order creation | Yes | Order type, timing, slippage, attempts |
-| 18. Stop Loss | `unresolved` | Sweep extreme, 5M HL candidate, entry | Human-selected Stop Loss | Missing/ambiguous SL means `no_trade` | Yes | Contradictory selection rule and thresholds |
+| 18. Stop Loss | `confirmed` conceptually + `human_validation_required` | Structural 5M HL and entry | Human validates SL where the buy idea loses structural meaning | Missing/ambiguous structural SL means `no_trade` | Yes | HL algorithm, invalidation geometry, buffer and costs |
 | 19. Break Even | `confirmed` mechanism + `candidate` universality | Post-entry 1M swing and closed candle | SL moved to entry after break and close | Not evaluated before entry | Yes for post-entry swing | Costs, applicability, later management |
-| 20. Take Profit | `unresolved` | Liquidity targets and position state | `human_validation_required` | No automatic target selection | Yes | General target, priority, ratio, partials |
-| 21. Latest entry | `confirmed` | Clock and timezone configuration | `failed` for new entry after 11:30 | New entries prohibited | Yes while timezone is `null` | Open-position management |
+| 20. Take Profit | `confirmed` conceptually + `human_validation_required` | Candidate highs and position state | Important high selected | No automatic target selection | Yes | Importance algorithm, priority, ratio, partials |
+| 21. Trading-window end | `confirmed` | Clock in `America/Bogota` | `failed` for new entry after 11:30 | New entries prohibited | No for timezone/DST | Open-position management |
 | 22. Risk controls | `confirmed` max trade risk + open controls | Entry, Stop Loss, sizing inputs | At most 1% risk after human validation | Missing sizing/control data blocks execution | Yes | Position size, daily limit, kill switch |
 
 ## 8. Sell workflow
@@ -98,16 +84,16 @@ Solo se incluyen relaciones direccionales expresamente documentadas. No se compl
 
 | Step | Rule status | Required inputs | Evaluation result | Blocking behavior | Human validation requirement | Open variables |
 |---:|---|---|---|---|---|---|
-| 1. 4H context | `confirmed` + `human_validation_required` | 4H candles | Context reviewed | Blocks all lower stages | Yes | Structural swing algorithm |
-| 2. Break/Wick/Fake | `confirmed` conceptually | 4H context and relevant level | One classification recorded | Unclassified context blocks | Yes for Wick/Fake and marginal Break | Exact Wick/Fake criteria, tolerances |
-| 3. Relevant liquidity | `confirmed` + `human_validation_required` | Context and marked levels | Levels recorded | Missing levels block sweep evaluation | Yes | Internal/external and structural priority |
-| 4. Asia High/Low | `confirmed` | Session candles | Both levels recorded | Missing data returns `data_unavailable` | No after session boundary known | Timezone/session boundary |
-| 5. London High/Low | `confirmed` | Session candles | Both levels recorded | Missing data returns `data_unavailable` | No after session boundary known | Timezone/session boundary |
-| 6. Preparation | `candidate` + `confirmed` intent | Context and levels before operations | Preparation recorded | Incomplete preparation blocks entry | Yes | Exact analysis-start time |
-| 7. Entry start | `confirmed` | Clock and timezone configuration | `waiting` before 08:30 | Entry prohibited before start | Yes while timezone is `null` | Timezone and DST |
-| 8. Liquidity sweep | `confirmed` conceptually | Marked high/low and price | Human-approved sweep | Without sweep, remain `waiting` | Yes | Penetration, rejection, pre-08:30 validity |
+| 1. 4H HH/LL context | `confirmed` + `human_validation_required` | 4H candles | Trend and context reviewed | Blocks all lower stages | Yes | HH/LL structural swing algorithm |
+| 2. Breakout/Wickfill/Fakeout | `confirmed` conceptually | 4H context and relevant level | One classification recorded | Unclassified context blocks | Yes | Exact geometries and tolerances |
+| 3. Relevant liquidity | `confirmed` + `human_validation_required` | Session levels and 1H/4H context | Asia/London extrema and structural coincidences recorded | Missing levels block sweep evaluation | Yes | Session boundaries, structural-point algorithm, coincidence tolerance |
+| 4. Asia High/Low | `confirmed` | Session candles | Both levels recorded | Missing data returns `data_unavailable` | No after session boundary known | Exact session boundary |
+| 5. London High/Low | `confirmed` | Session candles | Both levels recorded | Missing data returns `data_unavailable` | No after session boundary known | Exact session boundary |
+| 6. Preparation | `confirmed` | Clock, context and levels | Preparation begins at 08:00 `America/Bogota` | Incomplete preparation blocks entry | Yes for analysis content | Calendar eligibility |
+| 7. Trading-window start | `confirmed` | Clock in `America/Bogota` | `waiting` before 08:30 | Entry prohibited before start | No for timezone/DST | None for timezone/DST |
+| 8. Liquidity sweep | `confirmed` conceptually | Marked high/low and price | Price exceeds the level; remaining details human-approved | Without an exceedance, remain `waiting` | Yes | Minimum penetration, rejection, pre-08:30 validity |
 | 9. Move to 5M | `confirmed` | Approved sweep, 5M data | 5M review enabled | Blocks inversion without sweep | No | Data alignment |
-| 10. 5M inversion OR | `confirmed` | 5M structure/FVG evidence | Traditional change `OR` IFVG validated | Without either, `waiting` | Yes | Swing algorithm and IFVG geometry |
+| 10. 5M inversion OR | `confirmed` | 5M structure/FVG evidence | First occurring traditional change `OR` IFVG validated | Without either, `waiting` | Yes | Swing algorithm and IFVG geometry |
 | 11. 5M close | `confirmed` | Bullish-structure swing and 5M close | Candle body closes beyond relevant swing | Wick alone is `failed`; open candle is `waiting` | Yes for swing selection/marginal close | Pivot and minimum distance |
 | 12. Continuation FVG | `confirmed` + `human_validation_required` | Three 5M candles after inversion | FVG favors new sell-side move and is clear | Missing/weak FVG means `no_trade` | Yes | Minimum size and quality threshold |
 | 13. Move to 1M | `confirmed` | Approved FVG, 1M data | 1M review enabled | Blocks entry if data absent | No | Data alignment |
@@ -115,42 +101,45 @@ Solo se incluyen relaciones direccionales expresamente documentadas. No se compl
 | 15. 1M realignment | `confirmed` + `human_validation_required` | Corrective microstructure | Candidate sell realignment identified | No realignment means no entry | Yes | Corrective swing algorithm |
 | 16. Corrective swing break | `confirmed` | Entry swing and closed 1M candle | Body closes beyond corrective swing | Wick/open candle does not pass | Yes for swing selection | Marginal close distance |
 | 17. Entry | `confirmed` + `unresolved` | All earlier stages approved | `human_validation_required` | No automatic order creation | Yes | Order type, timing, slippage, attempts |
-| 18. Stop Loss | `unresolved` | Sweep extreme, 5M LH candidate, entry | Human-selected Stop Loss | Missing/ambiguous SL means `no_trade` | Yes | Contradictory selection rule and thresholds |
+| 18. Stop Loss | `confirmed` conceptually + `human_validation_required` | Structural 5M LH and entry | Human validates SL where the sell idea loses structural meaning | Missing/ambiguous structural SL means `no_trade` | Yes | LH algorithm, invalidation geometry, buffer and costs |
 | 19. Break Even | `confirmed` mechanism + `candidate` universality | Post-entry 1M swing and closed candle | SL moved to entry after break and close | Not evaluated before entry | Yes for post-entry swing | Costs, applicability, later management |
-| 20. Take Profit | `unresolved` | Liquidity targets and position state | `human_validation_required` | No automatic target selection | Yes | General target, priority, ratio, partials |
-| 21. Latest entry | `confirmed` | Clock and timezone configuration | `failed` for new entry after 11:30 | New entries prohibited | Yes while timezone is `null` | Open-position management |
+| 20. Take Profit | `confirmed` conceptually + `human_validation_required` | Candidate lows and position state | Important low selected | No automatic target selection | Yes | Importance algorithm, priority, ratio, partials |
+| 21. Trading-window end | `confirmed` | Clock in `America/Bogota` | `failed` for new entry after 11:30 | New entries prohibited | No for timezone/DST | Open-position management |
 | 22. Risk controls | `confirmed` max trade risk + open controls | Entry, Stop Loss, sizing inputs | At most 1% risk after human validation | Missing sizing/control data blocks execution | Yes | Position size, daily limit, kill switch |
 
 ## 9. 4H context
 
-Analysis begins on 4H and establishes daily macro context.
+Preparation begins at 08:00 `America/Bogota`. Analysis starts on 4H, identifies trend by reviewing whether the market is constructing HH or LL, and then classifies the context as Breakout, Wickfill or Fakeout.
 
-- `Break` — `confirmed`: the candle body must close beyond the relevant structural level; a wick without close is not a Break. Swing selection, structural algorithm, candle count, tolerances and marginal closes are unresolved.
-- `Wick` — conceptually `confirmed`, operationally `human_validation_required`: price interacts with or exceeds the level by wick and must not automatically be called Break. Wick versus sweep, Wickfill, fill amount, effect and invalidation remain open.
-- `Fake` — conceptually `confirmed`, operationally `human_validation_required`: price attempts to break and returns to the prior range. Re-entry timeframe/close, distance, allowed candles, distinction from sweep and bias effect remain open.
+- `Breakout` — `confirmed` conceptually: prior audited evidence that a Break requires a candle-body close beyond the relevant structural level remains applicable. Swing selection, structural algorithm, candle count, tolerances and marginal closes are unresolved.
+- `Wickfill` — conceptually `confirmed`, operationally `human_validation_required`: it is a distinct 4H context. Wickfill geometry, fill amount, effect, invalidation and distinction from a liquidity sweep remain open.
+- `Fakeout` — conceptually `confirmed`, operationally `human_validation_required`: it is a distinct 4H context. Range, return, timeframe/close, distance, allowed candles, sweep distinction and bias effect remain open.
 
-These concepts must not be collapsed into one body-close rule.
+HH/LL and these three contexts are confirmed strategy concepts, not completed deterministic algorithms. They must not be collapsed into one body-close rule.
 
 ## 10. Liquidity
 
-Mark Asia High, Asia Low, London High and London Low. A liquidity level must be taken before searching for 5M inversion; the sweep alone is never an entry.
+Mark Asia High, Asia Low, London High and London Low. Also review structural points on 1H/4H, especially when they coincide with those session extrema. A liquidity level must be taken before searching for 5M inversion; the sweep alone is never an entry.
 
-Priority between sessions and 1H/4H structure, reuse after sweep, multiple sweeps, internal/external liquidity, equal levels, prior-day levels and pre-08:30 sweeps are unresolved. A wick as sweep alert is `candidate`; penetration and confirmation remain `human_validation_required`.
+The confirmed high-level sweep condition is that price exceeds an identified high or low. Minimum penetration, close-back, rejection, displacement, timing and invalidation remain unresolved; neither wick-only nor candle-close confirmation is inferred. Exact Asia/London session boundaries, structural-point detection, coincidence tolerance, priority, reuse after sweep, multiple sweeps, internal/external liquidity, equal levels, prior-day levels and pre-08:30 sweeps are also unresolved.
 
 ## 11. Operating schedule
 
 ```yaml
+preparation_start_time: "08:00"
 entry_start_time: "08:30"
-latest_new_entry_time: "11:30"
-timezone: null
-daylight_saving_rule: null
+trading_window_end_time: "11:30"
+timezone: "America/Bogota"
+daylight_saving_adjustment: false
 ```
 
-Pre-analysis around 08:00 is `candidate`; preparing context and levels before operations is supported. No entry before 08:30 and no new entry after 11:30 are `confirmed`. Country/market reference, DST, allowed days, holidays, early closes, low-liquidity sessions and management after 11:30 remain unresolved. `America/New_York` must not be inferred.
+Preparation/analysis starts at 08:00. The trading window starts at 08:30 and ends at 11:30. All three are local Colombia times governed normatively by `America/Bogota`, which does not apply seasonal DST adjustments to these limits.
+
+The strategy operates the New York market, but that market reference does not change its clock to `America/New_York`, EST or EDT. Allowed days, holidays, early closes, low-liquidity sessions and management of positions after 11:30 remain unresolved. The confirmed timezone also does not define the Asia or London session boundaries.
 
 ## 12. 5M inversion
 
-Two alternatives are valid with `OR`: traditional structural change or IFVG. Both are not required.
+Two alternatives are valid with `OR`: traditional structural change or IFVG, whichever occurs first. Both are not required and neither has a fixed priority.
 
 - Traditional change — for buys, break bearish structure; for sells, break bullish structure. A relevant 5M swing and candle-body close beyond it are required. A wick does not confirm. Pivot selection and marginal-close thresholds require human validation.
 - IFVG — conceptually `confirmed`: invalidation of a prior FVG may replace traditional structural change. Geometry, direction, partial/full close, mitigation, confirming candle, expiry, direct-entry capability and displacement relation are unresolved. No external IFVG definition applies.
@@ -182,25 +171,21 @@ Order type, close-versus-next-open timing, slippage, maximum chase distance, att
 
 ## 15. Stop Loss
 
-Status: `unresolved`; `human_validation_required: true`.
+Status: conceptually `confirmed`; deterministic geometry remains `human_validation_required`.
 
 ```yaml
-possible_references:
-  - liquidity_sweep_extreme
-  - structural_5m_hl_or_lh
-selection_rule: null
-sweep_size_threshold_points: null
+buy_reference: structural_5m_hl
+sell_reference: structural_5m_lh
+invalidation_principle: trade_idea_loses_structural_meaning
+selection_algorithm: null
 buffer_points: null
-status: unresolved
+status: confirmed_concept
 human_validation_required: true
 ```
 
-Contradictory reports remain unresolved:
+Manual source-video re-verification resolves the prior competing interpretation involving the sweep extreme. The confirmed conceptual reference is the structural 5M HL for buys and structural 5M LH for sells, placed where the trade idea loses structural meaning.
 
-- Version A: wide sweep → sweep wick; short sweep → 5M HL/LH.
-- Version B: wide sweep → 5M HL/LH; short sweep → sweep wick.
-
-Neither version is selected. Body/wick treatment, spread, slippage, maximum Stop Loss, oversized-stop behavior, pre-entry invalidation and risk reduction are open. This contradiction blocks fully automatic demo execution.
+This reconciliation does not define how to detect HL/LH, select the relevant structural swing or translate “loses structural meaning” into deterministic geometry. Body/wick treatment, buffer, spread, slippage, maximum Stop Loss, oversized-stop behavior, pre-entry invalidation and risk reduction remain open. Human validation is still required and fully automatic demo execution remains blocked.
 
 ## 16. Break Even
 
@@ -211,14 +196,19 @@ An earlier explanation used “touch”; the later “break and close” explana
 ## 17. Take Profit
 
 ```yaml
-general_target_rule: null
+buy_target_reference: important_high
+sell_target_reference: important_low
+importance_algorithm: null
 target_priority: null
 fixed_risk_reward: null
 partials: null
-status: unresolved
+status: confirmed_concept
+human_validation_required: true
 ```
 
-Asia Low, opposite session extremes and important liquidity appeared only as `context_specific` targets. Always targeting Asia/London/opposite extreme, fixed ratio, partials, trailing, manual close and 1H/4H objectives are not confirmed.
+Manual source-video re-verification confirms important highs as the target concept for buys and important lows for sells. The algorithm that determines importance and the priority among multiple candidates remain unresolved, so target selection still requires human validation.
+
+Asia Low and opposite session extremes remain `context_specific` examples that may satisfy the directional concept in their original context; they are not universal targets. Fixed ratio, partials, trailing, manual close and 1H/4H target priority are not confirmed.
 
 ## 18. Risk
 
@@ -259,7 +249,7 @@ The phrase similar to “if it takes you out, do not seek re-entry” lacks suff
 
 ## 21. Waiting states
 
-Return `waiting` before 08:30, before liquidity is taken, while inversion or candle close is pending, without a continuation FVG, during the 1M correction, before realignment, or while required post-entry management evidence has not formed. Return `data_unavailable` for missing candles, session boundaries or timestamps. Return `human_validation_required` at subjective or contradictory gates; later stages remain blocked.
+Return `waiting` before 08:30 `America/Bogota`, before liquidity is taken, while inversion or candle close is pending, without a continuation FVG, during the 1M correction, before realignment, or while required post-entry management evidence has not formed. Return `data_unavailable` for missing candles, unresolved session boundaries or timestamps. Return `human_validation_required` at subjective gates; later stages remain blocked.
 
 ## 22. No-trade conditions
 
@@ -271,18 +261,18 @@ Confirmed:
 - No trade without a continuation 5M FVG.
 - No trade when FVG strength is insufficient according to human review.
 - No entry without 1M retracement and realignment.
-- No entry before 08:30.
-- No new entry after 11:30.
+- No entry before 08:30 `America/Bogota`.
+- No new entry after 11:30 `America/Bogota`.
 
-FVG size/quality, displacement, Wick/Fake, Stop Loss selection and target availability require human validation. News, oversized stops, target distance, reentries, operation counts, daily limit, data quality, lateral markets and holidays remain unresolved.
+FVG size/quality, displacement, Wickfill/Fakeout, structural HL/LH selection and important-high/important-low selection require human validation. News, oversized stops, target distance, reentries, operation counts, daily limit, data quality, lateral markets and holidays remain unresolved.
 
 ## 23. Human-validation points
 
-Human validation is required for 4H swings, Wick/Fake, liquidity selection and sweep, timezone interpretation, 5M pivots, IFVG, FVG quality, 1M correction/swing, order mechanics, Stop Loss, Break Even swing, Take Profit, sizing, daily limit, news and reentries.
+Human validation is required for 4H HH/LL swings, Breakout/Wickfill/Fakeout geometry, liquidity selection and sweep details, 5M pivots, IFVG, FVG quality, 1M correction/swing, order mechanics, structural Stop Loss selection, Break Even swing, important target selection, sizing, daily limit, news and reentries. Timezone/DST interpretation is no longer a human-validation point for 08:00/08:30/11:30.
 
 ## 24. Automation readiness
 
-The evidence supports assisted analysis, manual backtesting and supervised paper trading. Semi-automatic backtesting remains partial. Subjective FVG quality, swing algorithms, null timezone, contradictory Stop Loss, unresolved Take Profit/news/reentries and incomplete risk controls prohibit fully automatic backtesting and autonomous execution. Critical timestamps require manual comparison with the original video before supervised demo execution.
+The evidence supports assisted analysis, manual backtesting and supervised paper trading. Semi-automatic backtesting remains partial. The time-window ambiguity and prior Stop Loss reference contradiction are resolved conceptually, and directional target concepts are confirmed. Subjective FVG quality, swing algorithms, structural Stop Loss geometry, target-importance selection, unresolved news/reentries and incomplete risk controls still prohibit fully automatic backtesting and autonomous execution.
 
 ## 25. Traceability requirements
 
