@@ -53,7 +53,7 @@ public sealed class MoneyWayNasdaqTradingWindowStartScenarioTests
         Assert.Equal(0, report.ReadyCount);
         Assert.Equal(2, report.DataUnavailableCount);
         Assert.Equal(2, report.IncompleteRequiredCoverageCount);
-        Assert.Equal(11, report.MissingRequiredRules.Count);
+        Assert.Equal(10, report.MissingRequiredRules.Count);
         Assert.DoesNotContain(report.MissingRequiredRules, item => item.RuleId == selectedRuleId);
         Assert.DoesNotContain(report.MissingRequiredRules, item => item.RuleId == endRuleId);
         Assert.All(report.OutcomeRun.Outcomes, outcome =>
@@ -61,7 +61,7 @@ public sealed class MoneyWayNasdaqTradingWindowStartScenarioTests
             Assert.False(outcome.HasCompleteRequiredCoverage);
             Assert.DoesNotContain(selectedRuleId, outcome.MissingRequiredRuleIds);
             Assert.DoesNotContain(endRuleId, outcome.MissingRequiredRuleIds);
-            Assert.Equal(11, outcome.MissingRequiredRuleIds.Count);
+            Assert.Equal(10, outcome.MissingRequiredRuleIds.Count);
         });
 
         var evaluations = report.OutcomeRun.StrategyRun.StrategyObservations

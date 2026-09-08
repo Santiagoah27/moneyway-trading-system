@@ -11,13 +11,14 @@ namespace MoneyWay.Application.UnitTests.StrategyReplay;
 public sealed class MoneyWayReplayRuleEvaluatorsTests
 {
     [Fact]
-    public void RegistryContainsExactlyTwoStableCanonicalEvaluators()
+    public void RegistryContainsExactlyThreeStableCanonicalEvaluators()
     {
         var first = MoneyWayReplayRuleEvaluators.GetAll();
         var second = MoneyWayReplayRuleEvaluators.GetAll();
 
         Assert.NotNull(first);
         Assert.Collection(first,
+            evaluator => Assert.IsType<MoneyWayNasdaqSessionLiquidityEvaluator>(evaluator),
             evaluator => Assert.IsType<MoneyWayNasdaqTradingWindowStartEvaluator>(evaluator),
             evaluator => Assert.IsType<MoneyWayNasdaqTradingWindowEndEvaluator>(evaluator));
         Assert.DoesNotContain(first, item => item is null);
@@ -28,26 +29,35 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
     }
 
     [Fact]
-    public void RegistrationNaturallyChangesOnlySelectedNasdaqCapability()
+    public void SessionLiquidityRegistrationNaturallyChangesOnlySelectedNasdaqCapability()
     {
         var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
         var beforeCatalog = new StrategyReplayEvaluationCapabilityCatalog(
-            new StrategyDefinitionCatalog(), [new MoneyWayNasdaqTradingWindowStartEvaluator()], declarations);
+            new StrategyDefinitionCatalog(),
+            [new MoneyWayNasdaqTradingWindowStartEvaluator(), new MoneyWayNasdaqTradingWindowEndEvaluator()],
+            declarations);
         var afterCatalog = new StrategyReplayEvaluationCapabilityCatalog(
             new StrategyDefinitionCatalog(), MoneyWayReplayRuleEvaluators.GetAll(), declarations);
         var definition = MoneyWayNasdaqStrategyDefinition.Instance;
         var before = beforeCatalog.Find(definition.StrategyId, definition.Version)!;
         var after = afterCatalog.Find(definition.StrategyId, definition.Version)!;
 
-        Assert.Equal((32, 13, 1, 0, 28, 3, 1, 12, false), Counts(before));
-        Assert.Equal((32, 13, 2, 0, 27, 3, 2, 11, false), Counts(after));
+        Assert.Equal((32, 13, 2, 0, 27, 3, 2, 11, false), Counts(before));
+        Assert.Equal((32, 13, 3, 0, 26, 3, 3, 10, false), Counts(after));
 
         var beforeByRule = before.Rules.ToDictionary(rule => rule.RuleId);
         var afterByRule = after.Rules.ToDictionary(rule => rule.RuleId);
-        var start = new MoneyWayNasdaqTradingWindowStartEvaluator().RuleId;
-        var selected = new MoneyWayNasdaqTradingWindowEndEvaluator().RuleId;
-        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented, beforeByRule[start].CapabilityStatus);
-        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented, afterByRule[start].CapabilityStatus);
+        var timingRuleIds = new[]
+        {
+            new MoneyWayNasdaqTradingWindowStartEvaluator().RuleId,
+            new MoneyWayNasdaqTradingWindowEndEvaluator().RuleId,
+        };
+        var selected = new MoneyWayNasdaqSessionLiquidityEvaluator(new()).RuleId;
+        Assert.All(timingRuleIds, ruleId =>
+        {
+            Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented, beforeByRule[ruleId].CapabilityStatus);
+            Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented, afterByRule[ruleId].CapabilityStatus);
+        });
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, beforeByRule[selected].CapabilityStatus);
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented, afterByRule[selected].CapabilityStatus);
         Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.ImplementedReason, afterByRule[selected].CapabilityReason);
@@ -63,9 +73,8 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
     }
 
     [Fact]
-    public void SessionLiquidityPrimitiveWithoutEvaluatorPreservesNotImplementedCapability()
+    public void SessionLiquidityEvaluatorNaturallyProducesImplementedCapability()
     {
-        var calculator = new NasdaqSessionLiquidityCalculator();
         var definition = MoneyWayNasdaqStrategyDefinition.Instance;
         var sessionRule = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-001");
         var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
@@ -75,8 +84,9 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
             .Find(definition.StrategyId, definition.Version)!;
         var capability = report.Rules.Single(rule => rule.RuleId == sessionRule.RuleId);
 
-        Assert.NotNull(calculator);
         Assert.DoesNotContain(evaluators, evaluator =>
+            evaluator is ISingleTimeframeReplayRuleEvaluator);
+        Assert.Contains(evaluators, evaluator =>
             evaluator.StrategyId == definition.StrategyId &&
             evaluator.StrategyVersion == definition.Version &&
             evaluator.RuleId == sessionRule.RuleId);
@@ -84,10 +94,10 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
             declaration.StrategyId == definition.StrategyId &&
             declaration.StrategyVersion == definition.Version &&
             declaration.RuleId == sessionRule.RuleId);
-        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, capability.CapabilityStatus);
-        Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, capability.CapabilityReason);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented, capability.CapabilityStatus);
+        Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.ImplementedReason, capability.CapabilityReason);
         Assert.Null(capability.CapabilitySourceReference);
-        Assert.Equal((32, 13, 2, 0, 27, 3, 2, 11, false), Counts(report));
+        Assert.Equal((32, 13, 3, 0, 26, 3, 3, 10, false), Counts(report));
     }
 
     private static (string StrategyId, string Version, string RuleId) Identity(IReplayRuleEvaluator evaluator) =>

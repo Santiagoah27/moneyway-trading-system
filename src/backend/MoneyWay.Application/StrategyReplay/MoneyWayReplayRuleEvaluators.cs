@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using MoneyWay.Application.Strategies.Nasdaq.Liquidity;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 
 namespace MoneyWay.Application.StrategyReplay;
@@ -9,6 +10,7 @@ public static class MoneyWayReplayRuleEvaluators
     private static readonly IReadOnlyList<IReplayRuleEvaluator> Evaluators =
         new ReadOnlyCollection<IReplayRuleEvaluator>(
         [
+            new MoneyWayNasdaqSessionLiquidityEvaluator(new NasdaqSessionLiquidityCalculator()),
             new MoneyWayNasdaqTradingWindowStartEvaluator(),
             new MoneyWayNasdaqTradingWindowEndEvaluator(),
         ]);

@@ -37,9 +37,13 @@ public sealed class MoneyWayNasdaqTradingWindowEndScenarioTests
         var observation = new EvaluateStrategyReplayContextUseCase(MoneyWayReplayRuleEvaluators.GetAll())
             .Execute(definition, context);
 
-        Assert.Equal([new RuleId("NQ-TIME-001"), new RuleId("NQ-TIME-002")], observation.Evaluations.Select(item => item.RuleId));
-        Assert.Equal([100, 260], observation.Evaluations.Select(item => item.Sequence));
-        Assert.Equal([expectedStart, expectedEnd], observation.Evaluations.Select(item => item.Result));
+        Assert.Equal(
+            [new RuleId("NQ-LIQ-001"), new RuleId("NQ-TIME-001"), new RuleId("NQ-TIME-002")],
+            observation.Evaluations.Select(item => item.RuleId));
+        Assert.Equal([50, 100, 260], observation.Evaluations.Select(item => item.Sequence));
+        Assert.Equal(
+            [RuleEvaluationResult.DataUnavailable, expectedStart, expectedEnd],
+            observation.Evaluations.Select(item => item.Result));
     }
 
     [Fact]
@@ -63,18 +67,21 @@ public sealed class MoneyWayNasdaqTradingWindowEndScenarioTests
         Assert.Equal(0, report.ReadyCount);
         Assert.Equal(4, report.DataUnavailableCount);
         Assert.Equal(4, report.IncompleteRequiredCoverageCount);
-        Assert.Equal(11, report.MissingRequiredRules.Count);
+        Assert.Equal(10, report.MissingRequiredRules.Count);
         Assert.DoesNotContain(report.MissingRequiredRules, item => item.RuleId == startRuleId || item.RuleId == endRuleId);
         Assert.All(report.OutcomeRun.Outcomes, outcome =>
         {
             Assert.False(outcome.HasCompleteRequiredCoverage);
             Assert.DoesNotContain(startRuleId, outcome.MissingRequiredRuleIds);
             Assert.DoesNotContain(endRuleId, outcome.MissingRequiredRuleIds);
-            Assert.Equal(11, outcome.MissingRequiredRuleIds.Count);
+            Assert.Equal(10, outcome.MissingRequiredRuleIds.Count);
         });
 
         var results = report.OutcomeRun.StrategyRun.StrategyObservations
-            .Select(observation => observation.Evaluations.Select(evaluation => evaluation.Result).ToArray())
+            .Select(observation => observation.Evaluations
+                .Where(evaluation => evaluation.RuleId == startRuleId || evaluation.RuleId == endRuleId)
+                .Select(evaluation => evaluation.Result)
+                .ToArray())
             .ToArray();
         Assert.Equal([RuleEvaluationResult.Waiting, RuleEvaluationResult.Passed], results[0]);
         Assert.Equal([RuleEvaluationResult.Passed, RuleEvaluationResult.Passed], results[1]);
