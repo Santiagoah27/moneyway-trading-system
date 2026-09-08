@@ -8,37 +8,45 @@ using MoneyWay.Domain.Strategies;
 
 namespace MoneyWay.Backtesting.Tests;
 
-public sealed class MoneyWayNasdaqTradingWindowStartScenarioTests
+public sealed class MoneyWayNasdaqTradingWindowEndScenarioTests
 {
     private static readonly MarketDataProviderId Provider = new("fixture");
     private static readonly MarketSymbol Symbol = new("NQ");
     private static readonly Timeframe Minute = new(1, TimeframeUnit.Minute);
 
-    [Fact]
-    public void CanonicalEvaluationPreservesDefinitionMetadataAndRuntimeDecision()
+    [Theory]
+    [InlineData(12, 30, 0, RuleEvaluationResult.Waiting, RuleEvaluationResult.Passed)]
+    [InlineData(13, 0, 0, RuleEvaluationResult.Waiting, RuleEvaluationResult.Passed)]
+    [InlineData(13, 29, 59, RuleEvaluationResult.Waiting, RuleEvaluationResult.Passed)]
+    [InlineData(13, 30, 0, RuleEvaluationResult.Passed, RuleEvaluationResult.Passed)]
+    [InlineData(15, 0, 0, RuleEvaluationResult.Passed, RuleEvaluationResult.Passed)]
+    [InlineData(16, 29, 59, RuleEvaluationResult.Passed, RuleEvaluationResult.Passed)]
+    [InlineData(16, 30, 0, RuleEvaluationResult.Passed, RuleEvaluationResult.Passed)]
+    [InlineData(16, 30, 1, RuleEvaluationResult.Passed, RuleEvaluationResult.Failed)]
+    [InlineData(17, 0, 0, RuleEvaluationResult.Passed, RuleEvaluationResult.Failed)]
+    public void RealTimingEvaluatorsComposeWithoutSharingResponsibilities(
+        int utcHour,
+        int utcMinute,
+        int utcSecond,
+        RuleEvaluationResult expectedStart,
+        RuleEvaluationResult expectedEnd)
     {
         var definition = MoneyWayNasdaqStrategyDefinition.Instance;
-        var rule = definition.Rules.Single(item => item.RuleId.Value == "NQ-TIME-001");
-        var context = Context(definition, AtUtc(13, 30));
+        var context = Context(definition, AtUtc(utcHour, utcMinute, utcSecond));
 
         var observation = new EvaluateStrategyReplayContextUseCase(MoneyWayReplayRuleEvaluators.GetAll())
             .Execute(definition, context);
 
-        var evaluation = observation.Evaluations.Single(item => item.RuleId == rule.RuleId);
-        Assert.Equal(rule.RuleId, evaluation.RuleId);
-        Assert.Equal(rule.Sequence, evaluation.Sequence);
-        Assert.Equal(rule.IsRequired, evaluation.IsRequired);
-        Assert.Equal(rule.DefinitionStatus, evaluation.DefinitionStatus);
-        Assert.Equal(context.AsOfUtc, evaluation.EvaluatedAtUtc);
-        Assert.Equal(RuleEvaluationResult.Passed, evaluation.Result);
-        Assert.Null(evaluation.EvidenceReference);
+        Assert.Equal([new RuleId("NQ-TIME-001"), new RuleId("NQ-TIME-002")], observation.Evaluations.Select(item => item.RuleId));
+        Assert.Equal([100, 260], observation.Evaluations.Select(item => item.Sequence));
+        Assert.Equal([expectedStart, expectedEnd], observation.Evaluations.Select(item => item.Result));
     }
 
     [Fact]
-    public void CanonicalBacktestEvaluatesStartBoundaryWhileRequiredCoverageRemainsIncomplete()
+    public void CanonicalBacktestPreservesBothTimingEvaluationsWhileOtherRequiredCoverageIsMissing()
     {
         var definition = MoneyWayNasdaqStrategyDefinition.Instance;
-        var selectedRuleId = new RuleId("NQ-TIME-001");
+        var startRuleId = new RuleId("NQ-TIME-001");
         var endRuleId = new RuleId("NQ-TIME-002");
         var report = Facade().Execute(definition,
         [
@@ -46,29 +54,32 @@ public sealed class MoneyWayNasdaqTradingWindowStartScenarioTests
             [
                 Candle(AtUtc(13, 28, 59), AtUtc(13, 29, 59), 100),
                 Candle(AtUtc(13, 29, 59), AtUtc(13, 30), 101),
+                Candle(AtUtc(16, 29), AtUtc(16, 30), 102),
+                Candle(AtUtc(16, 30), AtUtc(16, 30, 1), 103),
             ]),
         ]);
 
-        Assert.Equal(2, report.FrameCount);
+        Assert.Equal(4, report.FrameCount);
         Assert.Equal(0, report.ReadyCount);
-        Assert.Equal(2, report.DataUnavailableCount);
-        Assert.Equal(2, report.IncompleteRequiredCoverageCount);
+        Assert.Equal(4, report.DataUnavailableCount);
+        Assert.Equal(4, report.IncompleteRequiredCoverageCount);
         Assert.Equal(11, report.MissingRequiredRules.Count);
-        Assert.DoesNotContain(report.MissingRequiredRules, item => item.RuleId == selectedRuleId);
-        Assert.DoesNotContain(report.MissingRequiredRules, item => item.RuleId == endRuleId);
+        Assert.DoesNotContain(report.MissingRequiredRules, item => item.RuleId == startRuleId || item.RuleId == endRuleId);
         Assert.All(report.OutcomeRun.Outcomes, outcome =>
         {
             Assert.False(outcome.HasCompleteRequiredCoverage);
-            Assert.DoesNotContain(selectedRuleId, outcome.MissingRequiredRuleIds);
+            Assert.DoesNotContain(startRuleId, outcome.MissingRequiredRuleIds);
             Assert.DoesNotContain(endRuleId, outcome.MissingRequiredRuleIds);
             Assert.Equal(11, outcome.MissingRequiredRuleIds.Count);
         });
 
-        var evaluations = report.OutcomeRun.StrategyRun.StrategyObservations
-            .Select(observation => observation.Evaluations.Single(evaluation => evaluation.RuleId == selectedRuleId))
+        var results = report.OutcomeRun.StrategyRun.StrategyObservations
+            .Select(observation => observation.Evaluations.Select(evaluation => evaluation.Result).ToArray())
             .ToArray();
-        Assert.Equal([RuleEvaluationResult.Waiting, RuleEvaluationResult.Passed], evaluations.Select(item => item.Result));
-        Assert.All(evaluations, evaluation => Assert.Equal(selectedRuleId, evaluation.RuleId));
+        Assert.Equal([RuleEvaluationResult.Waiting, RuleEvaluationResult.Passed], results[0]);
+        Assert.Equal([RuleEvaluationResult.Passed, RuleEvaluationResult.Passed], results[1]);
+        Assert.Equal([RuleEvaluationResult.Passed, RuleEvaluationResult.Passed], results[2]);
+        Assert.Equal([RuleEvaluationResult.Passed, RuleEvaluationResult.Failed], results[3]);
     }
 
     private static GenerateCanonicalMultiTimeframeBacktestUseCase Facade() =>
