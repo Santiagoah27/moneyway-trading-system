@@ -1,4 +1,5 @@
 using MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
+using MoneyWay.Application.Strategies.Nasdaq.Liquidity;
 using MoneyWay.Application.StrategyDefinitions;
 using MoneyWay.Application.StrategyDefinitions.Forex;
 using MoneyWay.Application.StrategyDefinitions.Nasdaq;
@@ -62,8 +63,9 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
     }
 
     [Fact]
-    public void SessionLiquidityMetadataReconciliationPreservesNotImplementedCapability()
+    public void SessionLiquidityPrimitiveWithoutEvaluatorPreservesNotImplementedCapability()
     {
+        var calculator = new NasdaqSessionLiquidityCalculator();
         var definition = MoneyWayNasdaqStrategyDefinition.Instance;
         var sessionRule = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-001");
         var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
@@ -73,6 +75,7 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
             .Find(definition.StrategyId, definition.Version)!;
         var capability = report.Rules.Single(rule => rule.RuleId == sessionRule.RuleId);
 
+        Assert.NotNull(calculator);
         Assert.DoesNotContain(evaluators, evaluator =>
             evaluator.StrategyId == definition.StrategyId &&
             evaluator.StrategyVersion == definition.Version &&
