@@ -3,8 +3,9 @@ using MoneyWay.Domain.Strategies;
 namespace MoneyWay.Application.Backtesting.Diagnostics;
 
 /// <summary>
-/// Projects and aggregates an already completed outcome run.
-/// It performs no replay, strategy evaluation, or trading simulation.
+/// Projects diagnostics for the transitional single-timeframe pipeline retained for backward compatibility with
+/// earlier MoneyWay backtesting infrastructure. New strategy-rule and backtesting features must use the canonical
+/// StrategyReplayContext multi-timeframe pipeline.
 /// </summary>
 public sealed class GenerateStrategyBacktestDiagnosticsReportUseCase
 {

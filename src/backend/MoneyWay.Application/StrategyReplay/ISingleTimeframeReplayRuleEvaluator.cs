@@ -4,8 +4,9 @@ using MoneyWay.Domain.Strategies;
 namespace MoneyWay.Application.StrategyReplay;
 
 /// <summary>
-/// Transitional evaluator contract retained for the legacy single-timeframe backtesting pipeline.
-/// New strategy rule implementations must use <see cref="IReplayRuleEvaluator"/> instead.
+/// Transitional single-timeframe evaluator contract retained for backward compatibility with earlier MoneyWay
+/// backtesting infrastructure. New strategy-rule and backtesting features must use the canonical
+/// <see cref="StrategyReplayContext"/> multi-timeframe pipeline through <see cref="IReplayRuleEvaluator"/>.
 /// </summary>
 public interface ISingleTimeframeReplayRuleEvaluator
 {

@@ -5,8 +5,9 @@ using MoneyWay.Domain.Strategies;
 namespace MoneyWay.Application.Backtesting;
 
 /// <summary>
-/// Generates a <see cref="StrategyBacktestRun"/> once and derives one safe strategy outcome for each
-/// recorded strategy frame observation. It performs no trade simulation.
+/// Generates outcomes for the transitional single-timeframe pipeline retained for backward compatibility with
+/// earlier MoneyWay backtesting infrastructure. New strategy-rule and backtesting features must use the canonical
+/// StrategyReplayContext multi-timeframe pipeline.
 /// </summary>
 public sealed class GenerateStrategyOutcomeBacktestRunUseCase(
     GenerateStrategyBacktestRunUseCase strategyBacktestUseCase,

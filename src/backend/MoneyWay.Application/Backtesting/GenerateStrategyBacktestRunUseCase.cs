@@ -6,8 +6,9 @@ using MoneyWay.Domain.Strategies;
 namespace MoneyWay.Application.Backtesting;
 
 /// <summary>
-/// Runs a strategy definition across historical replay frames and records rule evaluations for each step.
-/// Rule evaluators receive only the replay frame and no direct access to future market data.
+/// Runs the transitional single-timeframe strategy backtest retained for backward compatibility with earlier
+/// MoneyWay backtesting infrastructure. New strategy-rule and backtesting features must use the canonical
+/// StrategyReplayContext multi-timeframe pipeline.
 /// </summary>
 public sealed class GenerateStrategyBacktestRunUseCase(
     RunCandleReplayUseCase replayUseCase,

@@ -3,7 +3,11 @@ using MoneyWay.Domain.Strategies;
 
 namespace MoneyWay.Application.StrategyReplay;
 
-/// <summary>Coordinates registered rule evaluators for one definition and frame without calculating a strategy verdict.</summary>
+/// <summary>
+/// Coordinates registered rule evaluators in the transitional single-timeframe pipeline retained for backward
+/// compatibility with earlier MoneyWay backtesting infrastructure. New strategy-rule and backtesting features must
+/// use the canonical <see cref="StrategyReplayContext"/> multi-timeframe pipeline.
+/// </summary>
 public sealed class EvaluateStrategyReplayFrameUseCase
 {
     private readonly IReadOnlyDictionary<EvaluatorKey, ISingleTimeframeReplayRuleEvaluator> evaluators;

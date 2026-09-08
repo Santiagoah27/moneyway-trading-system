@@ -4,8 +4,9 @@ using MoneyWay.Domain.Strategies.Evaluation;
 namespace MoneyWay.Application.StrategyReplay;
 
 /// <summary>
-/// Checks required rule-evaluation coverage before invoking the sequential strategy evaluator.
-/// It never fabricates rule evaluations for missing rules.
+/// Checks required coverage in the transitional single-timeframe pipeline retained for backward compatibility with
+/// earlier MoneyWay backtesting infrastructure. New strategy-rule and backtesting features must use the canonical
+/// <see cref="StrategyReplayContext"/> multi-timeframe pipeline.
 /// </summary>
 public sealed class EvaluateStrategyReplayFrameOutcomeUseCase
 {
