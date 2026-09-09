@@ -110,18 +110,28 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         var sweep = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-003");
         Assert.Equal("Liquidity take required", sweep.Name);
         Assert.Contains("08:30 operational start", sweep.Description, StringComparison.Ordinal);
-        Assert.Contains("exceed a selected relevant High", sweep.Description, StringComparison.Ordinal);
-        Assert.Contains("go below a selected relevant Low", sweep.Description, StringComparison.Ordinal);
-        Assert.Contains("before any Step-4 5M setup is valid", sweep.Description, StringComparison.Ordinal);
+        Assert.Contains("before 11:00 America/Bogota", sweep.Description, StringComparison.Ordinal);
+        Assert.Contains("liquidity-take event", sweep.Description, StringComparison.Ordinal);
+        Assert.Contains("exceeds a selected relevant High", sweep.Description, StringComparison.Ordinal);
+        Assert.Contains("goes below a selected relevant Low", sweep.Description, StringComparison.Ordinal);
+        Assert.Contains("prerequisite", sweep.Description, StringComparison.Ordinal);
+        Assert.Contains("enables waiting for the downstream Step-4 5M trigger", sweep.Description, StringComparison.Ordinal);
+        Assert.Contains("not Step-4 confirmation or entry eligibility", sweep.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("points", sweep.Description, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("ticks", sweep.Description, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("tolerance", sweep.Description, StringComparison.OrdinalIgnoreCase);
 
         var inversion = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-M5-001");
-        Assert.Contains("Only after a valid liquidity take", inversion.Description, StringComparison.Ordinal);
-        Assert.Contains("Structural Change or IFVG", inversion.Description, StringComparison.Ordinal);
+        Assert.Contains("active pre-entry setup before 11:00 America/Bogota", inversion.Description, StringComparison.Ordinal);
+        Assert.Contains("only after its valid liquidity take", inversion.Description, StringComparison.Ordinal);
+        Assert.Contains("Structural Change OR IFVG", inversion.Description, StringComparison.Ordinal);
         Assert.Contains("whichever occurs first", inversion.Description, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("separate Step-5 FVG confirmation", inversion.Description, StringComparison.Ordinal);
+        Assert.Contains("body close beyond the active 5M structural reference", inversion.Description, StringComparison.Ordinal);
+        Assert.Contains("wick-only break", inversion.Description, StringComparison.Ordinal);
+        Assert.Contains("continued manipulation-direction movement remains pending", inversion.Description, StringComparison.Ordinal);
+        Assert.Contains("does not alone cancel the setup", inversion.Description, StringComparison.Ordinal);
+        Assert.Contains("newer extreme may update that reference", inversion.Description, StringComparison.Ordinal);
 
         var buyChange = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-M5-002");
         Assert.Contains("After downside liquidity is taken", buyChange.Description, StringComparison.Ordinal);
@@ -159,9 +169,14 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("geometry remains unresolved", realignment.Description, StringComparison.Ordinal);
 
         var entry = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-M1-003");
-        Assert.Contains("mandatory Steps 1 through 6", entry.Description, StringComparison.Ordinal);
+        Assert.Contains("all mandatory Steps 1 through 6", entry.Description, StringComparison.Ordinal);
         Assert.Contains("chronological order", entry.Description, StringComparison.Ordinal);
+        Assert.Contains("active pre-entry setup before 11:00 America/Bogota", entry.Description, StringComparison.Ordinal);
+        Assert.Contains("late isolated 1M signal cannot complete an expired setup", entry.Description, StringComparison.Ordinal);
+        Assert.Contains("target consumed before eligibility cancels the setup", entry.Description, StringComparison.Ordinal);
+        Assert.Contains("do-not-chase-price", entry.Description, StringComparison.Ordinal);
         Assert.Contains("runtime gate-status mapping", entry.Description, StringComparison.Ordinal);
+        Assert.Contains("order mechanics remain unresolved", entry.Description, StringComparison.Ordinal);
 
         var stop = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-SL-001");
         Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, stop.DefinitionStatus);
@@ -195,6 +210,32 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("downside liquidity for a sell", breakEven.Description, StringComparison.Ordinal);
         Assert.Contains("moves Stop Loss conceptually to entry", breakEven.Description, StringComparison.Ordinal);
         Assert.Contains("remain unresolved", breakEven.Description, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void LifecycleReconciliationPreservesFrozenRuleMetadata()
+    {
+        AssertFrozenMetadata(
+            "NQ-LIQ-003",
+            "Liquidity take required",
+            "Sweep",
+            70,
+            true,
+            RuleDefinitionStatus.Confirmed);
+        AssertFrozenMetadata(
+            "NQ-M5-001",
+            "Inversion alternatives",
+            "5M inversion",
+            110,
+            true,
+            RuleDefinitionStatus.Confirmed);
+        AssertFrozenMetadata(
+            "NQ-M1-003",
+            "Entry mechanics",
+            "Entry",
+            190,
+            false,
+            RuleDefinitionStatus.Unresolved);
     }
 
     [Fact]
@@ -308,5 +349,24 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         var rule = definition.Rules.Single(item => item.RuleId.Value == id);
         Assert.Equal(status, rule.DefinitionStatus);
         Assert.Equal(required, rule.IsRequired);
+    }
+
+    private void AssertFrozenMetadata(
+        string ruleId,
+        string name,
+        string stage,
+        int sequence,
+        bool isRequired,
+        RuleDefinitionStatus definitionStatus)
+    {
+        var rule = definition.Rules.Single(item => item.RuleId.Value == ruleId);
+
+        Assert.Equal(ruleId, rule.RuleId.Value);
+        Assert.Equal(name, rule.Name);
+        Assert.Equal(stage, rule.Stage);
+        Assert.Equal(sequence, rule.Sequence);
+        Assert.Equal(isRequired, rule.IsRequired);
+        Assert.Equal(definitionStatus, rule.DefinitionStatus);
+        Assert.Equal("docs/strategies/nasdaq/rule-catalog.md", rule.SourceReference);
     }
 }
