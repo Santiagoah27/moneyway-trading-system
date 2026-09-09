@@ -120,7 +120,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         }
 
         Assert.Equal(
-            [new RuleId("NQ-M5-004"), new RuleId("NQ-SL-001"), new RuleId("NQ-TP-001")],
+            [new RuleId("NQ-H4-001"), new RuleId("NQ-M5-004"), new RuleId("NQ-SL-001"), new RuleId("NQ-TP-001")],
             report.Rules
                 .Where(rule => rule.CapabilityStatus == ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification)
                 .Select(rule => rule.RuleId));
@@ -129,8 +129,8 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Equal(13, report.RequiredRuleCount);
         Assert.Equal(0, report.ImplementedCount);
         Assert.Equal(0, report.HumanOnlyCount);
-        Assert.Equal(29, report.NotImplementedCount);
-        Assert.Equal(3, report.BlockedByUnresolvedSpecificationCount);
+        Assert.Equal(28, report.NotImplementedCount);
+        Assert.Equal(4, report.BlockedByUnresolvedSpecificationCount);
         Assert.Equal(0, report.RequiredImplementedCount);
         Assert.Equal(13, report.RequiredEvaluatorGapCount);
         Assert.False(report.HasFullRequiredEvaluatorRegistration);
@@ -143,9 +143,64 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
                 forex.HasFullRequiredEvaluatorRegistration));
     }
 
+    [Fact]
+    public void NasdaqFourHourContextRemainsConfirmedWhileCapabilityIsExplicitlyBlocked()
+    {
+        var definition = Nasdaq;
+        var rule = definition.Rules.Single(item => item.RuleId.Value == "NQ-H4-001");
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
+        var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
+        var declaration = Assert.Single(declarations, item =>
+            item.StrategyId == definition.StrategyId &&
+            item.StrategyVersion == definition.Version &&
+            item.RuleId == rule.RuleId);
+        var beforeCatalog = Catalog(evaluators, declarations.Where(item => item != declaration));
+        var afterCatalog = Catalog(evaluators, declarations);
+        var before = beforeCatalog.Find(definition.StrategyId, definition.Version)!;
+        var after = afterCatalog.Find(definition.StrategyId, definition.Version)!;
+        var beforeByRule = before.Rules.ToDictionary(item => item.RuleId);
+        var afterByRule = after.Rules.ToDictionary(item => item.RuleId);
+
+        Assert.Equal(RuleDefinitionStatus.Confirmed, rule.DefinitionStatus);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, beforeByRule[rule.RuleId].CapabilityStatus);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, afterByRule[rule.RuleId].CapabilityStatus);
+        Assert.NotEqual(ReplayRuleEvaluationCapabilityStatus.Implemented, afterByRule[rule.RuleId].CapabilityStatus);
+        Assert.NotEqual(ReplayRuleEvaluationCapabilityStatus.HumanOnly, afterByRule[rule.RuleId].CapabilityStatus);
+        Assert.DoesNotContain(evaluators, evaluator =>
+            evaluator.StrategyId == definition.StrategyId &&
+            evaluator.StrategyVersion == definition.Version &&
+            evaluator.RuleId == rule.RuleId);
+
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, declaration.Status);
+        Assert.False(string.IsNullOrWhiteSpace(declaration.Reason));
+        Assert.Contains("previous structural High/Low", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("retracement pivots from closed candles", declaration.Reason, StringComparison.Ordinal);
+        Assert.Equal("docs/strategies/nasdaq/rule-catalog.md", declaration.SourceReference);
+        Assert.Equal(declarations.Count, declarations
+            .Select(item => (item.StrategyId, item.StrategyVersion, item.RuleId))
+            .Distinct()
+            .Count());
+
+        Assert.Equal((32, 13, 3, 0, 26, 3, 3, 10, false), Counts(before));
+        Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(after));
+        Assert.All(after.Rules.Where(item => item.RuleId != rule.RuleId), item =>
+            Assert.Equal(beforeByRule[item.RuleId].CapabilityStatus, item.CapabilityStatus));
+
+        var forexDefinition = Forex;
+        var forexBefore = beforeCatalog.Find(forexDefinition.StrategyId, forexDefinition.Version)!;
+        var forexAfter = afterCatalog.Find(forexDefinition.StrategyId, forexDefinition.Version)!;
+        Assert.Equal((17, 15, 0, 0, 13, 4, 0, 15, false), Counts(forexBefore));
+        Assert.Equal(Counts(forexBefore), Counts(forexAfter));
+    }
+
     private static StrategyDefinition Forex => MoneyWayForexStrategyDefinition.Instance;
     private static StrategyDefinition Nasdaq => MoneyWayNasdaqStrategyDefinition.Instance;
     private static StrategyReplayEvaluationCapabilityCatalog Catalog(IEnumerable<IReplayRuleEvaluator> evaluators, IEnumerable<ReplayRuleEvaluationCapabilityDeclaration> declarations) => new(new StrategyDefinitionCatalog(), evaluators, declarations);
+    private static (int, int, int, int, int, int, int, int, bool) Counts(StrategyReplayEvaluationCapabilityReport report) =>
+        (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount, report.HumanOnlyCount,
+            report.NotImplementedCount, report.BlockedByUnresolvedSpecificationCount,
+            report.RequiredImplementedCount, report.RequiredEvaluatorGapCount,
+            report.HasFullRequiredEvaluatorRegistration);
     private sealed class Fake(StrategyId strategyId, StrategyVersion version, RuleId ruleId) : IReplayRuleEvaluator
     {
         public StrategyId StrategyId { get; } = strategyId; public StrategyVersion StrategyVersion { get; } = version; public RuleId RuleId { get; } = ruleId;

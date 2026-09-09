@@ -42,8 +42,8 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
         var before = beforeCatalog.Find(definition.StrategyId, definition.Version)!;
         var after = afterCatalog.Find(definition.StrategyId, definition.Version)!;
 
-        Assert.Equal((32, 13, 2, 0, 27, 3, 2, 11, false), Counts(before));
-        Assert.Equal((32, 13, 3, 0, 26, 3, 3, 10, false), Counts(after));
+        Assert.Equal((32, 13, 2, 0, 26, 4, 2, 11, false), Counts(before));
+        Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(after));
 
         var beforeByRule = before.Rules.ToDictionary(rule => rule.RuleId);
         var afterByRule = after.Rules.ToDictionary(rule => rule.RuleId);
@@ -97,7 +97,7 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented, capability.CapabilityStatus);
         Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.ImplementedReason, capability.CapabilityReason);
         Assert.Null(capability.CapabilitySourceReference);
-        Assert.Equal((32, 13, 3, 0, 26, 3, 3, 10, false), Counts(report));
+        Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(report));
     }
 
     private static (string StrategyId, string Version, string RuleId) Identity(IReplayRuleEvaluator evaluator) =>

@@ -16,7 +16,7 @@ public static class MoneyWayNasdaqStrategyDefinition
         "docs/strategies/nasdaq/strategy-specification.md",
         [
             Rule("NQ-H4-001", "4H-first context", "4H", 10, true, RuleDefinitionStatus.Confirmed,
-                "At 08:00 America/Bogota, start preparation on 4H by reviewing HH/LL trend and Breakout, Wickfill, or Fakeout context through human validation."),
+                "At 08:00 America/Bogota, review 4H structure: HH/HL is bullish and LL/LH is bearish; a valid structural break requires a candle-body close beyond the human-selected structural level, not a wick. Confirm HL/LH retrospectively only after the next HH/LL break closes, and classify context as Breakout, Wickfill, or Fakeout using OR. Deterministic structural-level and retracement-pivot selection remains unresolved pending source clarification."),
             Rule("NQ-H4-002", "Break classification", "4H", 20, false, RuleDefinitionStatus.HumanValidationRequired,
                 "Classify Break when a candle body closes beyond the human-selected structural level; exact thresholds remain undefined."),
             Rule("NQ-H4-003", "Wickfill classification", "4H", 30, false, RuleDefinitionStatus.HumanValidationRequired,

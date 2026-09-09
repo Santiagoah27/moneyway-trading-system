@@ -66,12 +66,34 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
     }
 
     [Fact]
-    public void ReverifiedConceptsRemainExplicitWithoutClaimingDeterministicGeometry()
+    public void FourHourContextMetadataMatchesAuditedSpecification()
     {
         var context = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-H4-001");
-        Assert.Contains("HH/LL", context.Description, StringComparison.Ordinal);
-        Assert.Contains("Breakout, Wickfill, or Fakeout", context.Description, StringComparison.Ordinal);
-        Assert.Contains("human validation", context.Description, StringComparison.OrdinalIgnoreCase);
+
+        Assert.Equal("NQ-H4-001", context.RuleId.Value);
+        Assert.Equal("4H-first context", context.Name);
+        Assert.Equal("4H", context.Stage);
+        Assert.Equal(10, context.Sequence);
+        Assert.True(context.IsRequired);
+        Assert.Equal(RuleDefinitionStatus.Confirmed, context.DefinitionStatus);
+        Assert.Equal("docs/strategies/nasdaq/rule-catalog.md", context.SourceReference);
+        Assert.Contains("08:00 America/Bogota", context.Description, StringComparison.Ordinal);
+        Assert.Contains("4H structure", context.Description, StringComparison.Ordinal);
+        Assert.Contains("HH/HL is bullish", context.Description, StringComparison.Ordinal);
+        Assert.Contains("LL/LH is bearish", context.Description, StringComparison.Ordinal);
+        Assert.Contains("candle-body close", context.Description, StringComparison.Ordinal);
+        Assert.Contains("not a wick", context.Description, StringComparison.Ordinal);
+        Assert.Contains("HL/LH retrospectively", context.Description, StringComparison.Ordinal);
+        Assert.Contains("next HH/LL break closes", context.Description, StringComparison.Ordinal);
+        Assert.Contains("Breakout, Wickfill, or Fakeout using OR", context.Description, StringComparison.Ordinal);
+        Assert.Contains("structural-level and retracement-pivot selection remains unresolved", context.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("automated", context.Description, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("implemented", context.Description, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ReverifiedConceptsRemainExplicitWithoutClaimingDeterministicGeometry()
+    {
 
         var structuralLiquidity = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-002");
         Assert.Contains("1H and 4H", structuralLiquidity.Description, StringComparison.Ordinal);
