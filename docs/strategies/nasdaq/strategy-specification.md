@@ -23,7 +23,7 @@ Los resultados permitidos son `passed`, `failed`, `waiting`, `not_applicable`, `
 
 ## 4. Source coverage
 
-La documentación representa la evidencia actualmente auditada del video de 58:24, consolidada desde cinco intervalos y re-verificaciones humanas directas del video fuente. Estas re-verificaciones confirmaron la secuencia de seis etapas, 08:00/08:30/11:30 en hora Colombia, las sesiones Asia/London y sus extremos 1H, la guía de Stop Loss 5M HL/LH, los targets en important highs/lows y los conceptos estructurales 4H descritos en la sección 9. Los timestamps 4H suministrados son aproximados; no se inventan título, URL ni líneas de transcript. Salvo esos intervalos aproximados y `50:15` para riesgo máximo por operación, los timestamps de reglas individuales siguen siendo `null` cuando no fueron proporcionados.
+La documentación representa la evidencia actualmente auditada del video de 58:24, consolidada desde cinco intervalos y re-verificaciones humanas directas del video fuente. Estas re-verificaciones confirmaron la secuencia de seis etapas, 08:00/08:30/11:30 en hora Colombia, las sesiones Asia/London y sus extremos 1H, la guía de Stop Loss 5M HL/LH, los targets en important highs/lows y los conceptos estructurales 4H descritos en la sección 9. Una nueva revisión humana del segundo video aclaró la confirmación retrospectiva y selección visual de puntos estructurales aproximadamente en `03:05–04:55` y `06:20–07:35`, el uso de cuerpos aproximadamente en `11:10–11:45` y el filtro higher-timeframe aproximadamente en `08:35–09:20`. Los timestamps 4H suministrados son aproximados; no se inventan título, URL ni líneas de transcript. Salvo esos intervalos aproximados y `50:15` para riesgo máximo por operación, los timestamps de reglas individuales siguen siendo `null` cuando no fueron proporcionados.
 
 ## 5. Supported operating modes
 
@@ -109,24 +109,32 @@ Solo se incluyen relaciones direccionales expresamente documentadas. No se compl
 
 ## 9. 4H context
 
-Preparation begins at 08:00 `America/Bogota`. The mentor reviews 4H to read the structure already developed; no rule initializes structure from the first candle, the first two candles, a fixed lookback or artificial initial H/L. The source statement that the initial H and L are not needed only confirms that the relevant task is to identify the current structural state, not how to bootstrap it algorithmically.
+Preparation begins at 08:00 `America/Bogota`, coinciding with the close of the 4H candle used for the review. Only information observable through that closed candle may be used. The mentor reviews 4H to read the structure already developed and to filter lower-timeframe oscillations/noise; 1M/5M internal movement does not independently create 4H structural points.
+
+No rule initializes structure from the first candle, the first two candles, a fixed lookback or artificial initial H/L. The source statement that the initial H and L are not needed only confirms that the relevant task is to identify the current structural state, not how to bootstrap it algorithmically.
 
 ### 9.1 Confirmed structural concepts
 
-- Bullish context is associated with an `HH → retracement → HL → HH → ...` progression.
-- Bearish context is associated with an `LL → retracement → LH → LL → ...` progression.
+- Bullish confirmation progresses as `prior structural High → relevant retracement candidate → subsequent body-close break above that High/new HH → prior relevant retracement becomes confirmed HL`.
+- Bearish confirmation progresses symmetrically as `prior structural Low → relevant retracement candidate → subsequent body-close break below that Low/new LL → prior relevant retracement becomes confirmed LH`.
 - `HH` is a structural High above the previous structural High. A wick above is insufficient: `Candle.Close > previous structural High` confirms the bullish structural break and the new HH only after that candle closes.
 - `LL` is a structural Low below the previous structural Low. A wick below is insufficient: `Candle.Close < previous structural Low` confirms the bearish structural break and the new LL only after that candle closes.
-- After an HH, the low of a visually recognized slowdown/retracement is provisional. It becomes a confirmed `HL` only when a later candle closes above the previous HH and forms the next HH; the confirmed HL is above the corresponding prior structural Low.
-- After an LL, the high of a visually recognized slowdown/retracement is provisional. It becomes a confirmed `LH` only when a later candle closes below the previous LL and forms the next LL; the confirmed LH is below the corresponding prior structural High.
+- After an HH, the relevant low of the slowdown/retracement is provisional. It becomes a confirmed `HL` only when a later 4H candle closes above the previous HH and forms the next HH; the confirmed HL is above the corresponding prior structural Low.
+- After an LL, the relevant high of the slowdown/retracement is provisional. It becomes a confirmed `LH` only when a later 4H candle closes below the previous LL and forms the next LL; the confirmed LH is below the corresponding prior structural High.
+- Minor fluctuations, pauses, local extrema and direction changes inside the retracement do not automatically become structural points.
+- After the confirming break, the mentor looks backward to the retracement preceding the breakout impulse and identifies the relevant turning extreme where that impulse originated. Human source evidence describes it as **"el punto exacto donde el precio desaceleró y rebotó"**.
+- In bullish context, the visual selection is the lowest relevant point of the retracement/contraction associated with that turn; minor intermediate pauses are discarded. The bearish relationship remains symmetric for the relevant high preceding the subsequent LL break.
+- Structural points and relevant turning/stop zones are marked on candle bodies. An isolated wick neither defines strong structural confirmation nor replaces the required body-close break.
 
-“Price slows down” is confirmed only as a visual guide for recognizing the retracement. It does not define candle count, minimum retracement, pivot width, percentage, ATR or candle-size thresholds. Likewise, selecting the previous structural High/Low from raw 4H candles remains `human_validation_required`.
+The source now materially clarifies how a retracement candidate is confirmed and selected retrospectively after an already-supplied structural level is broken. It does not define the exact boundaries of the relevant retracement interval or the exact OHLC/body coordinate that numerically represents a structural High/Low or turning point. No `Min(Candle.Low)`, `Min(Open, Close)`, `Max(Candle.High)`, `Max(Open, Close)` or equivalent formula is inferred.
+
+“Price slows down” remains a visual source criterion. It does not define candle count, minimum retracement, pivot width, percentage, ATR or candle-size thresholds. The source also does not define how to obtain the initial previous structural High/Low from an arbitrary raw 4H series without a human annotation or pre-seeded level. Full structural detection therefore remains `human_validation_required` and blocked for deterministic evaluation.
 
 ### 9.2 Retrospective confirmation and historical replay
 
-HL/LH confirmation is retrospective but must not leak future information. At a replay time before the confirming candle has closed, the prior retracement remains candidate/unconfirmed. From the `AsOfUtc` at which the subsequent HH/LL break closes, the earlier retracement may be recorded as the confirmed HL/LH. A future candle must never change what was considered confirmed at an earlier replay timestamp.
+HL/LH confirmation is retrospective but must not leak future information. At replay time `T1`, before the subsequent HH/LL break candle has closed, the prior retracement remains candidate/unconfirmed and minor fluctuations remain non-structural. From `T2`, the `AsOfUtc` at which the subsequent body-close break confirms the new HH/LL, the earlier relevant retracement may be recorded as the confirmed HL/LH. Historical evaluation at `T1` must not use the `T2` candle, and a future candle must never change what was considered confirmed at an earlier replay timestamp.
 
-Historical automation of `NQ-H4-001` therefore requires reconstruction using only information observable through each `AsOfUtc`; this specification does not define the missing pivot/retracement algorithm.
+Historical automation of `NQ-H4-001` therefore requires reconstruction using only information observable through each `AsOfUtc`. The source defines the causal confirmation order, but not a complete detector: bootstrap of the prior reference level, exact retracement boundaries and exact numeric body coordinates remain unresolved.
 
 ### 9.3 Breakout
 
@@ -321,11 +329,11 @@ FVG size/quality, displacement, Wickfill/Fakeout, structural HL/LH selection and
 
 ## 23. Human-validation points
 
-Human validation is required for 4H structural pivot/retracement selection and Breakout/Wickfill/Fakeout geometry/classification precedence, liquidity selection and sweep details, 5M pivots, IFVG, FVG quality, 1M correction/swing, order mechanics, structural Stop Loss selection, Break Even swing, important target selection, sizing, daily limit, news and reentries. Timezone/DST interpretation and the confirmed 4H body-close semantics are not human-validation points; selecting the structural inputs to which those semantics apply remains one.
+Human validation is required for bootstrapping the prior 4H structural level, delimiting the relevant retracement, translating body-marked structural points into exact prices, Breakout/Wickfill/Fakeout geometry/classification precedence, liquidity selection and sweep details, 5M pivots, IFVG, FVG quality, 1M correction/swing, order mechanics, structural Stop Loss selection, Break Even swing, important target selection, sizing, daily limit, news and reentries. Timezone/DST interpretation, the 08:00 closed-4H filter, rejection of minor fluctuations and the confirmed 4H body-close/retrospective-confirmation sequence are not human-validation points; selecting their unresolved structural inputs remains one.
 
 ## 24. Automation readiness
 
-The evidence supports assisted analysis, manual backtesting and supervised paper trading. Semi-automatic backtesting remains partial. The trading window, Asia/London session boundaries and extrema calculation are deterministically specified; the prior Stop Loss reference contradiction is resolved conceptually, and directional target concepts are confirmed. The 4H structural relationships and close requirements are clearer, but structural pivot/retracement selection, zone geometry, Wickfill completion and context precedence remain non-deterministic. Subjective FVG quality, swing algorithms, structural Stop Loss geometry, target-importance selection, unresolved news/reentries and incomplete risk controls still prohibit fully automatic backtesting and autonomous execution.
+The evidence supports assisted analysis, manual backtesting and supervised paper trading. Semi-automatic backtesting remains partial. The trading window, Asia/London session boundaries and extrema calculation are deterministically specified; the prior Stop Loss reference contradiction is resolved conceptually, and directional target concepts are confirmed. For 4H structure, the closed-candle filter, body-close requirement, retrospective confirmation order, relevant-turning-extreme concept and rejection of minor fluctuations are confirmed. Full detection remains non-deterministic because the prior reference-level bootstrap, retracement boundaries, exact numeric body coordinate, zone geometry, Wickfill completion and context precedence are unresolved. Subjective FVG quality, swing algorithms, structural Stop Loss geometry, target-importance selection, unresolved news/reentries and incomplete risk controls still prohibit fully automatic backtesting and autonomous execution.
 
 ## 25. Traceability requirements
 

@@ -6,9 +6,20 @@ No answer is proposed from external trading theory. `Blocking level` is the earl
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-H4-001 | ¿Cómo se seleccionan determinísticamente el previous structural High/Low y los retrocesos que pueden convertirse en HL/LH desde raw 4H candles? | Body-close and retrospective confirmation semantics are known, but the required structural inputs cannot yet be reproduced. | `human_validation_required` | `semi_automatic_backtesting` | Mentor selection method plus annotated positive, negative and marginal pivot/retracement examples |
+| NQ-Q-H4-001 | ¿Cómo se obtiene el initial previous structural High/Low desde una serie arbitraria de raw closed 4H candles, sin human seed, arbitrary pivot o generic TA inference? | The next structural point can be confirmed once a prior reference exists, but the raw-series bootstrap cannot yet be reproduced. | `unresolved` | `semi_automatic_backtesting` | Explicit mentor initialization method plus annotated starting-history examples |
+| NQ-Q-H4-002 | ¿Dónde comienzan y terminan exactamente el retracement/contraction relevante cuyo turning extreme se revisa después del confirming break? | The source rejects minor pauses and identifies the relevant turn retrospectively, but does not provide reproducible interval boundaries. | `human_validation_required` | `semi_automatic_backtesting` | Annotated interval boundaries with included and discarded pauses |
+| NQ-Q-H4-003 | ¿Qué exact body price representa numéricamente un structural High/Low o retracement turning point? | The source marks structure on candle bodies but does not define an OHLC/body formula. | `unresolved` | `semi_automatic_backtesting` | Explicit coordinate rule plus marginal multi-candle/body-zone examples |
 
-Confirmed by manual source-video re-verification: HH/LL require a body close beyond the prior human-selected structural High/Low; wick-only breaks are insufficient. The preceding retracement is confirmed retrospectively as HL/LH only after the subsequent HH/LL confirming candle closes. HH/HL is bullish, LL/LH is bearish, no initial-H/L bootstrap rule was supplied, and replay must not label the retracement as confirmed before that close. Deterministic pivot selection and visual “price slowdown” detection remain open.
+Confirmed or materially narrowed by the new human source review:
+
+- HH/LL require a 4H body close beyond the prior human-selected structural High/Low; wick-only breaks are insufficient.
+- Before that subsequent break closes, the preceding retracement is candidate/unconfirmed. Only after the close may the relevant prior retracement be confirmed retrospectively as HL/LH.
+- The mentor then looks backward to the retracement preceding the breakout impulse and identifies **"el punto exacto donde el precio desaceleró y rebotó"**. In bullish context this is the lowest relevant turning point of that retracement/contraction; the bearish relation is symmetric.
+- Minor fluctuations, intermediate pauses, local extrema and direction changes do not automatically become structural points.
+- Structural points and relevant turning/stop zones are marked on candle bodies; isolated wicks are not strong structural confirmation.
+- At 08:00 `America/Bogota`, use only information observable through the closed 4H candle. Lower-timeframe noise does not independently create 4H structural points.
+
+Still unresolved: the initial prior-level bootstrap from raw 4H history, exact retracement interval boundaries and exact numeric body coordinate. No first-candle, first-two-candle, fixed-lookback, fractal, ZigZag, N-left/N-right, ATR, percentage-swing or fixed-point initialization is supplied. Replay must not label the retracement as confirmed before the subsequent break closes.
 
 ## Break
 
