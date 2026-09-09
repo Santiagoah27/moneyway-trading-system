@@ -13,6 +13,7 @@ public sealed class MoneyWayNasdaqTradingWindowEndEvaluatorTests
     private static readonly MarketSymbol Symbol = new("NQ");
     private static readonly Timeframe Minute = new(1, TimeframeUnit.Minute);
     private static readonly Timeframe FiveMinutes = new(5, TimeframeUnit.Minute);
+    private static readonly TimeZoneInfo Bogota = ResolveBogotaTimeZone();
     private readonly MoneyWayNasdaqTradingWindowEndEvaluator evaluator = new();
 
     [Fact]
@@ -29,24 +30,25 @@ public sealed class MoneyWayNasdaqTradingWindowEndEvaluatorTests
     }
 
     [Theory]
-    [InlineData(2026, 1, 15, 12, 30, 0, RuleEvaluationResult.Passed)]
-    [InlineData(2026, 1, 15, 13, 0, 0, RuleEvaluationResult.Passed)]
-    [InlineData(2026, 1, 15, 13, 29, 59, RuleEvaluationResult.Passed)]
-    [InlineData(2026, 1, 15, 16, 29, 59, RuleEvaluationResult.Passed)]
-    [InlineData(2026, 1, 15, 16, 30, 0, RuleEvaluationResult.Passed)]
-    [InlineData(2026, 1, 15, 16, 30, 1, RuleEvaluationResult.Failed)]
-    [InlineData(2026, 1, 15, 17, 0, 0, RuleEvaluationResult.Failed)]
-    [InlineData(2026, 7, 15, 16, 30, 0, RuleEvaluationResult.Passed)]
-    [InlineData(2026, 7, 16, 16, 30, 1, RuleEvaluationResult.Failed)]
-    public void ConvertsUtcToBogotaAndAppliesInclusiveEndBoundary(
-        int year, int month, int day, int hour, int minute, int second, RuleEvaluationResult expected)
+    [InlineData(2026, 1, 15, 7, 30, 0, RuleEvaluationResult.Passed)]
+    [InlineData(2026, 1, 15, 8, 0, 0, RuleEvaluationResult.Passed)]
+    [InlineData(2026, 1, 15, 8, 29, 59, RuleEvaluationResult.Passed)]
+    [InlineData(2026, 1, 15, 10, 59, 59, RuleEvaluationResult.Passed)]
+    [InlineData(2026, 1, 15, 11, 0, 0, RuleEvaluationResult.Failed)]
+    [InlineData(2026, 1, 15, 11, 0, 1, RuleEvaluationResult.Failed)]
+    [InlineData(2026, 1, 15, 11, 30, 0, RuleEvaluationResult.Failed)]
+    [InlineData(2026, 1, 15, 12, 0, 0, RuleEvaluationResult.Failed)]
+    [InlineData(2026, 7, 15, 10, 59, 59, RuleEvaluationResult.Passed)]
+    [InlineData(2026, 7, 16, 11, 0, 0, RuleEvaluationResult.Failed)]
+    public void ConvertsBogotaLocalTimeAndAppliesExclusiveEndBoundary(
+        int year, int month, int day, int localHour, int localMinute, int localSecond, RuleEvaluationResult expected)
     {
-        var decision = evaluator.Evaluate(Context(new DateTimeOffset(year, month, day, hour, minute, second, TimeSpan.Zero)));
+        var decision = evaluator.Evaluate(Context(LocalUtc(year, month, day, localHour, localMinute, localSecond)));
 
         Assert.Equal(expected, decision.Result);
         Assert.Equal(expected == RuleEvaluationResult.Failed
-                ? "The replay context is after the 11:30 America/Bogota trading-window end."
-                : "The replay context is not after the 11:30 America/Bogota trading-window end.",
+                ? "The replay context is at or after the 11:00 America/Bogota pre-entry operational cutoff."
+                : "The replay context is before the 11:00 America/Bogota pre-entry operational cutoff.",
             decision.Reason);
         Assert.Null(decision.EvidenceReference);
     }
@@ -54,7 +56,7 @@ public sealed class MoneyWayNasdaqTradingWindowEndEvaluatorTests
     [Fact]
     public void DecisionDependsOnlyOnAsOfUtcAndIgnoresMarketDataAndFutureCandles()
     {
-        var at = new DateTimeOffset(2026, 3, 10, 16, 30, 1, TimeSpan.Zero);
+        var at = LocalUtc(2026, 3, 10, 11, 0, 1);
         var first = Context(at, Minute, 100, 101, provider: new("fixture-a"), symbol: new("NQ-A"));
         var second = Context(at, FiveMinutes, 500, 50, provider: new("fixture-b"), symbol: new("NQ-B"));
 
@@ -69,7 +71,7 @@ public sealed class MoneyWayNasdaqTradingWindowEndEvaluatorTests
     [Fact]
     public void DecisionAtTDoesNotDependOnFutureCandles()
     {
-        var at = new DateTimeOffset(2026, 4, 20, 16, 30, 0, TimeSpan.Zero);
+        var at = LocalUtc(2026, 4, 20, 10, 59, 59);
         var first = Context(at, Minute, 100, 101);
         var second = Context(at, Minute, 100, 999);
 
@@ -84,8 +86,8 @@ public sealed class MoneyWayNasdaqTradingWindowEndEvaluatorTests
     [Fact]
     public void EvaluationIsRepeatableAndIndependentOfCallOrder()
     {
-        var passed = Context(new DateTimeOffset(2026, 2, 1, 15, 0, 0, TimeSpan.Zero));
-        var failed = Context(new DateTimeOffset(2026, 2, 1, 17, 0, 0, TimeSpan.Zero));
+        var passed = Context(LocalUtc(2026, 2, 1, 10, 59, 59));
+        var failed = Context(LocalUtc(2026, 2, 2, 11, 0, 0));
 
         Assert.Equal(RuleEvaluationResult.Failed, evaluator.Evaluate(failed).Result);
         Assert.Equal(RuleEvaluationResult.Passed, evaluator.Evaluate(passed).Result);
@@ -97,7 +99,7 @@ public sealed class MoneyWayNasdaqTradingWindowEndEvaluatorTests
     public void RejectsNullOrMismatchedStrategyContext()
     {
         Assert.Throws<ArgumentNullException>(() => evaluator.Evaluate(null!));
-        var context = Context(new DateTimeOffset(2026, 1, 15, 16, 30, 0, TimeSpan.Zero), definition: new(
+        var context = Context(LocalUtc(2026, 1, 15, 11, 0, 0), definition: new(
             new("other-strategy"), new("v1"), "Other", "test",
             [new(new("OTHER-001"), "Other", "stage", 10, true, RuleDefinitionStatus.Confirmed, "description", "source")]));
         Assert.Throws<InvalidOperationException>(() => evaluator.Evaluate(context));
@@ -138,4 +140,23 @@ public sealed class MoneyWayNasdaqTradingWindowEndEvaluatorTests
         DateTimeOffset close,
         decimal value) =>
         new(provider, symbol, timeframe, open, close, value, value + 1, value - 1, value, null);
+
+    private static DateTimeOffset LocalUtc(int year, int month, int day, int hour, int minute, int second)
+    {
+        var local = new DateTime(year, month, day, hour, minute, second, DateTimeKind.Unspecified);
+        return new(TimeZoneInfo.ConvertTimeToUtc(local, Bogota), TimeSpan.Zero);
+    }
+
+    private static TimeZoneInfo ResolveBogotaTimeZone()
+    {
+        const string timeZoneId = "America/Bogota";
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+        }
+        catch (TimeZoneNotFoundException) when (TimeZoneInfo.TryConvertIanaIdToWindowsId(timeZoneId, out var windowsId))
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById(windowsId);
+        }
+    }
 }

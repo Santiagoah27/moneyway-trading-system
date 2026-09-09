@@ -13,26 +13,28 @@ public sealed class MoneyWayNasdaqTradingWindowEndScenarioTests
     private static readonly MarketDataProviderId Provider = new("fixture");
     private static readonly MarketSymbol Symbol = new("NQ");
     private static readonly Timeframe Minute = new(1, TimeframeUnit.Minute);
+    private static readonly TimeZoneInfo Bogota = ResolveBogotaTimeZone();
 
     [Theory]
-    [InlineData(12, 30, 0, RuleEvaluationResult.Waiting, RuleEvaluationResult.Passed)]
-    [InlineData(13, 0, 0, RuleEvaluationResult.Waiting, RuleEvaluationResult.Passed)]
-    [InlineData(13, 29, 59, RuleEvaluationResult.Waiting, RuleEvaluationResult.Passed)]
-    [InlineData(13, 30, 0, RuleEvaluationResult.Passed, RuleEvaluationResult.Passed)]
-    [InlineData(15, 0, 0, RuleEvaluationResult.Passed, RuleEvaluationResult.Passed)]
-    [InlineData(16, 29, 59, RuleEvaluationResult.Passed, RuleEvaluationResult.Passed)]
-    [InlineData(16, 30, 0, RuleEvaluationResult.Passed, RuleEvaluationResult.Passed)]
-    [InlineData(16, 30, 1, RuleEvaluationResult.Passed, RuleEvaluationResult.Failed)]
-    [InlineData(17, 0, 0, RuleEvaluationResult.Passed, RuleEvaluationResult.Failed)]
+    [InlineData(7, 30, 0, RuleEvaluationResult.Waiting, RuleEvaluationResult.Passed)]
+    [InlineData(8, 0, 0, RuleEvaluationResult.Waiting, RuleEvaluationResult.Passed)]
+    [InlineData(8, 29, 59, RuleEvaluationResult.Waiting, RuleEvaluationResult.Passed)]
+    [InlineData(8, 30, 0, RuleEvaluationResult.Passed, RuleEvaluationResult.Passed)]
+    [InlineData(10, 0, 0, RuleEvaluationResult.Passed, RuleEvaluationResult.Passed)]
+    [InlineData(10, 59, 59, RuleEvaluationResult.Passed, RuleEvaluationResult.Passed)]
+    [InlineData(11, 0, 0, RuleEvaluationResult.Passed, RuleEvaluationResult.Failed)]
+    [InlineData(11, 0, 1, RuleEvaluationResult.Passed, RuleEvaluationResult.Failed)]
+    [InlineData(11, 30, 0, RuleEvaluationResult.Passed, RuleEvaluationResult.Failed)]
+    [InlineData(12, 0, 0, RuleEvaluationResult.Passed, RuleEvaluationResult.Failed)]
     public void RealTimingEvaluatorsComposeWithoutSharingResponsibilities(
-        int utcHour,
-        int utcMinute,
-        int utcSecond,
+        int localHour,
+        int localMinute,
+        int localSecond,
         RuleEvaluationResult expectedStart,
         RuleEvaluationResult expectedEnd)
     {
         var definition = MoneyWayNasdaqStrategyDefinition.Instance;
-        var context = Context(definition, AtUtc(utcHour, utcMinute, utcSecond));
+        var context = Context(definition, AtLocal(localHour, localMinute, localSecond));
 
         var observation = new EvaluateStrategyReplayContextUseCase(MoneyWayReplayRuleEvaluators.GetAll())
             .Execute(definition, context);
@@ -56,10 +58,10 @@ public sealed class MoneyWayNasdaqTradingWindowEndScenarioTests
         [
             new CandleSeries(Provider, Symbol, Minute,
             [
-                Candle(AtUtc(13, 28, 59), AtUtc(13, 29, 59), 100),
-                Candle(AtUtc(13, 29, 59), AtUtc(13, 30), 101),
-                Candle(AtUtc(16, 29), AtUtc(16, 30), 102),
-                Candle(AtUtc(16, 30), AtUtc(16, 30, 1), 103),
+                Candle(AtLocal(8, 28, 59), AtLocal(8, 29, 59), 100),
+                Candle(AtLocal(8, 29, 59), AtLocal(8, 30), 101),
+                Candle(AtLocal(10, 58, 59), AtLocal(10, 59, 59), 102),
+                Candle(AtLocal(10, 59, 59), AtLocal(11, 0), 103),
             ]),
         ]);
 
@@ -102,9 +104,25 @@ public sealed class MoneyWayNasdaqTradingWindowEndScenarioTests
         return context!;
     }
 
-    private static DateTimeOffset AtUtc(int hour, int minute = 0, int second = 0) =>
-        new(2026, 1, 15, hour, minute, second, TimeSpan.Zero);
+    private static DateTimeOffset AtLocal(int hour, int minute = 0, int second = 0)
+    {
+        var local = new DateTime(2026, 1, 15, hour, minute, second, DateTimeKind.Unspecified);
+        return new(TimeZoneInfo.ConvertTimeToUtc(local, Bogota), TimeSpan.Zero);
+    }
 
     private static Candle Candle(DateTimeOffset open, DateTimeOffset close, decimal value) =>
         new(Provider, Symbol, Minute, open, close, value, value + 1, value - 1, value, null);
+
+    private static TimeZoneInfo ResolveBogotaTimeZone()
+    {
+        const string timeZoneId = "America/Bogota";
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+        }
+        catch (TimeZoneNotFoundException) when (TimeZoneInfo.TryConvertIanaIdToWindowsId(timeZoneId, out var windowsId))
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById(windowsId);
+        }
+    }
 }

@@ -60,9 +60,12 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("trading window starts", start.Description, StringComparison.OrdinalIgnoreCase);
 
         Assert.Equal((260, true, RuleDefinitionStatus.Confirmed), (end.Sequence, end.IsRequired, end.DefinitionStatus));
-        Assert.Contains("11:30 America/Bogota", end.Description, StringComparison.Ordinal);
-        Assert.Contains("new entries", end.Description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("before 11:00 America/Bogota", end.Description, StringComparison.Ordinal);
+        Assert.Contains("11:00 and later", end.Description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("pre-entry operational period", end.Description, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("does not require closing existing positions", end.Description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("post-entry management", end.Description, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("11:30", end.Description, StringComparison.Ordinal);
 
         Assert.All(new[] { preparation, start, end }, rule =>
             Assert.Equal("docs/strategies/nasdaq/rule-catalog.md", rule.SourceReference));

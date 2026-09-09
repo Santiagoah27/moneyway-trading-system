@@ -66,7 +66,7 @@ public static class MoneyWayNasdaqStrategyDefinition
             Rule("NQ-BE-003", "Universal BE use", "Break Even", 250, false, RuleDefinitionStatus.Candidate,
                 "Preserve universal Break Even application as a candidate rather than a rule for every trade."),
             Rule("NQ-TIME-002", "Trading-window end", "Schedule", 260, true, RuleDefinitionStatus.Confirmed,
-                "Do not open new entries after the trading window ends at 11:30 America/Bogota; this does not require closing existing positions."),
+                "Treat local times before 11:00 America/Bogota as inside the Nasdaq pre-entry operational period; at 11:00 and later, the setup/entry cutoff has been reached. This does not require closing existing positions or end post-entry management."),
             Rule("NQ-RISK-001", "Maximum risk per trade", "Risk", 270, true, RuleDefinitionStatus.Confirmed,
                 "Record a maximum risk per trade of 1%; sizing implementation remains undefined."),
             Rule("NQ-RISK-002", "Daily loss limit", "Risk", 280, false, RuleDefinitionStatus.Candidate,
