@@ -6,7 +6,7 @@ No answer is proposed from external trading theory. `Blocking level` is the earl
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-H4-001 | ¿Cómo se obtiene el initial previous structural High/Low desde una serie arbitraria de raw closed 4H candles, sin human seed, arbitrary pivot o generic TA inference? | The next structural point can be confirmed once a prior reference exists, but the raw-series bootstrap cannot yet be reproduced. | `unresolved` | `semi_automatic_backtesting` | Explicit mentor initialization method plus annotated starting-history examples |
+| NQ-Q-H4-001 | ¿Qué reproducible viewport/boundary selecciona el major visible extreme que originó el movimiento relevante al iniciar desde raw closed 4H candles? | The visual/contextual bootstrap and subsequent reconstruction are confirmed, but an arbitrary raw series cannot select the same starting extreme automatically. | `human_validation_required` | `semi_automatic_backtesting` | Annotated starting histories showing included/excluded extremes and the exact observation boundary |
 | NQ-Q-H4-002 | ¿Dónde comienzan y terminan exactamente el retracement/contraction relevante cuyo turning extreme se revisa después del confirming break? | The source rejects minor pauses and identifies the relevant turn retrospectively, but does not provide reproducible interval boundaries. | `human_validation_required` | `semi_automatic_backtesting` | Annotated interval boundaries with included and discarded pauses |
 | NQ-Q-H4-003 | ¿Qué exact body price representa numéricamente un structural High/Low o retracement turning point? | The source marks structure on candle bodies but does not define an OHLC/body formula. | `unresolved` | `semi_automatic_backtesting` | Explicit coordinate rule plus marginal multi-candle/body-zone examples |
 
@@ -19,7 +19,18 @@ Confirmed or materially narrowed by the new human source review:
 - Structural points and relevant turning/stop zones are marked on candle bodies; isolated wicks are not strong structural confirmation.
 - At 08:00 `America/Bogota`, use only information observable through the closed 4H candle. Lower-timeframe noise does not independently create 4H structural points.
 
-Still unresolved: the initial prior-level bootstrap from raw 4H history, exact retracement interval boundaries and exact numeric body coordinate. No first-candle, first-two-candle, fixed-lookback, fractal, ZigZag, N-left/N-right, ATR, percentage-swing or fixed-point initialization is supplied. Replay must not label the retracement as confirmed before the subsequent break closes.
+The latest human review further confirms that 4H bootstrap starts visually/contextually from the major visible extreme that originated the current relevant movement, then reconstructs push, retracement, structural break and current structure. Asia/London session extrema do not seed 4H structure. The current decision focuses on the latest active HH/HL or LL/LH pair without deleting older audit history.
+
+Still unresolved: a reproducible viewport for the visual bootstrap, exact retracement interval boundaries and exact numeric body coordinate. No first-candle, first-two-candle, fixed-lookback, fractal, ZigZag, N-left/N-right, ATR, percentage-swing or fixed-point initialization is supplied. Replay must not label the retracement as confirmed before the subsequent break closes.
+
+## Resolved workflow relationships
+
+- Canonical order is Step 1 4H context → Step 2 liquidity marking → Step 3 liquidity take → Step 4 5M Structural Change `OR` IFVG → Step 5 separate mandatory 5M FVG → Step 6 1M pullback/FVG interaction and realignment → entry eligibility.
+- Every downstream gate requires its prerequisites in chronological order; a later pattern cannot repair a missing earlier gate through hindsight.
+- Step 1 market structure and Step 2 session-liquidity references are separate.
+- A Step-4 IFVG is not a direct entry and does not automatically satisfy the Step-5 FVG gate.
+- At `StrategyReplayContext.AsOfUtc`, future liquidity takes, FVGs or 1M realignments cannot change a prior eligibility state.
+- Exact runtime mapping of an unmet prerequisite to `failed`, `waiting` or `not_applicable` remains unaudited.
 
 ## Break
 
@@ -72,21 +83,22 @@ Confirmed conceptually: at 08:00 `America/Bogota`, Breakout `OR` Wickfill `OR` F
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-SW-001 | ¿Qué penetración mínima, close-back, rechazo, desplazamiento, plazo e invalidación aplican después de superar el high/low? | Exceeding the identified high/low is confirmed, but boundary and lifecycle details remain open. | `human_validation_required` | `semi_automatic_backtesting` | Positive/negative/boundary sweeps with timestamps |
+| NQ-Q-SW-001 | ¿Qué close-back, rechazo, desplazamiento, plazo e invalidación aplican después de superar el selected High o bajar del selected Low? | The strict exceed/below comparison is confirmed without an extra tolerance, but lifecycle and the relevance of later evidence remain open. | `human_validation_required` | `semi_automatic_backtesting` | Positive/negative/boundary takes with timestamps and subsequent outcomes |
 | NQ-Q-SW-002 | ¿Puede utilizarse una toma anterior a 08:30? | Affects operating sequence. | `unresolved` | `paper_trading` | Explicit pre-open examples and mentor decision |
 
 ## 5M structure
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-M5-001 | ¿Cómo se selecciona el swing relevante, incluidos pivotes, swings internos y cierres marginales? | Traditional inversion requires a reproducible swing and close. | `human_validation_required` | `semi_automatic_backtesting` | Annotated structural changes and rejected alternatives |
+| NQ-Q-M5-001 | ¿Cómo se convierte el extreme left by the liquidity take en la primera referencia 5M y cómo se seleccionan después swing, pivots, internal swings y marginal closes? | The take extreme may begin the 5M reading, but the complete structural progression and strong/decisive close criteria are not reproducible. | `human_validation_required` | `semi_automatic_backtesting` | Annotated post-take structure with accepted/rejected initial references and closes |
 
 ## IFVG
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
 | NQ-Q-IF-001 | ¿Cuál es la geometría, dirección, close, mitigation, confirming candle, expiry y relación con displacement del IFVG? | IFVG is an OR alternative but lacks operational definition. | `unresolved` | `semi_automatic_backtesting` | Audited mentor definition; no external ICT/SMC source |
-| NQ-Q-IF-002 | ¿Puede IFVG habilitar una entrada directa? | Prevents bypassing required continuation and 1M stages. | `unresolved` | `paper_trading` | Explicit full-sequence examples |
+
+Resolved: IFVG is only an alternative inside Step 4. It does not enable direct entry, bypass Step 5 or automatically count as the mandatory Step-5 FVG.
 
 ## Continuation FVG
 
@@ -99,7 +111,7 @@ Confirmed conceptually: at 08:00 `America/Bogota`, Breakout `OR` Wickfill `OR` F
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-M1-001 | ¿Cómo se selecciona el último swing correctivo y cuánto puede tardar la realineación? | This swing gates entry. | `human_validation_required` | `semi_automatic_backtesting` | Annotated corrections, pivots, failures and timeouts |
+| NQ-Q-M1-001 | ¿Qué exact interaction depth/tolerance con el Step-5 FVG, corrective swing selection y timeout confirman el pullback y la realineación 1M? | Countertrend pullback toward/into the FVG followed by intended-direction realignment is confirmed, but its geometry is not reproducible. | `human_validation_required` | `semi_automatic_backtesting` | Annotated FVG interactions, corrections, pivots, failures and timeouts |
 | NQ-Q-M1-002 | ¿Qué order type, timing, slippage, distance and maximum attempts apply? | Defines executable entry mechanics. | `unresolved` | `paper_trading` | Audited execution examples and explicit limits |
 | NQ-Q-M1-003 | ¿Qué ocurre si la confirmación aparece después de las 11:30? | Cutoff applies to new entries. | `unresolved` | `paper_trading` | Explicit after-cutoff examples |
 
@@ -108,20 +120,21 @@ Confirmed conceptually: at 08:00 `America/Bogota`, Breakout `OR` Wickfill `OR` F
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
 | NQ-Q-SL-001 | ¿Qué algoritmo identifica el structural 5M HL para buys y el structural 5M LH para sells? | The conceptual reference is confirmed, but deterministic swing selection is not. | `human_validation_required` | `semi_automatic_backtesting` | Annotated HL/LH selections and rejected alternatives |
-| NQ-Q-SL-002 | ¿Cómo se formaliza el punto donde el trade pierde sentido, incluidos body/wick, buffer, spread, maximum Stop and oversized-stop behavior? | Conceptual invalidation is confirmed but not quantitatively reproducible. | `unresolved` | `paper_trading` | Approved quantitative policy and boundary cases |
+| NQ-Q-SL-002 | ¿Qué offset exacto más allá de la wick estructural aplica, incluidos spread, maximum Stop and oversized-stop behavior? | The wick/tail side of the latest relevant 5M HL/LH is confirmed, but “below/above” is not an executable price. | `unresolved` | `paper_trading` | Approved quantitative offset/cost policy and boundary cases |
 
 ## Break Even
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-BE-001 | ¿Cómo se identifica el primer post-entry swing y se elige entre varios? | Break-and-close depends on this distinct swing. | `human_validation_required` | `semi_automatic_backtesting` | Annotated post-entry swing sequences |
-| NQ-Q-BE-002 | ¿BE es universal y mueve a entry o entry plus costs; qué gestión sigue? | `mandatory_for_every_trade` is only candidate. | `unresolved` | `paper_trading` | Multiple complete trade-management examples |
+| NQ-Q-BE-001 | ¿Cómo se selecciona el first important favorable liquidity level cuando existen varios Asia/London/structural candidates? | The liquidity-target trigger is confirmed, but “first important” is not deterministic. | `human_validation_required` | `semi_automatic_backtesting` | Ordered multi-target examples with accepted and rejected first levels |
+| NQ-Q-BE-002 | ¿Reach/touch significa wick touch, body interaction o close, y BE mueve a raw entry o entry plus costs? | Trigger geometry and exact Break-Even price remain unresolved. | `unresolved` | `paper_trading` | Marginal interaction examples and approved cost-basis policy |
+| NQ-Q-BE-003 | ¿Qué relación conserva el earlier post-entry swing observation con el nuevo first-important-liquidity trigger? | The authoritative trigger changed; silently combining or substituting both would invent management behavior. | `unresolved` | `paper_trading` | Complete examples showing both events and the mentor's chosen trigger |
 
 ## Take Profit
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-TP-001 | ¿Qué algoritmo convierte un high en important para buys o un low en important para sells y cómo se priorizan varios candidatos? | Target direction is confirmed but exact selection remains unresolved. | `human_validation_required` | `paper_trading` | Annotated important/non-important levels and priority counterexamples |
+| NQ-Q-TP-001 | ¿Cómo se determina relevance/importance y prioridad entre Asia High/London High para buys o Asia Low/London Low para sells y otros structural candidates? | Directional session-liquidity candidates are confirmed, but exact selection among multiple targets remains unresolved. | `human_validation_required` | `paper_trading` | Annotated important/non-important levels and Asia/London/structural priority counterexamples |
 | NQ-Q-TP-002 | ¿Existe fixed RR, partials, trailing or manual close? | Required for reproducible results and management. | `unresolved` | `paper_trading` | Complete audited trades and explicit management statements |
 
 ## Risk

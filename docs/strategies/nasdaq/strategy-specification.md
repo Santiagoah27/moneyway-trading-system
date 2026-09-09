@@ -23,7 +23,7 @@ Los resultados permitidos son `passed`, `failed`, `waiting`, `not_applicable`, `
 
 ## 4. Source coverage
 
-La documentación representa la evidencia actualmente auditada del video de 58:24, consolidada desde cinco intervalos y re-verificaciones humanas directas del video fuente. Estas re-verificaciones confirmaron la secuencia de seis etapas, 08:00/08:30/11:30 en hora Colombia, las sesiones Asia/London y sus extremos 1H, la guía de Stop Loss 5M HL/LH, los targets en important highs/lows y los conceptos estructurales 4H descritos en la sección 9. Una nueva revisión humana del segundo video aclaró la confirmación retrospectiva y selección visual de puntos estructurales aproximadamente en `03:05–04:55` y `06:20–07:35`, el uso de cuerpos aproximadamente en `11:10–11:45` y el filtro higher-timeframe aproximadamente en `08:35–09:20`. Los timestamps 4H suministrados son aproximados; no se inventan título, URL ni líneas de transcript. Salvo esos intervalos aproximados y `50:15` para riesgo máximo por operación, los timestamps de reglas individuales siguen siendo `null` cuando no fueron proporcionados.
+La documentación representa la evidencia actualmente auditada del video de 58:24, consolidada desde cinco intervalos y re-verificaciones humanas directas de los videos fuente. Estas re-verificaciones confirmaron la secuencia de seis etapas, 08:00/08:30/11:30 en hora Colombia, las sesiones Asia/London y sus extremos 1H, la guía de Stop Loss 5M HL/LH, los targets en important highs/lows y los conceptos estructurales 4H descritos en la sección 9. Una revisión humana del segundo video aclaró la confirmación retrospectiva y selección visual de puntos estructurales aproximadamente en `03:05–04:55` y `06:20–07:35`, el uso de cuerpos aproximadamente en `11:10–11:45` y el filtro higher-timeframe aproximadamente en `08:35–09:20`. La revisión humana posterior, especialmente de Video 3, confirmó el workflow end-to-end como una secuencia de gates obligatorios y aclaró la separación entre 4H context, session liquidity, 5M trigger, 5M FVG confirmation, 1M realignment y management. Los timestamps 4H suministrados son aproximados; no se inventan título, URL ni líneas de transcript. Salvo esos intervalos aproximados y `50:15` para riesgo máximo por operación, los timestamps de reglas individuales siguen siendo `null` cuando no fueron proporcionados.
 
 ## 5. Supported operating modes
 
@@ -40,41 +40,55 @@ La documentación representa la evidencia actualmente auditada del video de 58:2
 
 ## 6. High-level workflow
 
-1. At 08:00 `America/Bogota`, prepare the market on 4H: review the current HH/HL or LL/LH structure and classify the context as Breakout `OR` Wickfill `OR` Fakeout through human validation.
-2. Mark Asia High/Low and London High/Low, and review coincident structural points on 1H/4H.
-3. Wait for price to exceed an identified liquidity high or low.
-4. Move to 5M and identify inversion through structural change `OR` IFVG, whichever occurs first.
-5. Remain on 5M and require FVG confirmation/strength for the new direction.
-6. Move to 1M, wait for a counter-direction pullback, then require realignment with the sought direction before entry confirmation.
+1. At 08:00 `America/Bogota`, use the closed 4H candle to reconstruct the current HH/HL or LL/LH context from a human-selected major visible extreme, classify Breakout `OR` Wickfill `OR` Fakeout and determine the direction permitted for the subsequent setup.
+2. Separately mark Asia High/Low, London High/Low and relevant 1H/4H structural liquidity references. Session extrema do not initialize 4H market structure.
+3. From 08:30, wait for price to exceed a directionally relevant marked High or go below a directionally relevant marked Low. This liquidity take is mandatory.
+4. Only after Step 3, move to 5M and require Structural Change/ChoCH/MSS `OR` IFVG, whichever occurs first.
+5. After the Step-4 trigger, separately require the displacement in the intended direction to leave the mandatory 5M FVG confirmation. A Step-4 IFVG does not automatically satisfy Step 5.
+6. Only after Step 5, move to 1M, require a counter-direction pullback toward/into the relevant 5M FVG and then require structural realignment with the intended direction before entry eligibility.
 
-Trading starts at 08:30 and ends at 11:30, always in `America/Bogota`. Entry order mechanics remain unresolved. For buys, the conceptual Stop Loss reference is the structural 5M HL and the target reference is an important high. For sells, the conceptual Stop Loss reference is the structural 5M LH and the target reference is an important low. Structural detection and target-importance algorithms remain unresolved and require human validation.
+Trading starts at 08:30 and ends at 11:30, always in `America/Bogota`. Entry order mechanics remain unresolved. For buys, the Stop Loss anchor is beyond the wick of the latest relevant structural 5M HL and target concepts include relevant upside Asia/London highs. For sells, the Stop Loss anchor is beyond the wick of the latest relevant structural 5M LH and target concepts include relevant downside Asia/London lows. When price reaches/touches the first important favorable liquidity target, the confirmed Break-Even concept moves Stop Loss to entry. Exact structural detection, offsets, target priority and Break-Even trigger geometry remain unresolved and require human validation.
 
-The workflow is sequential. A later mandatory stage cannot be `passed` while an earlier stage is `failed`, `waiting`, `data_unavailable` or `human_validation_required`.
+The workflow is strictly sequential. A downstream signal observed in isolation is not valid for this strategy unless every mandatory prerequisite occurred in chronological order. This dependency statement does not itself assign `passed`, `failed`, `waiting` or `not_applicable`; runtime status mapping requires a separate audit.
+
+### 6.1 Workflow dependency matrix
+
+| Gate | Prerequisite | Dependency semantics |
+|---|---|---|
+| Step 1: 4H context | Information observable through the 08:00 closed 4H candle | Establishes context and permitted direction through human validation |
+| Step 2: liquidity marking | Preparation workflow and required session/structural inputs | Produces liquidity references; does not seed 4H structure |
+| Step 3: liquidity take | A relevant Step-2 level and the 08:30 operational start | Enables Step 4 only after the relevant High is exceeded or Low is broken below |
+| Step 4: 5M trigger | Valid Step-3 liquidity take | Structural Change `OR` IFVG, whichever occurs first |
+| Step 5: 5M FVG confirmation | Valid Step-4 trigger | Separate mandatory directional FVG gate |
+| Step 6: 1M pullback and realignment | Valid Step-5 FVG | Countertrend pullback into/toward the FVG, followed by intended-direction realignment |
+| Entry concept | All mandatory preceding gates | Eligibility only; no order type or execution is defined |
+
+At `StrategyReplayContext.AsOfUtc`, only prerequisites and confirming events observable at or before that timestamp may participate. A future liquidity take cannot activate an earlier Step 4, a future 5M FVG cannot activate an earlier Step 6, and a future 1M realignment cannot create past entry eligibility. Backtesting must not find a later successful pattern and retroactively assume its earlier gates were valid.
 
 ## 7. Buy workflow
 
 | Step | Rule status | Required inputs | Evaluation result | Blocking behavior | Human validation requirement | Open variables |
 |---:|---|---|---|---|---|---|
-| 1. 4H HH/LL context | `confirmed` + `human_validation_required` | 4H candles | Trend and context reviewed | Blocks all lower stages | Yes | HH/LL structural swing algorithm |
+| 1. 4H HH/LL context | `confirmed` + `human_validation_required` | Closed 4H candles | Trend, active structural pair, scenario and permitted direction reviewed | Blocks all lower stages | Yes | Visual bootstrap, exact body coordinate, retracement boundaries |
 | 2. Breakout/Wickfill/Fakeout | `confirmed` conceptually | 4H context and relevant level | One classification recorded | Unclassified context blocks | Yes | Exact geometries and tolerances |
-| 3. Relevant liquidity | `confirmed` + `human_validation_required` | Session levels and 1H/4H context | Asia/London extrema and structural coincidences recorded | Missing levels block sweep evaluation | Yes | Structural-point algorithm, coincidence tolerance and priority |
+| 3. Relevant liquidity | `confirmed` + `human_validation_required` | Session levels and 1H/4H context | Asia/London extrema and structural coincidences recorded separately from 4H bootstrap | Missing levels block sweep evaluation | Yes | Structural-point algorithm, coincidence tolerance and priority |
 | 4. Asia High/Low | `confirmed` | Completed 1H candles with local `OpenTime` in the Asia interval | Maximum `High` and minimum `Low` recorded | Missing required data returns `data_unavailable` | No | Data completeness policy for non-nominal sessions |
 | 5. London High/Low | `confirmed` | Completed 1H candles with local `OpenTime` in the London interval | Maximum `High` and minimum `Low` recorded | Missing required data returns `data_unavailable` | No | Data completeness policy for non-nominal sessions |
 | 6. Preparation | `confirmed` | Clock, context and levels | Preparation begins at 08:00 `America/Bogota` | Incomplete preparation blocks entry | Yes for analysis content | Calendar eligibility |
 | 7. Trading-window start | `confirmed` | Clock in `America/Bogota` | `waiting` before 08:30 | Entry prohibited before start | No for timezone/DST | None for timezone/DST |
-| 8. Liquidity sweep | `confirmed` conceptually | Marked high/low and price | Price exceeds the level; remaining details human-approved | Without an exceedance, remain `waiting` | Yes | Minimum penetration, rejection, pre-08:30 validity |
+| 8. Liquidity sweep | `confirmed` conceptually | Directionally relevant marked high/low and price | Price exceeds the selected High or goes below the selected Low; remaining details human-approved | Without the mandatory take, no downstream setup is valid | Yes | Level priority, rejection, pre-08:30 validity |
 | 9. Move to 5M | `confirmed` | Approved sweep, 5M data | 5M review enabled | Blocks inversion without sweep | No | Data alignment |
-| 10. 5M inversion OR | `confirmed` | 5M structure/FVG evidence | First occurring traditional change `OR` IFVG validated | Without either, `waiting` | Yes | Swing algorithm and IFVG geometry |
+| 10. 5M inversion OR | `confirmed` | Approved liquidity take and 5M structure/FVG evidence | First occurring Structural Change/ChoCH/MSS `OR` IFVG validated | Cannot precede the liquidity take and does not satisfy continuation FVG | Yes | Swing algorithm, strong/decisive threshold and IFVG geometry |
 | 11. 5M close | `confirmed` | 5M candle close | Close beyond required level validated | Wick alone is `failed`; open candle is `waiting` | Yes for marginal close | Minimum distance |
-| 12. Continuation FVG | `confirmed` + `human_validation_required` | Three 5M candles after inversion | Directional, clear FVG validated | Missing/weak FVG means `no_trade` | Yes | Minimum size and quality threshold |
+| 12. Continuation FVG | `confirmed` + `human_validation_required` | Three 5M candles after the Step-4 trigger | Separate directional, clear FVG validated | Without this mandatory gate, Step 6 is not enabled | Yes | Minimum size, quality and lifecycle |
 | 13. Move to 1M | `confirmed` | Approved FVG, 1M data | 1M review enabled | Blocks entry if data absent | No | Data alignment |
-| 14. Corrective retracement | `confirmed` + `human_validation_required` | 1M candles against new 5M move | Retracement identified | No retracement means `waiting` | Yes | Correction boundaries |
+| 14. Corrective retracement | `confirmed` + `human_validation_required` | Approved Step-5 FVG and countertrend 1M candles | Pullback toward/into the relevant 5M FVG identified | Without the pullback/FVG interaction, no realignment gate | Yes | Interaction depth, correction boundaries and timeout |
 | 15. 1M realignment | `confirmed` + `human_validation_required` | Corrective microstructure | Candidate realignment identified | No realignment means no entry | Yes | Corrective swing algorithm |
 | 16. Corrective swing break | `confirmed` | Entry swing and closed 1M candle | Body closes beyond corrective swing | Wick/open candle does not pass | Yes for swing selection | Marginal close distance |
 | 17. Entry | `confirmed` + `unresolved` | All earlier stages approved | `human_validation_required` | No automatic order creation | Yes | Order type, timing, slippage, attempts |
-| 18. Stop Loss | `confirmed` conceptually + `human_validation_required` | Structural 5M HL and entry | Human validates SL where the buy idea loses structural meaning | Missing/ambiguous structural SL means `no_trade` | Yes | HL algorithm, invalidation geometry, buffer and costs |
-| 19. Break Even | `confirmed` mechanism + `candidate` universality | Post-entry 1M swing and closed candle | SL moved to entry after break and close | Not evaluated before entry | Yes for post-entry swing | Costs, applicability, later management |
-| 20. Take Profit | `confirmed` conceptually + `human_validation_required` | Candidate highs and position state | Important high selected | No automatic target selection | Yes | Importance algorithm, priority, ratio, partials |
+| 18. Stop Loss | `confirmed` conceptually + `human_validation_required` | Latest relevant structural 5M HL and entry | Human validates SL below/beyond the HL wick | Missing/ambiguous structural SL blocks management automation | Yes | HL algorithm, exact offset, spread and costs |
+| 19. Break Even | `confirmed` conceptually + `human_validation_required` | Entry and first important favorable upside liquidity target | On source-confirmed reach/touch, SL moves to entry | Not evaluated before entry or target interaction | Yes | First-important selection, touch semantics, costs and later management |
+| 20. Take Profit | `confirmed` conceptually + `human_validation_required` | Relevant upside liquidity highs and position state | Important target, including relevant Asia/London High, selected | No automatic target selection | Yes | Priority among candidates, ratio and partials |
 | 21. Trading-window end | `confirmed` | Clock in `America/Bogota` | `failed` for new entry after 11:30 | New entries prohibited | No for timezone/DST | Open-position management |
 | 22. Risk controls | `confirmed` max trade risk + open controls | Entry, Stop Loss, sizing inputs | At most 1% risk after human validation | Missing sizing/control data blocks execution | Yes | Position size, daily limit, kill switch |
 
@@ -84,34 +98,34 @@ Solo se incluyen relaciones direccionales expresamente documentadas. No se compl
 
 | Step | Rule status | Required inputs | Evaluation result | Blocking behavior | Human validation requirement | Open variables |
 |---:|---|---|---|---|---|---|
-| 1. 4H HH/LL context | `confirmed` + `human_validation_required` | 4H candles | Trend and context reviewed | Blocks all lower stages | Yes | HH/LL structural swing algorithm |
+| 1. 4H HH/LL context | `confirmed` + `human_validation_required` | Closed 4H candles | Trend, active structural pair, scenario and permitted direction reviewed | Blocks all lower stages | Yes | Visual bootstrap, exact body coordinate, retracement boundaries |
 | 2. Breakout/Wickfill/Fakeout | `confirmed` conceptually | 4H context and relevant level | One classification recorded | Unclassified context blocks | Yes | Exact geometries and tolerances |
-| 3. Relevant liquidity | `confirmed` + `human_validation_required` | Session levels and 1H/4H context | Asia/London extrema and structural coincidences recorded | Missing levels block sweep evaluation | Yes | Structural-point algorithm, coincidence tolerance and priority |
+| 3. Relevant liquidity | `confirmed` + `human_validation_required` | Session levels and 1H/4H context | Asia/London extrema and structural coincidences recorded separately from 4H bootstrap | Missing levels block sweep evaluation | Yes | Structural-point algorithm, coincidence tolerance and priority |
 | 4. Asia High/Low | `confirmed` | Completed 1H candles with local `OpenTime` in the Asia interval | Maximum `High` and minimum `Low` recorded | Missing required data returns `data_unavailable` | No | Data completeness policy for non-nominal sessions |
 | 5. London High/Low | `confirmed` | Completed 1H candles with local `OpenTime` in the London interval | Maximum `High` and minimum `Low` recorded | Missing required data returns `data_unavailable` | No | Data completeness policy for non-nominal sessions |
 | 6. Preparation | `confirmed` | Clock, context and levels | Preparation begins at 08:00 `America/Bogota` | Incomplete preparation blocks entry | Yes for analysis content | Calendar eligibility |
 | 7. Trading-window start | `confirmed` | Clock in `America/Bogota` | `waiting` before 08:30 | Entry prohibited before start | No for timezone/DST | None for timezone/DST |
-| 8. Liquidity sweep | `confirmed` conceptually | Marked high/low and price | Price exceeds the level; remaining details human-approved | Without an exceedance, remain `waiting` | Yes | Minimum penetration, rejection, pre-08:30 validity |
+| 8. Liquidity sweep | `confirmed` conceptually | Directionally relevant marked high/low and price | Price exceeds the selected High or goes below the selected Low; remaining details human-approved | Without the mandatory take, no downstream setup is valid | Yes | Level priority, rejection, pre-08:30 validity |
 | 9. Move to 5M | `confirmed` | Approved sweep, 5M data | 5M review enabled | Blocks inversion without sweep | No | Data alignment |
-| 10. 5M inversion OR | `confirmed` | 5M structure/FVG evidence | First occurring traditional change `OR` IFVG validated | Without either, `waiting` | Yes | Swing algorithm and IFVG geometry |
+| 10. 5M inversion OR | `confirmed` | Approved liquidity take and 5M structure/FVG evidence | First occurring Structural Change/ChoCH/MSS `OR` IFVG validated | Cannot precede the liquidity take and does not satisfy continuation FVG | Yes | Swing algorithm, strong/decisive threshold and IFVG geometry |
 | 11. 5M close | `confirmed` | Bullish-structure swing and 5M close | Candle body closes beyond relevant swing | Wick alone is `failed`; open candle is `waiting` | Yes for swing selection/marginal close | Pivot and minimum distance |
-| 12. Continuation FVG | `confirmed` + `human_validation_required` | Three 5M candles after inversion | FVG favors new sell-side move and is clear | Missing/weak FVG means `no_trade` | Yes | Minimum size and quality threshold |
+| 12. Continuation FVG | `confirmed` + `human_validation_required` | Three 5M candles after the Step-4 trigger | Separate clear FVG favors the new sell-side move | Without this mandatory gate, Step 6 is not enabled | Yes | Minimum size, quality and lifecycle |
 | 13. Move to 1M | `confirmed` | Approved FVG, 1M data | 1M review enabled | Blocks entry if data absent | No | Data alignment |
-| 14. Corrective retracement | `confirmed` + `human_validation_required` | 1M candles against new 5M move | Retracement identified | No retracement means `waiting` | Yes | Correction boundaries |
+| 14. Corrective retracement | `confirmed` + `human_validation_required` | Approved Step-5 FVG and countertrend 1M candles | Pullback toward/into the relevant 5M FVG identified | Without the pullback/FVG interaction, no realignment gate | Yes | Interaction depth, correction boundaries and timeout |
 | 15. 1M realignment | `confirmed` + `human_validation_required` | Corrective microstructure | Candidate sell realignment identified | No realignment means no entry | Yes | Corrective swing algorithm |
 | 16. Corrective swing break | `confirmed` | Entry swing and closed 1M candle | Body closes beyond corrective swing | Wick/open candle does not pass | Yes for swing selection | Marginal close distance |
 | 17. Entry | `confirmed` + `unresolved` | All earlier stages approved | `human_validation_required` | No automatic order creation | Yes | Order type, timing, slippage, attempts |
-| 18. Stop Loss | `confirmed` conceptually + `human_validation_required` | Structural 5M LH and entry | Human validates SL where the sell idea loses structural meaning | Missing/ambiguous structural SL means `no_trade` | Yes | LH algorithm, invalidation geometry, buffer and costs |
-| 19. Break Even | `confirmed` mechanism + `candidate` universality | Post-entry 1M swing and closed candle | SL moved to entry after break and close | Not evaluated before entry | Yes for post-entry swing | Costs, applicability, later management |
-| 20. Take Profit | `confirmed` conceptually + `human_validation_required` | Candidate lows and position state | Important low selected | No automatic target selection | Yes | Importance algorithm, priority, ratio, partials |
+| 18. Stop Loss | `confirmed` conceptually + `human_validation_required` | Latest relevant structural 5M LH and entry | Human validates SL above/beyond the LH wick | Missing/ambiguous structural SL blocks management automation | Yes | LH algorithm, exact offset, spread and costs |
+| 19. Break Even | `confirmed` conceptually + `human_validation_required` | Entry and first important favorable downside liquidity target | On source-confirmed reach/touch, SL moves to entry | Not evaluated before entry or target interaction | Yes | First-important selection, touch semantics, costs and later management |
+| 20. Take Profit | `confirmed` conceptually + `human_validation_required` | Relevant downside liquidity lows and position state | Important target, including relevant Asia/London Low, selected | No automatic target selection | Yes | Priority among candidates, ratio and partials |
 | 21. Trading-window end | `confirmed` | Clock in `America/Bogota` | `failed` for new entry after 11:30 | New entries prohibited | No for timezone/DST | Open-position management |
 | 22. Risk controls | `confirmed` max trade risk + open controls | Entry, Stop Loss, sizing inputs | At most 1% risk after human validation | Missing sizing/control data blocks execution | Yes | Position size, daily limit, kill switch |
 
 ## 9. 4H context
 
-Preparation begins at 08:00 `America/Bogota`, coinciding with the close of the 4H candle used for the review. Only information observable through that closed candle may be used. The mentor reviews 4H to read the structure already developed and to filter lower-timeframe oscillations/noise; 1M/5M internal movement does not independently create 4H structural points.
+Preparation begins at 08:00 `America/Bogota`, coinciding with the close of the 4H candle used for the review. Only information observable through that closed candle may be used. The mentor reviews 4H to read the structure already developed, determine the direction permitted for the later setup and filter lower-timeframe oscillations/noise; 1M/5M internal movement does not independently create 4H structural points.
 
-No rule initializes structure from the first candle, the first two candles, a fixed lookback or artificial initial H/L. The source statement that the initial H and L are not needed only confirms that the relevant task is to identify the current structural state, not how to bootstrap it algorithmically.
+The mentor visually/contextually starts from the major visible extreme that originated the current relevant movement and reconstructs the recent push, retracement, structural break, next push and current structure. Asia/London session highs and lows are not used to initialize this 4H structure. No rule defines a deterministic viewport or initializes from the first candle, first two candles, fixed lookback or artificial initial H/L; this remains a human visual bootstrap.
 
 ### 9.1 Confirmed structural concepts
 
@@ -125,6 +139,7 @@ No rule initializes structure from the first candle, the first two candles, a fi
 - After the confirming break, the mentor looks backward to the retracement preceding the breakout impulse and identifies the relevant turning extreme where that impulse originated. Human source evidence describes it as **"el punto exacto donde el precio desaceleró y rebotó"**.
 - In bullish context, the visual selection is the lowest relevant point of the retracement/contraction associated with that turn; minor intermediate pauses are discarded. The bearish relationship remains symmetric for the relevant high preceding the subsequent LL break.
 - Structural points and relevant turning/stop zones are marked on candle bodies. An isolated wick neither defines strong structural confirmation nor replaces the required body-close break.
+- After the recent structure is reconstructed, the active current pair is the latest confirmed HH and HL in bullish context, or the latest confirmed LL and LH in bearish context. Older points remain in the historical audit trail even when they are less relevant to the current decision.
 
 The source now materially clarifies how a retracement candidate is confirmed and selected retrospectively after an already-supplied structural level is broken. It does not define the exact boundaries of the relevant retracement interval or the exact OHLC/body coordinate that numerically represents a structural High/Low or turning point. No `Min(Candle.Low)`, `Min(Open, Close)`, `Max(Candle.High)`, `Max(Open, Close)` or equivalent formula is inferred.
 
@@ -162,7 +177,7 @@ These structural and context relationships are confirmed strategy concepts, not 
 
 ## 10. Liquidity
 
-Mark Asia High, Asia Low, London High and London Low. Also review structural points on 1H/4H, especially when they coincide with those session extrema. A liquidity level must be taken before searching for 5M inversion; the sweep alone is never an entry.
+Mark Asia High, Asia Low, London High and London Low. Also review structural points on 1H/4H, especially when they coincide with those session extrema. These horizontal liquidity references are a separate step and do not bootstrap 4H HH/HL/LL/LH structure. Coincidence may make a level more relevant in the mentor's reading, but no automatic hierarchy is defined. A liquidity level must be taken before searching for 5M inversion; the take alone is never an entry.
 
 For each trading/preparation day `D`, session membership is defined in local `America/Bogota` time by the 1H candle `OpenTime`:
 
@@ -182,7 +197,9 @@ Intervals are start-inclusive and end-exclusive. Asia crosses midnight; London d
 
 These extrema do not use `Open`, `Close`, candle bodies, averages, pivots or future candles. No resampling, interpolation, forward fill or synthetic candle generation is permitted. Missing required session data must produce `data_unavailable`; a future implementation must define and test provider-specific data completeness without inventing calendar behavior. At the normal 08:00 `America/Bogota` preparation time, Asia has ended at 02:00 and London at 07:00, so all four references come from completed prior sessions; this observation does not add a new execution rule.
 
-These definitions make `NQ-LIQ-001` sufficiently specified for a future deterministic implementation, but no evaluator is implemented by this documentation change. Structural-point detection, coincidence tolerance, liquidity priority, reuse after sweep, multiple sweeps, internal/external liquidity, equal levels, prior-day levels and pre-08:30 sweeps remain unresolved or require human validation. The confirmed high-level sweep condition is only that price exceeds an identified high or low; minimum penetration, close-back, rejection, displacement, timing and invalidation remain unresolved, and neither wick-only nor candle-close confirmation is inferred.
+These definitions make `NQ-LIQ-001` deterministically specified; this documentation change does not alter its existing runtime evaluator. Structural-point detection, coincidence tolerance, liquidity priority, reuse after sweep, multiple sweeps, internal/external liquidity, equal levels, prior-day levels and pre-08:30 sweeps remain unresolved or require human validation. The confirmed high-level take condition is only that price exceeds an identified High or goes below an identified Low; no extra penetration threshold, point/tick count, close-back, rejection, displacement or tolerance is inferred.
+
+Directional source examples support waiting for downside liquidity such as an Asia/London Low before bullish continuation, and upside liquidity such as an Asia/London High before bearish continuation. They do not define automatic priority among Asia, London or structural liquidity references.
 
 ## 11. Operating schedule
 
@@ -200,10 +217,10 @@ The strategy operates the New York market, but that market reference does not ch
 
 ## 12. 5M inversion
 
-Two alternatives are valid with `OR`: traditional structural change or IFVG, whichever occurs first. Both are not required and neither has a fixed priority.
+Only after the required liquidity take, two Step-4 alternatives are valid with `OR`: traditional Structural Change/ChoCH/MSS or IFVG, whichever occurs first. Both alternatives are not required and neither has a fixed priority. The extreme left by the liquidity-taking event can serve as the first 5M High/Low reference from which the mentor begins reading subsequent 5M structure; this observation does not define a complete 5M structural detector and does not solve 4H bootstrap.
 
-- Traditional change — for buys, break bearish structure; for sells, break bullish structure. A relevant 5M swing and candle-body close beyond it are required. A wick does not confirm. Pivot selection and marginal-close thresholds require human validation.
-- IFVG — conceptually `confirmed`: invalidation of a prior FVG may replace traditional structural change. Geometry, direction, partial/full close, mitigation, confirming candle, expiry, direct-entry capability and displacement relation are unresolved. No external IFVG definition applies.
+- Traditional change — for buys, break bearish structure; for sells, break bullish structure. A strong/decisive 5M candle-body close beyond the relevant prior swing is required. A wick does not confirm. “Strong/decisive,” pivot selection and marginal-close thresholds require human validation and have no numeric threshold.
+- IFVG — conceptually `confirmed`: candle-body action invalidating a prior FVG in the opposite direction may replace traditional structural change. Geometry, direction, partial/full close, mitigation, confirming candle, expiry and displacement relation are unresolved. No external IFVG definition applies. A Step-4 IFVG is not a direct entry and does not automatically satisfy Step 5.
 
 ## 13. 5M continuation FVG
 
@@ -214,19 +231,21 @@ minimum_size_points: null
 quality_validation: human_validation_required
 ```
 
-It must occur after 5M inversion and favor the new move. The space is evaluated between wicks of the first and third candles. Without a continuation FVG there is `no_trade`. One or two points were described as insufficient evidence of strength, but this qualitative observation does not establish a three-point minimum. Clear/evident size, volatility relation, fills, invalidation, lifespan and multiple-FVG selection remain open.
+This is a separate mandatory gate after the Step-4 trigger. The displacement responsible for the new direction must leave a 5M FVG favoring that move; without it, Step 6 is not enabled. A Step-4 IFVG does not satisfy this requirement merely by being an IFVG.
+
+The previously audited specification describes the FVG as a three-candle space between the first and third candle wicks. One or two points were described as insufficient evidence of strength, but this qualitative observation does not establish a three-point minimum. Clear/evident size, volatility relation, fills, invalidation, lifespan, multiple-FVG selection and whether any Step-4 IFVG can also form a distinct Step-5 FVG remain open.
 
 ## 14. 1M entry
 
-After the 5M inversion and FVG, move to 1M. Wait for a retracement against the new 5M move and corrective microstructure. Touching the 5M FVG alone does not authorize entry. The last corrective swing must break with a candle-body close; if 1M never realigns, no entry occurs.
+Only after the mandatory Step-5 FVG, move to 1M. Wait for a countertrend retracement toward/into that relevant 5M FVG and then for 1M structural realignment with the intended direction. For sells, the pullback is bullish and the realignment bearish; for buys, the pullback is bearish and the realignment bullish. Reaching the 5M FVG alone does not authorize entry. The last corrective swing must break with a candle-body close in the intended direction; if 1M never realigns, no entry concept becomes eligible.
 
 ### Entry swing
 
 The last swing of the corrective 1M structure whose break and close enables entry.
 
-### Break Even swing
+### Earlier post-entry swing observation
 
-A different swing formed after entry and used for position management.
+Earlier evidence distinguished a post-entry management swing from the corrective entry swing. The new authoritative Break-Even evidence uses first important favorable liquidity instead; whether the earlier swing retains a separate role remains unresolved and it is not the canonical trigger in this specification.
 
 Order type, close-versus-next-open timing, slippage, maximum chase distance, attempts, reentries, timeout, after-11:30 confirmation and corrective-swing algorithm are unresolved.
 
@@ -244,21 +263,21 @@ status: confirmed_concept
 human_validation_required: true
 ```
 
-Manual source-video re-verification resolves the prior competing interpretation involving the sweep extreme. The confirmed conceptual reference is the structural 5M HL for buys and structural 5M LH for sells, placed where the trade idea loses structural meaning.
+Manual source-video re-verification resolves the prior competing interpretation involving the sweep extreme. The confirmed conceptual reference is beyond the wick/tail of the latest relevant structural 5M HL for buys and beyond the wick/tail of the latest relevant structural 5M LH for sells, where the trade idea loses structural meaning.
 
-This reconciliation does not define how to detect HL/LH, select the relevant structural swing or translate “loses structural meaning” into deterministic geometry. Body/wick treatment, buffer, spread, slippage, maximum Stop Loss, oversized-stop behavior, pre-entry invalidation and risk reduction remain open. Human validation is still required and fully automatic demo execution remains blocked.
+This reconciliation does not define how to detect HL/LH, select the latest relevant structural swing or translate “beyond the wick” into an executable price. No one-tick, one-point, fixed, percentage, ATR, spread or broker-minimum offset is inferred. Spread, slippage, maximum Stop Loss, oversized-stop behavior, pre-entry invalidation and risk reduction remain open. Human validation is still required and fully automatic demo execution remains blocked.
 
 ## 16. Break Even
 
-The entry swing and Break Even swing are different. After entry, identify the first relevant 1M swing. Break Even activates after a 1M candle breaks and closes beyond that post-entry swing; Stop Loss then moves to entry.
+The newly confirmed management concept uses favorable liquidity rather than treating an isolated post-entry swing as the canonical trigger. For a sell, when price reaches/touches the first important downside liquidity/minimum target, move Stop Loss to entry. For a buy, when price reaches/touches the first important upside liquidity/maximum target, move Stop Loss to entry.
 
-An earlier explanation used “touch”; the later “break and close” explanation is treated as more specific. `mandatory_for_every_trade: candidate`. Swing algorithm, multiple swings, universality, commissions, spread, exact entry/cost basis, pre-confirmation retracement and subsequent management remain open.
+The relationship between this authoritative trigger and the earlier documented post-entry swing break is unresolved; the earlier swing rule must not replace the first-important-liquidity concept automatically. “First important,” reach/touch semantics, wick/body/close requirement, universality, commissions, spread, exact entry/cost basis, BE offset, timing delay, partial close, retained Take Profit and subsequent management remain open. The strategy concept is `confirmed`; a deterministic Break-Even algorithm is not defined.
 
 ## 17. Take Profit
 
 ```yaml
-buy_target_reference: important_high
-sell_target_reference: important_low
+buy_target_reference: relevant_upside_liquidity_including_asia_or_london_high
+sell_target_reference: relevant_downside_liquidity_including_asia_or_london_low
 importance_algorithm: null
 target_priority: null
 fixed_risk_reward: null
@@ -267,9 +286,9 @@ status: confirmed_concept
 human_validation_required: true
 ```
 
-Manual source-video re-verification confirms important highs as the target concept for buys and important lows for sells. The algorithm that determines importance and the priority among multiple candidates remain unresolved, so target selection still requires human validation.
+Manual source-video re-verification confirms important upside liquidity/highs for buys, specifically including relevant Asia High and London High, and important downside liquidity/lows for sells, specifically including relevant Asia Low and London Low. These are source-supported target candidates, not an automatic instruction to choose every session extreme.
 
-Asia Low and opposite session extremes remain `context_specific` examples that may satisfy the directional concept in their original context; they are not universal targets. Fixed ratio, partials, trailing, manual close and 1H/4H target priority are not confirmed.
+The algorithm that determines relevance/importance and priority among multiple candidates remains unresolved, so target selection still requires human validation. Neither Asia nor London always wins; nearest/farthest priority, fixed ratio, partials, trailing, manual close and 1H/4H target priority are not confirmed.
 
 ## 18. Risk
 
@@ -310,30 +329,30 @@ The phrase similar to “if it takes you out, do not seek re-entry” lacks suff
 
 ## 21. Waiting states
 
-Return `waiting` before 08:30 `America/Bogota`, before liquidity is taken, while inversion or candle close is pending, without a continuation FVG, during the 1M correction, before realignment, or while required post-entry management evidence has not formed. Return `data_unavailable` for missing required closed 1H session candles, other missing candles or unavailable timestamps. Return `human_validation_required` at subjective gates; later stages remain blocked.
+Existing audited status semantics remain: return `waiting` before 08:30 `America/Bogota`, while an expected event is pending, `data_unavailable` for missing required closed candles/timestamps and `human_validation_required` at subjective gates. The new strict dependency model does not by itself decide whether an unmet prerequisite maps to `failed`, `waiting` or `not_applicable`; that runtime mapping remains to be audited separately. Regardless of status label, downstream eligibility is not established while a mandatory prior gate is absent.
 
-## 22. No-trade conditions
+## 22. Entry-ineligibility conditions
 
 Confirmed:
 
 - No entry without a liquidity sweep.
 - No entry without confirmed 5M inversion.
 - A wick is not a 5M structural change.
-- No trade without a continuation 5M FVG.
-- No trade when FVG strength is insufficient according to human review.
+- No entry eligibility without a continuation 5M FVG.
+- FVG strength must be approved by human review before downstream eligibility.
 - No entry without 1M retracement and realignment.
 - No entry before 08:30 `America/Bogota`.
 - No new entry after 11:30 `America/Bogota`.
 
-FVG size/quality, displacement, Wickfill/Fakeout, structural HL/LH selection and important-high/important-low selection require human validation. News, oversized stops, target distance, reentries, operation counts, daily limit, data quality, lateral markets and holidays remain unresolved.
+These dependency statements do not select a runtime final verdict. FVG size/quality, displacement, Wickfill/Fakeout, structural HL/LH selection and important-high/important-low selection require human validation. News, oversized stops, target distance, reentries, operation counts, daily limit, data quality, lateral markets and holidays remain unresolved.
 
 ## 23. Human-validation points
 
-Human validation is required for bootstrapping the prior 4H structural level, delimiting the relevant retracement, translating body-marked structural points into exact prices, Breakout/Wickfill/Fakeout geometry/classification precedence, liquidity selection and sweep details, 5M pivots, IFVG, FVG quality, 1M correction/swing, order mechanics, structural Stop Loss selection, Break Even swing, important target selection, sizing, daily limit, news and reentries. Timezone/DST interpretation, the 08:00 closed-4H filter, rejection of minor fluctuations and the confirmed 4H body-close/retrospective-confirmation sequence are not human-validation points; selecting their unresolved structural inputs remains one.
+Human validation is required for 4H visual bootstrap, delimiting the relevant retracement, translating body-marked structural points into exact prices, Breakout/Wickfill/Fakeout geometry/classification precedence, liquidity selection, 1H/4H coincidence, 5M pivots, “strong/decisive” close, IFVG, FVG quality/lifecycle, 1M FVG interaction/corrective swing, order mechanics, structural Stop Loss selection/offset, liquidity-target priority, first-important-liquidity Break-Even semantics, sizing, daily limit, news and reentries. Timezone/DST interpretation, the 08:00 closed-4H filter, rejection of minor fluctuations, mandatory step order and confirmed body-close/retrospective-confirmation sequence are not human-validation points; selecting their unresolved inputs remains one.
 
 ## 24. Automation readiness
 
-The evidence supports assisted analysis, manual backtesting and supervised paper trading. Semi-automatic backtesting remains partial. The trading window, Asia/London session boundaries and extrema calculation are deterministically specified; the prior Stop Loss reference contradiction is resolved conceptually, and directional target concepts are confirmed. For 4H structure, the closed-candle filter, body-close requirement, retrospective confirmation order, relevant-turning-extreme concept and rejection of minor fluctuations are confirmed. Full detection remains non-deterministic because the prior reference-level bootstrap, retracement boundaries, exact numeric body coordinate, zone geometry, Wickfill completion and context precedence are unresolved. Subjective FVG quality, swing algorithms, structural Stop Loss geometry, target-importance selection, unresolved news/reentries and incomplete risk controls still prohibit fully automatic backtesting and autonomous execution.
+The evidence supports assisted analysis, manual backtesting and supervised paper trading. Semi-automatic backtesting remains partial. The end-to-end gate order, trading window, Asia/London boundaries and session-extrema calculation are confirmed; Step-1 and Step-2 inputs remain explicitly separate. For 4H structure, the closed-candle filter, body-close requirement, retrospective confirmation order, active-pair concept and rejection of minor fluctuations are confirmed, while visual bootstrap and exact geometry remain non-deterministic. Step-3 exceed semantics are confirmed but relevant-level priority is unresolved. Step 4 remains blocked by 5M structural/IFVG geometry; Step 5 remains human-validated for FVG quality/lifecycle; Step 6 remains human-validated for FVG interaction and 1M structural realignment. The Stop Loss wick anchor, directional session-liquidity targets and Break-Even liquidity-target concept are confirmed, while their exact executable selection and offsets remain unresolved. These gaps prohibit fully automatic backtesting and autonomous execution.
 
 ## 25. Traceability requirements
 

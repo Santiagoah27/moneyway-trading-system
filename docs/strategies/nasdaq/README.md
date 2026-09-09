@@ -23,12 +23,24 @@
 
 Real-money trading and autonomous execution are prohibited.
 
+## Canonical gated workflow
+
+1. At 08:00 `America/Bogota`, review the closed 4H context and permitted direction.
+2. Mark Asia/London extrema and relevant 1H/4H structural liquidity references; these levels do not seed 4H structure.
+3. From 08:30, require a relevant liquidity take before enabling any 5M setup.
+4. On 5M, require Structural Change `OR` IFVG, whichever occurs first.
+5. Separately require the directional 5M FVG confirmation produced after the Step-4 trigger.
+6. On 1M, require a countertrend pullback toward/into that FVG and structural realignment before entry eligibility.
+
+No downstream pattern is valid for this strategy when a mandatory prerequisite was not satisfied in chronological order. Management concepts then use a structural 5M HL/LH wick anchor for Stop Loss, relevant directional liquidity for Take Profit and the first important favorable liquidity target for Break-Even; their exact executable geometry remains unresolved.
+
 ## Critical open variables
 
 - Exact HH/LL and structural swing detection.
 - Liquidity priority, structural-point coincidence and sweep qualification beyond the confirmed session extrema.
-- Deterministic 5M HL/LH Stop Loss geometry.
-- Deterministic important-high/important-low target selection.
+- Deterministic 5M HL/LH detection and exact Stop Loss offset beyond the structural wick.
+- Deterministic priority among relevant upside/downside liquidity targets.
+- Deterministic first-important-liquidity and touch semantics for Break-Even.
 - News policy.
 - Reentries.
 - FVG quality threshold.
