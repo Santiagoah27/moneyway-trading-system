@@ -24,7 +24,7 @@ public sealed class MoneyWayNasdaqTradingWindowStartEvaluatorTests
         Assert.Equal(definition.StrategyId, evaluator.StrategyId);
         Assert.Equal(definition.Version, evaluator.StrategyVersion);
         Assert.Equal(rule.RuleId, evaluator.RuleId);
-        Assert.Equal(("Trading-window start", "Schedule", 100, true, RuleDefinitionStatus.Confirmed, "docs/strategies/nasdaq/rule-catalog.md"),
+        Assert.Equal(("Trading-window start", "Schedule", 65, true, RuleDefinitionStatus.Confirmed, "docs/strategies/nasdaq/rule-catalog.md"),
             (rule.Name, rule.Stage, rule.Sequence, rule.IsRequired, rule.DefinitionStatus, rule.SourceReference));
     }
 

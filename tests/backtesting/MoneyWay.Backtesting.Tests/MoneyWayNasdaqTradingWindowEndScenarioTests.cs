@@ -40,7 +40,7 @@ public sealed class MoneyWayNasdaqTradingWindowEndScenarioTests
         Assert.Equal(
             [new RuleId("NQ-LIQ-001"), new RuleId("NQ-TIME-001"), new RuleId("NQ-TIME-002")],
             observation.Evaluations.Select(item => item.RuleId));
-        Assert.Equal([50, 100, 260], observation.Evaluations.Select(item => item.Sequence));
+        Assert.Equal([50, 65, 260], observation.Evaluations.Select(item => item.Sequence));
         Assert.Equal(
             [RuleEvaluationResult.DataUnavailable, expectedStart, expectedEnd],
             observation.Evaluations.Select(item => item.Result));
