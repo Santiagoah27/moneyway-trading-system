@@ -23,7 +23,7 @@ Los resultados permitidos son `passed`, `failed`, `waiting`, `not_applicable`, `
 
 ## 4. Source coverage
 
-La documentación representa la evidencia actualmente auditada del video de 58:24, consolidada desde cinco intervalos y re-verificaciones humanas directas de los videos fuente. Estas re-verificaciones confirmaron la secuencia de seis etapas, 08:00/08:30/11:30 en hora Colombia, las sesiones Asia/London y sus extremos 1H, la guía de Stop Loss 5M HL/LH, los targets en important highs/lows y los conceptos estructurales 4H descritos en la sección 9. Una revisión humana del segundo video aclaró la confirmación retrospectiva y selección visual de puntos estructurales aproximadamente en `03:05–04:55` y `06:20–07:35`, el uso de cuerpos aproximadamente en `11:10–11:45` y el filtro higher-timeframe aproximadamente en `08:35–09:20`. La revisión humana posterior, especialmente de Video 3, confirmó el workflow end-to-end como una secuencia de gates obligatorios y aclaró la separación entre 4H context, session liquidity, 5M trigger, 5M FVG confirmation, 1M realignment y management. Los timestamps 4H suministrados son aproximados; no se inventan título, URL ni líneas de transcript. Salvo esos intervalos aproximados y `50:15` para riesgo máximo por operación, los timestamps de reglas individuales siguen siendo `null` cuando no fueron proporcionados.
+La documentación representa la evidencia actualmente auditada del video de 58:24, consolidada desde cinco intervalos y re-verificaciones humanas directas de los videos fuente. Estas re-verificaciones confirmaron la secuencia de seis etapas, preparación a las 08:00 y workflow operativo `[08:30, 11:00)` en hora Colombia, las sesiones Asia/London y sus extremos 1H, la guía de Stop Loss 5M HL/LH, los targets en important highs/lows y los conceptos estructurales 4H descritos en la sección 9. La evidencia humana directa más reciente corrige 11:30 como una interpretación anterior incorrecta: a las 11:00 comienza la "zona muerta" y no se continúa buscando o completando una entrada. Video 3 aproximadamente `04:15–04:30` también evidencia días sin liquidity take o sin confirmación estructural/inversa, para los cuales no hay trade y se vuelve al siguiente día operativo. Una revisión humana del segundo video aclaró la confirmación retrospectiva y selección visual de puntos estructurales aproximadamente en `03:05–04:55` y `06:20–07:35`, el uso de cuerpos aproximadamente en `11:10–11:45` y el filtro higher-timeframe aproximadamente en `08:35–09:20`. La revisión humana posterior, especialmente de Video 3, confirmó el workflow end-to-end como una secuencia de gates obligatorios y aclaró la separación entre 4H context, session liquidity, 5M trigger, 5M FVG confirmation, 1M realignment y management. Los timestamps suministrados son aproximados; no se inventan título, URL ni líneas de transcript. Salvo esos intervalos aproximados y `50:15` para riesgo máximo por operación, los timestamps de reglas individuales siguen siendo `null` cuando no fueron proporcionados.
 
 ## 5. Supported operating modes
 
@@ -47,7 +47,7 @@ La documentación representa la evidencia actualmente auditada del video de 58:2
 5. After the Step-4 trigger, separately require the displacement in the intended direction to leave the mandatory 5M FVG confirmation. A Step-4 IFVG does not automatically satisfy Step 5.
 6. Only after Step 5, move to 1M, require a counter-direction pullback toward/into the relevant 5M FVG and then require structural realignment with the intended direction before entry eligibility.
 
-Trading starts at 08:30 and ends at 11:30, always in `America/Bogota`. Entry order mechanics remain unresolved. For buys, the Stop Loss anchor is beyond the wick of the latest relevant structural 5M HL and target concepts include relevant upside Asia/London highs. For sells, the Stop Loss anchor is beyond the wick of the latest relevant structural 5M LH and target concepts include relevant downside Asia/London lows. When price reaches/touches the first important favorable liquidity target, the confirmed Break-Even concept moves Stop Loss to entry. Exact structural detection, offsets, target priority and Break-Even trigger geometry remain unresolved and require human validation.
+The operational entry-acquisition workflow starts at 08:30 and ends at 11:00, always in `America/Bogota`, with interval `[08:30, 11:00)`. Times before 11:00 may remain actionable; 11:00 and later are the mentor's "zona muerta" and are not actionable for a new or unfinished setup. Entry order mechanics remain unresolved. For buys, the Stop Loss anchor is beyond the wick of the latest relevant structural 5M HL and target concepts include relevant upside Asia/London highs. For sells, the Stop Loss anchor is beyond the wick of the latest relevant structural 5M LH and target concepts include relevant downside Asia/London lows. When price reaches/touches the first important favorable liquidity target, the confirmed Break-Even concept moves Stop Loss to entry. Exact structural detection, offsets, target priority and Break-Even trigger geometry remain unresolved and require human validation.
 
 The workflow is strictly sequential. A downstream signal observed in isolation is not valid for this strategy unless every mandatory prerequisite occurred in chronological order. This dependency statement does not itself assign `passed`, `failed`, `waiting` or `not_applicable`; runtime status mapping requires a separate audit.
 
@@ -64,6 +64,16 @@ The workflow is strictly sequential. A downstream signal observed in isolation i
 | Entry concept | All mandatory preceding gates | Eligibility only; no order type or execution is defined |
 
 At `StrategyReplayContext.AsOfUtc`, only prerequisites and confirming events observable at or before that timestamp may participate. A future liquidity take cannot activate an earlier Step 4, a future 5M FVG cannot activate an earlier Step 6, and a future 1M realignment cannot create past entry eligibility. Backtesting must not find a later successful pattern and retroactively assume its earlier gates were valid.
+
+### 6.2 Pre-entry lifecycle and cutoff
+
+- A valid liquidity take activates waiting for Step 4; it is not entry eligibility.
+- Continued movement in the manipulation direction does not confirm Step 4 and does not alone cancel the setup.
+- A wick-only break does not confirm Step 4 and does not alone cancel the setup. Before 11:00, the strategy continues waiting when no other audited cancellation occurred.
+- If price establishes a newer extreme before valid structural reversal confirmation, the active 5M structural reference is updated without deleting earlier reference observations. In the reviewed bearish-reversal example, a newer higher High becomes active and its corresponding relevant 5M low becomes the level watched for a later body-close structural break. No unsupported mirrored geometry is inferred.
+- If price consumes the intended target/liquidity destination before formal entry confirmation, the setup is cancelled and price must not be chased. Target priority, touch tolerance, wick/body/close semantics and partial-target behavior remain unresolved.
+- All Steps 3–6 and entry eligibility must complete before 11:00. At 11:00, unfinished pre-entry progression expires, there is no entry for that day, and the strategy returns the next operational day. A later dead-zone signal cannot revive the setup. For example, a 10:55 liquidity take followed by an 11:03 structural change cannot complete that expired setup.
+- This cutoff governs entry acquisition. It does not establish forced closure at 11:00 for a conceptual trade entered earlier; post-entry Stop Loss, Take Profit and Break-Even management remain separate.
 
 ## 7. Buy workflow
 
@@ -89,7 +99,7 @@ At `StrategyReplayContext.AsOfUtc`, only prerequisites and confirming events obs
 | 18. Stop Loss | `confirmed` conceptually + `human_validation_required` | Latest relevant structural 5M HL and entry | Human validates SL below/beyond the HL wick | Missing/ambiguous structural SL blocks management automation | Yes | HL algorithm, exact offset, spread and costs |
 | 19. Break Even | `confirmed` conceptually + `human_validation_required` | Entry and first important favorable upside liquidity target | On source-confirmed reach/touch, SL moves to entry | Not evaluated before entry or target interaction | Yes | First-important selection, touch semantics, costs and later management |
 | 20. Take Profit | `confirmed` conceptually + `human_validation_required` | Relevant upside liquidity highs and position state | Important target, including relevant Asia/London High, selected | No automatic target selection | Yes | Priority among candidates, ratio and partials |
-| 21. Trading-window end | `confirmed` | Clock in `America/Bogota` | `failed` for new entry after 11:30 | New entries prohibited | No for timezone/DST | Open-position management |
+| 21. Trading-window end | `confirmed` | Clock in `America/Bogota` | Pre-entry workflow is outside `[08:30, 11:00)` at or after 11:00 | New or unfinished entry setup expires at 11:00 | No for timezone/DST | Post-entry management remains separately unresolved |
 | 22. Risk controls | `confirmed` max trade risk + open controls | Entry, Stop Loss, sizing inputs | At most 1% risk after human validation | Missing sizing/control data blocks execution | Yes | Position size, daily limit, kill switch |
 
 ## 8. Sell workflow
@@ -118,7 +128,7 @@ Solo se incluyen relaciones direccionales expresamente documentadas. No se compl
 | 18. Stop Loss | `confirmed` conceptually + `human_validation_required` | Latest relevant structural 5M LH and entry | Human validates SL above/beyond the LH wick | Missing/ambiguous structural SL blocks management automation | Yes | LH algorithm, exact offset, spread and costs |
 | 19. Break Even | `confirmed` conceptually + `human_validation_required` | Entry and first important favorable downside liquidity target | On source-confirmed reach/touch, SL moves to entry | Not evaluated before entry or target interaction | Yes | First-important selection, touch semantics, costs and later management |
 | 20. Take Profit | `confirmed` conceptually + `human_validation_required` | Relevant downside liquidity lows and position state | Important target, including relevant Asia/London Low, selected | No automatic target selection | Yes | Priority among candidates, ratio and partials |
-| 21. Trading-window end | `confirmed` | Clock in `America/Bogota` | `failed` for new entry after 11:30 | New entries prohibited | No for timezone/DST | Open-position management |
+| 21. Trading-window end | `confirmed` | Clock in `America/Bogota` | Pre-entry workflow is outside `[08:30, 11:00)` at or after 11:00 | New or unfinished entry setup expires at 11:00 | No for timezone/DST | Post-entry management remains separately unresolved |
 | 22. Risk controls | `confirmed` max trade risk + open controls | Entry, Stop Loss, sizing inputs | At most 1% risk after human validation | Missing sizing/control data blocks execution | Yes | Position size, daily limit, kill switch |
 
 ## 9. 4H context
@@ -206,18 +216,20 @@ Directional source examples support waiting for downside liquidity such as an As
 ```yaml
 preparation_start_time: "08:00"
 entry_start_time: "08:30"
-trading_window_end_time: "11:30"
+trading_window_end_time: "11:00"
 timezone: "America/Bogota"
 daylight_saving_adjustment: false
 ```
 
-Preparation/analysis starts at 08:00. The trading window starts at 08:30 and ends at 11:30. All three are local Colombia times governed normatively by `America/Bogota`, which does not apply seasonal DST adjustments to these limits.
+Preparation/analysis starts at 08:00. The operational entry-acquisition window is `[08:30, 11:00)`: it starts at 08:30 and ends when 11:00 is reached. All three are local Colombia times governed normatively by `America/Bogota`, which does not apply seasonal DST adjustments to these limits.
 
-The strategy operates the New York market, but that market reference does not change its clock to `America/New_York`, EST or EDT. The same confirmed timezone governs the Asia and London definitions in section 10. Allowed days, holidays, early closes, low-liquidity sessions and management of positions after 11:30 remain unresolved.
+The strategy operates the New York market, but that market reference does not change its clock to `America/New_York`, EST or EDT. The same confirmed timezone governs the Asia and London definitions in section 10. Allowed days, holidays, early closes, low-liquidity sessions and management of positions after a pre-11:00 entry remain unresolved. No forced exit at 11:00 is confirmed.
 
 ## 12. 5M inversion
 
 Only after the required liquidity take, two Step-4 alternatives are valid with `OR`: traditional Structural Change/ChoCH/MSS or IFVG, whichever occurs first. Both alternatives are not required and neither has a fixed priority. The extreme left by the liquidity-taking event can serve as the first 5M High/Low reference from which the mentor begins reading subsequent 5M structure; this observation does not define a complete 5M structural detector and does not solve 4H bootstrap.
+
+Until Step 4 is confirmed and while local time remains before 11:00, a newer price extreme may replace the active 5M structural reference; prior observations remain in the audit history. Continued movement in the manipulation direction and a wick-only break do not confirm Step 4 and do not alone cancel the setup. The setup expires at 11:00 or is cancelled earlier if price consumes the intended target before formal entry confirmation.
 
 - Traditional change — for buys, break bearish structure; for sells, break bullish structure. A strong/decisive 5M candle-body close beyond the relevant prior swing is required. A wick does not confirm. “Strong/decisive,” pivot selection and marginal-close thresholds require human validation and have no numeric threshold.
 - IFVG — conceptually `confirmed`: candle-body action invalidating a prior FVG in the opposite direction may replace traditional structural change. Geometry, direction, partial/full close, mitigation, confirming candle, expiry and displacement relation are unresolved. No external IFVG definition applies. A Step-4 IFVG is not a direct entry and does not automatically satisfy Step 5.
@@ -247,7 +259,7 @@ The last swing of the corrective 1M structure whose break and close enables entr
 
 Earlier evidence distinguished a post-entry management swing from the corrective entry swing. The new authoritative Break-Even evidence uses first important favorable liquidity instead; whether the earlier swing retains a separate role remains unresolved and it is not the canonical trigger in this specification.
 
-Order type, close-versus-next-open timing, slippage, maximum chase distance, attempts, reentries, timeout, after-11:30 confirmation and corrective-swing algorithm are unresolved.
+Order type, close-versus-next-open timing, slippage, maximum entry distance, attempts, reentries and corrective-swing algorithm are unresolved. The time boundary is resolved: all pre-entry confirmation must complete before 11:00, and price must not be chased when the intended target was already consumed.
 
 ## 15. Stop Loss
 
@@ -342,7 +354,8 @@ Confirmed:
 - FVG strength must be approved by human review before downstream eligibility.
 - No entry without 1M retracement and realignment.
 - No entry before 08:30 `America/Bogota`.
-- No new entry after 11:30 `America/Bogota`.
+- No new or unfinished pre-entry setup may continue at or after 11:00 `America/Bogota`.
+- No entry when the intended target was consumed before formal entry confirmation; do not chase price.
 
 These dependency statements do not select a runtime final verdict. FVG size/quality, displacement, Wickfill/Fakeout, structural HL/LH selection and important-high/important-low selection require human validation. News, oversized stops, target distance, reentries, operation counts, daily limit, data quality, lateral markets and holidays remain unresolved.
 

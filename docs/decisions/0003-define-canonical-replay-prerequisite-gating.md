@@ -184,13 +184,13 @@ Canonical diagnostics will project the preserved raw evaluation, eligibility/pro
 
 The architecture is defined, but Nasdaq runtime configuration cannot yet be completed safely. It needs audited answers for:
 
-- when a liquidity-take event stops enabling Step 4;
 - whether another liquidity take replaces, coexists with or starts another setup;
 - how multiple Step-4 triggers and multiple Step-5 FVG confirmations are associated with a setup;
 - what resets progression after a downstream failure or incomplete confirmation;
-- whether 11:30 expires an analytical setup or only prevents new entry eligibility;
 - how human validation is introduced into replay progression;
 - how ineligible prerequisite states map to rule results and final verdict processing.
+
+Subsequent direct human source review resolved the time-bound lifecycle needed by this architecture: a valid liquidity take activates waiting for Step 4 while no audited cancellation has occurred and local time remains before 11:00 `America/Bogota`; unfinished pre-entry progression expires at 11:00 and cannot be revived by later signals. Consumption of the intended target before formal entry also cancels the setup. These clarifications configure the selected progression model without changing its architectural ownership or boundaries. Exact target selection/interaction and multiple-event association remain unresolved.
 
 Evaluator-specific geometry for 4H structure, relevant liquidity selection, 5M structure/IFVG/FVG and 1M realignment remains separately unresolved. Those algorithms are not architectural prerequisite semantics.
 

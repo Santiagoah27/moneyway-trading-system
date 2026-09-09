@@ -32,6 +32,10 @@ Real-money trading and autonomous execution are prohibited.
 5. Separately require the directional 5M FVG confirmation produced after the Step-4 trigger.
 6. On 1M, require a countertrend pullback toward/into that FVG and structural realignment before entry eligibility.
 
+The operational entry-acquisition window is `[08:30, 11:00)` in `America/Bogota`. All pre-entry gates must complete before 11:00. At 11:00, any unfinished setup expires; do not continue into the mentor's "zona muerta," chase price or carry the incomplete setup into a later day. This cutoff does not define forced closure of a conceptual trade entered before 11:00.
+
+After a valid liquidity take, wait for Step 4 while the setup remains inside the operational window and no audited cancellation has occurred. Continued movement in the manipulation direction or a wick-only structural break does not confirm Step 4 and does not alone cancel the setup. A newer extreme may update the active 5M structural reference before valid reversal confirmation. If price consumes the intended target before formal entry confirmation, cancel the setup and do not chase price; exact target selection and interaction geometry remain unresolved.
+
 No downstream pattern is valid for this strategy when a mandatory prerequisite was not satisfied in chronological order. Management concepts then use a structural 5M HL/LH wick anchor for Stop Loss, relevant directional liquidity for Take Profit and the first important favorable liquidity target for Break-Even; their exact executable geometry remains unresolved.
 
 ## Critical open variables

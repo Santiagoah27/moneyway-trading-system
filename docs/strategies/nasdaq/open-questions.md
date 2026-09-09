@@ -30,6 +30,11 @@ Still unresolved: a reproducible viewport for the visual bootstrap, exact retrac
 - Step 1 market structure and Step 2 session-liquidity references are separate.
 - A Step-4 IFVG is not a direct entry and does not automatically satisfy the Step-5 FVG gate.
 - At `StrategyReplayContext.AsOfUtc`, future liquidity takes, FVGs or 1M realignments cannot change a prior eligibility state.
+- Preparation remains 08:00 and the operational entry-acquisition interval is `[08:30, 11:00)` in `America/Bogota`. The former 11:30 cutoff was an incorrect interpretation and is not a second limit.
+- At 11:00, an unfinished pre-entry setup expires. A dead-zone signal cannot revive it; no forced close of an already-entered conceptual trade is established.
+- A valid liquidity take activates waiting for Step 4. Continued manipulation-direction movement and a wick-only break do not confirm Step 4 and do not alone cancel the setup.
+- Before Step 4 and before cutoff, a newer extreme may update the active 5M structural reference while prior observations remain auditable.
+- Consumption of the intended target before formal entry confirmation cancels the setup; do not chase price. Exact target selection and interaction semantics remain unresolved.
 - Exact runtime mapping of an unmet prerequisite to `failed`, `waiting` or `not_applicable` remains unaudited.
 
 ## Break
@@ -77,20 +82,20 @@ Confirmed conceptually: at 08:00 `America/Bogota`, Breakout `OR` Wickfill `OR` F
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
 | NQ-Q-SC-001 | ¿Qué días, feriados, cierres o sesiones se permiten? | Preparation is confirmed at 08:00 `America/Bogota`, but calendar eligibility remains undefined. | `unresolved` | `paper_trading` | Verified calendar policy and examples |
-| NQ-Q-SC-002 | ¿Cómo se gestionan posiciones abiertas después de las 11:30? | 11:30 only confirms the latest new entry. | `unresolved` | `paper_trading` | Explicit open-position examples after cutoff |
+| NQ-Q-SC-002 | ¿Cómo se gestionan posiciones abiertas después de las 11:00? | The 11:00 cutoff governs acquisition of new entries; no forced close of an already-entered conceptual trade is confirmed. | `unresolved` | `paper_trading` | Explicit post-entry management examples after cutoff |
 
 ## Liquidity sweep
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-SW-001 | ¿Qué close-back, rechazo, desplazamiento, plazo e invalidación aplican después de superar el selected High o bajar del selected Low? | The strict exceed/below comparison is confirmed without an extra tolerance, but lifecycle and the relevance of later evidence remain open. | `human_validation_required` | `semi_automatic_backtesting` | Positive/negative/boundary takes with timestamps and subsequent outcomes |
+| NQ-Q-SW-001 | ¿Qué close-back, rechazo, desplazamiento y asociaciones entre múltiples takes/setups aplican después de superar el selected High o bajar del selected Low? | Activation until audited cancellation or the 11:00 cutoff is confirmed, but multiple-event association and additional invalidations remain open. | `human_validation_required` | `semi_automatic_backtesting` | Positive/negative/boundary takes, multiple-event cases and subsequent outcomes |
 | NQ-Q-SW-002 | ¿Puede utilizarse una toma anterior a 08:30? | Affects operating sequence. | `unresolved` | `paper_trading` | Explicit pre-open examples and mentor decision |
 
 ## 5M structure
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-M5-001 | ¿Cómo se convierte el extreme left by the liquidity take en la primera referencia 5M y cómo se seleccionan después swing, pivots, internal swings y marginal closes? | The take extreme may begin the 5M reading, but the complete structural progression and strong/decisive close criteria are not reproducible. | `human_validation_required` | `semi_automatic_backtesting` | Annotated post-take structure with accepted/rejected initial references and closes |
+| NQ-Q-M5-001 | ¿Cómo se convierte el extreme left by the liquidity take en la primera referencia 5M y cómo se seleccionan después swing, pivots, internal swings, updated active references y marginal closes? | A newer extreme may update the active reference before Step 4, but exact reference/associated-low selection and strong/decisive close criteria are not reproducible. | `human_validation_required` | `semi_automatic_backtesting` | Annotated post-take structure with accepted/rejected initial and updated references, associated levels and closes |
 
 ## IFVG
 
@@ -113,7 +118,12 @@ Resolved: IFVG is only an alternative inside Step 4. It does not enable direct e
 |---|---|---|---|---|---|
 | NQ-Q-M1-001 | ¿Qué exact interaction depth/tolerance con el Step-5 FVG, corrective swing selection y timeout confirman el pullback y la realineación 1M? | Countertrend pullback toward/into the FVG followed by intended-direction realignment is confirmed, but its geometry is not reproducible. | `human_validation_required` | `semi_automatic_backtesting` | Annotated FVG interactions, corrections, pivots, failures and timeouts |
 | NQ-Q-M1-002 | ¿Qué order type, timing, slippage, distance and maximum attempts apply? | Defines executable entry mechanics. | `unresolved` | `paper_trading` | Audited execution examples and explicit limits |
-| NQ-Q-M1-003 | ¿Qué ocurre si la confirmación aparece después de las 11:30? | Cutoff applies to new entries. | `unresolved` | `paper_trading` | Explicit after-cutoff examples |
+
+### Resolved entry-cutoff question
+
+| Question ID | Resolution | Current status | Evidence |
+|---|---|---|---|
+| NQ-Q-M1-003 | A confirmation at or after 11:00 cannot complete or revive an unfinished pre-entry setup. The operational entry-acquisition interval is `[08:30, 11:00)`; after cutoff, do not chase and return the next operational day. This does not define forced closure of a trade entered before cutoff. | `confirmed` | Direct human source re-review; Video 3 approx. `04:15–04:30` |
 
 ## Stop Loss
 
