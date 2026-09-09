@@ -4,6 +4,7 @@
 
 - [ADR 0001](../decisions/0001-select-application-stack.md) accepted the initial application stack.
 - [ADR 0002](../decisions/0002-select-bootstrap-toolchain.md) accepted the bootstrap toolchain and physical solution structure.
+- [ADR 0003](../decisions/0003-define-canonical-replay-prerequisite-gating.md) places explicit, strategy-owned prerequisite gating in canonical replay orchestration while preserving stateless evaluators and raw observations.
 - The technical bootstrap is now authorized.
 - Detailed domain architecture and trading implementation remain pending.
 
