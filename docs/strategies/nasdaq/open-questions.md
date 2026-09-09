@@ -6,27 +6,35 @@ No answer is proposed from external trading theory. `Blocking level` is the earl
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-H4-001 | ¿Qué swing es estructural y qué algoritmo, velas y tolerancias lo identifican? | Controls Break/Wick/Fake classification. | `human_validation_required` | `semi_automatic_backtesting` | Mentor definition plus annotated positive, negative and marginal examples |
+| NQ-Q-H4-001 | ¿Cómo se seleccionan determinísticamente el previous structural High/Low y los retrocesos que pueden convertirse en HL/LH desde raw 4H candles? | Body-close and retrospective confirmation semantics are known, but the required structural inputs cannot yet be reproduced. | `human_validation_required` | `semi_automatic_backtesting` | Mentor selection method plus annotated positive, negative and marginal pivot/retracement examples |
 
-HH/LL trend review and the Breakout/Wickfill/Fakeout context alternatives are confirmed conceptually. This question concerns only their deterministic geometry.
+Confirmed by manual source-video re-verification: HH/LL require a body close beyond the prior human-selected structural High/Low; wick-only breaks are insufficient. The preceding retracement is confirmed retrospectively as HL/LH only after the subsequent HH/LL confirming candle closes. HH/HL is bullish, LL/LH is bearish, no initial-H/L bootstrap rule was supplied, and replay must not label the retracement as confirmed before that close. Deterministic pivot selection and visual “price slowdown” detection remain open.
 
 ## Break
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-BR-001 | ¿Qué distancia de cierre valida un Break y cómo se trata un cierre marginal? | Body-close concept is confirmed but threshold is not. | `unresolved` | `semi_automatic_backtesting` | Manually verified timestamp and boundary cases |
+| NQ-Q-BR-001 | ¿Cómo se selecciona el structural support/resistance level o zone relevante y qué width, tolerance o minimum penetration se aplica a un marginal close? | A 4H body close beyond the selected level/zone is confirmed and wick-only penetration is rejected, but the structural input and numeric boundary remain undefined. | `unresolved` | `semi_automatic_backtesting` | Annotated level/zone selections and positive, negative and marginal close cases |
 
 ## Wick
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-WI-001 | ¿Cómo se distingue Wick de sweep y qué define Wickfill, fill e invalidación? | Prevents collapsing Wick into Break or liquidity take. | `human_validation_required` | `analysis` | Explicit explanation and annotated Wick/non-Wick cases |
+| NQ-Q-WI-001 | ¿Qué prior wick extreme completa Wickfill, basta tocarlo o debe superarse, se requiere close y qué retracement/zone/tolerance aplica? | The post-Breakout wickfill progression is confirmed, but its completion and selected inputs are not deterministic. | `human_validation_required` | `analysis` | Annotated complete/incomplete Wickfill sequences, including multiple extrema and boundary cases |
+
+Confirmed by manual source-video re-verification: Wickfill follows an extended Breakout that left a wick/extreme; after price moves away or retraces, a later impulse seeks to travel through that space and reach or exceed the prior extreme. Approximate evidence: definition `04:23–04:32`, example `06:55–07:25`. “Reach or exceed” does not resolve the exact completion comparison.
 
 ## Fake
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-FA-001 | ¿Qué timeframe, cierre, distancia y número de velas confirman Fake y cómo afecta el bias? | Fake classification remains conceptual. | `human_validation_required` | `analysis` | Explicit criteria, sweep comparison and invalidation examples |
+| NQ-Q-FA-001 | ¿Cómo se selecciona el relevant 4H range/zone, cuánto puede tardar el retorno y qué tolerance, returning-candle choice, invalidation y bias effect aplican? | A new candle closing back inside after a failed Breakout is confirmed, but zone selection and lifecycle remain non-deterministic. | `human_validation_required` | `analysis` | Annotated positive, negative, marginal and overlapping-context examples |
+
+Confirmed by manual source-video re-verification: Fakeout is a Breakout that did not complete; price returns and a new candle closes back inside the relevant range/zone. Wick-only return is insufficient. Approximate evidence: definition `10:40`, return example `10:55–11:25`.
+
+## 4H context relationship
+
+Confirmed conceptually: at 08:00 `America/Bogota`, Breakout `OR` Wickfill `OR` Fakeout are alternative current 4H context classifications. Causally, Wickfill may follow an extended Breakout and Fakeout is a failed Breakout that closes back inside. Formal mutual exclusivity and precedence remain `human_validation_required` when visual conditions appear to coexist.
 
 ## Liquidity
 

@@ -23,7 +23,7 @@ Los resultados permitidos son `passed`, `failed`, `waiting`, `not_applicable`, `
 
 ## 4. Source coverage
 
-La documentación representa la evidencia actualmente auditada del video de 58:24, consolidada desde cinco intervalos y una re-verificación humana directa del video fuente. Esta re-verificación confirmó la secuencia de seis etapas, 08:00/08:30/11:30 en hora Colombia, las sesiones Asia/London y sus extremos 1H, la guía de Stop Loss 5M HL/LH y los targets en important highs/lows. No se inventan timestamps, URL ni líneas de transcript para esta corrección. Salvo `50:15` para riesgo máximo por operación, los timestamps de reglas individuales siguen siendo `null` cuando no fueron proporcionados.
+La documentación representa la evidencia actualmente auditada del video de 58:24, consolidada desde cinco intervalos y re-verificaciones humanas directas del video fuente. Estas re-verificaciones confirmaron la secuencia de seis etapas, 08:00/08:30/11:30 en hora Colombia, las sesiones Asia/London y sus extremos 1H, la guía de Stop Loss 5M HL/LH, los targets en important highs/lows y los conceptos estructurales 4H descritos en la sección 9. Los timestamps 4H suministrados son aproximados; no se inventan título, URL ni líneas de transcript. Salvo esos intervalos aproximados y `50:15` para riesgo máximo por operación, los timestamps de reglas individuales siguen siendo `null` cuando no fueron proporcionados.
 
 ## 5. Supported operating modes
 
@@ -40,7 +40,7 @@ La documentación representa la evidencia actualmente auditada del video de 58:2
 
 ## 6. High-level workflow
 
-1. At 08:00 `America/Bogota`, prepare the market on 4H: determine HH/LL trend and identify Breakout, Wickfill or Fakeout context.
+1. At 08:00 `America/Bogota`, prepare the market on 4H: review the current HH/HL or LL/LH structure and classify the context as Breakout `OR` Wickfill `OR` Fakeout through human validation.
 2. Mark Asia High/Low and London High/Low, and review coincident structural points on 1H/4H.
 3. Wait for price to exceed an identified liquidity high or low.
 4. Move to 5M and identify inversion through structural change `OR` IFVG, whichever occurs first.
@@ -109,13 +109,48 @@ Solo se incluyen relaciones direccionales expresamente documentadas. No se compl
 
 ## 9. 4H context
 
-Preparation begins at 08:00 `America/Bogota`. Analysis starts on 4H, identifies trend by reviewing whether the market is constructing HH or LL, and then classifies the context as Breakout, Wickfill or Fakeout.
+Preparation begins at 08:00 `America/Bogota`. The mentor reviews 4H to read the structure already developed; no rule initializes structure from the first candle, the first two candles, a fixed lookback or artificial initial H/L. The source statement that the initial H and L are not needed only confirms that the relevant task is to identify the current structural state, not how to bootstrap it algorithmically.
 
-- `Breakout` — `confirmed` conceptually: prior audited evidence that a Break requires a candle-body close beyond the relevant structural level remains applicable. Swing selection, structural algorithm, candle count, tolerances and marginal closes are unresolved.
-- `Wickfill` — conceptually `confirmed`, operationally `human_validation_required`: it is a distinct 4H context. Wickfill geometry, fill amount, effect, invalidation and distinction from a liquidity sweep remain open.
-- `Fakeout` — conceptually `confirmed`, operationally `human_validation_required`: it is a distinct 4H context. Range, return, timeframe/close, distance, allowed candles, sweep distinction and bias effect remain open.
+### 9.1 Confirmed structural concepts
 
-HH/LL and these three contexts are confirmed strategy concepts, not completed deterministic algorithms. They must not be collapsed into one body-close rule.
+- Bullish context is associated with an `HH → retracement → HL → HH → ...` progression.
+- Bearish context is associated with an `LL → retracement → LH → LL → ...` progression.
+- `HH` is a structural High above the previous structural High. A wick above is insufficient: `Candle.Close > previous structural High` confirms the bullish structural break and the new HH only after that candle closes.
+- `LL` is a structural Low below the previous structural Low. A wick below is insufficient: `Candle.Close < previous structural Low` confirms the bearish structural break and the new LL only after that candle closes.
+- After an HH, the low of a visually recognized slowdown/retracement is provisional. It becomes a confirmed `HL` only when a later candle closes above the previous HH and forms the next HH; the confirmed HL is above the corresponding prior structural Low.
+- After an LL, the high of a visually recognized slowdown/retracement is provisional. It becomes a confirmed `LH` only when a later candle closes below the previous LL and forms the next LL; the confirmed LH is below the corresponding prior structural High.
+
+“Price slows down” is confirmed only as a visual guide for recognizing the retracement. It does not define candle count, minimum retracement, pivot width, percentage, ATR or candle-size thresholds. Likewise, selecting the previous structural High/Low from raw 4H candles remains `human_validation_required`.
+
+### 9.2 Retrospective confirmation and historical replay
+
+HL/LH confirmation is retrospective but must not leak future information. At a replay time before the confirming candle has closed, the prior retracement remains candidate/unconfirmed. From the `AsOfUtc` at which the subsequent HH/LL break closes, the earlier retracement may be recorded as the confirmed HL/LH. A future candle must never change what was considered confirmed at an earlier replay timestamp.
+
+Historical automation of `NQ-H4-001` therefore requires reconstruction using only information observable through each `AsOfUtc`; this specification does not define the missing pivot/retracement algorithm.
+
+### 9.3 Breakout
+
+`Breakout` is conceptually `confirmed`. The reviewed 4H evidence at approximately `02:20–02:40` requires a candle-body close beyond the relevant prior structural level or zone; a wick alone does not confirm it. For a bullish context, the 4H candle closes above relevant structural resistance, which may be the prior HH. For a bearish context, it closes below relevant structural support.
+
+The exact support/resistance selection, zone construction and width, tolerance, choice among multiple levels and any minimum penetration or confirming-candle count remain unresolved. Consequently, the complete Breakout detector is not deterministic.
+
+### 9.4 Wickfill
+
+`Wickfill` is conceptually `confirmed` and operationally `human_validation_required`. At approximately `04:23–04:32`, the mentor describes it as filling the wick/tail. The confirmed progression is: a Breakout has occurred, the extension leaves a wick/extreme, price moves away or retraces, and a later impulse seeks to travel through that space again and reach or exceed the earlier wick extreme. The example at approximately `06:55–07:25` shows a retracement, ideally toward support/old resistance, followed by that renewed impulse.
+
+The source does not yet establish whether touching or exceeding the extreme completes Wickfill, whether a close is required, which wick applies when several exist, the exact retracement requirement, the support/resistance selection or tolerance. No exact comparison is inferred from “reach or exceed.”
+
+### 9.5 Fakeout
+
+`Fakeout` is conceptually `confirmed` and operationally `human_validation_required`. At approximately `10:40`, it is described as a Breakout that did not complete. The reviewed example at approximately `10:55–11:25` confirms this progression: price exits a relevant support, resistance, range or structural zone; the break fails; price returns; and a new candle closes back inside the relevant zone. A wick returning inside is insufficient when no candle has closed back inside.
+
+The allowed time/candle count, penetration tolerance, exact zone width and selection, which returning candle applies, numeric invalidation and effect on bias remain unresolved.
+
+### 9.6 Context relationship and implementation boundary
+
+At the 08:00 review, `Breakout`, `Wickfill` and `Fakeout` are three alternative current context/scenario classifications: `Breakout OR Wickfill OR Fakeout`, not an `AND` gate. They can nevertheless have causal history: Wickfill may follow an extended Breakout, while Fakeout is a failed Breakout that closes back inside structure. The source does not define formal mutual exclusivity or precedence when visual conditions appear to coexist, so classification remains human-validated.
+
+These structural and context relationships are confirmed strategy concepts, not a complete swing, pivot or scenario-classification engine. No fractal, fixed pivot width, ZigZag, percentage/ATR swing, point threshold, nearest local extreme or fixed lookback is part of the audited rule.
 
 ## 10. Liquidity
 
@@ -286,11 +321,11 @@ FVG size/quality, displacement, Wickfill/Fakeout, structural HL/LH selection and
 
 ## 23. Human-validation points
 
-Human validation is required for 4H HH/LL swings, Breakout/Wickfill/Fakeout geometry, liquidity selection and sweep details, 5M pivots, IFVG, FVG quality, 1M correction/swing, order mechanics, structural Stop Loss selection, Break Even swing, important target selection, sizing, daily limit, news and reentries. Timezone/DST interpretation is no longer a human-validation point for 08:00/08:30/11:30.
+Human validation is required for 4H structural pivot/retracement selection and Breakout/Wickfill/Fakeout geometry/classification precedence, liquidity selection and sweep details, 5M pivots, IFVG, FVG quality, 1M correction/swing, order mechanics, structural Stop Loss selection, Break Even swing, important target selection, sizing, daily limit, news and reentries. Timezone/DST interpretation and the confirmed 4H body-close semantics are not human-validation points; selecting the structural inputs to which those semantics apply remains one.
 
 ## 24. Automation readiness
 
-The evidence supports assisted analysis, manual backtesting and supervised paper trading. Semi-automatic backtesting remains partial. The trading window, Asia/London session boundaries and extrema calculation are deterministically specified; the prior Stop Loss reference contradiction is resolved conceptually, and directional target concepts are confirmed. The session-liquidity evaluator is not yet implemented. Subjective FVG quality, swing algorithms, structural Stop Loss geometry, target-importance selection, unresolved news/reentries and incomplete risk controls still prohibit fully automatic backtesting and autonomous execution.
+The evidence supports assisted analysis, manual backtesting and supervised paper trading. Semi-automatic backtesting remains partial. The trading window, Asia/London session boundaries and extrema calculation are deterministically specified; the prior Stop Loss reference contradiction is resolved conceptually, and directional target concepts are confirmed. The 4H structural relationships and close requirements are clearer, but structural pivot/retracement selection, zone geometry, Wickfill completion and context precedence remain non-deterministic. Subjective FVG quality, swing algorithms, structural Stop Loss geometry, target-importance selection, unresolved news/reentries and incomplete risk controls still prohibit fully automatic backtesting and autonomous execution.
 
 ## 25. Traceability requirements
 
