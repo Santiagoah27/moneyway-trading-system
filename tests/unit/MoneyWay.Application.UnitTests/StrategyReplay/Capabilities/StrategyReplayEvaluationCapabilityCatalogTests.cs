@@ -144,6 +144,29 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
     }
 
     [Fact]
+    public void NasdaqTakeProfitCapabilityReasonNamesOnlyCurrentSpecificationBlockers()
+    {
+        var declaration = Assert.Single(
+            MoneyWayReplayEvaluationCapabilityDeclarations.GetAll(),
+            item => item.StrategyId == Nasdaq.StrategyId &&
+                item.StrategyVersion == Nasdaq.Version &&
+                item.RuleId == new RuleId("NQ-TP-001"));
+
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, declaration.Status);
+        Assert.Contains("first encountered Asia/London target", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("final Take Profit", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("full-exit behavior is universal", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("equal", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("already-crossed", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("unavailable", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("initially-beyond", declaration.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("important-high/important-low selection", declaration.Reason, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("target priority", declaration.Reason, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("touch", declaration.Reason, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("tolerance", declaration.Reason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void NasdaqFourHourContextRemainsConfirmedWhileCapabilityIsExplicitlyBlocked()
     {
         var definition = Nasdaq;

@@ -15,7 +15,7 @@ public static class MoneyWayReplayEvaluationCapabilityDeclarations
         Blocked("moneyway-nasdaq", "nasdaq-0.1.0-draft", "NQ-H4-001", "Deterministic 4H structural context evaluation is blocked because the audited strategy does not define a reproducible method for selecting the previous structural High/Low and retracement pivots from closed candles.", NasdaqSource),
         Blocked("moneyway-nasdaq", "nasdaq-0.1.0-draft", "NQ-M5-004", "The deterministic IFVG geometry remains unresolved.", NasdaqSource),
         Blocked("moneyway-nasdaq", "nasdaq-0.1.0-draft", "NQ-SL-001", "Deterministic 5M HL/LH detection and structural invalidation geometry remain unresolved.", NasdaqSource),
-        Blocked("moneyway-nasdaq", "nasdaq-0.1.0-draft", "NQ-TP-001", "Deterministic important-high/important-low selection and target priority remain unresolved.", NasdaqSource),
+        Blocked("moneyway-nasdaq", "nasdaq-0.1.0-draft", "NQ-TP-001", "The audited source does not establish whether the first encountered Asia/London target is always the final Take Profit or whether observed full-exit behavior is universal; equal, already-crossed, unavailable, and initially-beyond target cases remain unresolved.", NasdaqSource),
     ];
 
     private static ReplayRuleEvaluationCapabilityDeclaration Blocked(string strategyId, string version, string ruleId, string reason, string source) =>
