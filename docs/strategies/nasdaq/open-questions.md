@@ -34,7 +34,7 @@ Still unresolved: a reproducible viewport for the visual bootstrap, exact retrac
 - At 11:00, an unfinished pre-entry setup expires. A dead-zone signal cannot revive it; no forced close of an already-entered conceptual trade is established.
 - A valid liquidity take activates waiting for Step 4. Continued manipulation-direction movement and a wick-only break do not confirm Step 4 and do not alone cancel the setup.
 - Before Step 4 and before cutoff, each valid farther same-side take keeps one active setup at Step 3 and updates its current 5M structural reference while prior observations remain auditable. It does not create a concurrent setup or satisfy Step 4.
-- Before completed pre-entry progression, exact touch of the first encountered intended Asia/London target cancels the old setup; wick contact is sufficient without close or tolerance. Do not chase price. Later evidence cannot revive it.
+- Once Step 3 has activated a setup, exact touch of its already-selected intended target before completed pre-entry progression cancels that setup; wick contact is sufficient without close or tolerance. Do not chase price. Later evidence cannot revive it. This active-setup cancellation is distinct from selecting a structural fallback when a session target was consumed before the operational setup context.
 - The opposite take never reverses permitted direction automatically. When aligned with the existing Step-1 4H direction, it may activate Step 3 of a new chronological setup; otherwise it creates no countertrend setup.
 - Exact runtime mapping of an unmet prerequisite to `failed`, `waiting` or `not_applicable` remains unaudited.
 
@@ -68,7 +68,7 @@ Confirmed conceptually: at 08:00 `America/Bogota`, Breakout `OR` Wickfill `OR` F
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-LQ-001 | ¿Qué prioridad existe entre Asia, London, 1H/4H, equal highs/lows and prior-day liquidity? | Determines which level can enable the setup. | `unresolved` | `semi_automatic_backtesting` | Ranked examples and explicit mentor rationale |
+| NQ-Q-LQ-001 | ¿Qué algoritmo selecciona el siguiente punto estructural 1H/4H cuando no queda un target Asia/London relevante y future-valid, qué prioridad existe entre 1H y 4H y cómo se resuelven ranking y empates? | The structural fallback concept is confirmed, but its deterministic construction is not. | `unresolved` (`STRUCTURAL_TARGET_TIMEFRAME_PRIORITY_UNRESOLVED`) | `semi_automatic_backtesting` | Annotated structural candidates, ranked examples, ties and explicit mentor rationale |
 | NQ-Q-LQ-002 | ¿Un nivel ya barrido expira o puede reutilizarse como future relevant level, y altera su consumo previo alguna validity/probability/risk consideration? | Same-side setup association is resolved, but level reuse and any probability/risk effect remain undefined. | `unresolved` | `semi_automatic_backtesting` | Repeated-level cases with explicit validity, probability and risk outcomes |
 | NQ-Q-LQ-004 | ¿Qué algoritmo identifica puntos estructurales 1H/4H y qué tolerancia define que coinciden con un extremo de sesión? | Structural confluence is confirmed but not deterministic. | `human_validation_required` | `semi_automatic_backtesting` | Annotated structural points and boundary cases |
 
@@ -91,7 +91,7 @@ Confirmed conceptually: at 08:00 `America/Bogota`, Breakout `OR` Wickfill `OR` F
 |---|---|---|---|---|---|
 | NQ-Q-SW-001 | ¿Qué close-back, rechazo o desplazamiento adicional, si alguno, califica un take después de superar el selected High o bajar del selected Low? | Direction-dependent setup association is now confirmed, but any qualification beyond exceed/break-below remains undefined. | `human_validation_required` | `semi_automatic_backtesting` | Positive, negative and marginal take examples |
 | NQ-Q-SW-002 | ¿Puede utilizarse una toma anterior a 08:30? | Affects operating sequence. | `unresolved` | `paper_trading` | Explicit pre-open examples and mentor decision |
-| NQ-Q-SW-006 | ¿Cómo se trata el target cuando ya fue cruzado antes de activarse el setup, los dos niveles coinciden, falta una sesión o el precio inicia más allá de un candidato? | La regla first-encountered no define estos límites. | `unresolved` | `semi_automatic_backtesting` | Human-reviewed boundary cases for each condition |
+| NQ-Q-SW-006 | ¿Qué ocurre si el target es consumido después de las 08:30 pero antes de que Step 3 active el setup? | The reviewed evidence distinguishes pre-operational fallback from active-setup cancellation but does not cover this interval edge. | `unresolved` | `semi_automatic_backtesting` | Human-reviewed examples spanning 08:30, target consumption and Step-3 activation |
 
 Resolved by direct human review of Video 3 at approximately `06:20–06:40` and `10:30–10:55`: same-side subsequent takes retain one pending setup at Step 3 and roll its active 5M reference; opposite-side target consumption cancels the setup; the opposite take can become Step 3 of a new setup only when aligned with Step-1 4H context. There is no source support for concurrent same-direction setups or automatic bias reversal.
 
@@ -101,6 +101,14 @@ Resolved by direct human review of Video 3 at approximately `06:20–06:40` and 
 |---|---|---|---|
 | NQ-Q-SW-003 | The candidates are London Low/Asia Low for sells and London High/Asia High for buys. When distinct, the immediate target is the first relevant level encountered in the expected direction of travel. Exact contact with the horizontal session-extreme wick level is sufficient, including wick contact; no body close, candle close, tolerance or penetration buffer applies. A pre-entry touch cancels the active setup. | `confirmed` | Direct human review of Video 3 approx. `09:40–10:55` and `13:25–13:40` |
 | NQ-Q-SW-005 | No candle timeframe is normative. The target is an absolute Asia/London price level and `TARGET_TOUCH_EVENT` is a timeframe-independent price-quote touch. The mentor's 1M chart is the visual post-entry management surface, not part of the target definition. | `confirmed` | Direct human review of Video 3 approx. `13:10–13:45` |
+
+### Resolved target edge and fallback semantics
+
+- When the relevant Asia and London targets have the same absolute price, they collapse into one unique target rather than two sequential targets. In the reviewed scenario, the shared level is final Take Profit and does not create an artificial intermediate Break-Even transition.
+- When a relevant session target was already consumed before the operational setup context, or otherwise no longer remains the next future-valid target, the source confirms using the next relevant structural 1H/4H point from Step 2. This confirms the fallback concept only; the structural detector, 1H-versus-4H priority, candidate ranking and tie handling remain unresolved.
+- Once a setup is active with a selected target, touching that target before entry completion cancels the setup. This is not a fallback event: do not chase price and do not revive the cancelled setup with later evidence.
+- Direct source trace: Video 3 approx. `03:10–03:25` and `08:50–10:50`; Video 1 approx. `10:10–10:30`.
+- The edge in which target consumption occurs after 08:30 but before Step-3 activation remains unresolved under `NQ-Q-SW-006`.
 
 ### Replay data-resolution limitation
 
@@ -159,7 +167,7 @@ Resolved: IFVG is only an alternative inside Step 4. It does not enable direct e
 
 | Question ID | Resolution | Current status | Evidence |
 |---|---|---|---|
-| NQ-Q-BE-001 | For a sell, use the first relevant London/Asia Low encountered downward; for a buy, use the first relevant London/Asia High encountered upward. Arbitrary structural candidates are not added to this exact role. | `confirmed` | Direct human review of Video 3 approx. `09:40–10:55` and `13:25–13:40` |
+| NQ-Q-BE-001 | For distinct targets, a sell uses the first relevant selected Low encountered downward and a buy uses the first relevant selected High encountered upward. When the relevant Asia/London prices are equal, they are one final target in the reviewed scenario and do not create an intermediate Break-Even step. Structural-fallback management beyond its target role remains unaudited. | `confirmed` for the reviewed session-target cases | Direct human review of Video 3 approx. `03:10–03:25`, `08:50–10:55` and `13:25–13:40`; Video 1 approx. `10:10–10:30` |
 | NQ-Q-BE-002 | Exact touch is sufficient, including wick contact, without body close, candle close or tolerance. The source supports moving Stop Loss to entry/Break-Even; executable cost basis remains covered by `NQ-Q-BE-004`. | `confirmed` | Direct human review of Video 3 approx. `09:40–10:55` and `13:25–13:40` |
 
 ## Take Profit
@@ -169,7 +177,7 @@ Resolved: IFVG is only an alternative inside Step 4. It does not enable direct e
 | NQ-Q-TP-001 | ¿El primer target Asia/London encontrado es siempre el TP final y exige salida completa, o puede ser solo un target de gestión previo? | One reviewed case supports full exit on touch, but it does not establish universal equivalence between the first BE target and final TP. | `unresolved` | `paper_trading` | Complete trades distinguishing first management target from final exit |
 | NQ-Q-TP-002 | ¿Existe fixed RR, partials, trailing or manual close? | Required for reproducible results and management. | `unresolved` | `paper_trading` | Complete audited trades and explicit management statements |
 
-Confirmed target scope: buy candidates are London High and Asia High; sell candidates are London Low and Asia Low. When distinct, first encountered in the expected price path determines the immediate target. The target is an absolute price and its touch is a timeframe-independent quote-level event without close or tolerance. Video 3 approximately `13:25–13:40` supports complete exit in one reviewed case only. Closed-candle replay can observe occurrence from OHLC range but not same-candle intrabar order.
+Confirmed target scope: primary buy candidates are London High and Asia High; primary sell candidates are London Low and Asia Low. When distinct and future-valid, first encountered in the expected price path determines the immediate target. Equal relevant session prices collapse into one unique target and the reviewed equal case treats it as final Take Profit without an intermediate Break-Even transition. If no relevant session candidate remains future-valid before the operational setup context, use the next relevant structural 1H/4H point conceptually; its deterministic selection remains unresolved. The selected target is an absolute price and its touch is a timeframe-independent quote-level event without close or tolerance. Video 3 approximately `13:25–13:40` supports complete exit in one additional distinct-target case only, so universal final-exit behavior remains unresolved. Closed-candle replay can observe occurrence from OHLC range but not same-candle intrabar order.
 
 ## Risk
 
