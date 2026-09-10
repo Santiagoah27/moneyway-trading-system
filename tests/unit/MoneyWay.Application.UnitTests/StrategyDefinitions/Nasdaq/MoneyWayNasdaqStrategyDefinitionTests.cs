@@ -115,23 +115,26 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("exceeds a selected relevant High", sweep.Description, StringComparison.Ordinal);
         Assert.Contains("goes below a selected relevant Low", sweep.Description, StringComparison.Ordinal);
         Assert.Contains("prerequisite", sweep.Description, StringComparison.Ordinal);
-        Assert.Contains("enables waiting for the downstream Step-4 5M trigger", sweep.Description, StringComparison.Ordinal);
-        Assert.Contains("not Step-4 confirmation or entry eligibility", sweep.Description, StringComparison.Ordinal);
+        Assert.Contains("enables downstream 5M progression", sweep.Description, StringComparison.Ordinal);
+        Assert.Contains("does not confirm Step 4 or entry", sweep.Description, StringComparison.Ordinal);
+        Assert.Contains("subsequent same-side extension", sweep.Description, StringComparison.Ordinal);
+        Assert.Contains("same single pending setup", sweep.Description, StringComparison.Ordinal);
+        Assert.Contains("rather than create a parallel setup", sweep.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("points", sweep.Description, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("ticks", sweep.Description, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("tolerance", sweep.Description, StringComparison.OrdinalIgnoreCase);
 
         var inversion = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-M5-001");
         Assert.Contains("active pre-entry setup before 11:00 America/Bogota", inversion.Description, StringComparison.Ordinal);
-        Assert.Contains("only after its valid liquidity take", inversion.Description, StringComparison.Ordinal);
+        Assert.Contains("only after its valid Step-3 liquidity take", inversion.Description, StringComparison.Ordinal);
         Assert.Contains("Structural Change OR IFVG", inversion.Description, StringComparison.Ordinal);
         Assert.Contains("whichever occurs first", inversion.Description, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("separate Step-5 FVG confirmation", inversion.Description, StringComparison.Ordinal);
-        Assert.Contains("body close beyond the active 5M structural reference", inversion.Description, StringComparison.Ordinal);
-        Assert.Contains("wick-only break", inversion.Description, StringComparison.Ordinal);
-        Assert.Contains("continued manipulation-direction movement remains pending", inversion.Description, StringComparison.Ordinal);
-        Assert.Contains("does not alone cancel the setup", inversion.Description, StringComparison.Ordinal);
-        Assert.Contains("newer extreme may update that reference", inversion.Description, StringComparison.Ordinal);
+        Assert.Contains("isolated 5M pattern without that preceding progression", inversion.Description, StringComparison.Ordinal);
+        Assert.Contains("not a valid strategy Step 4", inversion.Description, StringComparison.Ordinal);
+        Assert.Contains("same-side continuation may update the active structural reference", inversion.Description, StringComparison.Ordinal);
+        Assert.Contains("Step 4 remains pending", inversion.Description, StringComparison.Ordinal);
+        Assert.Contains("exact structural and IFVG geometry remain unresolved", inversion.Description, StringComparison.Ordinal);
 
         var buyChange = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-M5-002");
         Assert.Contains("After downside liquidity is taken", buyChange.Description, StringComparison.Ordinal);
@@ -169,12 +172,11 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("geometry remains unresolved", realignment.Description, StringComparison.Ordinal);
 
         var entry = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-M1-003");
-        Assert.Contains("all mandatory Steps 1 through 6", entry.Description, StringComparison.Ordinal);
+        Assert.Contains("valid preceding Steps 1 through 5", entry.Description, StringComparison.Ordinal);
+        Assert.Contains("Step-6 1M countertrend pullback and directional realignment", entry.Description, StringComparison.Ordinal);
         Assert.Contains("chronological order", entry.Description, StringComparison.Ordinal);
-        Assert.Contains("active pre-entry setup before 11:00 America/Bogota", entry.Description, StringComparison.Ordinal);
-        Assert.Contains("late isolated 1M signal cannot complete an expired setup", entry.Description, StringComparison.Ordinal);
-        Assert.Contains("target consumed before eligibility cancels the setup", entry.Description, StringComparison.Ordinal);
-        Assert.Contains("do-not-chase-price", entry.Description, StringComparison.Ordinal);
+        Assert.Contains("before 11:00 America/Bogota", entry.Description, StringComparison.Ordinal);
+        Assert.Contains("late isolated 1M signal cannot revive a cancelled or expired setup", entry.Description, StringComparison.Ordinal);
         Assert.Contains("runtime gate-status mapping", entry.Description, StringComparison.Ordinal);
         Assert.Contains("order mechanics remain unresolved", entry.Description, StringComparison.Ordinal);
 
