@@ -15,6 +15,14 @@ public sealed class AdvanceStrategyReplayLifecycleUseCase
         IStrategyReplayLifecyclePolicy policy,
         StrategyReplayContextObservation observation,
         StrategyReplayLifecycleSnapshot? previousSnapshot)
+        => Execute(workflow, policy, observation, previousSnapshot, null);
+
+    public StrategyReplayLifecycleAdvanceResult Execute(
+        StrategyReplayWorkflowDefinition workflow,
+        IStrategyReplayLifecyclePolicy policy,
+        StrategyReplayContextObservation observation,
+        StrategyReplayLifecycleSnapshot? previousSnapshot,
+        StrategyReplayProgressionSnapshot? previousProgression)
     {
         ArgumentNullException.ThrowIfNull(workflow);
         ArgumentNullException.ThrowIfNull(policy);
@@ -22,9 +30,13 @@ public sealed class AdvanceStrategyReplayLifecycleUseCase
         ValidateIdentityAndChronology(workflow, policy, observation, previousSnapshot);
 
         var previousActive = previousSnapshot?.ActiveInstance;
-        var candidateProgression = previousActive is null
-            ? progressionUseCase.StartInstance(workflow, observation)
-            : progressionUseCase.Execute(workflow, observation, previousActive.WorkflowProgression);
+        var candidateProgression = previousActive is not null
+            ? progressionUseCase.Execute(workflow, observation, previousActive.WorkflowProgression)
+            : previousSnapshot is null
+                || previousSnapshot.Instances.Count == 0
+                || !WasTerminatedOnSnapshot(previousSnapshot)
+                ? progressionUseCase.Execute(workflow, observation, previousProgression)
+                : progressionUseCase.StartInstance(workflow, observation);
         var policyContext = new StrategyReplayLifecyclePolicyContext(observation, candidateProgression, previousSnapshot);
         var transition = policy.Decide(policyContext) ?? throw new InvalidOperationException("Lifecycle policy returned null.");
         var instances = previousSnapshot?.Instances.ToList() ?? [];
@@ -113,6 +125,13 @@ public sealed class AdvanceStrategyReplayLifecycleUseCase
     private static void EnsureActive(StrategyReplayProgressionInstanceSnapshot? active, StrategyReplayLifecycleTransitionKind kind)
     {
         if (active is null) throw new InvalidOperationException($"Lifecycle transition '{kind}' requires an active progression.");
+    }
+
+    private static bool WasTerminatedOnSnapshot(StrategyReplayLifecycleSnapshot snapshot)
+    {
+        var lastTransition = snapshot.TransitionHistory.LastOrDefault();
+        return lastTransition?.AsOfUtc == snapshot.AsOfUtc
+            && lastTransition.Kind is StrategyReplayLifecycleTransitionKind.Cancel or StrategyReplayLifecycleTransitionKind.Expire;
     }
 
     private static void ReplaceInstance(

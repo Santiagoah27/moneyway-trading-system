@@ -37,6 +37,24 @@ public sealed class AdvanceStrategyReplayLifecycleUseCaseTests
     }
 
     [Fact]
+    public void PreActivationProgressionCanEstablishPrerequisitesBeforePolicyStartsAnInstance()
+    {
+        var policy = Policy((2, StrategyReplayLifecycleTransition.Start(new("R1"))));
+        var first = Advance(policy, Observation(1, Evaluation("A", RuleEvaluationResult.Passed)));
+
+        var second = useCase.Execute(
+            Workflow,
+            policy,
+            Observation(2, Evaluation("B", RuleEvaluationResult.Passed, 2)),
+            first.LifecycleProgression,
+            first.WorkflowProgression);
+
+        var active = Assert.IsType<StrategyReplayProgressionInstanceSnapshot>(second.LifecycleProgression.ActiveInstance);
+        Assert.Equal([new RuleId("A"), new RuleId("B")], active.WorkflowProgression.EstablishedRuleIds);
+        Assert.True(Assert.Single(active.WorkflowProgression.RuleEligibility).IsEligible);
+    }
+
+    [Fact]
     public void NoTransitionPreservesOneActiveInstanceWithoutDuplicateHistory()
     {
         var policy = Policy((1, StrategyReplayLifecycleTransition.Start(new("R1"))));
@@ -113,6 +131,35 @@ public sealed class AdvanceStrategyReplayLifecycleUseCaseTests
         Assert.False(old.IsActive);
         Assert.Empty(active.WorkflowProgression.EstablishedRuleIds);
         Assert.False(active.WorkflowProgression.RuleEligibility.Single().IsEligible);
+    }
+
+    [Fact]
+    public void CleanPostTerminationProgressionCanAccumulatePrerequisitesForALaterNewInstance()
+    {
+        var policy = Policy(
+            (1, StrategyReplayLifecycleTransition.Start(new("R1"))),
+            (2, StrategyReplayLifecycleTransition.Expire()),
+            (4, StrategyReplayLifecycleTransition.Start(new("R2"))));
+        var first = Advance(policy, Observation(1, Evaluation("A", RuleEvaluationResult.Passed)));
+        var second = Advance(policy, Observation(2, Evaluation("A", RuleEvaluationResult.Failed, 2)), first.LifecycleProgression);
+        var third = useCase.Execute(
+            Workflow,
+            policy,
+            Observation(3, Evaluation("A", RuleEvaluationResult.Passed, 3)),
+            second.LifecycleProgression,
+            second.WorkflowProgression);
+        var fourth = useCase.Execute(
+            Workflow,
+            policy,
+            Observation(4, Evaluation("B", RuleEvaluationResult.Passed, 4)),
+            third.LifecycleProgression,
+            third.WorkflowProgression);
+
+        Assert.Equal(2, fourth.LifecycleProgression.Instances.Count);
+        Assert.Equal(StrategyReplayProgressionTerminationKind.Expired, fourth.LifecycleProgression.Instances[0].TerminationKind);
+        var active = Assert.IsType<StrategyReplayProgressionInstanceSnapshot>(fourth.LifecycleProgression.ActiveInstance);
+        Assert.Equal(2, active.InstanceId.Ordinal);
+        Assert.Equal([new RuleId("A"), new RuleId("B")], active.WorkflowProgression.EstablishedRuleIds);
     }
 
     [Fact]

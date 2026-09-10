@@ -93,7 +93,12 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
                 }
                 else
                 {
-                    var advanced = lifecycleUseCase.Execute(workflow, lifecyclePolicy, strategyObservation, lifecycle);
+                    var advanced = lifecycleUseCase.Execute(
+                        workflow,
+                        lifecyclePolicy,
+                        strategyObservation,
+                        lifecycle,
+                        progression);
                     progression = advanced.WorkflowProgression;
                     lifecycle = advanced.LifecycleProgression;
                     strategyObservation = strategyObservation.WithProgressions(progression, lifecycle);
