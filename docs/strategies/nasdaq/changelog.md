@@ -2,6 +2,7 @@
 
 ## nasdaq-0.1.0-draft
 
+- Direct human review of Video 3 approximately `09:40–10:55` and `13:25–13:40` narrowed intended opposite-side targets to the Step-2 Asia/London session extrema: London/Asia Low for sells and London/Asia High for buys. When distinct, the immediate target is the first relevant level encountered in the expected price path. Exact contact with the horizontal wick extreme is sufficient without body close or tolerance. A pre-entry touch cancels the active setup; after entry, the same touch geometry supports the documented Break-Even trigger, while one reviewed case supports complete exit at its selected TP. Universal target-observation timeframe, same-observation ordering, candidate availability/already-crossed cases and whether the first BE target always equals final TP remain unresolved.
 - Initial repository documentation.
 - Based on the complete 58:24 mentorship analysis.
 - Confirmed sequence separated from subjective and unresolved criteria.

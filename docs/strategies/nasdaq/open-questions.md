@@ -34,7 +34,7 @@ Still unresolved: a reproducible viewport for the visual bootstrap, exact retrac
 - At 11:00, an unfinished pre-entry setup expires. A dead-zone signal cannot revive it; no forced close of an already-entered conceptual trade is established.
 - A valid liquidity take activates waiting for Step 4. Continued manipulation-direction movement and a wick-only break do not confirm Step 4 and do not alone cancel the setup.
 - Before Step 4 and before cutoff, each valid farther same-side take keeps one active setup at Step 3 and updates its current 5M structural reference while prior observations remain auditable. It does not create a concurrent setup or satisfy Step 4.
-- Consumption of the intended opposite-side target before formal entry confirmation cancels the old setup; do not chase price. Later evidence cannot revive it.
+- Before completed pre-entry progression, exact touch of the first encountered intended Asia/London target cancels the old setup; wick contact is sufficient without close or tolerance. Do not chase price. Later evidence cannot revive it.
 - The opposite take never reverses permitted direction automatically. When aligned with the existing Step-1 4H direction, it may activate Step 3 of a new chronological setup; otherwise it creates no countertrend setup.
 - Exact runtime mapping of an unmet prerequisite to `failed`, `waiting` or `not_applicable` remains unaudited.
 
@@ -91,9 +91,17 @@ Confirmed conceptually: at 08:00 `America/Bogota`, Breakout `OR` Wickfill `OR` F
 |---|---|---|---|---|---|
 | NQ-Q-SW-001 | ¿Qué close-back, rechazo o desplazamiento adicional, si alguno, califica un take después de superar el selected High o bajar del selected Low? | Direction-dependent setup association is now confirmed, but any qualification beyond exceed/break-below remains undefined. | `human_validation_required` | `semi_automatic_backtesting` | Positive, negative and marginal take examples |
 | NQ-Q-SW-002 | ¿Puede utilizarse una toma anterior a 08:30? | Affects operating sequence. | `unresolved` | `paper_trading` | Explicit pre-open examples and mentor decision |
-| NQ-Q-SW-003 | ¿Qué target concreto y qué wick/body/close/tolerance confirman que el destino opuesto fue consumido antes de entry? | Cancellation is confirmed, but its deterministic trigger is not reproducible. | `human_validation_required` | `semi_automatic_backtesting` | Annotated cancellation and near-touch counterexamples with selected target |
+| NQ-Q-SW-004 | ¿Qué evento prevalece cuando un mismo observable candle/frame contiene el target touch y el cierre que completaría `NQ-M1-003`? | OHLC puede mostrar ambos eventos sin probar su orden intrabar. | `unresolved` — `SAME_OBSERVATION_ORDERING_UNRESOLVED` | `semi_automatic_backtesting` | Human-source case that states precedence, or a source-approved finer event stream |
+| NQ-Q-SW-005 | ¿Qué timeframe o event stream es normativo para observar el target touch? | La referencia del mentor a “ese minuto” es un ejemplo y no establece universalmente 1M. | `unresolved` — `TARGET_TOUCH_OBSERVATION_TIMEFRAME_UNRESOLVED` | `semi_automatic_backtesting` | Explicit source statement across pre-entry and post-entry target interactions |
+| NQ-Q-SW-006 | ¿Cómo se trata el target cuando ya fue cruzado antes de activarse el setup, los dos niveles coinciden, falta una sesión o el precio inicia más allá de un candidato? | La regla first-encountered no define estos límites. | `unresolved` | `semi_automatic_backtesting` | Human-reviewed boundary cases for each condition |
 
 Resolved by direct human review of Video 3 at approximately `06:20–06:40` and `10:30–10:55`: same-side subsequent takes retain one pending setup at Step 3 and roll its active 5M reference; opposite-side target consumption cancels the setup; the opposite take can become Step 3 of a new setup only when aligned with Step-1 4H context. There is no source support for concurrent same-direction setups or automatic bias reversal.
+
+### Resolved target-consumption question
+
+| Question ID | Resolution | Current status | Evidence |
+|---|---|---|---|
+| NQ-Q-SW-003 | The candidates are London Low/Asia Low for sells and London High/Asia High for buys. When distinct, the immediate target is the first relevant level encountered in the expected direction of travel. Exact contact with the horizontal session-extreme wick level is sufficient, including wick contact; no body close, candle close, tolerance or penetration buffer applies. A pre-entry touch cancels the active setup. | `confirmed` | Direct human review of Video 3 approx. `09:40–10:55` and `13:25–13:40` |
 
 ## 5M structure
 
@@ -141,16 +149,24 @@ Resolved: IFVG is only an alternative inside Step 4. It does not enable direct e
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-BE-001 | ¿Cómo se selecciona el first important favorable liquidity level cuando existen varios Asia/London/structural candidates? | The liquidity-target trigger is confirmed, but “first important” is not deterministic. | `human_validation_required` | `semi_automatic_backtesting` | Ordered multi-target examples with accepted and rejected first levels |
-| NQ-Q-BE-002 | ¿Reach/touch significa wick touch, body interaction o close, y BE mueve a raw entry o entry plus costs? | Trigger geometry and exact Break-Even price remain unresolved. | `unresolved` | `paper_trading` | Marginal interaction examples and approved cost-basis policy |
 | NQ-Q-BE-003 | ¿Qué relación conserva el earlier post-entry swing observation con el nuevo first-important-liquidity trigger? | The authoritative trigger changed; silently combining or substituting both would invent management behavior. | `unresolved` | `paper_trading` | Complete examples showing both events and the mentor's chosen trigger |
+| NQ-Q-BE-004 | ¿Mover a entry/Break-Even usa el entry price bruto o incorpora costos, y el trigger aplica universalmente a toda operación? | Touch and target selection are narrowed, but exact executable BE price and universality are not established. | `unresolved` | `paper_trading` | Approved cost-basis policy and diverse complete trades |
+
+### Resolved Break-Even questions
+
+| Question ID | Resolution | Current status | Evidence |
+|---|---|---|---|
+| NQ-Q-BE-001 | For a sell, use the first relevant London/Asia Low encountered downward; for a buy, use the first relevant London/Asia High encountered upward. Arbitrary structural candidates are not added to this exact role. | `confirmed` | Direct human review of Video 3 approx. `09:40–10:55` and `13:25–13:40` |
+| NQ-Q-BE-002 | Exact touch is sufficient, including wick contact, without body close, candle close or tolerance. The source supports moving Stop Loss to entry/Break-Even; executable cost basis remains covered by `NQ-Q-BE-004`. | `confirmed` | Direct human review of Video 3 approx. `09:40–10:55` and `13:25–13:40` |
 
 ## Take Profit
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-TP-001 | ¿Cómo se determina relevance/importance y prioridad entre Asia High/London High para buys o Asia Low/London Low para sells y otros structural candidates? | Directional session-liquidity candidates are confirmed, but exact selection among multiple targets remains unresolved. | `human_validation_required` | `paper_trading` | Annotated important/non-important levels and Asia/London/structural priority counterexamples |
+| NQ-Q-TP-001 | ¿El primer target Asia/London encontrado es siempre el TP final y exige salida completa, o puede ser solo un target de gestión previo? | One reviewed case supports full exit on touch, but it does not establish universal equivalence between the first BE target and final TP. | `unresolved` | `paper_trading` | Complete trades distinguishing first management target from final exit |
 | NQ-Q-TP-002 | ¿Existe fixed RR, partials, trailing or manual close? | Required for reproducible results and management. | `unresolved` | `paper_trading` | Complete audited trades and explicit management statements |
+
+Confirmed target scope: buy candidates are London High and Asia High; sell candidates are London Low and Asia Low. When distinct, first encountered in the expected price path determines the immediate target. Exact wick-capable touch is sufficient without close or tolerance. Video 3 approximately `13:25–13:40` supports complete exit in one reviewed case only.
 
 ## Risk
 
