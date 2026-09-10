@@ -4,8 +4,8 @@ using MoneyWay.Domain.MarketData;
 namespace MoneyWay.Application.MarketData.Replay;
 
 /// <summary>
-/// Summarizes a completed synchronized multi-timeframe replay. <see cref="GlobalFramesProcessed"/> counts synchronized
-/// close-time events rather than the sum of source candles.
+/// Summarizes a completed synchronized multi-timeframe replay. <see cref="GlobalFramesProcessed"/> counts canonical
+/// observable boundaries rather than the sum of source items.
 /// </summary>
 public sealed class MultiTimeframeReplayRunResult
 {

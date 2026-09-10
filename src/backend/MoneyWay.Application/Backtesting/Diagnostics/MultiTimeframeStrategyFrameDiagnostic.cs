@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using MoneyWay.Application.MarketData.Replay;
 using MoneyWay.Application.StrategyReplay.Observability;
 using MoneyWay.Application.StrategyReplay.Workflow;
 using MoneyWay.Domain.MarketData;
@@ -7,8 +8,8 @@ using MoneyWay.Domain.Strategies;
 namespace MoneyWay.Application.Backtesting.Diagnostics;
 
 /// <summary>
-/// Represents a compact diagnostic projection of one synchronized canonical strategy outcome. It includes global
-/// replay timing and timeframe state, but no candle-history copies or trade information.
+/// Represents a compact diagnostic projection of one synchronized canonical strategy outcome. It includes replay
+/// timing, timeframe state, and source-resolution availability, but no market-history copies or trade information.
 /// </summary>
 public sealed class MultiTimeframeStrategyFrameDiagnostic
 {
@@ -26,7 +27,8 @@ public sealed class MultiTimeframeStrategyFrameDiagnostic
         IEnumerable<Timeframe> availableTimeframes,
         StrategyReplayProgressionSnapshot? workflowProgression = null,
         StrategyReplayLifecycleSnapshot? lifecycleProgression = null,
-        IEnumerable<ReplayMarketDataObservabilityAssessment>? marketDataObservability = null)
+        IEnumerable<ReplayMarketDataObservabilityAssessment>? marketDataObservability = null,
+        ReplayMarketDataAvailability? marketDataAvailability = null)
     {
         if (step <= 0) throw new ArgumentOutOfRangeException(nameof(step));
         if (asOfUtc.Offset != TimeSpan.Zero) throw new ArgumentException("Timestamp must be UTC.", nameof(asOfUtc));
@@ -82,6 +84,7 @@ public sealed class MultiTimeframeStrategyFrameDiagnostic
         WorkflowProgression = workflowProgression;
         LifecycleProgression = lifecycleProgression;
         MarketDataObservability = new ReadOnlyCollection<ReplayMarketDataObservabilityAssessment>(observability);
+        MarketDataAvailability = marketDataAvailability ?? ReplayMarketDataAvailability.CandleOnly;
     }
 
     public int Step { get; }
@@ -98,6 +101,7 @@ public sealed class MultiTimeframeStrategyFrameDiagnostic
     public StrategyReplayProgressionSnapshot? WorkflowProgression { get; }
     public StrategyReplayLifecycleSnapshot? LifecycleProgression { get; }
     public IReadOnlyList<ReplayMarketDataObservabilityAssessment> MarketDataObservability { get; }
+    public ReplayMarketDataAvailability MarketDataAvailability { get; }
 
     private static void ValidateUniqueItems<T>(IReadOnlyList<T> values, string parameterName) where T : class
     {

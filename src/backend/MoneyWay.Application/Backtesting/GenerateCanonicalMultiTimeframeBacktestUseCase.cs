@@ -1,4 +1,5 @@
 using MoneyWay.Application.Backtesting.Diagnostics;
+using MoneyWay.Application.MarketData.Replay;
 using MoneyWay.Domain.MarketData;
 using MoneyWay.Domain.Strategies;
 
@@ -26,6 +27,26 @@ public sealed class GenerateCanonicalMultiTimeframeBacktestUseCase(
         ArgumentNullException.ThrowIfNull(series);
 
         var outcomeRun = outcomeRunUseCase.Execute(strategyDefinition, series);
+        var report = diagnosticsUseCase.Execute(strategyDefinition, outcomeRun);
+        if (!ReferenceEquals(report.OutcomeRun, outcomeRun)
+            || report.StrategyId != strategyDefinition.StrategyId
+            || report.StrategyVersion != strategyDefinition.Version)
+        {
+            throw new InvalidOperationException("Canonical diagnostics do not match the generated strategy outcome run.");
+        }
+        return report;
+    }
+
+    public MultiTimeframeStrategyBacktestDiagnosticsReport Execute(
+        StrategyDefinition strategyDefinition,
+        IEnumerable<CandleSeries> series,
+        HistoricalMarketPriceObservationSeries marketPriceObservations)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition);
+        ArgumentNullException.ThrowIfNull(series);
+        ArgumentNullException.ThrowIfNull(marketPriceObservations);
+
+        var outcomeRun = outcomeRunUseCase.Execute(strategyDefinition, series, marketPriceObservations);
         var report = diagnosticsUseCase.Execute(strategyDefinition, outcomeRun);
         if (!ReferenceEquals(report.OutcomeRun, outcomeRun)
             || report.StrategyId != strategyDefinition.StrategyId

@@ -73,16 +73,45 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
     public MultiTimeframeStrategyBacktestRun Execute(StrategyDefinition strategyDefinition, IEnumerable<CandleSeries> series)
     {
         ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series);
+        return ExecuteCore(
+            strategyDefinition,
+            consumeContext => replayUseCase.Execute(
+                series,
+                frame => consumeContext(contextUseCase.Execute(strategyDefinition, frame))));
+    }
+
+    public MultiTimeframeStrategyBacktestRun Execute(
+        StrategyDefinition strategyDefinition,
+        IEnumerable<CandleSeries> series,
+        HistoricalMarketPriceObservationSeries marketPriceObservations)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series); ArgumentNullException.ThrowIfNull(marketPriceObservations);
+        return ExecuteCore(
+            strategyDefinition,
+            consumeContext => replayUseCase.Execute(
+                series,
+                marketPriceObservations,
+                frame => consumeContext(contextUseCase.ExecuteCanonical(strategyDefinition, frame))));
+    }
+
+    private MultiTimeframeStrategyBacktestRun ExecuteCore(
+        StrategyDefinition strategyDefinition,
+        Func<Action<StrategyReplayContext>, MultiTimeframeReplayRunResult> runReplay)
+    {
         var workflow = workflowCatalog.Find(strategyDefinition.StrategyId, strategyDefinition.Version);
         var lifecyclePolicy = lifecyclePolicyCatalog.Find(strategyDefinition.StrategyId, strategyDefinition.Version);
         StrategyReplayProgressionSnapshot? progression = null;
         StrategyReplayLifecycleSnapshot? lifecycle = null;
         var marketObservations = new List<MultiTimeframeBacktestObservation>();
         var strategyObservations = new List<StrategyReplayContextObservation>();
-        var replayResult = replayUseCase.Execute(series, frame =>
+        var replayResult = runReplay(context =>
         {
-            var context = contextUseCase.Execute(strategyDefinition, frame);
-            var marketObservation = new MultiTimeframeBacktestObservation(context.Step, context.AsOfUtc, context.UpdatedTimeframes, context.AvailableTimeframes);
+            var marketObservation = new MultiTimeframeBacktestObservation(
+                context.Step,
+                context.AsOfUtc,
+                context.UpdatedTimeframes,
+                context.AvailableTimeframes,
+                context.MarketDataAvailability);
             var strategyObservation = evaluationUseCase.Execute(strategyDefinition, context);
             if (workflow is not null)
             {

@@ -1,3 +1,4 @@
+using MoneyWay.Application.MarketData.Replay;
 using MoneyWay.Application.StrategyReplay;
 using MoneyWay.Domain.MarketData;
 using MoneyWay.Domain.Strategies;
@@ -18,7 +19,22 @@ public sealed class GenerateMultiTimeframeStrategyOutcomeBacktestRunUseCase(
     public MultiTimeframeStrategyOutcomeBacktestRun Execute(StrategyDefinition strategyDefinition, IEnumerable<CandleSeries> series)
     {
         ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series);
-        var strategyRun = strategyBacktestUseCase.Execute(strategyDefinition, series);
+        return CreateOutcomes(strategyDefinition, strategyBacktestUseCase.Execute(strategyDefinition, series));
+    }
+
+    public MultiTimeframeStrategyOutcomeBacktestRun Execute(
+        StrategyDefinition strategyDefinition,
+        IEnumerable<CandleSeries> series,
+        HistoricalMarketPriceObservationSeries marketPriceObservations)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series); ArgumentNullException.ThrowIfNull(marketPriceObservations);
+        return CreateOutcomes(strategyDefinition, strategyBacktestUseCase.Execute(strategyDefinition, series, marketPriceObservations));
+    }
+
+    private MultiTimeframeStrategyOutcomeBacktestRun CreateOutcomes(
+        StrategyDefinition strategyDefinition,
+        MultiTimeframeStrategyBacktestRun strategyRun)
+    {
         var outcomes = new List<StrategyReplayContextOutcome>(strategyRun.ObservationCount);
         foreach (var observation in strategyRun.StrategyObservations)
         {

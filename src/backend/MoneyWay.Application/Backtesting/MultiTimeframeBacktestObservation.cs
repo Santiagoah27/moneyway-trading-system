@@ -1,15 +1,21 @@
 using System.Collections.ObjectModel;
+using MoneyWay.Application.MarketData.Replay;
 using MoneyWay.Domain.MarketData;
 
 namespace MoneyWay.Application.Backtesting;
 
 /// <summary>
-/// Records compact temporal metadata for one synchronized backtest step, including available and updated timeframes,
-/// without copying candle history.
+/// Records compact temporal and source-resolution metadata for one canonical backtest step without copying candle or
+/// high-resolution observation history.
 /// </summary>
 public sealed class MultiTimeframeBacktestObservation
 {
-    public MultiTimeframeBacktestObservation(int step, DateTimeOffset asOfUtc, IEnumerable<Timeframe> updatedTimeframes, IEnumerable<Timeframe> availableTimeframes)
+    public MultiTimeframeBacktestObservation(
+        int step,
+        DateTimeOffset asOfUtc,
+        IEnumerable<Timeframe> updatedTimeframes,
+        IEnumerable<Timeframe> availableTimeframes,
+        ReplayMarketDataAvailability? marketDataAvailability = null)
     {
         if (step <= 0) throw new ArgumentOutOfRangeException(nameof(step));
         if (asOfUtc.Offset != TimeSpan.Zero) throw new ArgumentException("Timestamp must be UTC.", nameof(asOfUtc));
@@ -22,12 +28,14 @@ public sealed class MultiTimeframeBacktestObservation
         AsOfUtc = asOfUtc;
         UpdatedTimeframes = new ReadOnlyCollection<Timeframe>(updated);
         AvailableTimeframes = new ReadOnlyCollection<Timeframe>(available);
+        MarketDataAvailability = marketDataAvailability ?? ReplayMarketDataAvailability.CandleOnly;
     }
 
     public int Step { get; }
     public DateTimeOffset AsOfUtc { get; }
     public IReadOnlyList<Timeframe> UpdatedTimeframes { get; }
     public IReadOnlyList<Timeframe> AvailableTimeframes { get; }
+    public ReplayMarketDataAvailability MarketDataAvailability { get; }
 
     private static void Validate(IReadOnlyList<Timeframe> values, string parameterName)
     {

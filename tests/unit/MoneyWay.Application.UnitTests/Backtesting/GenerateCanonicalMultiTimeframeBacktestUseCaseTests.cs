@@ -1,5 +1,6 @@
 using MoneyWay.Application.Backtesting;
 using MoneyWay.Application.Backtesting.Diagnostics;
+using MoneyWay.Application.MarketData.Replay;
 using MoneyWay.Application.StrategyReplay;
 using MoneyWay.Domain.MarketData;
 using MoneyWay.Domain.Strategies;
@@ -101,6 +102,68 @@ public sealed class GenerateCanonicalMultiTimeframeBacktestUseCaseTests
         Assert.Equal(report.FrameCount, missing.Count);
     }
 
+    [Fact]
+    public void HighResolutionInputIsAdditiveAndDiagnosticsPreserveStrategyResults()
+    {
+        var candles = Series(Minute, 1, 2);
+        var before = candles.Candles.ToArray();
+        var baselineEvaluator = new Fake("A", _ => RuleEvaluationResult.Passed);
+        var enrichedEvaluator = new Fake("A", _ => RuleEvaluationResult.Passed);
+        var baseline = Facade([baselineEvaluator]).Execute(Definition("A"), [candles]);
+        var events = new HistoricalMarketPriceObservationSeries(
+            Provider,
+            Symbol,
+            [PriceObservation(1, 100, 10), PriceObservation(2, 101, 20)]);
+
+        var enriched = Facade([enrichedEvaluator]).Execute(Definition("A"), [candles], events);
+
+        Assert.Equal(baseline.Frames.Select(frame => (frame.AsOfUtc, frame.Verdict, frame.UpdatedTimeframes.Count)),
+            enriched.Frames.Select(frame => (frame.AsOfUtc, frame.Verdict, frame.UpdatedTimeframes.Count)));
+        Assert.Equal(baselineEvaluator.Invocations, enrichedEvaluator.Invocations);
+        Assert.All(enriched.Frames, frame =>
+        {
+            Assert.True(frame.MarketDataAvailability.HighResolutionInputConfigured);
+            Assert.Equal(1, frame.MarketDataAvailability.CurrentObservationCount);
+            Assert.True(frame.MarketDataAvailability.CurrentGroupHasAuthoritativeOrder);
+            Assert.Equal(["source-price"], frame.MarketDataAvailability.ObservationKinds);
+            Assert.Equal(["100ms"], frame.MarketDataAvailability.SourceResolutions);
+        });
+        Assert.Equal(before, candles.Candles);
+        Assert.Equal(baseline.ReadyCount, enriched.ReadyCount);
+    }
+
+    [Fact]
+    public void HighResolutionEventsAreExposedToContextOnlyAtCausalCanonicalBoundaries()
+    {
+        var contexts = new List<StrategyReplayContext>();
+        var evaluator = new Fake("A", context =>
+        {
+            contexts.Add(context);
+            return RuleEvaluationResult.Passed;
+        });
+        var events = new HistoricalMarketPriceObservationSeries(
+            Provider,
+            Symbol,
+            [
+                new(Provider, Symbol, Start.AddSeconds(10), 100, "source-price", "100ms"),
+                new(Provider, Symbol, Start.AddSeconds(20), 101, "source-price", "100ms"),
+            ]);
+
+        var report = Facade([evaluator]).Execute(Definition("A"), [Series(Minute, 1)], events);
+
+        Assert.Equal([Start.AddSeconds(10), Start.AddSeconds(20), Start.AddMinutes(1)], contexts.Select(context => context.AsOfUtc));
+        Assert.Equal([1, 2, 2], contexts.Select(context => context.MarketPriceObservations.ObservationCount));
+        Assert.Equal(3, report.ReadyCount);
+        Assert.Empty(contexts[0].AvailableTimeframes);
+        Assert.Equal([Minute], contexts[^1].AvailableTimeframes);
+        Assert.Null(contexts[^1].CurrentMarketPriceObservations);
+        var finalDiagnostic = report.Frames[^1];
+        Assert.Equal(2, finalDiagnostic.MarketDataAvailability.VisibleObservationCount);
+        Assert.Equal(0, finalDiagnostic.MarketDataAvailability.CurrentObservationCount);
+        Assert.Equal(["source-price"], finalDiagnostic.MarketDataAvailability.ObservationKinds);
+        Assert.Equal(["100ms"], finalDiagnostic.MarketDataAvailability.SourceResolutions);
+    }
+
     private static GenerateCanonicalMultiTimeframeBacktestUseCase Facade(IEnumerable<IReplayRuleEvaluator> evaluators) =>
         new(OutcomeUseCase(evaluators), new());
 
@@ -116,6 +179,9 @@ public sealed class GenerateCanonicalMultiTimeframeBacktestUseCaseTests
         Provider, Symbol, timeframe,
         closes.Select(close => new Candle(Provider, Symbol, timeframe, Start.AddMinutes(close - 1),
             Start.AddMinutes(close), 100, 101, 99, 100, null)));
+
+    private static HistoricalMarketPriceObservation PriceObservation(int minute, decimal price, long sequence) =>
+        new(Provider, Symbol, Start.AddMinutes(minute), price, "source-price", "100ms", sequence);
 
     private sealed class Fake(string ruleId, Func<StrategyReplayContext, RuleEvaluationResult> result) : IReplayRuleEvaluator
     {
