@@ -184,13 +184,12 @@ Canonical diagnostics will project the preserved raw evaluation, eligibility/pro
 
 The architecture is defined, but Nasdaq runtime configuration cannot yet be completed safely. It needs audited answers for:
 
-- whether another liquidity take replaces, coexists with or starts another setup;
 - how multiple Step-4 triggers and multiple Step-5 FVG confirmations are associated with a setup;
 - what resets progression after a downstream failure or incomplete confirmation;
 - how human validation is introduced into replay progression;
 - how ineligible prerequisite states map to rule results and final verdict processing.
 
-Subsequent direct human source review resolved the time-bound lifecycle needed by this architecture: a valid liquidity take activates waiting for Step 4 while no audited cancellation has occurred and local time remains before 11:00 `America/Bogota`; unfinished pre-entry progression expires at 11:00 and cannot be revived by later signals. Consumption of the intended target before formal entry also cancels the setup. These clarifications configure the selected progression model without changing its architectural ownership or boundaries. Exact target selection/interaction and multiple-event association remain unresolved.
+Subsequent direct human source review resolved the time-bound lifecycle needed by this architecture: a valid liquidity take activates waiting for Step 4 while no audited cancellation has occurred and local time remains before 11:00 `America/Bogota`; unfinished pre-entry progression expires at 11:00 and cannot be revived by later signals. Further review resolved the previously open multiple-take association by direction: a same-side subsequent take keeps one setup at Step 3 and updates its active reference, while opposite-side target consumption cancels the old setup and may activate Step 3 of a new setup only when aligned with the existing 4H context. These clarifications do not change prerequisite ownership or authorize Nasdaq hardcoding in generic orchestration. Exact target selection/interaction, active-reference geometry and IFVG-specific update behavior remain unresolved, and lifecycle transitions are not implemented by the prerequisite fold.
 
 Evaluator-specific geometry for 4H structure, relevant liquidity selection, 5M structure/IFVG/FVG and 1M realignment remains separately unresolved. Those algorithms are not architectural prerequisite semantics.
 

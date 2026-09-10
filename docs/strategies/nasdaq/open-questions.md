@@ -33,8 +33,9 @@ Still unresolved: a reproducible viewport for the visual bootstrap, exact retrac
 - Preparation remains 08:00 and the operational entry-acquisition interval is `[08:30, 11:00)` in `America/Bogota`. The former 11:30 cutoff was an incorrect interpretation and is not a second limit.
 - At 11:00, an unfinished pre-entry setup expires. A dead-zone signal cannot revive it; no forced close of an already-entered conceptual trade is established.
 - A valid liquidity take activates waiting for Step 4. Continued manipulation-direction movement and a wick-only break do not confirm Step 4 and do not alone cancel the setup.
-- Before Step 4 and before cutoff, a newer extreme may update the active 5M structural reference while prior observations remain auditable.
-- Consumption of the intended target before formal entry confirmation cancels the setup; do not chase price. Exact target selection and interaction semantics remain unresolved.
+- Before Step 4 and before cutoff, each valid farther same-side take keeps one active setup at Step 3 and updates its current 5M structural reference while prior observations remain auditable. It does not create a concurrent setup or satisfy Step 4.
+- Consumption of the intended opposite-side target before formal entry confirmation cancels the old setup; do not chase price. Later evidence cannot revive it.
+- The opposite take never reverses permitted direction automatically. When aligned with the existing Step-1 4H direction, it may activate Step 3 of a new chronological setup; otherwise it creates no countertrend setup.
 - Exact runtime mapping of an unmet prerequisite to `failed`, `waiting` or `not_applicable` remains unaudited.
 
 ## Break
@@ -68,7 +69,7 @@ Confirmed conceptually: at 08:00 `America/Bogota`, Breakout `OR` Wickfill `OR` F
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
 | NQ-Q-LQ-001 | ¿Qué prioridad existe entre Asia, London, 1H/4H, equal highs/lows and prior-day liquidity? | Determines which level can enable the setup. | `unresolved` | `semi_automatic_backtesting` | Ranked examples and explicit mentor rationale |
-| NQ-Q-LQ-002 | ¿Un nivel barrido expira, puede reutilizarse o cambia algo al barrer varios niveles? | Avoids invented validity/probability/risk rules. | `unresolved` | `semi_automatic_backtesting` | Repeated-level and multi-sweep cases with explicit outcomes |
+| NQ-Q-LQ-002 | ¿Un nivel ya barrido expira o puede reutilizarse como future relevant level, y altera su consumo previo alguna validity/probability/risk consideration? | Same-side setup association is resolved, but level reuse and any probability/risk effect remain undefined. | `unresolved` | `semi_automatic_backtesting` | Repeated-level cases with explicit validity, probability and risk outcomes |
 | NQ-Q-LQ-004 | ¿Qué algoritmo identifica puntos estructurales 1H/4H y qué tolerancia define que coinciden con un extremo de sesión? | Structural confluence is confirmed but not deterministic. | `human_validation_required` | `semi_automatic_backtesting` | Annotated structural points and boundary cases |
 
 ### Resolved session-liquidity question
@@ -88,8 +89,11 @@ Confirmed conceptually: at 08:00 `America/Bogota`, Breakout `OR` Wickfill `OR` F
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-SW-001 | ¿Qué close-back, rechazo, desplazamiento y asociaciones entre múltiples takes/setups aplican después de superar el selected High o bajar del selected Low? | Activation until audited cancellation or the 11:00 cutoff is confirmed, but multiple-event association and additional invalidations remain open. | `human_validation_required` | `semi_automatic_backtesting` | Positive/negative/boundary takes, multiple-event cases and subsequent outcomes |
+| NQ-Q-SW-001 | ¿Qué close-back, rechazo o desplazamiento adicional, si alguno, califica un take después de superar el selected High o bajar del selected Low? | Direction-dependent setup association is now confirmed, but any qualification beyond exceed/break-below remains undefined. | `human_validation_required` | `semi_automatic_backtesting` | Positive, negative and marginal take examples |
 | NQ-Q-SW-002 | ¿Puede utilizarse una toma anterior a 08:30? | Affects operating sequence. | `unresolved` | `paper_trading` | Explicit pre-open examples and mentor decision |
+| NQ-Q-SW-003 | ¿Qué target concreto y qué wick/body/close/tolerance confirman que el destino opuesto fue consumido antes de entry? | Cancellation is confirmed, but its deterministic trigger is not reproducible. | `human_validation_required` | `semi_automatic_backtesting` | Annotated cancellation and near-touch counterexamples with selected target |
+
+Resolved by direct human review of Video 3 at approximately `06:20–06:40` and `10:30–10:55`: same-side subsequent takes retain one pending setup at Step 3 and roll its active 5M reference; opposite-side target consumption cancels the setup; the opposite take can become Step 3 of a new setup only when aligned with Step-1 4H context. There is no source support for concurrent same-direction setups or automatic bias reversal.
 
 ## 5M structure
 
@@ -102,6 +106,7 @@ Confirmed conceptually: at 08:00 `America/Bogota`, Breakout `OR` Wickfill `OR` F
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
 | NQ-Q-IF-001 | ¿Cuál es la geometría, dirección, close, mitigation, confirming candle, expiry y relación con displacement del IFVG? | IFVG is an OR alternative but lacks operational definition. | `unresolved` | `semi_automatic_backtesting` | Audited mentor definition; no external ICT/SMC source |
+| NQ-Q-IF-002 | ¿Cómo afecta una actualización same-side de la active 5M reference a un IFVG candidate previo o en formación? | The setup-level reference update is confirmed, but branch-specific reset/retention behavior was not stated. | `unresolved` | `semi_automatic_backtesting` | Sequenced same-side update examples that include the IFVG branch |
 
 Resolved: IFVG is only an alternative inside Step 4. It does not enable direct entry, bypass Step 5 or automatically count as the mandatory Step-5 FVG.
 
