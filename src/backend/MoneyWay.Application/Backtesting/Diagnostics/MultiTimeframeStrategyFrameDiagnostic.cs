@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using MoneyWay.Application.StrategyReplay.Workflow;
 using MoneyWay.Domain.MarketData;
 using MoneyWay.Domain.Strategies;
 
@@ -21,7 +22,8 @@ public sealed class MultiTimeframeStrategyFrameDiagnostic
         RuleEvaluationResult? blockingResult,
         IEnumerable<RuleId> missingRequiredRuleIds,
         IEnumerable<Timeframe> updatedTimeframes,
-        IEnumerable<Timeframe> availableTimeframes)
+        IEnumerable<Timeframe> availableTimeframes,
+        StrategyReplayProgressionSnapshot? workflowProgression = null)
     {
         if (step <= 0) throw new ArgumentOutOfRangeException(nameof(step));
         if (asOfUtc.Offset != TimeSpan.Zero) throw new ArgumentException("Timestamp must be UTC.", nameof(asOfUtc));
@@ -50,6 +52,9 @@ public sealed class MultiTimeframeStrategyFrameDiagnostic
             throw new ArgumentException("Complete coverage cannot contain missing rules.", nameof(missingRequiredRuleIds));
         if (!hasCompleteRequiredCoverage && (verdict != StrategyVerdict.DataUnavailable || missing.Length == 0 || hasAnyBlockingValue))
             throw new ArgumentException("Incomplete coverage requires missing rules and a blocker-free data-unavailable verdict.");
+        if (workflowProgression is not null
+            && (workflowProgression.Step != step || workflowProgression.AsOfUtc != asOfUtc))
+            throw new ArgumentException("Workflow progression must match the frame step and timestamp.", nameof(workflowProgression));
 
         Step = step;
         AsOfUtc = asOfUtc;
@@ -62,6 +67,7 @@ public sealed class MultiTimeframeStrategyFrameDiagnostic
         MissingRequiredRuleIds = new ReadOnlyCollection<RuleId>(missing);
         UpdatedTimeframes = new ReadOnlyCollection<Timeframe>(updated);
         AvailableTimeframes = new ReadOnlyCollection<Timeframe>(available);
+        WorkflowProgression = workflowProgression;
     }
 
     public int Step { get; }
@@ -75,6 +81,7 @@ public sealed class MultiTimeframeStrategyFrameDiagnostic
     public IReadOnlyList<RuleId> MissingRequiredRuleIds { get; }
     public IReadOnlyList<Timeframe> UpdatedTimeframes { get; }
     public IReadOnlyList<Timeframe> AvailableTimeframes { get; }
+    public StrategyReplayProgressionSnapshot? WorkflowProgression { get; }
 
     private static void ValidateUniqueItems<T>(IReadOnlyList<T> values, string parameterName) where T : class
     {

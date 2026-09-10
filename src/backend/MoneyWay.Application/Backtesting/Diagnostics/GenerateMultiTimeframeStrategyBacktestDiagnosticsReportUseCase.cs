@@ -53,7 +53,8 @@ public sealed class GenerateMultiTimeframeStrategyBacktestDiagnosticsReportUseCa
                 evaluation?.BlockingResult,
                 outcome.MissingRequiredRuleIds,
                 market.UpdatedTimeframes,
-                market.AvailableTimeframes));
+                market.AvailableTimeframes,
+                outcome.Observation.WorkflowProgression));
         }
 
         var blockingCounts = blockers.Select(pair => new MultiTimeframeStrategyBlockingRuleCount(

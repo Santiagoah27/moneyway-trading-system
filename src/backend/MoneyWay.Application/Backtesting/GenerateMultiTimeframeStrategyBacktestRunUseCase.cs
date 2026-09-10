@@ -1,5 +1,6 @@
 using MoneyWay.Application.MarketData.Replay;
 using MoneyWay.Application.StrategyReplay;
+using MoneyWay.Application.StrategyReplay.Workflow;
 using MoneyWay.Domain.MarketData;
 using MoneyWay.Domain.Strategies;
 
@@ -9,18 +10,41 @@ namespace MoneyWay.Application.Backtesting;
 /// Runs one synchronized multi-timeframe replay, creates and evaluates one strategy context per global step, and records
 /// aligned observations. It performs no strategy-verdict aggregation or trading simulation.
 /// </summary>
-public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase(
-    RunMultiTimeframeReplayUseCase replayUseCase,
-    CreateStrategyReplayContextUseCase contextUseCase,
-    EvaluateStrategyReplayContextUseCase evaluationUseCase)
+public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
 {
-    private readonly RunMultiTimeframeReplayUseCase replayUseCase = replayUseCase ?? throw new ArgumentNullException(nameof(replayUseCase));
-    private readonly CreateStrategyReplayContextUseCase contextUseCase = contextUseCase ?? throw new ArgumentNullException(nameof(contextUseCase));
-    private readonly EvaluateStrategyReplayContextUseCase evaluationUseCase = evaluationUseCase ?? throw new ArgumentNullException(nameof(evaluationUseCase));
+    private readonly RunMultiTimeframeReplayUseCase replayUseCase;
+    private readonly CreateStrategyReplayContextUseCase contextUseCase;
+    private readonly EvaluateStrategyReplayContextUseCase evaluationUseCase;
+    private readonly StrategyReplayWorkflowCatalog workflowCatalog;
+    private readonly AdvanceStrategyReplayProgressionUseCase progressionUseCase;
+
+    public GenerateMultiTimeframeStrategyBacktestRunUseCase(
+        RunMultiTimeframeReplayUseCase replayUseCase,
+        CreateStrategyReplayContextUseCase contextUseCase,
+        EvaluateStrategyReplayContextUseCase evaluationUseCase)
+        : this(replayUseCase, contextUseCase, evaluationUseCase, StrategyReplayWorkflowCatalog.Empty, new())
+    {
+    }
+
+    public GenerateMultiTimeframeStrategyBacktestRunUseCase(
+        RunMultiTimeframeReplayUseCase replayUseCase,
+        CreateStrategyReplayContextUseCase contextUseCase,
+        EvaluateStrategyReplayContextUseCase evaluationUseCase,
+        StrategyReplayWorkflowCatalog workflowCatalog,
+        AdvanceStrategyReplayProgressionUseCase progressionUseCase)
+    {
+        this.replayUseCase = replayUseCase ?? throw new ArgumentNullException(nameof(replayUseCase));
+        this.contextUseCase = contextUseCase ?? throw new ArgumentNullException(nameof(contextUseCase));
+        this.evaluationUseCase = evaluationUseCase ?? throw new ArgumentNullException(nameof(evaluationUseCase));
+        this.workflowCatalog = workflowCatalog ?? throw new ArgumentNullException(nameof(workflowCatalog));
+        this.progressionUseCase = progressionUseCase ?? throw new ArgumentNullException(nameof(progressionUseCase));
+    }
 
     public MultiTimeframeStrategyBacktestRun Execute(StrategyDefinition strategyDefinition, IEnumerable<CandleSeries> series)
     {
         ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series);
+        var workflow = workflowCatalog.Find(strategyDefinition.StrategyId, strategyDefinition.Version);
+        StrategyReplayProgressionSnapshot? progression = null;
         var marketObservations = new List<MultiTimeframeBacktestObservation>();
         var strategyObservations = new List<StrategyReplayContextObservation>();
         var replayResult = replayUseCase.Execute(series, frame =>
@@ -28,6 +52,11 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase(
             var context = contextUseCase.Execute(strategyDefinition, frame);
             var marketObservation = new MultiTimeframeBacktestObservation(context.Step, context.AsOfUtc, context.UpdatedTimeframes, context.AvailableTimeframes);
             var strategyObservation = evaluationUseCase.Execute(strategyDefinition, context);
+            if (workflow is not null)
+            {
+                progression = progressionUseCase.Execute(workflow, strategyObservation, progression);
+                strategyObservation = strategyObservation.WithWorkflowProgression(progression);
+            }
             if (strategyObservation.StrategyId != strategyDefinition.StrategyId || strategyObservation.StrategyVersion != strategyDefinition.Version
                 || strategyObservation.ProviderId != context.ProviderId || strategyObservation.Symbol != context.Symbol
                 || strategyObservation.Step != context.Step || strategyObservation.AsOfUtc != context.AsOfUtc)

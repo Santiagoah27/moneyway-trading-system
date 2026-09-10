@@ -56,7 +56,8 @@ public sealed class MultiTimeframeStrategyOutcomeBacktestRun
     {
         if (actual.StrategyId != expected.StrategyId || actual.StrategyVersion != expected.StrategyVersion
             || actual.ProviderId != expected.ProviderId || actual.Symbol != expected.Symbol || actual.Step != expected.Step
-            || actual.AsOfUtc != expected.AsOfUtc || actual.Evaluations.Count != expected.Evaluations.Count)
+            || actual.AsOfUtc != expected.AsOfUtc || actual.Evaluations.Count != expected.Evaluations.Count
+            || !ReferenceEquals(actual.WorkflowProgression, expected.WorkflowProgression))
             return false;
         return actual.Evaluations.Zip(expected.Evaluations).All(pair =>
             pair.First.RuleId == pair.Second.RuleId && pair.First.DefinitionStatus == pair.Second.DefinitionStatus
