@@ -19,7 +19,8 @@ public sealed class StrategyReplayContextObservation
         int step,
         DateTimeOffset asOfUtc,
         IEnumerable<RuleEvaluation> evaluations,
-        StrategyReplayProgressionSnapshot? workflowProgression = null)
+        StrategyReplayProgressionSnapshot? workflowProgression = null,
+        StrategyReplayLifecycleSnapshot? lifecycleProgression = null)
     {
         ArgumentNullException.ThrowIfNull(strategyId);
         ArgumentNullException.ThrowIfNull(strategyVersion);
@@ -47,6 +48,15 @@ public sealed class StrategyReplayContextObservation
                 || workflowProgression.RuleEligibility.Zip(snapshot).Any(pair =>
                     pair.First.EstablishesProgression != (pair.First.IsEligible && pair.Second.Result == RuleEvaluationResult.Passed))))
             throw new ArgumentException("Workflow progression must match the observation identity and timestamp.", nameof(workflowProgression));
+        if (lifecycleProgression is not null
+            && (workflowProgression is null
+                || lifecycleProgression.StrategyId != strategyId
+                || lifecycleProgression.StrategyVersion != strategyVersion
+                || lifecycleProgression.ProviderId != providerId
+                || lifecycleProgression.Symbol != symbol
+                || lifecycleProgression.Step != step
+                || lifecycleProgression.AsOfUtc != asOfUtc))
+            throw new ArgumentException("Lifecycle progression must match the observation identity and timestamp.", nameof(lifecycleProgression));
         StrategyId = strategyId;
         StrategyVersion = strategyVersion;
         ProviderId = providerId;
@@ -55,6 +65,7 @@ public sealed class StrategyReplayContextObservation
         AsOfUtc = asOfUtc;
         Evaluations = new ReadOnlyCollection<RuleEvaluation>(snapshot);
         WorkflowProgression = workflowProgression;
+        LifecycleProgression = lifecycleProgression;
     }
 
     public StrategyId StrategyId { get; }
@@ -65,6 +76,7 @@ public sealed class StrategyReplayContextObservation
     public DateTimeOffset AsOfUtc { get; }
     public IReadOnlyList<RuleEvaluation> Evaluations { get; }
     public StrategyReplayProgressionSnapshot? WorkflowProgression { get; }
+    public StrategyReplayLifecycleSnapshot? LifecycleProgression { get; }
     public int EvaluationCount => Evaluations.Count;
 
     public StrategyReplayContextObservation WithWorkflowProgression(StrategyReplayProgressionSnapshot workflowProgression)
@@ -73,5 +85,25 @@ public sealed class StrategyReplayContextObservation
         if (WorkflowProgression is not null)
             throw new InvalidOperationException("Workflow progression is already attached to this observation.");
         return new(StrategyId, StrategyVersion, ProviderId, Symbol, Step, AsOfUtc, Evaluations, workflowProgression);
+    }
+
+    public StrategyReplayContextObservation WithProgressions(
+        StrategyReplayProgressionSnapshot workflowProgression,
+        StrategyReplayLifecycleSnapshot lifecycleProgression)
+    {
+        ArgumentNullException.ThrowIfNull(workflowProgression);
+        ArgumentNullException.ThrowIfNull(lifecycleProgression);
+        if (WorkflowProgression is not null || LifecycleProgression is not null)
+            throw new InvalidOperationException("Replay progression is already attached to this observation.");
+        return new(
+            StrategyId,
+            StrategyVersion,
+            ProviderId,
+            Symbol,
+            Step,
+            AsOfUtc,
+            Evaluations,
+            workflowProgression,
+            lifecycleProgression);
     }
 }

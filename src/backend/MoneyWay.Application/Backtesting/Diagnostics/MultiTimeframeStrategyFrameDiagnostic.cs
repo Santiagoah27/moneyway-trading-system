@@ -23,7 +23,8 @@ public sealed class MultiTimeframeStrategyFrameDiagnostic
         IEnumerable<RuleId> missingRequiredRuleIds,
         IEnumerable<Timeframe> updatedTimeframes,
         IEnumerable<Timeframe> availableTimeframes,
-        StrategyReplayProgressionSnapshot? workflowProgression = null)
+        StrategyReplayProgressionSnapshot? workflowProgression = null,
+        StrategyReplayLifecycleSnapshot? lifecycleProgression = null)
     {
         if (step <= 0) throw new ArgumentOutOfRangeException(nameof(step));
         if (asOfUtc.Offset != TimeSpan.Zero) throw new ArgumentException("Timestamp must be UTC.", nameof(asOfUtc));
@@ -55,6 +56,9 @@ public sealed class MultiTimeframeStrategyFrameDiagnostic
         if (workflowProgression is not null
             && (workflowProgression.Step != step || workflowProgression.AsOfUtc != asOfUtc))
             throw new ArgumentException("Workflow progression must match the frame step and timestamp.", nameof(workflowProgression));
+        if (lifecycleProgression is not null
+            && (workflowProgression is null || lifecycleProgression.Step != step || lifecycleProgression.AsOfUtc != asOfUtc))
+            throw new ArgumentException("Lifecycle progression must match the frame step and timestamp.", nameof(lifecycleProgression));
 
         Step = step;
         AsOfUtc = asOfUtc;
@@ -68,6 +72,7 @@ public sealed class MultiTimeframeStrategyFrameDiagnostic
         UpdatedTimeframes = new ReadOnlyCollection<Timeframe>(updated);
         AvailableTimeframes = new ReadOnlyCollection<Timeframe>(available);
         WorkflowProgression = workflowProgression;
+        LifecycleProgression = lifecycleProgression;
     }
 
     public int Step { get; }
@@ -82,6 +87,7 @@ public sealed class MultiTimeframeStrategyFrameDiagnostic
     public IReadOnlyList<Timeframe> UpdatedTimeframes { get; }
     public IReadOnlyList<Timeframe> AvailableTimeframes { get; }
     public StrategyReplayProgressionSnapshot? WorkflowProgression { get; }
+    public StrategyReplayLifecycleSnapshot? LifecycleProgression { get; }
 
     private static void ValidateUniqueItems<T>(IReadOnlyList<T> values, string parameterName) where T : class
     {

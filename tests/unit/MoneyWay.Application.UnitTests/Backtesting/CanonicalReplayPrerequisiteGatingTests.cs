@@ -33,7 +33,9 @@ public sealed class CanonicalReplayPrerequisiteGatingTests
 
         Assert.Equal(Signatures(baseline), Signatures(explicitEmpty));
         Assert.All(baseline.OutcomeRun.StrategyRun.StrategyObservations, observation => Assert.Null(observation.WorkflowProgression));
+        Assert.All(baseline.OutcomeRun.StrategyRun.StrategyObservations, observation => Assert.Null(observation.LifecycleProgression));
         Assert.All(baseline.Frames, frame => Assert.Null(frame.WorkflowProgression));
+        Assert.All(baseline.Frames, frame => Assert.Null(frame.LifecycleProgression));
     }
 
     [Fact]
@@ -99,6 +101,58 @@ public sealed class CanonicalReplayPrerequisiteGatingTests
         Assert.False(Eligibility(otherIdentityRun.StrategyObservations[0], "B").IsEligible);
         Assert.Equal(new MarketDataProviderId("other-provider"), otherIdentityRun.ProviderId);
         Assert.Equal(new MarketSymbol("OTHER"), otherIdentityRun.Symbol);
+    }
+
+    [Fact]
+    public void CanonicalRunnerAppliesStrategyOwnedLifecycleAfterRawEligibilityWithoutChangingOutcomes()
+    {
+        var definition = Definition("A", "B");
+        var workflow = new StrategyReplayWorkflowDefinition(Strategy, Version, [new(new("B"), [new("A")])]);
+        var workflowCatalog = new StrategyReplayWorkflowCatalog([definition], [workflow]);
+        var policy = new SyntheticLifecyclePolicy(new Dictionary<int, StrategyReplayLifecycleTransition>
+        {
+            [1] = StrategyReplayLifecycleTransition.Start(new("R1")),
+            [2] = StrategyReplayLifecycleTransition.ReplaceActiveState(new("R2")),
+            [3] = StrategyReplayLifecycleTransition.Cancel(),
+            [4] = StrategyReplayLifecycleTransition.Start(new("R3")),
+            [6] = StrategyReplayLifecycleTransition.Expire(),
+        });
+        var policyCatalog = new StrategyReplayLifecyclePolicyCatalog([definition], [policy]);
+        var evaluators = new IReplayRuleEvaluator[]
+        {
+            new Fake("A", context => context.Step is 1 or 4 ? RuleEvaluationResult.Passed : RuleEvaluationResult.Failed),
+            new Fake("B", _ => RuleEvaluationResult.Passed),
+        };
+        var progressionUseCase = new AdvanceStrategyReplayProgressionUseCase();
+        var runner = new GenerateMultiTimeframeStrategyBacktestRunUseCase(
+            new(),
+            new(),
+            new(evaluators),
+            workflowCatalog,
+            progressionUseCase,
+            policyCatalog,
+            new(progressionUseCase));
+
+        var outcomeRun = new GenerateMultiTimeframeStrategyOutcomeBacktestRunUseCase(runner, new()).Execute(
+            definition,
+            [Series(Provider, Symbol, 1, 2, 3, 4, 5, 6)]);
+        var report = new GenerateMultiTimeframeStrategyBacktestDiagnosticsReportUseCase().Execute(definition, outcomeRun);
+
+        var lifecycle = outcomeRun.StrategyRun.StrategyObservations.Select(item => item.LifecycleProgression).ToArray();
+        Assert.All(lifecycle, Assert.NotNull);
+        Assert.Equal(1, lifecycle[0]!.ActiveInstance!.InstanceId.Ordinal);
+        Assert.Equal("R2", lifecycle[1]!.ActiveInstance!.StateReference.Value);
+        Assert.Null(lifecycle[2]!.ActiveInstance);
+        Assert.Equal(2, lifecycle[3]!.ActiveInstance!.InstanceId.Ordinal);
+        Assert.DoesNotContain(new RuleId("B"), lifecycle[3]!.ActiveInstance!.WorkflowProgression.EstablishedRuleIds);
+        Assert.Null(lifecycle[5]!.ActiveInstance);
+        Assert.Equal(2, lifecycle[5]!.Instances.Count);
+        Assert.All(report.Frames, (frame, index) => Assert.Same(lifecycle[index], frame.LifecycleProgression));
+        var baselineOutcomes = new GenerateMultiTimeframeStrategyOutcomeBacktestRunUseCase(
+            Runner(evaluators, workflowCatalog),
+            new()).Execute(definition, [Series(Provider, Symbol, 1, 2, 3, 4, 5, 6)]);
+        Assert.Equal(baselineOutcomes.Outcomes.Select(item => item.Verdict), outcomeRun.Outcomes.Select(item => item.Verdict));
+        Assert.Equal(RuleEvaluationResult.Passed, outcomeRun.Outcomes[2].Observation.Evaluations.Single(item => item.RuleId == new RuleId("B")).Result);
     }
 
     private static StrategyReplayRuleEligibility Eligibility(StrategyReplayContextObservation observation, string ruleId) =>
@@ -180,5 +234,14 @@ public sealed class CanonicalReplayPrerequisiteGatingTests
 
         public ReplayRuleEvaluationDecision Evaluate(StrategyReplayContext context) =>
             new(evaluate(context), "Synthetic.", null);
+    }
+
+    private sealed class SyntheticLifecyclePolicy(IReadOnlyDictionary<int, StrategyReplayLifecycleTransition> decisions) : IStrategyReplayLifecyclePolicy
+    {
+        public StrategyId StrategyId => Strategy;
+        public StrategyVersion StrategyVersion => Version;
+
+        public StrategyReplayLifecycleTransition Decide(StrategyReplayLifecyclePolicyContext context) =>
+            decisions.GetValueOrDefault(context.Observation.Step, StrategyReplayLifecycleTransition.None);
     }
 }

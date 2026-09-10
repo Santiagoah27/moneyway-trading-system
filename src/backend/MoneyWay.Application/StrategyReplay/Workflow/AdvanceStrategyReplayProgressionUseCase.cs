@@ -9,12 +9,24 @@ public sealed class AdvanceStrategyReplayProgressionUseCase
         StrategyReplayWorkflowDefinition workflow,
         StrategyReplayContextObservation observation,
         StrategyReplayProgressionSnapshot? previousSnapshot)
+        => Execute(workflow, observation, previousSnapshot, false);
+
+    internal StrategyReplayProgressionSnapshot StartInstance(
+        StrategyReplayWorkflowDefinition workflow,
+        StrategyReplayContextObservation observation)
+        => Execute(workflow, observation, null, true);
+
+    private static StrategyReplayProgressionSnapshot Execute(
+        StrategyReplayWorkflowDefinition workflow,
+        StrategyReplayContextObservation observation,
+        StrategyReplayProgressionSnapshot? previousSnapshot,
+        bool startsInstance)
     {
         ArgumentNullException.ThrowIfNull(workflow);
         ArgumentNullException.ThrowIfNull(observation);
         if (workflow.StrategyId != observation.StrategyId || workflow.StrategyVersion != observation.StrategyVersion)
             throw new InvalidOperationException("Workflow identity must exactly match the strategy observation.");
-        ValidateChronology(observation, previousSnapshot);
+        ValidateChronology(observation, previousSnapshot, startsInstance);
 
         var previouslyEstablished = previousSnapshot?.EstablishedRuleIds.ToHashSet() ?? [];
         var eligibility = new List<StrategyReplayRuleEligibility>(observation.EvaluationCount);
@@ -52,11 +64,12 @@ public sealed class AdvanceStrategyReplayProgressionUseCase
 
     private static void ValidateChronology(
         StrategyReplayContextObservation observation,
-        StrategyReplayProgressionSnapshot? previousSnapshot)
+        StrategyReplayProgressionSnapshot? previousSnapshot,
+        bool startsInstance)
     {
         if (previousSnapshot is null)
         {
-            if (observation.Step != 1)
+            if (!startsInstance && observation.Step != 1)
                 throw new InvalidOperationException("The first progression observation must be replay step 1.");
             return;
         }
