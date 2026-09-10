@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using MoneyWay.Application.StrategyReplay.Observability;
 using MoneyWay.Application.StrategyReplay.Workflow;
 using MoneyWay.Domain.MarketData;
 using MoneyWay.Domain.Strategies;
@@ -24,7 +25,8 @@ public sealed class MultiTimeframeStrategyFrameDiagnostic
         IEnumerable<Timeframe> updatedTimeframes,
         IEnumerable<Timeframe> availableTimeframes,
         StrategyReplayProgressionSnapshot? workflowProgression = null,
-        StrategyReplayLifecycleSnapshot? lifecycleProgression = null)
+        StrategyReplayLifecycleSnapshot? lifecycleProgression = null,
+        IEnumerable<ReplayMarketDataObservabilityAssessment>? marketDataObservability = null)
     {
         if (step <= 0) throw new ArgumentOutOfRangeException(nameof(step));
         if (asOfUtc.Offset != TimeSpan.Zero) throw new ArgumentException("Timestamp must be UTC.", nameof(asOfUtc));
@@ -38,6 +40,7 @@ public sealed class MultiTimeframeStrategyFrameDiagnostic
         var missing = missingRequiredRuleIds.ToArray();
         var updated = updatedTimeframes.ToArray();
         var available = availableTimeframes.ToArray();
+        var observability = (marketDataObservability ?? []).ToArray();
         ValidateUniqueItems(missing, nameof(missingRequiredRuleIds));
         ValidateUniqueItems(updated, nameof(updatedTimeframes));
         ValidateUniqueItems(available, nameof(availableTimeframes));
@@ -59,6 +62,11 @@ public sealed class MultiTimeframeStrategyFrameDiagnostic
         if (lifecycleProgression is not null
             && (workflowProgression is null || lifecycleProgression.Step != step || lifecycleProgression.AsOfUtc != asOfUtc))
             throw new ArgumentException("Lifecycle progression must match the frame step and timestamp.", nameof(lifecycleProgression));
+        if (observability.Any(item => item is null)
+            || observability.GroupBy(item => item.RuleId).Any(group => group.Count() > 1)
+            || observability.Any(item => item.Step != step || item.AsOfUtc != asOfUtc)
+            || !observability.SequenceEqual(observability.OrderBy(item => item.RuleId.Value, StringComparer.Ordinal)))
+            throw new ArgumentException("Market-data observability must be non-null, unique, ordered by rule, and match the frame.", nameof(marketDataObservability));
 
         Step = step;
         AsOfUtc = asOfUtc;
@@ -73,6 +81,7 @@ public sealed class MultiTimeframeStrategyFrameDiagnostic
         AvailableTimeframes = new ReadOnlyCollection<Timeframe>(available);
         WorkflowProgression = workflowProgression;
         LifecycleProgression = lifecycleProgression;
+        MarketDataObservability = new ReadOnlyCollection<ReplayMarketDataObservabilityAssessment>(observability);
     }
 
     public int Step { get; }
@@ -88,6 +97,7 @@ public sealed class MultiTimeframeStrategyFrameDiagnostic
     public IReadOnlyList<Timeframe> AvailableTimeframes { get; }
     public StrategyReplayProgressionSnapshot? WorkflowProgression { get; }
     public StrategyReplayLifecycleSnapshot? LifecycleProgression { get; }
+    public IReadOnlyList<ReplayMarketDataObservabilityAssessment> MarketDataObservability { get; }
 
     private static void ValidateUniqueItems<T>(IReadOnlyList<T> values, string parameterName) where T : class
     {

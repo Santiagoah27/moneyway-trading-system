@@ -27,6 +27,8 @@ public sealed class EvaluateStrategyReplayContextOutcomeUseCase
                 || evaluation.EvaluatedAtUtc != observation.AsOfUtc)
                 throw new InvalidOperationException("Observation evaluation metadata does not match the strategy definition.");
         }
+        if (observation.MarketDataObservability.Any(item => !definitions.ContainsKey(item.RuleId)))
+            throw new InvalidOperationException("Observation market-data observability references an unknown strategy rule.");
         var evaluatedRuleIds = observation.Evaluations.Select(x => x.RuleId).ToHashSet();
         var missing = strategyDefinition.Rules.Where(rule => rule.IsRequired && !evaluatedRuleIds.Contains(rule.RuleId)).Select(rule => rule.RuleId).ToArray();
         if (missing.Length > 0)

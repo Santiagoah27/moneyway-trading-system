@@ -76,7 +76,8 @@ public sealed class MultiTimeframeStrategyBacktestDiagnosticsReport
             || !frame.UpdatedTimeframes.SequenceEqual(market.UpdatedTimeframes)
             || !frame.AvailableTimeframes.SequenceEqual(market.AvailableTimeframes)
             || !ReferenceEquals(frame.WorkflowProgression, outcome.Observation.WorkflowProgression)
-            || !ReferenceEquals(frame.LifecycleProgression, outcome.Observation.LifecycleProgression))
+            || !ReferenceEquals(frame.LifecycleProgression, outcome.Observation.LifecycleProgression)
+            || !frame.MarketDataObservability.SequenceEqual(outcome.Observation.MarketDataObservability))
             throw new ArgumentException("Frame diagnostics must exactly match their global outcome and market observation.", nameof(frame));
         ValidateConfiguredOrder(frame.UpdatedTimeframes, configured);
         ValidateConfiguredOrder(frame.AvailableTimeframes, configured);

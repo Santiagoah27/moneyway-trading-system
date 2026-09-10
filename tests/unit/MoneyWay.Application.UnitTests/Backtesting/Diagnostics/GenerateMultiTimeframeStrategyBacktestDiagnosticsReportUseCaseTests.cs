@@ -1,6 +1,7 @@
 using MoneyWay.Application.Backtesting;
 using MoneyWay.Application.Backtesting.Diagnostics;
 using MoneyWay.Application.StrategyReplay;
+using MoneyWay.Application.StrategyReplay.Observability;
 using MoneyWay.Domain.MarketData;
 using MoneyWay.Domain.Strategies;
 using MoneyWay.Domain.Strategies.Evaluation;
@@ -61,6 +62,21 @@ public sealed class GenerateMultiTimeframeStrategyBacktestDiagnosticsReportUseCa
         Assert.Empty(report.MissingRequiredRules);
         Assert.Equal(report.OutcomeRun.ReadyCount, report.ReadyCount);
         Assert.Equal(report.OutcomeRun.CompleteRequiredCoverageCount, report.CompleteRequiredCoverageCount);
+    }
+
+    [Fact]
+    public void ObservabilityProjectionPreservesRawEvaluationAndVerdict()
+    {
+        var assessment = Assessment(1, "A");
+        var outcome = Ready(1, [assessment]);
+
+        var report = Execute(Definition(), Run([outcome], [Market(1)]));
+        var frame = Assert.Single(report.Frames);
+
+        Assert.Equal(StrategyVerdict.Ready, outcome.Verdict);
+        Assert.Equal(StrategyVerdict.Ready, frame.Verdict);
+        Assert.Equal(RuleEvaluationResult.Passed, Assert.Single(outcome.Observation.Evaluations).Result);
+        Assert.Equal(assessment, Assert.Single(frame.MarketDataObservability));
     }
 
     [Fact]
@@ -197,10 +213,15 @@ public sealed class GenerateMultiTimeframeStrategyBacktestDiagnosticsReportUseCa
         IEnumerable<Timeframe>? available = null) =>
         new(step, Start.AddMinutes(step), updated ?? [Minute], available ?? [Minute]);
 
-    private static StrategyReplayContextOutcome Ready(int step)
+    private static StrategyReplayContextOutcome Ready(
+        int step,
+        IEnumerable<ReplayMarketDataObservabilityAssessment>? marketDataObservability = null)
     {
         var at = Start.AddMinutes(step);
-        var observation = Observation(step, [new(new("A"), RuleDefinitionStatus.Confirmed, RuleEvaluationResult.Passed, 10, true, "Ready.", at, null)]);
+        var observation = Observation(
+            step,
+            [new(new("A"), RuleDefinitionStatus.Confirmed, RuleEvaluationResult.Passed, 10, true, "Ready.", at, null)],
+            marketDataObservability);
         var evaluation = new StrategyEvaluationOutcome(StrategyVerdict.Ready, null, null, null, "Ready.", 1, 1);
         return new(observation, true, [], evaluation.Verdict, evaluation.Reason, evaluation);
     }
@@ -226,6 +247,26 @@ public sealed class GenerateMultiTimeframeStrategyBacktestDiagnosticsReportUseCa
             StrategyReplayContextOutcome.IncompleteCoverageReason, null);
     }
 
-    private static StrategyReplayContextObservation Observation(int step, IEnumerable<RuleEvaluation> evaluations) =>
-        new(Strategy, Version, Provider, Symbol, step, Start.AddMinutes(step), evaluations);
+    private static StrategyReplayContextObservation Observation(
+        int step,
+        IEnumerable<RuleEvaluation> evaluations,
+        IEnumerable<ReplayMarketDataObservabilityAssessment>? marketDataObservability = null) =>
+        new(Strategy, Version, Provider, Symbol, step, Start.AddMinutes(step), evaluations, marketDataObservability: marketDataObservability);
+
+    private static ReplayMarketDataObservabilityAssessment Assessment(int step, string ruleId)
+    {
+        var asOf = Start.AddMinutes(step);
+        return new(
+            Strategy,
+            Version,
+            Provider,
+            Symbol,
+            new(ruleId),
+            step,
+            asOf,
+            new("first", asOf.AddMinutes(-1), asOf.AddSeconds(-30)),
+            new("second", asOf.AddSeconds(-20), asOf),
+            ReplayMarketDataObservabilityStatus.Sufficient,
+            AssessReplayTemporalOrderingObservabilityUseCase.SufficientReason);
+    }
 }

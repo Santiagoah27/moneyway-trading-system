@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using MoneyWay.Application.StrategyReplay.Observability;
 using MoneyWay.Application.StrategyReplay.Workflow;
 using MoneyWay.Domain.MarketData;
 using MoneyWay.Domain.Strategies;
@@ -20,7 +21,8 @@ public sealed class StrategyReplayContextObservation
         DateTimeOffset asOfUtc,
         IEnumerable<RuleEvaluation> evaluations,
         StrategyReplayProgressionSnapshot? workflowProgression = null,
-        StrategyReplayLifecycleSnapshot? lifecycleProgression = null)
+        StrategyReplayLifecycleSnapshot? lifecycleProgression = null,
+        IEnumerable<ReplayMarketDataObservabilityAssessment>? marketDataObservability = null)
     {
         ArgumentNullException.ThrowIfNull(strategyId);
         ArgumentNullException.ThrowIfNull(strategyVersion);
@@ -30,13 +32,26 @@ public sealed class StrategyReplayContextObservation
         if (step <= 0) throw new ArgumentOutOfRangeException(nameof(step));
         if (asOfUtc.Offset != TimeSpan.Zero) throw new ArgumentException("Timestamp must be UTC.", nameof(asOfUtc));
         var snapshot = evaluations.ToArray();
+        var observabilityInput = (marketDataObservability ?? []).ToArray();
         if (snapshot.Any(x => x is null)) throw new ArgumentException("Evaluations cannot contain null.", nameof(evaluations));
+        if (observabilityInput.Any(item => item is null))
+            throw new ArgumentException("Market-data observability assessments cannot contain null.", nameof(marketDataObservability));
+        var observability = observabilityInput.OrderBy(item => item.RuleId.Value, StringComparer.Ordinal).ToArray();
         if (snapshot.GroupBy(x => x.RuleId).Any(x => x.Count() > 1) || snapshot.GroupBy(x => x.Sequence).Any(x => x.Count() > 1))
             throw new ArgumentException("Evaluation identifiers and sequences must be unique.", nameof(evaluations));
         if (snapshot.Where((x, i) => i > 0 && x.Sequence <= snapshot[i - 1].Sequence).Any())
             throw new ArgumentException("Evaluations must be ordered by sequence.", nameof(evaluations));
         if (snapshot.Any(x => x.EvaluatedAtUtc != asOfUtc))
             throw new ArgumentException("Evaluation timestamps must match the context.", nameof(evaluations));
+        if (observability.GroupBy(item => item.RuleId).Any(group => group.Count() > 1)
+            || observability.Any(item =>
+                item.StrategyId != strategyId
+                || item.StrategyVersion != strategyVersion
+                || item.ProviderId != providerId
+                || item.Symbol != symbol
+                || item.Step != step
+                || item.AsOfUtc != asOfUtc))
+            throw new ArgumentException("Market-data observability assessments must be non-null, unique by rule, and match the observation identity.", nameof(marketDataObservability));
         if (workflowProgression is not null
             && (workflowProgression.StrategyId != strategyId
                 || workflowProgression.StrategyVersion != strategyVersion
@@ -66,6 +81,7 @@ public sealed class StrategyReplayContextObservation
         Evaluations = new ReadOnlyCollection<RuleEvaluation>(snapshot);
         WorkflowProgression = workflowProgression;
         LifecycleProgression = lifecycleProgression;
+        MarketDataObservability = new ReadOnlyCollection<ReplayMarketDataObservabilityAssessment>(observability);
     }
 
     public StrategyId StrategyId { get; }
@@ -77,6 +93,7 @@ public sealed class StrategyReplayContextObservation
     public IReadOnlyList<RuleEvaluation> Evaluations { get; }
     public StrategyReplayProgressionSnapshot? WorkflowProgression { get; }
     public StrategyReplayLifecycleSnapshot? LifecycleProgression { get; }
+    public IReadOnlyList<ReplayMarketDataObservabilityAssessment> MarketDataObservability { get; }
     public int EvaluationCount => Evaluations.Count;
 
     public StrategyReplayContextObservation WithWorkflowProgression(StrategyReplayProgressionSnapshot workflowProgression)
@@ -84,7 +101,7 @@ public sealed class StrategyReplayContextObservation
         ArgumentNullException.ThrowIfNull(workflowProgression);
         if (WorkflowProgression is not null)
             throw new InvalidOperationException("Workflow progression is already attached to this observation.");
-        return new(StrategyId, StrategyVersion, ProviderId, Symbol, Step, AsOfUtc, Evaluations, workflowProgression);
+        return new(StrategyId, StrategyVersion, ProviderId, Symbol, Step, AsOfUtc, Evaluations, workflowProgression, marketDataObservability: MarketDataObservability);
     }
 
     public StrategyReplayContextObservation WithProgressions(
@@ -104,6 +121,26 @@ public sealed class StrategyReplayContextObservation
             AsOfUtc,
             Evaluations,
             workflowProgression,
-            lifecycleProgression);
+            lifecycleProgression,
+            MarketDataObservability);
+    }
+
+    public StrategyReplayContextObservation WithMarketDataObservability(
+        IEnumerable<ReplayMarketDataObservabilityAssessment> marketDataObservability)
+    {
+        ArgumentNullException.ThrowIfNull(marketDataObservability);
+        if (MarketDataObservability.Count != 0)
+            throw new InvalidOperationException("Market-data observability is already attached to this observation.");
+        return new(
+            StrategyId,
+            StrategyVersion,
+            ProviderId,
+            Symbol,
+            Step,
+            AsOfUtc,
+            Evaluations,
+            WorkflowProgression,
+            LifecycleProgression,
+            marketDataObservability);
     }
 }

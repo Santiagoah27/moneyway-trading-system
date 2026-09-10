@@ -1,4 +1,5 @@
 using MoneyWay.Application.StrategyReplay;
+using MoneyWay.Application.StrategyReplay.Observability;
 using MoneyWay.Domain.MarketData;
 using MoneyWay.Domain.Strategies;
 
@@ -85,10 +86,60 @@ public sealed class EvaluateStrategyReplayContextOutcomeUseCaseTests
         Assert.True(outcome.HasCompleteRequiredCoverage); Assert.NotNull(outcome.EvaluationOutcome); Assert.Equal(StrategyVerdict.DataUnavailable, outcome.Verdict);
     }
 
+    [Theory]
+    [InlineData(ReplayMarketDataObservabilityStatus.Sufficient)]
+    [InlineData(ReplayMarketDataObservabilityStatus.ResolutionInsufficient)]
+    public void ObservabilityDoesNotMapToRawResultOrStrategyVerdict(ReplayMarketDataObservabilityStatus status)
+    {
+        var definition = Definition(Rule("A", 10, true));
+        var rawEvaluation = From(definition.Rules[0], RuleEvaluationResult.Passed);
+        var observation = Observation(definition, [Assessment(definition, new("A"), status)], rawEvaluation);
+
+        var outcome = useCase.Execute(definition, observation);
+
+        Assert.Equal(RuleEvaluationResult.Passed, Assert.Single(outcome.Observation.Evaluations).Result);
+        Assert.Equal(StrategyVerdict.Ready, outcome.Verdict);
+        Assert.Equal(status, Assert.Single(outcome.Observation.MarketDataObservability).Status);
+    }
+
+    [Fact]
+    public void ObservabilityForUnknownRuleIsRejected()
+    {
+        var definition = Definition(Rule("A", 10, true));
+        var observation = Observation(
+            definition,
+            [Assessment(definition, new("UNKNOWN"), ReplayMarketDataObservabilityStatus.Sufficient)],
+            From(definition.Rules[0], RuleEvaluationResult.Passed));
+
+        Assert.Throws<InvalidOperationException>(() => useCase.Execute(definition, observation));
+    }
+
     private static StrategyDefinition Definition(params StrategyRuleDefinition[] rules) => Definition(Strategy, Version, rules);
     private static StrategyDefinition Definition(StrategyId strategy, StrategyVersion version, params StrategyRuleDefinition[] rules) => new(strategy, version, "Synthetic", "test", rules);
     private static StrategyRuleDefinition Rule(string id, int sequence, bool required, RuleDefinitionStatus status = RuleDefinitionStatus.Confirmed) => new(new(id), id, "stage", sequence, required, status, "description", "source");
     private static RuleEvaluation From(StrategyRuleDefinition rule, RuleEvaluationResult result) => Evaluation(rule.RuleId, rule.Sequence, rule.IsRequired, rule.DefinitionStatus, result);
     private static RuleEvaluation Evaluation(RuleId id, int sequence, bool required, RuleDefinitionStatus status, RuleEvaluationResult result) => new(id, status, result, sequence, required, "Synthetic.", AsOf, null);
-    private static StrategyReplayContextObservation Observation(StrategyDefinition definition, params RuleEvaluation[] evaluations) => new(definition.StrategyId, definition.Version, Provider, Symbol, 1, AsOf, evaluations.OrderBy(x => x.Sequence));
+    private static StrategyReplayContextObservation Observation(StrategyDefinition definition, params RuleEvaluation[] evaluations) =>
+        Observation(definition, [], evaluations);
+    private static StrategyReplayContextObservation Observation(
+        StrategyDefinition definition,
+        IEnumerable<ReplayMarketDataObservabilityAssessment> marketDataObservability,
+        params RuleEvaluation[] evaluations) =>
+        new(definition.StrategyId, definition.Version, Provider, Symbol, 1, AsOf, evaluations.OrderBy(x => x.Sequence), marketDataObservability: marketDataObservability);
+    private static ReplayMarketDataObservabilityAssessment Assessment(
+        StrategyDefinition definition,
+        RuleId ruleId,
+        ReplayMarketDataObservabilityStatus status) =>
+        new(
+            definition.StrategyId,
+            definition.Version,
+            Provider,
+            Symbol,
+            ruleId,
+            1,
+            AsOf,
+            new("condition-a", AsOf.AddMinutes(-1), AsOf),
+            new("condition-b", AsOf.AddMinutes(-1), AsOf),
+            status,
+            "Synthetic observability assessment.");
 }
