@@ -36,7 +36,7 @@ The operational entry-acquisition window is `[08:30, 11:00)` in `America/Bogota`
 
 After a valid liquidity take, wait for Step 4 while the setup remains inside the operational window and no audited cancellation has occurred. A subsequent same-side take or farther extreme before Step 4 keeps the same single setup at Step 3 and updates its active 5M structural reference; it does not create a parallel setup or advance Step 4. Historical references remain auditable. The intended opposite-side target candidates are only the Step-2 Asia/London session extrema: London Low or Asia Low for a sell-oriented setup, and London High or Asia High for a buy-oriented setup. When they differ, the immediate target is the first relevant level price encounters in the expected direction of travel; neither session has fixed priority. Exact contact with that horizontal wick extreme is sufficient, including wick contact, without body close, candle-close confirmation or tolerance. If this touch occurs before completed pre-entry progression, cancel the setup and do not chase price. That opposite take does not reverse the permitted direction automatically: only alignment with the existing Step-1 4H context may make it a new Step-3 activation for a new setup.
 
-No downstream pattern is valid for this strategy when a mandatory prerequisite was not satisfied in chronological order. Management concepts then use a structural 5M HL/LH wick anchor for Stop Loss, directional Asia/London session liquidity for Take Profit and the first encountered favorable Asia/London target for Break-Even. Target touch is now confirmed, but same-observation ordering, the universal target-observation timeframe and the relation between the first BE target and final TP remain unresolved.
+No downstream pattern is valid for this strategy when a mandatory prerequisite was not satisfied in chronological order. Management concepts then use a structural 5M HL/LH wick anchor for Stop Loss, directional Asia/London session liquidity for Take Profit and the first encountered favorable Asia/London target for Break-Even. A target is an absolute price level, and its semantic event is a timeframe-independent price-quote touch. The mentor monitors post-entry management visually on 1M, but 1M does not define the target. Current closed-candle replay can prove that a touch occurred within an interval from its OHLC range; it cannot order that touch against another event inside the same minimum-granularity candle.
 
 ## Critical open variables
 
@@ -44,7 +44,7 @@ No downstream pattern is valid for this strategy when a mandatory prerequisite w
 - Liquidity priority, structural-point coincidence and sweep qualification beyond the confirmed session extrema.
 - Deterministic 5M HL/LH detection and exact Stop Loss offset beyond the structural wick.
 - Target handling when a candidate was already crossed, both candidates coincide, one is unavailable or price begins beyond one candidate.
-- Same-observation ordering and the universal timeframe for target-touch detection.
+- Same-observation intrabar ordering with current closed-candle replay data.
 - Whether the first Break-Even target is also the final Take Profit target.
 - News policy.
 - Reentries.

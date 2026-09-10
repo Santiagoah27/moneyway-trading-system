@@ -91,8 +91,6 @@ Confirmed conceptually: at 08:00 `America/Bogota`, Breakout `OR` Wickfill `OR` F
 |---|---|---|---|---|---|
 | NQ-Q-SW-001 | ¿Qué close-back, rechazo o desplazamiento adicional, si alguno, califica un take después de superar el selected High o bajar del selected Low? | Direction-dependent setup association is now confirmed, but any qualification beyond exceed/break-below remains undefined. | `human_validation_required` | `semi_automatic_backtesting` | Positive, negative and marginal take examples |
 | NQ-Q-SW-002 | ¿Puede utilizarse una toma anterior a 08:30? | Affects operating sequence. | `unresolved` | `paper_trading` | Explicit pre-open examples and mentor decision |
-| NQ-Q-SW-004 | ¿Qué evento prevalece cuando un mismo observable candle/frame contiene el target touch y el cierre que completaría `NQ-M1-003`? | OHLC puede mostrar ambos eventos sin probar su orden intrabar. | `unresolved` — `SAME_OBSERVATION_ORDERING_UNRESOLVED` | `semi_automatic_backtesting` | Human-source case that states precedence, or a source-approved finer event stream |
-| NQ-Q-SW-005 | ¿Qué timeframe o event stream es normativo para observar el target touch? | La referencia del mentor a “ese minuto” es un ejemplo y no establece universalmente 1M. | `unresolved` — `TARGET_TOUCH_OBSERVATION_TIMEFRAME_UNRESOLVED` | `semi_automatic_backtesting` | Explicit source statement across pre-entry and post-entry target interactions |
 | NQ-Q-SW-006 | ¿Cómo se trata el target cuando ya fue cruzado antes de activarse el setup, los dos niveles coinciden, falta una sesión o el precio inicia más allá de un candidato? | La regla first-encountered no define estos límites. | `unresolved` | `semi_automatic_backtesting` | Human-reviewed boundary cases for each condition |
 
 Resolved by direct human review of Video 3 at approximately `06:20–06:40` and `10:30–10:55`: same-side subsequent takes retain one pending setup at Step 3 and roll its active 5M reference; opposite-side target consumption cancels the setup; the opposite take can become Step 3 of a new setup only when aligned with Step-1 4H context. There is no source support for concurrent same-direction setups or automatic bias reversal.
@@ -102,6 +100,11 @@ Resolved by direct human review of Video 3 at approximately `06:20–06:40` and 
 | Question ID | Resolution | Current status | Evidence |
 |---|---|---|---|
 | NQ-Q-SW-003 | The candidates are London Low/Asia Low for sells and London High/Asia High for buys. When distinct, the immediate target is the first relevant level encountered in the expected direction of travel. Exact contact with the horizontal session-extreme wick level is sufficient, including wick contact; no body close, candle close, tolerance or penetration buffer applies. A pre-entry touch cancels the active setup. | `confirmed` | Direct human review of Video 3 approx. `09:40–10:55` and `13:25–13:40` |
+| NQ-Q-SW-005 | No candle timeframe is normative. The target is an absolute Asia/London price level and `TARGET_TOUCH_EVENT` is a timeframe-independent price-quote touch. The mentor's 1M chart is the visual post-entry management surface, not part of the target definition. | `confirmed` | Direct human review of Video 3 approx. `13:10–13:45` |
+
+### Replay data-resolution limitation
+
+`NQ-Q-SW-004` is reclassified as `MARKET_DATA_RESOLUTION_LIMITATION`, not an unresolved strategy timeframe rule. Current canonical replay exposes closed OHLC `CandleSeries`. A candle range can establish `TARGET_WAS_TOUCHED_DURING_INTERVAL`, but when the same minimum-granularity candle also completes `NQ-M1-003`, OHLC cannot establish intrabar order. The audit categories are `UNAMBIGUOUS_CANDLE_TOUCH` for a target first observed in a later candle after entry progression was already established, and `AMBIGUOUS_SAME_OBSERVATION_TOUCH` when touch and final confirmation share one minimum observation. No runtime result or verdict mapping is selected.
 
 ## 5M structure
 
@@ -166,7 +169,7 @@ Resolved: IFVG is only an alternative inside Step 4. It does not enable direct e
 | NQ-Q-TP-001 | ¿El primer target Asia/London encontrado es siempre el TP final y exige salida completa, o puede ser solo un target de gestión previo? | One reviewed case supports full exit on touch, but it does not establish universal equivalence between the first BE target and final TP. | `unresolved` | `paper_trading` | Complete trades distinguishing first management target from final exit |
 | NQ-Q-TP-002 | ¿Existe fixed RR, partials, trailing or manual close? | Required for reproducible results and management. | `unresolved` | `paper_trading` | Complete audited trades and explicit management statements |
 
-Confirmed target scope: buy candidates are London High and Asia High; sell candidates are London Low and Asia Low. When distinct, first encountered in the expected price path determines the immediate target. Exact wick-capable touch is sufficient without close or tolerance. Video 3 approximately `13:25–13:40` supports complete exit in one reviewed case only.
+Confirmed target scope: buy candidates are London High and Asia High; sell candidates are London Low and Asia Low. When distinct, first encountered in the expected price path determines the immediate target. The target is an absolute price and its touch is a timeframe-independent quote-level event without close or tolerance. Video 3 approximately `13:25–13:40` supports complete exit in one reviewed case only. Closed-candle replay can observe occurrence from OHLC range but not same-candle intrabar order.
 
 ## Risk
 
