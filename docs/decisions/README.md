@@ -25,3 +25,4 @@ Las decisiones reales se registran y enumeran a continuación.
 - [ADR 0002: Select bootstrap toolchain and physical solution structure](0002-select-bootstrap-toolchain.md) — Status: `Accepted`.
 - [ADR 0003: Define canonical replay prerequisite gating](0003-define-canonical-replay-prerequisite-gating.md) — Status: `Accepted`.
 - [ADR 0004: Support observable market-data resolution in canonical replay](0004-support-observable-market-data-resolution-in-canonical-replay.md) — Status: `Accepted`.
+- [ADR 0005: Transport strategy-owned evidence to replay lifecycle policies](0005-transport-strategy-owned-evidence-to-replay-lifecycle-policies.md) — Status: `Accepted`.
