@@ -169,7 +169,16 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("body-based marking", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("reviewed 1H-first/4H-extended relationship", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("not universal", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("Deterministic structural-point identification", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("Causal structural validation is source-confirmed", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("candidate HL/LH is usable only after its impulse produces a formally closed body", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("same structural timeframe", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("new HH/LL also requires that closed body", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("not wick-only penetration or an open candle", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("cannot be used before the causal close AsOfUtc", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("Initial candidate-turn detection", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("candle count", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("pivot/lookback rules", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("candidate swing geometry", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("exact OHLC mitigation test", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("structural candle/body selection and coordinate", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("body-zone reduction", declaration.Reason, StringComparison.Ordinal);
@@ -177,6 +186,8 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("tie-breaking remain unresolved", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("General final Take Profit hierarchy outside the reviewed cases", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("universal full-exit behavior", declaration.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("Deterministic structural-point identification", declaration.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("structural validation remains unresolved", declaration.Reason, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Target consumption after 08:30 but before Step-3 activation", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("Structural 1H/4H fallback is source-confirmed", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("1H-versus-4H priority", declaration.Reason, StringComparison.Ordinal);
@@ -193,8 +204,27 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
             .Find(Nasdaq.StrategyId, Nasdaq.Version)!;
         var capability = report.Rules.Single(item => item.RuleId == declaration.RuleId);
 
+        var priorWording = new ReplayRuleEvaluationCapabilityDeclaration(
+            declaration.StrategyId,
+            declaration.StrategyVersion,
+            declaration.RuleId,
+            declaration.Status,
+            "Prior audited wording.",
+            declaration.SourceReference);
+        var reportWithPriorWording = Catalog(
+            evaluators,
+            MoneyWayReplayEvaluationCapabilityDeclarations.GetAll()
+                .Select(item =>
+                    item.StrategyId == declaration.StrategyId &&
+                    item.StrategyVersion == declaration.StrategyVersion &&
+                    item.RuleId == declaration.RuleId
+                        ? priorWording
+                        : item))
+            .Find(Nasdaq.StrategyId, Nasdaq.Version)!;
+
         Assert.Equal(declaration.Status, capability.CapabilityStatus);
         Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(report));
+        Assert.Equal(Counts(reportWithPriorWording), Counts(report));
     }
 
     [Fact]
