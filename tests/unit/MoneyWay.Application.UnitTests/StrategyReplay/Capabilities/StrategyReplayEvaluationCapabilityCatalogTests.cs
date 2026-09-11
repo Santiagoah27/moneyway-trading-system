@@ -181,8 +181,14 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("confirming-candle price scanning", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("turn membership", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("equal-coordinate candle identity", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("candidate-LH selection", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("bearish symmetry", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("Direct bearish evidence establishes the prior LL as the correction origin/reference", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("candidate high remains provisional", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("formally closed Close < prior LL", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("validates the preceding LH only from that causal AsOfUtc", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("wick-only penetration and an open candle do not confirm it", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("candidate symmetry rather than confirmed deterministic rules", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("Reproducible complex bearish target-point reconstruction", declaration.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("candidate-LH selection, bearish symmetry", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("other structural-point selection and coordinates", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("exact OHLC mitigation test", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("PDH/PDL cross-class ranking", declaration.Reason, StringComparison.Ordinal);
@@ -274,8 +280,14 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("confirming-candle price scanning", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("turn membership", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("equal-coordinate candle identity", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("candidate-LH selection", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("bearish symmetry", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("Direct bearish evidence establishes the prior LL as the correction origin/reference", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("candidate high remains provisional", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("formally closed Close < prior LL", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("validates the preceding LH only from that causal AsOfUtc", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("wick-only penetration and an open candle do not confirm it", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("candidate symmetry rather than confirmed deterministic rules", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("Reproducible complex bearish correction reconstruction", declaration.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("candidate-LH selection, bearish symmetry", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("retracement pivots from closed candles", declaration.Reason, StringComparison.Ordinal);
         Assert.Equal("docs/strategies/nasdaq/rule-catalog.md", declaration.SourceReference);
         Assert.Equal(declarations.Count, declarations
