@@ -153,15 +153,22 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
                 item.RuleId == new RuleId("NQ-TP-001"));
 
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, declaration.Status);
-        Assert.Contains("first encountered Asia/London target", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("final Take Profit", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("full-exit behavior is universal", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("equal", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("already-crossed", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("unavailable", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("initially-beyond", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("Session target candidates", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("distinct first-encountered priority", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("equal-target merge are source-defined", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("Structural 1H/4H fallback is source-confirmed", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("deterministic structural-point identification", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("1H-versus-4H priority", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("candidate ranking", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("tie-breaking remain unresolved", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("after 08:30 but before Step-3 activation", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("general final Take Profit hierarchy outside the reviewed cases", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("universal full-exit behavior", declaration.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("equal, already-crossed, unavailable", declaration.Reason, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("equal-target behavior remains unresolved", declaration.Reason, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Asia/London selection remains unresolved", declaration.Reason, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("session target priority remains unresolved", declaration.Reason, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("important-high/important-low selection", declaration.Reason, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("target priority", declaration.Reason, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("touch", declaration.Reason, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("tolerance", declaration.Reason, StringComparison.OrdinalIgnoreCase);
     }
