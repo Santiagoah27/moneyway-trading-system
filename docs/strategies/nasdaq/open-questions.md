@@ -7,13 +7,15 @@ No answer is proposed from external trading theory. `Blocking level` is the earl
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
 | NQ-Q-H4-001 | ¿Qué reproducible viewport/boundary selecciona el major visible extreme que originó el movimiento relevante al iniciar desde raw closed 4H candles? | The visual/contextual bootstrap and subsequent reconstruction are confirmed, but an arbitrary raw series cannot select the same starting extreme automatically. | `human_validation_required` | `semi_automatic_backtesting` | Annotated starting histories showing included/excluded extremes and the exact observation boundary |
-| NQ-Q-H4-002 | ¿Dónde comienzan y terminan exactamente el retracement/contraction relevante cuyo turning extreme se revisa después del confirming break? | The source rejects minor pauses and identifies the relevant turn retrospectively, but does not provide reproducible interval boundaries. | `human_validation_required` | `semi_automatic_backtesting` | Annotated interval boundaries with included and discarded pauses |
+| NQ-Q-H4-002 | ¿Cómo se detecta inicialmente el candidate turning/slowdown point y dónde comienzan y terminan su retracement/contraction? | The causal validation rule is confirmed and minor pauses are rejected, but initial candidate detection, candle count, pivot geometry and interval boundaries are not reproducible. | `PARTIALLY_DEFINED` | `semi_automatic_backtesting` | Annotated candidate turns, interval boundaries and negative examples before the confirming close |
 | NQ-Q-H4-003 | ¿Qué exact body price representa numéricamente un structural High/Low o retracement turning point? | The source marks structure on candle bodies but does not define an OHLC/body formula. | `unresolved` | `semi_automatic_backtesting` | Explicit coordinate rule plus marginal multi-candle/body-zone examples |
 
 Confirmed or materially narrowed by the new human source review:
 
-- HH/LL require a 4H body close beyond the prior human-selected structural High/Low; wick-only breaks are insufficient.
-- Before that subsequent break closes, the preceding retracement is candidate/unconfirmed. Only after the close may the relevant prior retracement be confirmed retrospectively as HL/LH.
+- On the relevant 1H or 4H timeframe, HH/LL require a formally closed candle body beyond the prior human-selected structural High/Low; wick-only penetration is insufficient and may instead be classified contextually as liquidity take, Wickfill or Fakeout.
+- A candidate low becomes a validated HL only when the impulse originating from it later produces a formally closed body above the prior HH on the same relevant timeframe. A rebound without that close does not validate the low as structural HL.
+- A candidate high becomes a validated LH only when the impulse originating from it later produces a formally closed body below the prior LL on the same relevant timeframe. A decline without that close does not validate the high as structural LH.
+- Before the confirming break candle closes, the preceding retracement remains candidate/unconfirmed. An open 1H/4H candle that temporarily trades beyond the level cannot validate it.
 - The mentor then looks backward to the retracement preceding the breakout impulse and identifies **"el punto exacto donde el precio desaceleró y rebotó"**. In bullish context this is the lowest relevant turning point of that retracement/contraction; the bearish relation is symmetric.
 - Minor fluctuations, intermediate pauses, local extrema and direction changes do not automatically become structural points.
 - Structural points and relevant turning/stop zones are marked on candle bodies; isolated wicks are not strong structural confirmation.
@@ -21,7 +23,9 @@ Confirmed or materially narrowed by the new human source review:
 
 The latest human review further confirms that 4H bootstrap starts visually/contextually from the major visible extreme that originated the current relevant movement, then reconstructs push, retracement, structural break and current structure. Asia/London session extrema do not seed 4H structure. The current decision focuses on the latest active HH/HL or LL/LH pair without deleting older audit history.
 
-Still unresolved: a reproducible viewport for the visual bootstrap, exact retracement interval boundaries and exact numeric body coordinate. No first-candle, first-two-candle, fixed-lookback, fractal, ZigZag, N-left/N-right, ATR, percentage-swing or fixed-point initialization is supplied. Replay must not label the retracement as confirmed before the subsequent break closes.
+Current boundaries: `STRUCTURAL_VALIDATION_RULE = CONFIRMED`; `STRUCTURAL_CANDIDATE_DETECTION = PARTIALLY_DEFINED`; `EXACT_STRUCTURAL_PRICE_COORDINATE = UNRESOLVED`.
+
+Still unresolved: a reproducible viewport for the visual bootstrap, initial candidate-turn detection, candle count, pivot/lookback geometry, exact retracement interval boundaries and exact numeric body coordinate. No first-candle, first-two-candle, fixed-lookback, fractal, ZigZag, N-left/N-right, ATR, percentage-swing or fixed-point initialization is supplied. Replay must not label the retracement as confirmed before the subsequent break closes; the confirming close changes status only from its own observable `AsOfUtc` onward.
 
 ## Resolved workflow relationships
 
@@ -70,9 +74,9 @@ Confirmed conceptually: at 08:00 `America/Bogota`, Breakout `OR` Wickfill `OR` F
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-LQ-001 | ¿Qué algoritmo detecta y valida los HL/LL/LH/HH de fallback, define un nivel como no mitigado, convierte su zona de cuerpos en un precio y ordena PDH/PDL frente a 1H/4H? | Candidate classes and the reviewed 1H-first/4H-extended relationship are confirmed, but deterministic construction and cross-class ranking are not. | `PARTIALLY_DEFINED` | `semi_automatic_backtesting` | Annotated body zones, mitigation boundary cases, exact selected prices, PDH/PDL coexistence and ties |
+| NQ-Q-LQ-001 | ¿Qué algoritmo detecta inicialmente los candidate turning points de fallback, define un nivel como no mitigado, convierte su zona de cuerpos en un precio y ordena PDH/PDL frente a 1H/4H? | Candidate classes, causal HL/LH/HH/LL validation and the reviewed 1H-first/4H-extended relationship are confirmed, but initial candidate detection, exact construction and cross-class ranking are not. | `PARTIALLY_DEFINED` | `semi_automatic_backtesting` | Annotated candidate turns and body zones, mitigation boundary cases, exact selected prices, PDH/PDL coexistence and ties |
 | NQ-Q-LQ-002 | ¿Un nivel ya barrido expira o puede reutilizarse como future relevant level, y altera su consumo previo alguna validity/probability/risk consideration? | Same-side setup association is resolved, but level reuse and any probability/risk effect remain undefined. | `unresolved` | `semi_automatic_backtesting` | Repeated-level cases with explicit validity, probability and risk outcomes |
-| NQ-Q-LQ-004 | ¿Qué algoritmo identifica puntos estructurales 1H/4H y qué tolerancia define que coinciden con un extremo de sesión? | Structural confluence is confirmed but not deterministic. | `human_validation_required` | `semi_automatic_backtesting` | Annotated structural points and boundary cases |
+| NQ-Q-LQ-004 | ¿Qué algoritmo detecta los candidate turning points 1H/4H y qué tolerancia define que los niveles ya validados coinciden con un extremo de sesión? | Causal validation and structural confluence are confirmed, but candidate detection and coincidence geometry are not deterministic. | `human_validation_required` | `semi_automatic_backtesting` | Annotated candidate turns, confirming closes and coincidence boundary cases |
 
 ### Resolved session-liquidity question
 
