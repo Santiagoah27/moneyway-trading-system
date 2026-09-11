@@ -32,6 +32,8 @@ Still unresolved: a reproducible viewport for the visual bootstrap, exact retrac
 - At `StrategyReplayContext.AsOfUtc`, future liquidity takes, FVGs or 1M realignments cannot change a prior eligibility state.
 - Preparation remains 08:00 and the operational entry-acquisition interval is `[08:30, 11:00)` in `America/Bogota`. The former 11:30 cutoff was an incorrect interpretation and is not a second limit.
 - At 11:00, an unfinished pre-entry setup expires. A dead-zone signal cannot revive it; no forced close of an already-entered conceptual trade is established.
+- At or after 08:30, the first valid event that exceeds a relevant High or goes below a relevant Low is the effective Step 3 for the scenario it may orient; it is not target consumption before Step 3.
+- A Low take can orient a possible buy progression and a High take can orient a possible sell progression only when aligned with the Step-1 4H permitted direction. Without alignment, Step 4 is blocked, the prior imagined scenario remains discarded and price is not chased.
 - A valid liquidity take activates waiting for Step 4. Continued manipulation-direction movement and a wick-only break do not confirm Step 4 and do not alone cancel the setup.
 - Before Step 4 and before cutoff, each valid farther same-side take keeps one active setup at Step 3 and updates its current 5M structural reference while prior observations remain auditable. It does not create a concurrent setup or satisfy Step 4.
 - Once Step 3 has activated a setup, exact touch of its already-selected intended target before completed pre-entry progression cancels that setup; wick contact is sufficient without close or tolerance. Do not chase price. Later evidence cannot revive it. This active-setup cancellation is distinct from selecting a structural fallback when a session target was consumed before the operational setup context.
@@ -91,9 +93,16 @@ Confirmed conceptually: at 08:00 `America/Bogota`, Breakout `OR` Wickfill `OR` F
 |---|---|---|---|---|---|
 | NQ-Q-SW-001 | ¿Qué close-back, rechazo o desplazamiento adicional, si alguno, califica un take después de superar el selected High o bajar del selected Low? | Direction-dependent setup association is now confirmed, but any qualification beyond exceed/break-below remains undefined. | `human_validation_required` | `semi_automatic_backtesting` | Positive, negative and marginal take examples |
 | NQ-Q-SW-002 | ¿Puede utilizarse una toma anterior a 08:30? | Affects operating sequence. | `unresolved` | `paper_trading` | Explicit pre-open examples and mentor decision |
-| NQ-Q-SW-006 | ¿Qué ocurre si el target es consumido después de las 08:30 pero antes de que Step 3 active el setup? | The reviewed evidence distinguishes pre-operational fallback from active-setup cancellation but does not cover this interval edge. | `unresolved` | `semi_automatic_backtesting` | Human-reviewed examples spanning 08:30, target consumption and Step-3 activation |
 
 Resolved by direct human review of Video 3 at approximately `06:20–06:40` and `10:30–10:55`: same-side subsequent takes retain one pending setup at Step 3 and roll its active 5M reference; opposite-side target consumption cancels the setup; the opposite take can become Step 3 of a new setup only when aligned with Step-1 4H context. There is no source support for concurrent same-direction setups or automatic bias reversal.
+
+### Resolved post-08:30 Step-3 orientation question
+
+| Question ID | Resolution | Current status | Evidence |
+|---|---|---|---|
+| NQ-Q-SW-006 | After 08:30, the first valid take of relevant liquidity is itself the effective Step 3; it is not target consumption in a separate interval before Step 3. Taking a relevant Low can orient a possible buy progression, and taking a relevant High can orient a possible sell progression, only when aligned with the Step-1 4H permitted direction. Without alignment, Step 4 is not enabled, the originally imagined scenario remains discarded and price is not chased. | `confirmed` | Direct human review of Video 3 approx. `07:50–09:15`; alignment reference approx. `04:25` |
+
+The confirmed Step-3 boundary remains `price exceeds the selected relevant High` or `price goes below the selected relevant Low`. The reviewed conversational words "touch/take" do not unequivocally establish equality-only activation, and no threshold or tolerance is inferred. This `CONFIRMED_EXCEEDS` geometry is distinct from `TARGET_TOUCH_EVENT`, where exact contact is sufficient for an already-selected target.
 
 ### Resolved target-consumption question
 
@@ -105,10 +114,10 @@ Resolved by direct human review of Video 3 at approximately `06:20–06:40` and 
 ### Resolved target edge and fallback semantics
 
 - When the relevant Asia and London targets have the same absolute price, they collapse into one unique target rather than two sequential targets. In the reviewed scenario, the shared level is final Take Profit and does not create an artificial intermediate Break-Even transition.
-- When a relevant session target was already consumed before the operational setup context, or otherwise no longer remains the next future-valid target, the source confirms using the next relevant structural 1H/4H point from Step 2. This confirms the fallback concept only; the structural detector, 1H-versus-4H priority, candidate ranking and tie handling remain unresolved.
+- When a relevant session target was already consumed before the operational setup context, or otherwise no longer remains the next future-valid target before that context, the source confirms using the next relevant structural 1H/4H point from Step 2. This confirms the fallback concept only; the structural detector, 1H-versus-4H priority, candidate ranking and tie handling remain unresolved. It does not rescue an originally imagined scenario after an opposite-liquidity take at or after 08:30.
 - Once a setup is active with a selected target, touching that target before entry completion cancels the setup. This is not a fallback event: do not chase price and do not revive the cancelled setup with later evidence.
 - Direct source trace: Video 3 approx. `03:10–03:25` and `08:50–10:50`; Video 1 approx. `10:10–10:30`.
-- The edge in which target consumption occurs after 08:30 but before Step-3 activation remains unresolved under `NQ-Q-SW-006`.
+- At or after 08:30, the first valid opposite-liquidity take is the effective Step 3 for the newly oriented scenario. The prior imagined scenario is discarded. Progression to Step 4 requires alignment with Step-1 4H; otherwise there is no new setup, revival or chase.
 
 ### Replay data-resolution limitation
 
