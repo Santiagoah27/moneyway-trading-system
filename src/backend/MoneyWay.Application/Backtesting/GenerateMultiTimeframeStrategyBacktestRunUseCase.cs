@@ -77,7 +77,22 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
             strategyDefinition,
             consumeContext => replayUseCase.Execute(
                 series,
-                frame => consumeContext(contextUseCase.Execute(strategyDefinition, frame))));
+                frame => consumeContext(contextUseCase.Execute(strategyDefinition, frame))),
+            null);
+    }
+
+    public MultiTimeframeStrategyBacktestRun Execute(
+        StrategyDefinition strategyDefinition,
+        IEnumerable<CandleSeries> series,
+        IStrategyReplayLifecycleEvidenceProducer evidenceProducer)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series); ArgumentNullException.ThrowIfNull(evidenceProducer);
+        return ExecuteCore(
+            strategyDefinition,
+            consumeContext => replayUseCase.Execute(
+                series,
+                frame => consumeContext(contextUseCase.Execute(strategyDefinition, frame))),
+            evidenceProducer);
     }
 
     public MultiTimeframeStrategyBacktestRun Execute(
@@ -91,15 +106,36 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
             consumeContext => replayUseCase.Execute(
                 series,
                 marketPriceObservations,
-                frame => consumeContext(contextUseCase.ExecuteCanonical(strategyDefinition, frame))));
+                frame => consumeContext(contextUseCase.ExecuteCanonical(strategyDefinition, frame))),
+            null);
+    }
+
+    public MultiTimeframeStrategyBacktestRun Execute(
+        StrategyDefinition strategyDefinition,
+        IEnumerable<CandleSeries> series,
+        HistoricalMarketPriceObservationSeries marketPriceObservations,
+        IStrategyReplayLifecycleEvidenceProducer evidenceProducer)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series);
+        ArgumentNullException.ThrowIfNull(marketPriceObservations); ArgumentNullException.ThrowIfNull(evidenceProducer);
+        return ExecuteCore(
+            strategyDefinition,
+            consumeContext => replayUseCase.Execute(
+                series,
+                marketPriceObservations,
+                frame => consumeContext(contextUseCase.ExecuteCanonical(strategyDefinition, frame))),
+            evidenceProducer);
     }
 
     private MultiTimeframeStrategyBacktestRun ExecuteCore(
         StrategyDefinition strategyDefinition,
-        Func<Action<StrategyReplayContext>, MultiTimeframeReplayRunResult> runReplay)
+        Func<Action<StrategyReplayContext>, MultiTimeframeReplayRunResult> runReplay,
+        IStrategyReplayLifecycleEvidenceProducer? evidenceProducer)
     {
         var workflow = workflowCatalog.Find(strategyDefinition.StrategyId, strategyDefinition.Version);
         var lifecyclePolicy = lifecyclePolicyCatalog.Find(strategyDefinition.StrategyId, strategyDefinition.Version);
+        if (evidenceProducer is not null && (workflow is null || lifecyclePolicy is null))
+            throw new InvalidOperationException("Lifecycle evidence requires a registered workflow and lifecycle policy.");
         StrategyReplayProgressionSnapshot? progression = null;
         StrategyReplayLifecycleSnapshot? lifecycle = null;
         var marketObservations = new List<MultiTimeframeBacktestObservation>();
@@ -122,12 +158,9 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
                 }
                 else
                 {
-                    var advanced = lifecycleUseCase.Execute(
-                        workflow,
-                        lifecyclePolicy,
-                        strategyObservation,
-                        lifecycle,
-                        progression);
+                    var advanced = evidenceProducer is null
+                        ? lifecycleUseCase.Execute(workflow, lifecyclePolicy, strategyObservation, lifecycle, progression)
+                        : lifecycleUseCase.Execute(workflow, lifecyclePolicy, context, strategyObservation, lifecycle, progression, evidenceProducer);
                     progression = advanced.WorkflowProgression;
                     lifecycle = advanced.LifecycleProgression;
                     strategyObservation = strategyObservation.WithProgressions(progression, lifecycle);

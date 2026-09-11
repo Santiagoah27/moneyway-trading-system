@@ -15,7 +15,8 @@ public sealed class StrategyReplayProgressionInstanceSnapshot
         StrategyReplayProgressionStateReference stateReference,
         StrategyReplayProgressionSnapshot workflowProgression,
         DateTimeOffset? terminatedAtUtc = null,
-        StrategyReplayProgressionTerminationKind? terminationKind = null)
+        StrategyReplayProgressionTerminationKind? terminationKind = null,
+        StrategyReplayLifecycleEvidenceSnapshot? evidence = null)
     {
         InstanceId = instanceId ?? throw new ArgumentNullException(nameof(instanceId));
         if (startedAtUtc.Offset != TimeSpan.Zero) throw new ArgumentException("Timestamp must be UTC.", nameof(startedAtUtc));
@@ -30,6 +31,23 @@ public sealed class StrategyReplayProgressionInstanceSnapshot
         StartedAtUtc = startedAtUtc;
         TerminatedAtUtc = terminatedAtUtc;
         TerminationKind = terminationKind;
+        Evidence = evidence ?? new(
+            workflowProgression.StrategyId,
+            workflowProgression.StrategyVersion,
+            workflowProgression.ProviderId,
+            workflowProgression.Symbol,
+            workflowProgression.Step,
+            workflowProgression.AsOfUtc,
+            StrategyReplayLifecycleEvidenceScope.ActiveInstance,
+            instanceId,
+            []);
+        if (Evidence.Scope != StrategyReplayLifecycleEvidenceScope.ActiveInstance || Evidence.InstanceId != instanceId
+            || Evidence.StrategyId != workflowProgression.StrategyId || Evidence.StrategyVersion != workflowProgression.StrategyVersion
+            || Evidence.ProviderId != workflowProgression.ProviderId || Evidence.Symbol != workflowProgression.Symbol
+            || Evidence.Step < workflowProgression.Step || Evidence.AsOfUtc < workflowProgression.AsOfUtc
+            || (terminatedAtUtc is null && (Evidence.Step != workflowProgression.Step || Evidence.AsOfUtc != workflowProgression.AsOfUtc))
+            || (terminatedAtUtc is not null && Evidence.AsOfUtc > terminatedAtUtc))
+            throw new ArgumentException("Lifecycle evidence must be bound to this progression instance.", nameof(evidence));
     }
 
     public StrategyReplayProgressionInstanceId InstanceId { get; }
@@ -38,5 +56,6 @@ public sealed class StrategyReplayProgressionInstanceSnapshot
     public StrategyReplayProgressionSnapshot WorkflowProgression { get; }
     public DateTimeOffset? TerminatedAtUtc { get; }
     public StrategyReplayProgressionTerminationKind? TerminationKind { get; }
+    public StrategyReplayLifecycleEvidenceSnapshot Evidence { get; }
     public bool IsActive => TerminationKind is null;
 }

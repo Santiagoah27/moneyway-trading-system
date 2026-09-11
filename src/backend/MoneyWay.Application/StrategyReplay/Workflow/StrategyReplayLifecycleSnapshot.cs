@@ -37,7 +37,13 @@ public sealed class StrategyReplayLifecycleSnapshot
                 || item.WorkflowProgression.ProviderId != providerId
                 || item.WorkflowProgression.Symbol != symbol
                 || item.WorkflowProgression.Step > step
-                || item.WorkflowProgression.AsOfUtc > asOfUtc)
+                || item.WorkflowProgression.AsOfUtc > asOfUtc
+                || item.Evidence.StrategyId != strategyId
+                || item.Evidence.StrategyVersion != strategyVersion
+                || item.Evidence.ProviderId != providerId
+                || item.Evidence.Symbol != symbol
+                || item.Evidence.Step > step
+                || item.Evidence.AsOfUtc > asOfUtc)
             || instanceSnapshot.Where(item => item.IsActive).Any(item => item.WorkflowProgression.Step != step))
             throw new ArgumentException("Lifecycle instances must be non-null, unique, and contain at most one active instance.", nameof(instances));
         var instanceIds = instanceSnapshot.Select(item => item.InstanceId).ToHashSet();

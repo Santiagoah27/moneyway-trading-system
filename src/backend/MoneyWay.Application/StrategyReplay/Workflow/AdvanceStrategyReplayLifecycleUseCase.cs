@@ -15,7 +15,7 @@ public sealed class AdvanceStrategyReplayLifecycleUseCase
         IStrategyReplayLifecyclePolicy policy,
         StrategyReplayContextObservation observation,
         StrategyReplayLifecycleSnapshot? previousSnapshot)
-        => Execute(workflow, policy, observation, previousSnapshot, null);
+        => ExecuteCore(workflow, policy, observation, previousSnapshot, null, null, null);
 
     public StrategyReplayLifecycleAdvanceResult Execute(
         StrategyReplayWorkflowDefinition workflow,
@@ -23,6 +23,28 @@ public sealed class AdvanceStrategyReplayLifecycleUseCase
         StrategyReplayContextObservation observation,
         StrategyReplayLifecycleSnapshot? previousSnapshot,
         StrategyReplayProgressionSnapshot? previousProgression)
+        => ExecuteCore(workflow, policy, observation, previousSnapshot, previousProgression, null, null);
+
+    public StrategyReplayLifecycleAdvanceResult Execute(
+        StrategyReplayWorkflowDefinition workflow,
+        IStrategyReplayLifecyclePolicy policy,
+        StrategyReplayContext replayContext,
+        StrategyReplayContextObservation observation,
+        StrategyReplayLifecycleSnapshot? previousSnapshot,
+        StrategyReplayProgressionSnapshot? previousProgression,
+        IStrategyReplayLifecycleEvidenceProducer evidenceProducer)
+        => ExecuteCore(workflow, policy, observation, previousSnapshot, previousProgression,
+            replayContext ?? throw new ArgumentNullException(nameof(replayContext)),
+            evidenceProducer ?? throw new ArgumentNullException(nameof(evidenceProducer)));
+
+    private StrategyReplayLifecycleAdvanceResult ExecuteCore(
+        StrategyReplayWorkflowDefinition workflow,
+        IStrategyReplayLifecyclePolicy policy,
+        StrategyReplayContextObservation observation,
+        StrategyReplayLifecycleSnapshot? previousSnapshot,
+        StrategyReplayProgressionSnapshot? previousProgression,
+        StrategyReplayContext? replayContext,
+        IStrategyReplayLifecycleEvidenceProducer? evidenceProducer)
     {
         ArgumentNullException.ThrowIfNull(workflow);
         ArgumentNullException.ThrowIfNull(policy);
@@ -37,12 +59,20 @@ public sealed class AdvanceStrategyReplayLifecycleUseCase
                 || !WasTerminatedOnSnapshot(previousSnapshot)
                 ? progressionUseCase.Execute(workflow, observation, previousProgression)
                 : progressionUseCase.StartInstance(workflow, observation);
-        var policyContext = new StrategyReplayLifecyclePolicyContext(observation, candidateProgression, previousSnapshot);
+        var evidence = StrategyReplayLifecycleEvidenceSnapshot.Empty(observation);
+        if (evidenceProducer is not null)
+        {
+            if (evidenceProducer.StrategyId != observation.StrategyId || evidenceProducer.StrategyVersion != observation.StrategyVersion)
+                throw new InvalidOperationException("Lifecycle evidence producer identity must exactly match the strategy observation.");
+            evidence = evidenceProducer.Capture(new(replayContext!, observation, candidateProgression, previousSnapshot))
+                ?? throw new InvalidOperationException("Lifecycle evidence producer returned null.");
+        }
+        var policyContext = new StrategyReplayLifecyclePolicyContext(observation, candidateProgression, previousSnapshot, evidence);
         var transition = policy.Decide(policyContext) ?? throw new InvalidOperationException("Lifecycle policy returned null.");
         var instances = previousSnapshot?.Instances.ToList() ?? [];
         var history = previousSnapshot?.TransitionHistory.ToList() ?? [];
 
-        ApplyTransition(observation, transition, previousActive, candidateProgression, instances, history);
+        ApplyTransition(observation, transition, previousActive, candidateProgression, evidence, instances, history);
         return new(
             candidateProgression,
             new(
@@ -61,6 +91,7 @@ public sealed class AdvanceStrategyReplayLifecycleUseCase
         StrategyReplayLifecycleTransition transition,
         StrategyReplayProgressionInstanceSnapshot? previousActive,
         StrategyReplayProgressionSnapshot candidateProgression,
+        StrategyReplayLifecycleEvidenceSnapshot evidence,
         List<StrategyReplayProgressionInstanceSnapshot> instances,
         List<StrategyReplayLifecycleTransitionRecord> history)
     {
@@ -68,18 +99,22 @@ public sealed class AdvanceStrategyReplayLifecycleUseCase
         {
             case StrategyReplayLifecycleTransitionKind.None:
                 if (previousActive is not null)
-                    ReplaceInstance(instances, new(previousActive.InstanceId, previousActive.StartedAtUtc, previousActive.StateReference, candidateProgression));
+                    ReplaceInstance(instances, new(previousActive.InstanceId, previousActive.StartedAtUtc, previousActive.StateReference,
+                        candidateProgression, evidence: EvidenceForActive(observation, evidence, previousActive)));
                 return;
             case StrategyReplayLifecycleTransitionKind.Start:
                 if (previousActive is not null) throw new InvalidOperationException("A new progression cannot start while another progression is active.");
                 var instanceId = new StrategyReplayProgressionInstanceId(instances.Count == 0 ? 1 : instances.Max(item => item.InstanceId.Ordinal) + 1);
-                var started = new StrategyReplayProgressionInstanceSnapshot(instanceId, observation.AsOfUtc, transition.StateReference!, candidateProgression);
+                var started = new StrategyReplayProgressionInstanceSnapshot(instanceId, observation.AsOfUtc, transition.StateReference!,
+                    candidateProgression, evidence: evidence.BindTo(instanceId));
                 instances.Add(started);
                 history.Add(Record(observation, instanceId, transition.Kind, null, instanceId, null, started.StateReference));
                 return;
             case StrategyReplayLifecycleTransitionKind.ReplaceActiveState:
                 EnsureActive(previousActive, transition.Kind);
-                var updated = new StrategyReplayProgressionInstanceSnapshot(previousActive!.InstanceId, previousActive.StartedAtUtc, transition.StateReference!, candidateProgression);
+                var updated = new StrategyReplayProgressionInstanceSnapshot(previousActive!.InstanceId, previousActive.StartedAtUtc,
+                    transition.StateReference!, candidateProgression,
+                    evidence: EvidenceForActive(observation, evidence, previousActive));
                 ReplaceInstance(instances, updated);
                 history.Add(Record(observation, updated.InstanceId, transition.Kind, updated.InstanceId, updated.InstanceId, previousActive.StateReference, updated.StateReference));
                 return;
@@ -95,7 +130,8 @@ public sealed class AdvanceStrategyReplayLifecycleUseCase
                     previousActive.StateReference,
                     previousActive.WorkflowProgression,
                     observation.AsOfUtc,
-                    terminationKind);
+                    terminationKind,
+                    EvidenceForActive(observation, evidence, previousActive));
                 ReplaceInstance(instances, terminated);
                 history.Add(Record(observation, terminated.InstanceId, transition.Kind, terminated.InstanceId, null, terminated.StateReference, null));
                 return;
@@ -103,6 +139,12 @@ public sealed class AdvanceStrategyReplayLifecycleUseCase
                 throw new ArgumentOutOfRangeException(nameof(transition));
         }
     }
+
+    private static StrategyReplayLifecycleEvidenceSnapshot EvidenceForActive(
+        StrategyReplayContextObservation observation,
+        StrategyReplayLifecycleEvidenceSnapshot current,
+        StrategyReplayProgressionInstanceSnapshot previousActive) =>
+        current.MergeFor(observation, previousActive.InstanceId, previousActive.Evidence);
 
     private static StrategyReplayLifecycleTransitionRecord Record(
         StrategyReplayContextObservation observation,
