@@ -146,6 +146,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
     [Fact]
     public void NasdaqTakeProfitCapabilityReasonNamesOnlyCurrentSpecificationBlockers()
     {
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
         var declaration = Assert.Single(
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll(),
             item => item.StrategyId == Nasdaq.StrategyId &&
@@ -153,6 +154,10 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
                 item.RuleId == new RuleId("NQ-TP-001"));
 
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, declaration.Status);
+        Assert.DoesNotContain(evaluators, evaluator =>
+            evaluator.StrategyId == Nasdaq.StrategyId &&
+            evaluator.StrategyVersion == Nasdaq.Version &&
+            evaluator.RuleId == declaration.RuleId);
         Assert.Contains("Session target candidates", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("distinct first-encountered priority", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("equal-target merge are source-defined", declaration.Reason, StringComparison.Ordinal);
@@ -161,9 +166,9 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("1H-versus-4H priority", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("candidate ranking", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("tie-breaking remain unresolved", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("after 08:30 but before Step-3 activation", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("general final Take Profit hierarchy outside the reviewed cases", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("General final Take Profit hierarchy outside the reviewed cases", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("universal full-exit behavior", declaration.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("Target consumption after 08:30 but before Step-3 activation", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("equal, already-crossed, unavailable", declaration.Reason, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("equal-target behavior remains unresolved", declaration.Reason, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Asia/London selection remains unresolved", declaration.Reason, StringComparison.OrdinalIgnoreCase);
@@ -171,6 +176,13 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.DoesNotContain("important-high/important-low selection", declaration.Reason, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("touch", declaration.Reason, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("tolerance", declaration.Reason, StringComparison.OrdinalIgnoreCase);
+
+        var report = Catalog(evaluators, MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
+            .Find(Nasdaq.StrategyId, Nasdaq.Version)!;
+        var capability = report.Rules.Single(item => item.RuleId == declaration.RuleId);
+
+        Assert.Equal(declaration.Status, capability.CapabilityStatus);
+        Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(report));
     }
 
     [Fact]
