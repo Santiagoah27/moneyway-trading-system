@@ -102,10 +102,13 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
     {
 
         var structuralLiquidity = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-002");
-        Assert.Contains("1H/4H structural liquidity references", structuralLiquidity.Description, StringComparison.Ordinal);
-        Assert.Contains("Step-2 levels", structuralLiquidity.Description, StringComparison.Ordinal);
-        Assert.Contains("coincidence with Asia or London highs/lows", structuralLiquidity.Description, StringComparison.Ordinal);
-        Assert.Contains("without inferring a structural-point algorithm, tolerance, or priority", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("At Step 2", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("Asia and London highs/lows", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("structural 1H/4H liquidity references", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("falls back to the next relevant structural 1H/4H point", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("Deterministic structural-point detection", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("1H-versus-4H priority", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("remain unresolved", structuralLiquidity.Description, StringComparison.Ordinal);
 
         var sweep = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-003");
         Assert.Equal("Liquidity take required", sweep.Name);
@@ -120,8 +123,10 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("subsequent same-side extension", sweep.Description, StringComparison.Ordinal);
         Assert.Contains("single setup", sweep.Description, StringComparison.Ordinal);
         Assert.Contains("rather than create a parallel setup", sweep.Description, StringComparison.Ordinal);
-        Assert.Contains("separate audited lifecycle conditions", sweep.Description, StringComparison.Ordinal);
-        Assert.DoesNotContain("detect", sweep.Description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Target selection occurs outside this rule", sweep.Description, StringComparison.Ordinal);
+        Assert.Contains("separate lifecycle cancellation condition", sweep.Description, StringComparison.Ordinal);
+        Assert.Contains("neither selects a fallback nor detects target touch or cancellation", sweep.Description, StringComparison.Ordinal);
+        Assert.Contains("after 08:30 but before Step-3 activation remains unresolved", sweep.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("points", sweep.Description, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("ticks", sweep.Description, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("tolerance", sweep.Description, StringComparison.OrdinalIgnoreCase);
@@ -180,9 +185,12 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("before 11:00 America/Bogota", entry.Description, StringComparison.Ordinal);
         Assert.Contains("active, non-cancelled and non-expired setup", entry.Description, StringComparison.Ordinal);
         Assert.Contains("timeframe-independent quote touch", entry.Description, StringComparison.Ordinal);
-        Assert.Contains("first encountered opposite-side Asia/London target", entry.Description, StringComparison.Ordinal);
+        Assert.Contains("already-selected opposite-side target", entry.Description, StringComparison.Ordinal);
+        Assert.Contains("surrounding lifecycle cancels the old setup", entry.Description, StringComparison.Ordinal);
         Assert.Contains("later NQ-M1-003 signal cannot revive it", entry.Description, StringComparison.Ordinal);
-        Assert.Contains("same-candle OHLC does not establish intrabar order", entry.Description, StringComparison.Ordinal);
+        Assert.Contains("does not select the target", entry.Description, StringComparison.Ordinal);
+        Assert.Contains("after 08:30 but before Step-3 activation", entry.Description, StringComparison.Ordinal);
+        Assert.Contains("same-observation OHLC intrabar order remains a market-data resolution limitation", entry.Description, StringComparison.Ordinal);
         Assert.Contains("runtime gate-status mapping", entry.Description, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("order mechanics remain unresolved", entry.Description, StringComparison.Ordinal);
 
@@ -197,12 +205,19 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, target.DefinitionStatus);
         Assert.Contains("London High and Asia High", target.Description, StringComparison.Ordinal);
         Assert.Contains("London Low and Asia Low", target.Description, StringComparison.Ordinal);
-        Assert.Contains("first relevant candidate encountered in the expected price direction", target.Description, StringComparison.Ordinal);
+        Assert.Contains("first relevant level encountered in the expected price direction", target.Description, StringComparison.Ordinal);
+        Assert.Contains("equal Asia/London prices merge into one unique target", target.Description, StringComparison.Ordinal);
+        Assert.Contains("final Take Profit in the reviewed scenario", target.Description, StringComparison.Ordinal);
+        Assert.Contains("without an intermediate Break-Even event", target.Description, StringComparison.Ordinal);
+        Assert.Contains("falls back to the next relevant structural 1H/4H point", target.Description, StringComparison.Ordinal);
+        Assert.Contains("Deterministic structural selection", target.Description, StringComparison.Ordinal);
+        Assert.Contains("1H-versus-4H priority", target.Description, StringComparison.Ordinal);
+        Assert.Contains("after-08:30-before-Step-3 edge", target.Description, StringComparison.Ordinal);
         Assert.Contains("absolute price level", target.Description, StringComparison.Ordinal);
         Assert.Contains("timeframe-independent quote touch", target.Description, StringComparison.Ordinal);
         Assert.Contains("including wick contact in candle observations", target.Description, StringComparison.Ordinal);
-        Assert.Contains("without body close, candle close, or tolerance", target.Description, StringComparison.Ordinal);
-        Assert.Contains("first target is always final Take Profit", target.Description, StringComparison.Ordinal);
+        Assert.Contains("no body close, candle close, or tolerance", target.Description, StringComparison.Ordinal);
+        Assert.Contains("universal full-exit behavior remain unresolved", target.Description, StringComparison.Ordinal);
         Assert.Contains("remain unresolved or human-validated", target.Description, StringComparison.Ordinal);
 
         var sessionTargets = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-TP-002");
@@ -211,10 +226,14 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("London High and Asia High", sessionTargets.Description, StringComparison.Ordinal);
         Assert.Contains("London Low and Asia Low", sessionTargets.Description, StringComparison.Ordinal);
         Assert.Contains("first relevant level encountered in the expected price direction", sessionTargets.Description, StringComparison.Ordinal);
-        Assert.Contains("quote-level touch is timeframe-independent", sessionTargets.Description, StringComparison.Ordinal);
+        Assert.Contains("Equal Asia/London prices merge into one unique session target", sessionTargets.Description, StringComparison.Ordinal);
+        Assert.Contains("without Asia or London tie priority", sessionTargets.Description, StringComparison.Ordinal);
+        Assert.Contains("covers session-target selection only", sessionTargets.Description, StringComparison.Ordinal);
+        Assert.Contains("does not define deterministic structural fallback selection", sessionTargets.Description, StringComparison.Ordinal);
+        Assert.Contains("does not claim that the first distinct target is always final Take Profit", sessionTargets.Description, StringComparison.Ordinal);
+        Assert.Contains("quote-level touch of the selected target is timeframe-independent", sessionTargets.Description, StringComparison.Ordinal);
         Assert.Contains("includes wick contact in candle observations", sessionTargets.Description, StringComparison.Ordinal);
         Assert.Contains("no body close, candle close, or tolerance", sessionTargets.Description, StringComparison.Ordinal);
-        Assert.Contains("not necessarily the final Take Profit", sessionTargets.Description, StringComparison.Ordinal);
 
         var distinctSwing = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-BE-001");
         Assert.Equal(RuleDefinitionStatus.Unresolved, distinctSwing.DefinitionStatus);
@@ -229,18 +248,30 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("first favorable target encountered in the expected price direction", breakEven.Description, StringComparison.Ordinal);
         Assert.Contains("London High or Asia High for a buy", breakEven.Description, StringComparison.Ordinal);
         Assert.Contains("London Low or Asia Low for a sell", breakEven.Description, StringComparison.Ordinal);
-        Assert.Contains("moves Stop Loss conceptually to entry", breakEven.Description, StringComparison.Ordinal);
+        Assert.Contains("may move Stop Loss conceptually to entry", breakEven.Description, StringComparison.Ordinal);
+        Assert.Contains("equal", breakEven.Description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("merge into one target treated as final Take Profit in the reviewed scenario", breakEven.Description, StringComparison.Ordinal);
+        Assert.Contains("no intermediate Break-Even transition is created at that same price", breakEven.Description, StringComparison.Ordinal);
         Assert.Contains("including wick contact in candle observations", breakEven.Description, StringComparison.Ordinal);
         Assert.Contains("without body close, candle close, or tolerance", breakEven.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("target selection", breakEven.Description, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("trigger geometry", breakEven.Description, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Exact Break-Even cost basis", breakEven.Description, StringComparison.Ordinal);
+        Assert.Contains("cost treatment", breakEven.Description, StringComparison.Ordinal);
+        Assert.Contains("universal applicability", breakEven.Description, StringComparison.Ordinal);
         Assert.Contains("remain unresolved", breakEven.Description, StringComparison.Ordinal);
     }
 
     [Fact]
     public void TargetManagementReconciliationPreservesFrozenRuleMetadata()
     {
+        AssertFrozenMetadata(
+            "NQ-LIQ-002",
+            "Relevant liquidity",
+            "Liquidity",
+            60,
+            true,
+            RuleDefinitionStatus.HumanValidationRequired);
         AssertFrozenMetadata(
             "NQ-LIQ-003",
             "Liquidity take required",
@@ -283,6 +314,30 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
             220,
             false,
             RuleDefinitionStatus.HumanValidationRequired);
+    }
+
+    [Fact]
+    public void TargetFallbackMetadataDoesNotInventUnresolvedSelectionOrLifecycleSemantics()
+    {
+        var targetedRuleIds = new[]
+        {
+            "NQ-LIQ-002", "NQ-LIQ-003", "NQ-M1-003", "NQ-BE-002", "NQ-TP-001", "NQ-TP-002",
+        };
+        var text = string.Join(' ', definition.Rules
+            .Where(rule => targetedRuleIds.Contains(rule.RuleId.Value))
+            .Select(rule => rule.Description));
+
+        Assert.DoesNotContain("equal session targets are two targets", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Asia always wins", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("London always wins", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("1H always wins", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("4H always wins", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("nearest structural point", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("structural fallback algorithm is deterministic", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("touch requires body close", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("after 08:30 but before Step-3 activation uses fallback", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("after 08:30 but before Step-3 activation cancels", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("implemented", text, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
