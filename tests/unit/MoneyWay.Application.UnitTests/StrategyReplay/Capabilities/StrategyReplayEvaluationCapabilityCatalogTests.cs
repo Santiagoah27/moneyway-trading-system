@@ -140,7 +140,32 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
             (forex.TotalRuleCount, forex.RequiredRuleCount, forex.ImplementedCount, forex.HumanOnlyCount,
                 forex.NotImplementedCount, forex.BlockedByUnresolvedSpecificationCount,
                 forex.RequiredImplementedCount, forex.RequiredEvaluatorGapCount,
-                forex.HasFullRequiredEvaluatorRegistration));
+            forex.HasFullRequiredEvaluatorRegistration));
+    }
+
+    [Fact]
+    public void NasdaqStopLossCapabilityReasonRecognizesTheSellHighestWickAnchorWithoutExecutionSemantics()
+    {
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
+        var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
+        var declaration = Assert.Single(declarations, item =>
+            item.StrategyId == Nasdaq.StrategyId &&
+            item.StrategyVersion == Nasdaq.Version &&
+            item.RuleId == new RuleId("NQ-SL-001"));
+        var report = Catalog(evaluators, declarations).Find(Nasdaq.StrategyId, Nasdaq.Version)!;
+
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, declaration.Status);
+        Assert.DoesNotContain(evaluators, evaluator =>
+            evaluator.StrategyId == Nasdaq.StrategyId &&
+            evaluator.StrategyVersion == Nasdaq.Version &&
+            evaluator.RuleId == declaration.RuleId);
+        Assert.Contains("conceptual Stop Loss anchor is above the highest wick/tail", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("relevant structural 5M LH", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("Deterministic identification", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("executable Stop Loss geometry remain unresolved", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("buffer, offset, spread or cost adjustment, broker order price, execution semantics", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("structural target coordinate", declaration.Reason, StringComparison.Ordinal);
+        Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(report));
     }
 
     [Fact]
@@ -177,17 +202,19 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("lowest Open or Close body price", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("an isolated wick is insufficient", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("Doji/gap handling", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("exact HH and confirming-candle inclusivity", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("confirming-candle price scanning", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("turn membership", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("exact candle inclusivity", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("confirming-candle scan participation", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("candidate-LH structural price selection", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("equal-coordinate candle identity", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("Direct bearish evidence establishes the prior LL as the correction origin/reference", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("candidate high remains provisional", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("formally closed Close < prior LL", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("validates the preceding LH only from that causal AsOfUtc", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("validates the preceding highest candidate high as LH only from that causal AsOfUtc", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("wick-only penetration and an open candle do not confirm it", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("candidate symmetry rather than confirmed deterministic rules", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("Reproducible complex bearish target-point reconstruction", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("a higher candidate high replaces a lower candidate", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("superseded intermediate highs do not survive as LH", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("This confirms candidate-LH identity, not a target structural coordinate", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("SELL Stop Loss highest-wick/tail anchor does not select the target coordinate", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("candidate-LH selection, bearish symmetry", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("other structural-point selection and coordinates", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("exact OHLC mitigation test", declaration.Reason, StringComparison.Ordinal);
@@ -276,17 +303,18 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("causal AsOfUtc", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("lowest Open or Close body price", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("Doji/gap handling", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("exact HH and confirming-candle inclusivity", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("confirming-candle price scanning", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("exact candle inclusivity", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("confirming-candle scan participation", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("turn membership", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("equal-coordinate candle identity", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("Direct bearish evidence establishes the prior LL as the correction origin/reference", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("candidate high remains provisional", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("formally closed Close < prior LL", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("validates the preceding LH only from that causal AsOfUtc", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("validates the preceding highest candidate high as LH only from that causal AsOfUtc", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("wick-only penetration and an open candle do not confirm it", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("candidate symmetry rather than confirmed deterministic rules", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("Reproducible complex bearish correction reconstruction", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("a higher candidate high replaces a lower candidate", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("superseded intermediate highs do not survive as LH", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("This confirms LH structural identity, not its structural price coordinate", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("candidate-LH selection, bearish symmetry", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("retracement pivots from closed candles", declaration.Reason, StringComparison.Ordinal);
         Assert.Equal("docs/strategies/nasdaq/rule-catalog.md", declaration.SourceReference);
