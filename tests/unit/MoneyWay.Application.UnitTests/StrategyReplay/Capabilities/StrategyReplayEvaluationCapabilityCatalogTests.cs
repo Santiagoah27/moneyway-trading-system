@@ -162,7 +162,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
     }
 
     [Fact]
-    public void NasdaqStopLossCapabilityReasonRecognizesTheSellHighestWickAnchorWithoutExecutionSemantics()
+    public void NasdaqStopLossCapabilityReasonRecognizesBothProtectionAnchorsWithoutExecutionSemantics()
     {
         var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
         var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
@@ -177,12 +177,12 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
             evaluator.StrategyId == Nasdaq.StrategyId &&
             evaluator.StrategyVersion == Nasdaq.Version &&
             evaluator.RuleId == declaration.RuleId);
-        Assert.Contains("conceptual Stop Loss anchor is above the highest wick/tail", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("relevant structural 5M LH", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("Low/lowest wick extreme of the relevant structural 5M HL", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("High/highest wick/tail of the relevant structural 5M LH", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("Deterministic identification", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("executable Stop Loss geometry remain unresolved", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("buffer, offset, spread or cost adjustment, broker order price, execution semantics", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("structural target coordinate", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("executable Stop Loss price/offset remain unresolved", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("separate from structural coordinates, including the single-candle origin Open", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("does not define an executable Stop Loss price, buffer, tick distance, spread/cost adjustment, broker order, or execution semantics", declaration.Reason, StringComparison.Ordinal);
         Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(report));
     }
 
@@ -223,8 +223,11 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("causal confirming candle is excluded from the correction set and retrospective candidate HL/LH scan", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("belongs conceptually to the impulsive leg", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("validates the new HH/LL and preceding candidate only from that causal AsOfUtc", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("single expansive confirming candle may also contain impulse-origin evidence without becoming a correction candle", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("single-expansive-candle case, its Open supplies the structural HL/LH origin coordinate", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("its Close supplies causal validation", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("without making it a correction candle or requiring an intrabar path", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("does not replace multi-candle body-edge rules or use a protection wick as a target coordinate", declaration.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("exact prior HH/LL boundary inclusivity", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("confirming-candle scan participation", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("Equal-coordinate candle identity", declaration.Reason, StringComparison.Ordinal);
@@ -239,7 +242,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("highest Open or Close body edge", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("candle color does not alter it", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("a higher wick does not redefine it", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("distinct from the separate SELL Stop Loss anchor above the highest wick/tail", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("distinct from buy/sell protection wick anchors", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("neither substitutes for the other", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("candidate-LH structural price selection", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("bearish body anchoring", declaration.Reason, StringComparison.Ordinal);
@@ -334,8 +337,11 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("causal confirming candle is excluded from the correction set and retrospective candidate HL/LH scan", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("belongs conceptually to the impulsive leg", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("validates the new HH/LL and preceding candidate only from that causal AsOfUtc", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("single expansive confirming candle may also contain impulse-origin evidence without becoming a correction candle", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("single-expansive-candle case, its Open supplies the structural HL/LH origin coordinate", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("its Close supplies causal validation", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("without making it a correction candle or requiring an intrabar path", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("This does not replace multi-candle body-edge rules", declaration.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("exact prior HH/LL boundary inclusivity", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("confirming-candle scan participation", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("turn membership", declaration.Reason, StringComparison.Ordinal);
@@ -351,7 +357,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("highest Open or Close body edge", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("candle color does not alter it", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("a higher wick does not redefine it", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("distinct from the separate SELL Stop Loss anchor above the highest wick/tail", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("distinct from the buy HL Low/lowest-wick and sell LH High/highest-wick protection anchors", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("candidate-LH structural price selection", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("bearish body anchoring", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("candidate-LH selection, bearish symmetry", declaration.Reason, StringComparison.Ordinal);
