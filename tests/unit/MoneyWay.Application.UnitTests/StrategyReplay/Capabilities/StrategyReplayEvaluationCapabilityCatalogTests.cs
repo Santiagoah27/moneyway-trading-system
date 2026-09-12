@@ -144,6 +144,24 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
     }
 
     [Fact]
+    public void NasdaqRelevantLiquidityHasNoExplicitCapabilityDeclaration()
+    {
+        var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
+        var report = Catalog(MoneyWayReplayRuleEvaluators.GetAll(), declarations)
+            .Find(Nasdaq.StrategyId, Nasdaq.Version)!;
+        var capability = report.Rules.Single(item => item.RuleId == new RuleId("NQ-LIQ-002"));
+
+        Assert.DoesNotContain(declarations, declaration =>
+            declaration.StrategyId == Nasdaq.StrategyId &&
+            declaration.StrategyVersion == Nasdaq.Version &&
+            declaration.RuleId == capability.RuleId);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, capability.CapabilityStatus);
+        Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, capability.CapabilityReason);
+        Assert.Null(capability.CapabilitySourceReference);
+        Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(report));
+    }
+
+    [Fact]
     public void NasdaqStopLossCapabilityReasonRecognizesTheSellHighestWickAnchorWithoutExecutionSemantics()
     {
         var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
@@ -204,8 +222,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("Doji/gap handling", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("exact candle inclusivity", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("confirming-candle scan participation", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("candidate-LH structural price selection", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("equal-coordinate candle identity", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("Equal-coordinate candle identity", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("Direct bearish evidence establishes the prior LL as the correction origin/reference", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("candidate high remains provisional", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("formally closed Close < prior LL", declaration.Reason, StringComparison.Ordinal);
@@ -213,8 +230,14 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("wick-only penetration and an open candle do not confirm it", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("a higher candidate high replaces a lower candidate", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("superseded intermediate highs do not survive as LH", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("This confirms candidate-LH identity, not a target structural coordinate", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("SELL Stop Loss highest-wick/tail anchor does not select the target coordinate", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("This confirms candidate-LH identity and its selected-turn target structural coordinate", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("highest Open or Close body edge", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("candle color does not alter it", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("a higher wick does not redefine it", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("distinct from the separate SELL Stop Loss anchor above the highest wick/tail", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("neither substitutes for the other", declaration.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("candidate-LH structural price selection", declaration.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("bearish body anchoring", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("candidate-LH selection, bearish symmetry", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("other structural-point selection and coordinates", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("exact OHLC mitigation test", declaration.Reason, StringComparison.Ordinal);
@@ -314,7 +337,13 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("wick-only penetration and an open candle do not confirm it", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("a higher candidate high replaces a lower candidate", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("superseded intermediate highs do not survive as LH", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("This confirms LH structural identity, not its structural price coordinate", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("This confirms LH structural identity and its selected-turn structural coordinate", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("highest Open or Close body edge", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("candle color does not alter it", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("a higher wick does not redefine it", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("distinct from the separate SELL Stop Loss anchor above the highest wick/tail", declaration.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("candidate-LH structural price selection", declaration.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("bearish body anchoring", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("candidate-LH selection, bearish symmetry", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("retracement pivots from closed candles", declaration.Reason, StringComparison.Ordinal);
         Assert.Equal("docs/strategies/nasdaq/rule-catalog.md", declaration.SourceReference);
