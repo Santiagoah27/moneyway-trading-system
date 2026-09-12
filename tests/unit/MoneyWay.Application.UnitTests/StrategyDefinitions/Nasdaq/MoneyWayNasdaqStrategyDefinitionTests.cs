@@ -119,8 +119,11 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("causal confirming candle is excluded from the correction set and retrospective candidate HL/LH scan", context.Description, StringComparison.Ordinal);
         Assert.Contains("belongs conceptually to the impulsive leg", context.Description, StringComparison.Ordinal);
         Assert.Contains("validates the new HH/LL and preceding candidate only from that causal AsOfUtc", context.Description, StringComparison.Ordinal);
-        Assert.Contains("single expansive confirming candle may also contain impulse-origin evidence without becoming a correction candle", context.Description, StringComparison.Ordinal);
-        Assert.Contains("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", context.Description, StringComparison.Ordinal);
+        Assert.Contains("single-expansive-candle case, its Open supplies the structural HL/LH origin coordinate", context.Description, StringComparison.Ordinal);
+        Assert.Contains("its Close supplies causal validation", context.Description, StringComparison.Ordinal);
+        Assert.Contains("without making it a correction candle or requiring an intrabar path", context.Description, StringComparison.Ordinal);
+        Assert.Contains("This does not replace multi-candle body-edge rules", context.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", context.Description, StringComparison.Ordinal);
         Assert.Contains("exact prior HH/LL boundary inclusivity", context.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("confirming-candle scan participation", context.Description, StringComparison.Ordinal);
         Assert.Contains("turn membership", context.Description, StringComparison.Ordinal);
@@ -173,8 +176,11 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("causal confirming candle is excluded from the correction set and retrospective candidate HL/LH scan", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("belongs conceptually to the impulsive leg", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("validates the new HH/LL and preceding candidate only from that causal AsOfUtc", structuralLiquidity.Description, StringComparison.Ordinal);
-        Assert.Contains("single expansive confirming candle may also contain impulse-origin evidence without becoming a correction candle", structuralLiquidity.Description, StringComparison.Ordinal);
-        Assert.Contains("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("single-expansive-candle case, its Open supplies the structural HL/LH origin coordinate", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("its Close supplies causal validation", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("without making it a correction candle or requiring an intrabar path", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("wick does not become the structural fallback target coordinate", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("exact prior HH/LL boundary inclusivity", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("confirming-candle scan participation", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("turn membership", structuralLiquidity.Description, StringComparison.Ordinal);
@@ -281,12 +287,11 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
 
         var stop = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-SL-001");
         Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, stop.DefinitionStatus);
-        Assert.Contains("wick of the latest relevant structural 5M HL", stop.Description, StringComparison.Ordinal);
-        Assert.Contains("highest wick/tail of the relevant structural 5M LH", stop.Description, StringComparison.Ordinal);
-        Assert.Contains("separate from the structural price coordinate", stop.Description, StringComparison.Ordinal);
-        Assert.Contains("exact offset remain unresolved", stop.Description, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("buffer", stop.Description, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("order", stop.Description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Low/lowest wick extreme of the latest relevant structural 5M HL", stop.Description, StringComparison.Ordinal);
+        Assert.Contains("High/highest wick/tail of the relevant structural 5M LH", stop.Description, StringComparison.Ordinal);
+        Assert.Contains("executable price and offset remain unresolved", stop.Description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("does not define a buffer, tick distance, spread/cost adjustment, or broker order semantics", stop.Description, StringComparison.Ordinal);
+        Assert.Contains("separate from structural coordinates, including the single-candle origin Open", stop.Description, StringComparison.Ordinal);
 
         var target = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-TP-001");
         Assert.Equal("Important liquidity target", target.Name);
@@ -325,14 +330,17 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("structural target/comparison coordinate is the highest Open or Close body edge", target.Description, StringComparison.Ordinal);
         Assert.Contains("candle color does not alter it", target.Description, StringComparison.Ordinal);
         Assert.Contains("a higher wick does not redefine it", target.Description, StringComparison.Ordinal);
-        Assert.Contains("distinct from the separate sell Stop Loss anchor above the highest wick/tail", target.Description, StringComparison.Ordinal);
-        Assert.Contains("neither substitutes for the other", target.Description, StringComparison.Ordinal);
+        Assert.Contains("distinct from separate buy/sell protection wick anchors", target.Description, StringComparison.Ordinal);
+        Assert.Contains("neither substitutes for the structural target coordinate", target.Description, StringComparison.Ordinal);
         Assert.Contains("doji/gap handling", target.Description, StringComparison.Ordinal);
         Assert.Contains("causal confirming candle is excluded from the correction set and retrospective candidate HL/LH scan", target.Description, StringComparison.Ordinal);
         Assert.Contains("belongs conceptually to the impulsive leg", target.Description, StringComparison.Ordinal);
         Assert.Contains("validates the new HH/LL and preceding candidate only from that causal AsOfUtc", target.Description, StringComparison.Ordinal);
-        Assert.Contains("single expansive confirming candle may also contain impulse-origin evidence without becoming a correction candle", target.Description, StringComparison.Ordinal);
-        Assert.Contains("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", target.Description, StringComparison.Ordinal);
+        Assert.Contains("single-expansive-candle case, its Open supplies the structural HL/LH origin coordinate", target.Description, StringComparison.Ordinal);
+        Assert.Contains("its Close supplies causal validation", target.Description, StringComparison.Ordinal);
+        Assert.Contains("without making it a correction candle or requiring an intrabar path", target.Description, StringComparison.Ordinal);
+        Assert.Contains("does not replace multi-candle body-edge rules or use a protection wick as a target coordinate", target.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", target.Description, StringComparison.Ordinal);
         Assert.Contains("exact prior HH/LL boundary inclusivity", target.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("confirming-candle scan participation", target.Description, StringComparison.Ordinal);
         Assert.Contains("turn membership", target.Description, StringComparison.Ordinal);
