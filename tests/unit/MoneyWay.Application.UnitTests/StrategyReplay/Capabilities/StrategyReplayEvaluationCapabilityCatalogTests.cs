@@ -214,9 +214,9 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("Bullish candidate-HL reconstruction is partially defined", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("prior HH is the upper boundary", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("first bearish candle after HH production stops starts the correction", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("Deeper lows replace shallower candidates", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("deeper lows replace shallower candidates", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("formally closed Close > prior HH", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("usable from that causal AsOfUtc", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("candidate usable from its AsOfUtc", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("lowest Open or Close body price", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("an isolated wick is insufficient", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("prior LL remains the structural reference", declaration.Reason, StringComparison.Ordinal);
@@ -318,6 +318,45 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
     }
 
     [Fact]
+    public void NasdaqBullishCorrectionMembershipCapabilityReasonsReflectOnlyCurrentBlockers()
+    {
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
+        var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
+        var report = Catalog(evaluators, declarations).Find(Nasdaq.StrategyId, Nasdaq.Version)!;
+        var context = Assert.Single(declarations, item => item.RuleId == new RuleId("NQ-H4-001"));
+        var target = Assert.Single(declarations, item => item.RuleId == new RuleId("NQ-TP-001"));
+        var liquidity = report.Rules.Single(item => item.RuleId == new RuleId("NQ-LIQ-002"));
+
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, context.Status);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, target.Status);
+        Assert.Contains("all in-range bearish, bullish, and exact-doji candles remain in one correction turn", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("body-color alternation does not fragment it or create parallel HL candidates", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("High > current correction-origin ceiling resets the correction", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("discards the current candidate HL without validating a structural HH", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("Close < prior validated HL invalidates the bullish structure", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("Close == prior validated HL and wick-only Low < prior validated HL with Close >= prior validated HL do not invalidate", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("terminal/reset candle membership or geometry", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("bearish reset/invalidation symmetry", context.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("exact turn membership/segmentation cases", context.Reason, StringComparison.Ordinal);
+
+        Assert.Contains("all in-range bearish, bullish, and exact-doji candles remain in one correction turn", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("An invalidated bullish structure cannot yield a validated HL usable as a structural fallback target candidate", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("exact OHLC mitigation test", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("PDH/PDL cross-class ranking", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("universal full-exit behavior", target.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("exact turn membership/segmentation cases", target.Reason, StringComparison.Ordinal);
+
+        Assert.DoesNotContain(declarations, item => item.RuleId == liquidity.RuleId);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, liquidity.CapabilityStatus);
+        Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, liquidity.CapabilityReason);
+        Assert.DoesNotContain(evaluators, evaluator =>
+            evaluator.StrategyId == Nasdaq.StrategyId &&
+            evaluator.StrategyVersion == Nasdaq.Version &&
+            (evaluator.RuleId == context.RuleId || evaluator.RuleId == target.RuleId));
+        Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(report));
+    }
+
+    [Fact]
     public void NasdaqFourHourContextRemainsConfirmedWhileCapabilityIsExplicitlyBlocked()
     {
         var definition = Nasdaq;
@@ -350,7 +389,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("bullish candidate-HL reconstruction is partially defined", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("prior HH is the upper boundary", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("first bearish candle after HH production stops starts the correction", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("Deeper lows replace shallower candidates", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("deeper lows replace shallower candidates", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("formally closed Close > prior HH", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("causal AsOfUtc", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("lowest Open or Close body price", declaration.Reason, StringComparison.Ordinal);
@@ -387,7 +426,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.DoesNotContain("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("Reproducible bearish correction boundaries", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("confirming-candle scan participation", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("exact turn membership", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("terminal/reset candle membership", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("equal-coordinate candle identity", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("Direct bearish evidence confirms the correction start for the demonstrated case", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("candidate high remains provisional", declaration.Reason, StringComparison.Ordinal);
