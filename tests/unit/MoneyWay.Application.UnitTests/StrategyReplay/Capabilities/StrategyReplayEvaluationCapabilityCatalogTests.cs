@@ -335,12 +335,22 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("discards the current candidate HL without validating a structural HH", context.Reason, StringComparison.Ordinal);
         Assert.Contains("Close < prior validated HL invalidates the bullish structure", context.Reason, StringComparison.Ordinal);
         Assert.Contains("Close == prior validated HL and wick-only Low < prior validated HL with Close >= prior validated HL do not invalidate", context.Reason, StringComparison.Ordinal);
-        Assert.Contains("terminal/reset candle membership or geometry", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("If that same reset candle closes bearish, it is excluded from the old turn and included as the first member of the new bullish correction turn", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("if it is neutral or bullish, the reset occurs but the new correction does not start", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("the invalidation candle is excluded from the destroyed turn and candidate geometry", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("cannot alter its StructuralPrice or ProtectionAnchor", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("new bearish impulse evidence rather than a validated structural LL", context.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("terminal/reset candle membership or geometry", context.Reason, StringComparison.Ordinal);
         Assert.Contains("bearish reset/invalidation symmetry", context.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("exact turn membership/segmentation cases", context.Reason, StringComparison.Ordinal);
 
         Assert.Contains("all in-range bearish, bullish, and exact-doji candles remain in one correction turn", target.Reason, StringComparison.Ordinal);
         Assert.Contains("An invalidated bullish structure cannot yield a validated HL usable as a structural fallback target candidate", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("If that same reset candle closes bearish, it is excluded from the old turn and included as the first member of the new bullish correction turn", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("the invalidation candle is excluded from the destroyed turn and candidate geometry", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("cannot alter its StructuralPrice or ProtectionAnchor", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("new bearish impulse evidence rather than a validated structural LL", target.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("terminal/reset candle membership or geometry", target.Reason, StringComparison.Ordinal);
         Assert.Contains("exact OHLC mitigation test", target.Reason, StringComparison.Ordinal);
         Assert.Contains("PDH/PDL cross-class ranking", target.Reason, StringComparison.Ordinal);
         Assert.Contains("universal full-exit behavior", target.Reason, StringComparison.Ordinal);
@@ -426,7 +436,12 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.DoesNotContain("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("Reproducible bearish correction boundaries", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("confirming-candle scan participation", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("terminal/reset candle membership", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("If that same reset candle closes bearish, it is excluded from the old turn and included as the first member of the new bullish correction turn", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("if it is neutral or bullish, the reset occurs but the new correction does not start", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("the invalidation candle is excluded from the destroyed turn and candidate geometry", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("cannot alter its StructuralPrice or ProtectionAnchor", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("new bearish impulse evidence rather than a validated structural LL", declaration.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("terminal/reset candle membership", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("equal-coordinate candle identity", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("Direct bearish evidence confirms the correction start for the demonstrated case", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("candidate high remains provisional", declaration.Reason, StringComparison.Ordinal);
