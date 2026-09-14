@@ -103,6 +103,12 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("prior LL remains the structural reference", context.Description, StringComparison.Ordinal);
         Assert.Contains("bearish impulse stops producing new lows", context.Description, StringComparison.Ordinal);
         Assert.Contains("first bullish candle that begins upward displacement starts the correction", context.Description, StringComparison.Ordinal);
+        Assert.Contains("new lower extreme takes precedence", context.Description, StringComparison.Ordinal);
+        Assert.Contains("update the correction-origin floor to that Low", context.Description, StringComparison.Ordinal);
+        Assert.Contains("only if the same candle closes bullish", context.Description, StringComparison.Ordinal);
+        Assert.Contains("not an automatically validated structural LL", context.Description, StringComparison.Ordinal);
+        Assert.Contains("formally closed body below the prior structural LL", context.Description, StringComparison.Ordinal);
+        Assert.Contains("no synthetic intrabar chronology is inferred", context.Description, StringComparison.Ordinal);
         Assert.Contains("candidate high remains provisional", context.Description, StringComparison.Ordinal);
         Assert.Contains("formally closed candle has Close < prior LL", context.Description, StringComparison.Ordinal);
         Assert.Contains("ends the correction, confirms the new LL", context.Description, StringComparison.Ordinal);
@@ -118,7 +124,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.DoesNotContain("demonstrated complex candidate-LH reconstruction", context.Description, StringComparison.Ordinal);
         Assert.Contains("formally closed candle body beyond the prior structural extreme", context.Description, StringComparison.Ordinal);
         Assert.Contains("Breakout, Wickfill, or Fakeout using OR", context.Description, StringComparison.Ordinal);
-        Assert.Contains("bearish doji/Close == Open, gap, simultaneous bullish-body/new-low, exact LL-candle inclusivity and turn-segmentation cases", context.Description, StringComparison.Ordinal);
+        Assert.Contains("bearish doji/Close == Open, gaps, exact LL-candle inclusivity, turn-segmentation cases and bullish-side bearish-body/new-high precedence", context.Description, StringComparison.Ordinal);
         Assert.Contains("causal confirming candle is excluded from the correction set and retrospective candidate HL/LH scan", context.Description, StringComparison.Ordinal);
         Assert.Contains("belongs conceptually to the impulsive leg", context.Description, StringComparison.Ordinal);
         Assert.Contains("validates the new HH/LL and preceding candidate only from that causal AsOfUtc", context.Description, StringComparison.Ordinal);
@@ -127,7 +133,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("without making it a correction candle or requiring an intrabar path", context.Description, StringComparison.Ordinal);
         Assert.Contains("This does not replace multi-candle body-edge rules", context.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", context.Description, StringComparison.Ordinal);
-        Assert.Contains("simultaneous bullish-body/new-low", context.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("simultaneous bullish-body/new-low", context.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("confirming-candle scan participation", context.Description, StringComparison.Ordinal);
         Assert.Contains("turn-segmentation", context.Description, StringComparison.Ordinal);
         Assert.Contains("equal-coordinate body identity", context.Description, StringComparison.Ordinal);
@@ -165,6 +171,12 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("prior LL remains the structural reference", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("bearish impulse stops producing new lows", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("first bullish candle that begins upward displacement starts the correction", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("new lower extreme takes precedence", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("update the correction-origin floor to that Low", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("only if the same candle closes bullish", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("not an automatically validated structural LL", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("formally closed body below the prior structural LL", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("no synthetic intrabar chronology is inferred", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("formally closed candle has Close < prior LL", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("ends the correction, confirms the new LL", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("Wick-only penetration or an open candle does not confirm the structural swing", structuralLiquidity.Description, StringComparison.Ordinal);
@@ -178,7 +190,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("New HH/LL likewise require that closed body", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("reviewed paths", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("4H is structurally stronger", structuralLiquidity.Description, StringComparison.Ordinal);
-        Assert.Contains("bearish doji/Close == Open, gap, simultaneous bullish-body/new-low, exact LL-candle inclusivity and turn-segmentation cases", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("bearish doji/Close == Open, gaps, exact LL-candle inclusivity, turn-segmentation cases and bullish-side bearish-body/new-high precedence", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("causal confirming candle is excluded from the correction set and retrospective candidate HL/LH scan", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("belongs conceptually to the impulsive leg", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("validates the new HH/LL and preceding candidate only from that causal AsOfUtc", structuralLiquidity.Description, StringComparison.Ordinal);
@@ -187,7 +199,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("without making it a correction candle or requiring an intrabar path", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("wick does not become the structural fallback target coordinate", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", structuralLiquidity.Description, StringComparison.Ordinal);
-        Assert.Contains("simultaneous bullish-body/new-low", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("simultaneous bullish-body/new-low", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("confirming-candle scan participation", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("turn-segmentation", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("candle count", structuralLiquidity.Description, StringComparison.Ordinal);
@@ -330,6 +342,12 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("prior LL remains the structural reference", target.Description, StringComparison.Ordinal);
         Assert.Contains("bearish impulse stops producing new lows", target.Description, StringComparison.Ordinal);
         Assert.Contains("first bullish candle that begins upward displacement starts the correction", target.Description, StringComparison.Ordinal);
+        Assert.Contains("new lower extreme takes precedence", target.Description, StringComparison.Ordinal);
+        Assert.Contains("update the correction-origin floor to that Low", target.Description, StringComparison.Ordinal);
+        Assert.Contains("only if the same candle closes bullish", target.Description, StringComparison.Ordinal);
+        Assert.Contains("not an automatically validated structural LL", target.Description, StringComparison.Ordinal);
+        Assert.Contains("formally closed body below the prior structural LL", target.Description, StringComparison.Ordinal);
+        Assert.Contains("no synthetic intrabar chronology is inferred", target.Description, StringComparison.Ordinal);
         Assert.Contains("formally closed candle has Close < prior LL", target.Description, StringComparison.Ordinal);
         Assert.Contains("ends the correction, confirms the new LL", target.Description, StringComparison.Ordinal);
         Assert.Contains("validates the preceding highest candidate high as LH only from that causal AsOfUtc", target.Description, StringComparison.Ordinal);
@@ -341,7 +359,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("a higher wick does not redefine it", target.Description, StringComparison.Ordinal);
         Assert.Contains("distinct from separate buy/sell protection wick anchors", target.Description, StringComparison.Ordinal);
         Assert.Contains("neither substitutes for the structural target coordinate", target.Description, StringComparison.Ordinal);
-        Assert.Contains("bearish doji/Close == Open, gap, simultaneous bullish-body/new-low, exact LL-candle inclusivity and turn-segmentation cases", target.Description, StringComparison.Ordinal);
+        Assert.Contains("bearish doji/Close == Open, gaps, exact LL-candle inclusivity, turn-segmentation cases and bullish-side bearish-body/new-high precedence", target.Description, StringComparison.Ordinal);
         Assert.Contains("causal confirming candle is excluded from the correction set and retrospective candidate HL/LH scan", target.Description, StringComparison.Ordinal);
         Assert.Contains("belongs conceptually to the impulsive leg", target.Description, StringComparison.Ordinal);
         Assert.Contains("validates the new HH/LL and preceding candidate only from that causal AsOfUtc", target.Description, StringComparison.Ordinal);
@@ -350,7 +368,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("without making it a correction candle or requiring an intrabar path", target.Description, StringComparison.Ordinal);
         Assert.Contains("does not replace multi-candle body-edge rules or use a protection wick as a target coordinate", target.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", target.Description, StringComparison.Ordinal);
-        Assert.Contains("simultaneous bullish-body/new-low", target.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("simultaneous bullish-body/new-low", target.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("confirming-candle scan participation", target.Description, StringComparison.Ordinal);
         Assert.Contains("turn-segmentation", target.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("Exact structural-point detector", target.Description, StringComparison.Ordinal);
