@@ -234,7 +234,12 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("not an automatically validated structural HH", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("formally closed body above the prior structural HH", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("floor and ceiling precedence cases are symmetric", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("doji/Close == Open, gaps, exact candle inclusivity and exact turn membership/segmentation cases", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("An exact doji with Close == Open is directionally neutral and starts neither correction", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("update the applicable correction-origin ceiling or floor but leave correction not started", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("neither turns the doji into an opposite-direction start candle nor validates a structural HH/LL", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("At that doji AsOfUtc, later candles cannot retroactively create a correction start", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("Near-doji/small-body thresholds remain unresolved; no epsilon, tick/pip/point tolerance, minimum body size, or percentage threshold is defined", declaration.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("doji/Close == Open, gaps, exact candle inclusivity and exact turn membership/segmentation cases", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("bullish-side bearish-body/new-high precedence", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("simultaneously produces a new low", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("causal confirming candle is excluded from the correction set and retrospective candidate HL/LH scan", declaration.Reason, StringComparison.Ordinal);
@@ -284,7 +289,6 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.DoesNotContain("session target priority remains unresolved", declaration.Reason, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("important-high/important-low selection", declaration.Reason, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("touch", declaration.Reason, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("tolerance", declaration.Reason, StringComparison.OrdinalIgnoreCase);
 
         var report = Catalog(evaluators, MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(Nasdaq.StrategyId, Nasdaq.Version)!;
@@ -365,7 +369,12 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("not an automatically validated structural HH", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("formally closed body above the prior structural HH", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("floor and ceiling precedence cases are symmetric", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("doji/Close == Open, gaps, exact candle inclusivity and exact turn membership/segmentation cases", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("An exact doji with Close == Open is directionally neutral and starts neither correction", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("update the applicable correction-origin ceiling or floor but leave correction not started", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("neither turns the doji into an opposite-direction start candle nor validates a structural HH/LL", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("At that doji AsOfUtc, later candles cannot retroactively create a correction start", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("Near-doji/small-body thresholds remain unresolved; no epsilon, tick/pip/point tolerance, minimum body size, or percentage threshold is defined", declaration.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("doji/Close == Open, gaps, exact candle inclusivity and exact turn membership/segmentation cases", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("bullish-side bearish-body/new-high precedence", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("simultaneously produces a new low", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("causal confirming candle is excluded from the correction set and retrospective candidate HL/LH scan", declaration.Reason, StringComparison.Ordinal);
