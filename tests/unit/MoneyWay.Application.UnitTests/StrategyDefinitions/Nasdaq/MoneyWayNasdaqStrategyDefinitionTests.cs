@@ -147,7 +147,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.DoesNotContain("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", context.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("simultaneous bullish-body/new-low", context.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("confirming-candle scan participation", context.Description, StringComparison.Ordinal);
-        Assert.Contains("terminal/reset candle membership", context.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("terminal/reset candle membership", context.Description, StringComparison.Ordinal);
         Assert.Contains("equal-coordinate body identity", context.Description, StringComparison.Ordinal);
         Assert.Contains("exact structural coordinates", context.Description, StringComparison.Ordinal);
         Assert.Contains("rather than a deterministic raw-candle algorithm", context.Description, StringComparison.Ordinal);
@@ -225,7 +225,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.DoesNotContain("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("simultaneous bullish-body/new-low", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("confirming-candle scan participation", structuralLiquidity.Description, StringComparison.Ordinal);
-        Assert.Contains("terminal/reset candle membership", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("terminal/reset candle membership", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("candle count", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("pivots/lookbacks", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("other exact structural coordinates", structuralLiquidity.Description, StringComparison.Ordinal);
@@ -406,7 +406,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.DoesNotContain("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", target.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("simultaneous bullish-body/new-low", target.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("confirming-candle scan participation", target.Description, StringComparison.Ordinal);
-        Assert.Contains("terminal/reset candle membership", target.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("terminal/reset candle membership", target.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("Exact structural-point detector", target.Description, StringComparison.Ordinal);
         Assert.Contains("OHLC mitigation test", target.Description, StringComparison.Ordinal);
         Assert.Contains("other structural coordinates", target.Description, StringComparison.Ordinal);
@@ -543,7 +543,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
     }
 
     [Fact]
-    public void BullishCorrectionMembershipMetadataReflectsConfirmedBoundariesWithoutInferringBearishSymmetry()
+    public void BullishTerminalCandleMetadataReflectsConfirmedMembershipWithoutInferringBearishSymmetry()
     {
         var context = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-H4-001");
         var liquidity = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-002");
@@ -555,21 +555,35 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
 
         Assert.Contains("all in-range bearish, bullish, and exact-doji candles remain in one correction turn", context.Description, StringComparison.Ordinal);
         Assert.Contains("body-color alternation does not fragment it or create parallel HL candidates", context.Description, StringComparison.Ordinal);
-        Assert.Contains("High > current correction-origin ceiling resets the correction", context.Description, StringComparison.Ordinal);
+        Assert.Contains("High > current correction-origin ceiling first resets the old correction", context.Description, StringComparison.Ordinal);
         Assert.Contains("discards the current candidate HL without validating a structural HH", context.Description, StringComparison.Ordinal);
+        Assert.Contains("when Close < Open, it is excluded from the old turn and included as the first member of the new bullish-correction turn", context.Description, StringComparison.Ordinal);
+        Assert.Contains("when Close == Open or Close > Open, the reset occurs but the new correction does not start", context.Description, StringComparison.Ordinal);
         Assert.Contains("Close < prior validated HL invalidates the bullish structure", context.Description, StringComparison.Ordinal);
+        Assert.Contains("its candle is excluded from the destroyed turn and previous candidate-HL geometry", context.Description, StringComparison.Ordinal);
+        Assert.Contains("cannot change the previous StructuralPrice or ProtectionAnchor", context.Description, StringComparison.Ordinal);
+        Assert.Contains("supplies new bearish-impulse evidence without automatically validating a structural LL", context.Description, StringComparison.Ordinal);
+        Assert.Contains("terminal memberships are fixed at the closed-candle AsOfUtc and future candles cannot reinterpret them or the destroyed candidate geometry", context.Description, StringComparison.Ordinal);
         Assert.Contains("Close == prior validated HL and wick-only Low < prior validated HL with Close >= prior validated HL do not invalidate", context.Description, StringComparison.Ordinal);
-        Assert.Contains("terminal/reset candle membership", context.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("terminal/reset candle membership", context.Description, StringComparison.Ordinal);
         Assert.Contains("bearish reset/invalidation symmetry", context.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("turn-segmentation cases", context.Description, StringComparison.Ordinal);
 
         Assert.Contains("all in-range bearish, bullish, and exact-doji candles remain in one correction turn", liquidity.Description, StringComparison.Ordinal);
         Assert.Contains("discards the current candidate HL without validating a structural HH", liquidity.Description, StringComparison.Ordinal);
         Assert.Contains("Close < prior validated HL invalidates the bullish structure", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("Reset or invalidation membership does not create a structural point by itself", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("an invalidated candidate HL cannot survive as a validated structural point", liquidity.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("terminal/reset candle membership", liquidity.Description, StringComparison.Ordinal);
 
-        Assert.Contains("An invalidated bullish structure cannot yield a validated HL usable as a structural target candidate", target.Description, StringComparison.Ordinal);
-        Assert.Contains("terminal/reset candle membership", target.Description, StringComparison.Ordinal);
+        Assert.Contains("An invalidated bullish structure cannot yield a validated HL usable as a structural fallback target candidate", target.Description, StringComparison.Ordinal);
+        Assert.Contains("the invalidation candle cannot retrospectively alter the destroyed candidate geometry", target.Description, StringComparison.Ordinal);
+        Assert.Contains("when Close < Open, it is excluded from the old turn and included as the first member of the new bullish-correction turn", target.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("terminal/reset candle membership", target.Description, StringComparison.Ordinal);
         Assert.Contains("bearish reset/invalidation symmetry", target.Description, StringComparison.Ordinal);
+
+        AssertFrozenMetadata("NQ-H4-002", "Break classification", "4H", 20, false, RuleDefinitionStatus.HumanValidationRequired);
+        AssertFrozenMetadata("NQ-TP-002", "Asia/London liquidity targets", "Take Profit", 220, false, RuleDefinitionStatus.HumanValidationRequired);
     }
 
     [Fact]
