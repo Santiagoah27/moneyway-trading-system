@@ -73,6 +73,20 @@ These cases preserve observed or conceptual evidence. They do not establish succ
 - Human-review notes: `mandatory_for_every_trade: candidate`.
 - Automation impact: event logic is clearer, but subjective swing selection still blocks automation.
 
+## NQ-CASE-007 — Bearish reset/invalidation collision
+
+- Case ID: `NQ-CASE-007`.
+- Status: `context_specific_reference_case`.
+- Scenario: one formally closed candle prints `Low < current correction-origin floor` and closes with `Close > prior validated LH`.
+- Structural rules demonstrated: both observations remain true, prior-LH invalidation dominates the transition, the candidate LH is destroyed, the candle is excluded from the old bearish correction and candidate geometry, and no new bearish correction starts. The candle belongs to the new bullish impulse context from its causal close.
+- Lower-extreme role: the collision `Low` remains a lower price extreme, bullish-origin reference and wick-based protection evidence. It is not automatically a validated HL, Structural Low or executable Stop Loss.
+- Context-specific Step-3/Step-4 evidence: the mentor interprets the lower wick/new Low as liquidity take and the body close above prior LH as structural change, with the candle beginning the bullish impulse.
+- Rules not demonstrated: universal mapping of a structural collision to `NQ-LIQ-003` or `NQ-M5-001`, selected-liquidity qualification, 4H alignment, timeframe satisfaction, first-valid-liquidity selection, same-frame prerequisite propagation or permission to skip any workflow gate.
+- Gating discrepancy: canonical progression currently determines eligibility from prerequisites established before the current replay frame. If future human validation maps both events to their canonical gates at the same causal boundary, Step 4 cannot become eligible in that same frame under current behavior.
+- Generalization risks: treating every lower wick as Step 3, every prior-LH close as canonical Step 4, or using the reviewed candle to bypass workflow prerequisites.
+- Human-review notes: retain the structural facts and narrow interpretation without inventing intrabar chronology or changing prior snapshots.
+- Automation impact: useful as a structural collision and gating-review case; insufficient to authorize RuleId mapping or runtime changes.
+
 ## Cross-case boundaries
 
 - No case supplies missing dates, prices, instruments, profits or losses.
