@@ -587,6 +587,52 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
     }
 
     [Fact]
+    public void BullishCollisionMetadataRepresentsInvalidationDominanceWithoutWorkflowInference()
+    {
+        var context = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-H4-001");
+        var liquidity = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-002");
+        var target = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-TP-001");
+
+        Assert.Equal(RuleDefinitionStatus.Confirmed, context.DefinitionStatus);
+        Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, liquidity.DefinitionStatus);
+        Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, target.DefinitionStatus);
+
+        Assert.All(new[] { context, liquidity, target }, rule =>
+        {
+            Assert.Contains("High > current correction-origin ceiling and Close < prior validated HL", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("both observations remain true but", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("invalidation dominates the structural transition", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("excluded from", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("candidate geometry", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("new bearish impulse context", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("relevant upper price extreme and bearish-origin reference", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("validated LH", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("executable Stop Loss", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("snapshots are not reinterpreted", rule.Description, StringComparison.Ordinal);
+        });
+
+        Assert.Contains("candidate HL is destroyed", context.Description, StringComparison.Ordinal);
+        Assert.Contains("starts no new bullish correction", context.Description, StringComparison.Ordinal);
+        Assert.Contains("old StructuralPrice and ProtectionAnchor remain unchanged", context.Description, StringComparison.Ordinal);
+        Assert.Contains("not an automatically validated LH", context.Description, StringComparison.Ordinal);
+        Assert.Contains("no intrabar chronology", context.Description, StringComparison.Ordinal);
+        Assert.Contains("Step-3/Step-4 mapping", context.Description, StringComparison.Ordinal);
+
+        Assert.Contains("cannot survive as a structural point", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("does not automatically create a validated LH", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("does not infer a Step-3 liquidity take, Step-4 trigger, IFVG/FVG confirmation, entry gating, or same-frame propagation", liquidity.Description, StringComparison.Ordinal);
+
+        Assert.Contains("destroyed candidate HL cannot enter structural fallback", target.Description, StringComparison.Ordinal);
+        Assert.Contains("without changing that candidate's StructuralPrice or ProtectionAnchor", target.Description, StringComparison.Ordinal);
+        Assert.Contains("Only causally validated structural points may enter the structural fallback", target.Description, StringComparison.Ordinal);
+        Assert.Contains("does not automatically become a validated LH", target.Description, StringComparison.Ordinal);
+        Assert.Contains("does not infer Step-3/Step-4, IFVG/FVG, entry-gating, or same-frame behavior", target.Description, StringComparison.Ordinal);
+
+        AssertFrozenMetadata("NQ-LIQ-003", "Liquidity take required", "Sweep", 70, true, RuleDefinitionStatus.Confirmed);
+        AssertFrozenMetadata("NQ-M5-001", "Inversion alternatives", "5M inversion", 110, true, RuleDefinitionStatus.Confirmed);
+    }
+
+    [Fact]
     public void RuleIdentitiesRequiredFlagsSourcesAndCanonicalOrderRemainStable()
     {
         var expectedOrder = new[]
