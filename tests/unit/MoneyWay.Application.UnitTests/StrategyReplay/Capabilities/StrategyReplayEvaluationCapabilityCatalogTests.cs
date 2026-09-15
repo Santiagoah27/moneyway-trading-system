@@ -367,6 +367,55 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
     }
 
     [Fact]
+    public void NasdaqBullishCollisionCapabilityReasonsRepresentInvalidationDominanceWithoutChangingCoverage()
+    {
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
+        var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
+        var report = Catalog(evaluators, declarations).Find(Nasdaq.StrategyId, Nasdaq.Version)!;
+        var context = Assert.Single(declarations, item => item.RuleId == new RuleId("NQ-H4-001"));
+        var target = Assert.Single(declarations, item => item.RuleId == new RuleId("NQ-TP-001"));
+        var liquidity = report.Rules.Single(item => item.RuleId == new RuleId("NQ-LIQ-002"));
+
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, context.Status);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, target.Status);
+        Assert.DoesNotContain(declarations, item => item.RuleId == liquidity.RuleId);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, liquidity.CapabilityStatus);
+
+        Assert.All(new[] { context, target }, declaration =>
+        {
+            Assert.Contains("High > current correction-origin ceiling and Close < prior validated HL", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("both observations coexist but", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("invalidation dominates the structural transition", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("excluded from the old", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("candidate geometry", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("new bearish impulse context", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("relevant upper price extreme and bearish-origin reference", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("validated LH", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("executable Stop Loss", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("historical evaluations are not reinterpreted", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("Step-3/Step-4 mapping", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("IFVG/FVG inference", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("same-frame propagation", declaration.Reason, StringComparison.Ordinal);
+        });
+
+        Assert.Contains("candidate HL is destroyed", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("starts no new bullish correction", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("old StructuralPrice and ProtectionAnchor remain unchanged", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("No intrabar chronology", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("bearish reset/invalidation symmetry", context.Reason, StringComparison.Ordinal);
+
+        Assert.Contains("destroyed candidate HL cannot enter structural fallback", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("without changing the old StructuralPrice or ProtectionAnchor", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("Only independently causally validated structural points may enter structural fallback", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("bearish reset/invalidation symmetry", target.Reason, StringComparison.Ordinal);
+
+        Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(report));
+        Assert.Equal(
+            ["NQ-LIQ-001", "NQ-TIME-001", "NQ-TIME-002"],
+            evaluators.Select(item => item.RuleId.Value));
+    }
+
+    [Fact]
     public void NasdaqFourHourContextRemainsConfirmedWhileCapabilityIsExplicitlyBlocked()
     {
         var definition = Nasdaq;
