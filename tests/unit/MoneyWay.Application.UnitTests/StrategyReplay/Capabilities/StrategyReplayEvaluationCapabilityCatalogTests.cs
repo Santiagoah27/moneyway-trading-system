@@ -341,7 +341,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("cannot alter its StructuralPrice or ProtectionAnchor", context.Reason, StringComparison.Ordinal);
         Assert.Contains("new bearish impulse evidence rather than a validated structural LL", context.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("terminal/reset candle membership or geometry", context.Reason, StringComparison.Ordinal);
-        Assert.Contains("bearish reset/invalidation symmetry", context.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("bearish reset/invalidation symmetry", context.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("exact turn membership/segmentation cases", context.Reason, StringComparison.Ordinal);
 
         Assert.Contains("all in-range bearish, bullish, and exact-doji candles remain in one correction turn", target.Reason, StringComparison.Ordinal);
@@ -350,6 +350,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("the invalidation candle is excluded from the destroyed turn and candidate geometry", target.Reason, StringComparison.Ordinal);
         Assert.Contains("cannot alter its StructuralPrice or ProtectionAnchor", target.Reason, StringComparison.Ordinal);
         Assert.Contains("new bearish impulse evidence rather than a validated structural LL", target.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("bearish reset/invalidation symmetry", target.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("terminal/reset candle membership or geometry", target.Reason, StringComparison.Ordinal);
         Assert.Contains("exact OHLC mitigation test", target.Reason, StringComparison.Ordinal);
         Assert.Contains("PDH/PDL cross-class ranking", target.Reason, StringComparison.Ordinal);
@@ -402,12 +403,12 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("starts no new bullish correction", context.Reason, StringComparison.Ordinal);
         Assert.Contains("old StructuralPrice and ProtectionAnchor remain unchanged", context.Reason, StringComparison.Ordinal);
         Assert.Contains("No intrabar chronology", context.Reason, StringComparison.Ordinal);
-        Assert.Contains("bearish reset/invalidation symmetry", context.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("bearish reset/invalidation symmetry", context.Reason, StringComparison.Ordinal);
 
         Assert.Contains("destroyed candidate HL cannot enter structural fallback", target.Reason, StringComparison.Ordinal);
         Assert.Contains("without changing the old StructuralPrice or ProtectionAnchor", target.Reason, StringComparison.Ordinal);
         Assert.Contains("Only independently causally validated structural points may enter structural fallback", target.Reason, StringComparison.Ordinal);
-        Assert.Contains("bearish reset/invalidation symmetry", target.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("bearish reset/invalidation symmetry", target.Reason, StringComparison.Ordinal);
 
         Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(report));
         Assert.Equal(
