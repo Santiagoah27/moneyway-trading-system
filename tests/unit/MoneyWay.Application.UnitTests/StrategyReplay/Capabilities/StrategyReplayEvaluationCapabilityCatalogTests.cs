@@ -252,7 +252,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.DoesNotContain("exact origin-price coordinate, intrabar chronology, and synthetic path remain unresolved", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("Reproducible bearish correction boundaries", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("confirming-candle scan participation", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("Equal-coordinate candle identity", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("one price-based structural fallback candidate level", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("Direct bearish evidence confirms the correction start for the demonstrated case", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("candidate high remains provisional", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("formally closed Close < prior LL", declaration.Reason, StringComparison.Ordinal);
@@ -269,7 +269,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.DoesNotContain("candidate-LH structural price selection", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("bearish body anchoring", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("candidate-LH selection, bearish symmetry", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("other structural-point selection and coordinates", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("Other structural-point selection and coordinate/boundary edge cases", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("exact OHLC mitigation test", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("PDH/PDL cross-class ranking", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("ties or coincidences remain unresolved", declaration.Reason, StringComparison.Ordinal);
@@ -449,6 +449,45 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
     }
 
     [Fact]
+    public void NasdaqEqualPriceCapabilityReasonsKeepExactIdentitySeparateFromRemainingBlockers()
+    {
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
+        var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
+        var report = Catalog(evaluators, declarations).Find(Nasdaq.StrategyId, Nasdaq.Version)!;
+        var context = Assert.Single(declarations, item => item.RuleId == new RuleId("NQ-H4-001"));
+        var target = Assert.Single(declarations, item => item.RuleId == new RuleId("NQ-TP-001"));
+        var liquidity = report.Rules.Single(item => item.RuleId == new RuleId("NQ-LIQ-002"));
+
+        Assert.All(new[] { context, target }, declaration =>
+        {
+            Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, declaration.Status);
+            Assert.Contains("no individual candle ownership or first/last/timestamp/sequence tie-break is required", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("Near-doji/small-body threshold", declaration.Reason, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("remaining candle inclusivity", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("near-equal structural zone tolerance", declaration.Reason, StringComparison.Ordinal);
+            Assert.DoesNotContain("equal-coordinate candle identity", declaration.Reason, StringComparison.OrdinalIgnoreCase);
+        });
+
+        Assert.Contains("one price-based structural level", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("duplicate structural points are not created", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("wick-based ProtectionAnchor may come from another candle in that turn", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("initial structural anchor selection from arbitrary raw 4H candles", context.Reason, StringComparison.Ordinal);
+
+        Assert.Contains("one price-based structural fallback candidate level", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("only when otherwise causally valid", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("exact OHLC mitigation test", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("PDH/PDL cross-class ranking", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("distinct target-level ties or coincidences remain unresolved", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("universal full-exit behavior", target.Reason, StringComparison.Ordinal);
+
+        Assert.DoesNotContain(declarations, item => item.RuleId == liquidity.RuleId);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, liquidity.CapabilityStatus);
+        Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, liquidity.CapabilityReason);
+        Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(report));
+        Assert.Equal(["NQ-LIQ-001", "NQ-TIME-001", "NQ-TIME-002"], evaluators.Select(item => item.RuleId.Value));
+    }
+
+    [Fact]
     public void NasdaqBullishCollisionCapabilityReasonsRepresentInvalidationDominanceWithoutChangingCoverage()
     {
         var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
@@ -573,7 +612,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("cannot alter its StructuralPrice or ProtectionAnchor", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("new bearish impulse evidence rather than a validated structural LL", declaration.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("terminal/reset candle membership", declaration.Reason, StringComparison.Ordinal);
-        Assert.Contains("equal-coordinate candle identity", declaration.Reason, StringComparison.Ordinal);
+        Assert.Contains("one price-based structural level", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("Direct bearish evidence confirms the correction start for the demonstrated case", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("candidate high remains provisional", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("formally closed Close < prior LL", declaration.Reason, StringComparison.Ordinal);
