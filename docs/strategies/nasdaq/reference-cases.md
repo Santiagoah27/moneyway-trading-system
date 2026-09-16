@@ -98,6 +98,17 @@ These cases preserve observed or conceptual evidence. They do not establish succ
 - Rules not demonstrated: near-doji threshold, initial structural anchor selection, historical scan termination or other remaining scan inclusivity.
 - Automation impact: defines membership for these reviewed pre-start cases; supplied-turn geometry primitives do not select the turn automatically.
 
+## NQ-CASE-009 — Pre-start waiting candles
+
+- Case ID: `NQ-CASE-009`.
+- Status: `confirmed_structural_boundary_reference_case`.
+- Normal bullish start: A produces the HH; B is bullish without a new High; C is an exact doji; D is the first bearish body. A belongs to the prior impulse, B/C remain pre-start waiting outside correction, and the correction turn begins `[D, ...]`. A/B/C contribute no OHLC to that turn's structural price or protection anchor.
+- Extreme extension while waiting: after an upper extreme of `100`, a bullish B prints `High = 102` and a following exact doji C remains waiting. The upper price extreme/ceiling updates under existing rules, but B/C do not start or join a correction. The first later bearish body starts it. A bearish waiting candle with a strict lower `Low` mirrors this floor update before the first bullish body.
+- Reset and await: a bullish-body new-High reset candle A terminates the old correction but starts no new one. Later bullish B and exact-doji C also remain outside. The first bearish D starts a new turn containing D, with no earlier reset/waiting candle included. The bearish-side mirror waits for the first bullish body.
+- Active-turn distinction: after D starts the correction, in-range candles of either body direction and exact dojis may remain in that turn under existing rules.
+- Rules not demonstrated: a near-doji threshold, numeric exhaustion-zone width, initial H4 anchor, remaining turn edges or a fully automatic detector.
+- Automation impact: the pre-start membership rule is deterministic when an extreme and direction are supplied; current primitives have no transition that consumes the waiting sequence and starts the first normal correction turn.
+
 ## Cross-case boundaries
 
 - No case supplies missing dates, prices, instruments, profits or losses.
