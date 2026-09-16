@@ -122,12 +122,21 @@ These cases preserve observed or conceptual evidence. They do not establish succ
 ## NQ-CASE-011 — Bullish candidate confirmation and origin extension
 
 - Case ID: `NQ-CASE-011`.
-- Status: `confirmed_structural_boundary_reference_case` for old-candidate validation and active-pair rollover; next-turn membership remains `unresolved`.
+- Status: `confirmed_structural_boundary_reference_case` for old-candidate validation, active-pair rollover and exact-body next-turn membership.
 - An active candidate-HL turn has prior structural HH `100` and current correction-origin ceiling `102`. A formally closed candle with `High = 105`, `Open = 104`, `Close = 103` satisfies both strict `Close > prior HH` and strict `High > ceiling`.
 - The prior candidate HL validates from this close. Its existing selected-turn `StructuralPrice` and `ProtectionAnchor` exclude the confirming candle. That candle's upper extreme supplies the new HH-side reference; the operational pair becomes new HH plus newly validated HL. Generic reset does not discard the old candidate.
-- The candle has a bearish body (`Close < Open`). Whether it also starts the *next* bullish-structure correction is unresolved; do not apply ordinary reset/start membership to this compound event.
-- The bearish `Close < prior LL` plus `Low < origin floor` mirror lacks explicit collision precedence in the reviewed source. Reset plus invalidation remains a distinct, confirmed invalidation-dominant collision.
+- The candle has a bearish body (`Close < Open`), so it is the first and only initial member of the *next* bullish-structure correction. It belongs to the new turn's geometry exactly once, never the old HL turn's geometry. If instead its body were bullish or exactly neutral, the valid new side would be `AwaitingCorrectionStart` with an empty new turn.
+- A strict candidate-confirming close plus opposite-point invalidating close is impossible in valid structure because `prior validated HL < prior structural HH` and `prior structural LL < prior validated LH`. A wick above the prior HH with a close below the prior HL is invalidation, not confirmation; reset plus invalidation remains a distinct, confirmed invalidation-dominant collision.
 - The prices are illustrative; this case defines no intrabar chronology, new HH geometry algorithm or trading workflow mapping.
+
+## NQ-CASE-012 — Bearish candidate confirmation and origin extension
+
+- Case ID: `NQ-CASE-012`.
+- Status: `confirmed_structural_boundary_reference_case` for the source-backed bearish mirror and next-turn membership.
+- An active candidate-LH turn has prior structural LL `100` and correction-origin floor `98`. A formally closed candle with `Low = 95`, `Open = 96`, `Close = 97` satisfies both strict `Close < prior LL` and strict `Low < floor`; its body is bullish (`Close > Open`).
+- The old LH validates. The confirming candle is excluded from that LH turn's `StructuralPrice` and `ProtectionAnchor`; its lower extreme supplies the new LL-side reference and the active pair becomes new LL plus validated LH. Its bullish body makes it the first and only initial member of the *next* bearish-structure correction.
+- With `Low = 95`, `Open = 98`, `Close = 96`, the old LH still validates and the active pair still rolls forward, but the bearish body is not corrective for bearish structure. The valid side is `AwaitingCorrectionStart` with an empty new turn. Neither example discards the old LH through generic reset.
+- The prices are illustrative; neither example introduces a pivot algorithm, an intrabar path or a trading workflow mapping.
 
 ## Cross-case boundaries
 
