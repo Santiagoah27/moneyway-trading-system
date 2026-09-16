@@ -755,6 +755,39 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
     }
 
     [Fact]
+    public void DistinctExtremeCandleMetadataKeepsPreStartBoundarySeparateFromActiveTurnMembership()
+    {
+        var context = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-H4-001");
+        var liquidity = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-002");
+        var target = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-TP-001");
+
+        Assert.Equal(RuleDefinitionStatus.Confirmed, context.DefinitionStatus);
+        Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, liquidity.DefinitionStatus);
+        Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, target.DefinitionStatus);
+
+        Assert.All(new[] { context, liquidity, target }, rule =>
+        {
+            Assert.Contains("HH-producing candle is distinct, it remains in the prior bullish impulse and outside the new correction", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("exact-doji HH candle before that first bearish body is likewise excluded", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("LL-producing candle is distinct, it remains in the prior bearish impulse and outside the new correction", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("exact-doji LL candle before that first bullish body is likewise excluded", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("Open, Close, High, and Low cannot alter the new candidate turn StructuralPrice or ProtectionAnchor", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("first member of the new bullish-correction turn", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("in-range bearish, bullish, and exact-doji candles remain in one correction turn", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("Near-doji/small-body thresholds remain unresolved", rule.Description, StringComparison.Ordinal);
+            Assert.DoesNotContain("distinct extreme candle membership remains unresolved", rule.Description, StringComparison.OrdinalIgnoreCase);
+        });
+
+        Assert.Contains("first bullish candle that begins upward displacement starts the correction", context.Description, StringComparison.Ordinal);
+        Assert.Contains("A price extreme alone remains insufficient to validate a structural point", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("Only causally validated structural points may enter fallback", target.Description, StringComparison.Ordinal);
+        Assert.Contains("PDH/PDL ranking, ties, general final-target hierarchy, and universal full-exit behavior remain unresolved or human-validated", target.Description, StringComparison.Ordinal);
+
+        AssertFrozenMetadata("NQ-LIQ-001", "Session liquidity levels", "Liquidity", 50, true, RuleDefinitionStatus.Confirmed);
+        AssertFrozenMetadata("NQ-TP-002", "Asia/London liquidity targets", "Take Profit", 220, false, RuleDefinitionStatus.HumanValidationRequired);
+    }
+
+    [Fact]
     public void RuleIdentitiesRequiredFlagsSourcesAndCanonicalOrderRemainStable()
     {
         var expectedOrder = new[]
