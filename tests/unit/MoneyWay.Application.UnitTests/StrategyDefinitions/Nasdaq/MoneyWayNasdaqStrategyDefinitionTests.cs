@@ -226,8 +226,9 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.DoesNotContain("simultaneous bullish-body/new-low", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("confirming-candle scan participation", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("terminal/reset candle membership", structuralLiquidity.Description, StringComparison.Ordinal);
-        Assert.Contains("candle count", structuralLiquidity.Description, StringComparison.Ordinal);
-        Assert.Contains("pivots/lookbacks", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("No fixed candle/day/session count, historical time window, scan count, or numeric pivot/fractal lookback defines 4H bootstrap", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("Initial structural anchor selection from arbitrary raw 4H candles", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("termination/boundary of that initial historical scan remain human-reviewed", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("other exact structural coordinates", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("OHLC mitigation semantics", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("equal-coordinate body identity", structuralLiquidity.Description, StringComparison.Ordinal);
@@ -662,8 +663,55 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("do not infer a liquidity-take evaluation or downstream workflow behavior", liquidity.Description, StringComparison.Ordinal);
         Assert.Contains("nor creates a structural target", target.Description, StringComparison.Ordinal);
         Assert.Contains("Only causally validated structural points may enter fallback", target.Description, StringComparison.Ordinal);
-        Assert.Contains("Initial structural candidate/bootstrap selection", target.Description, StringComparison.Ordinal);
+        Assert.Contains("initial structural anchor selection from arbitrary raw candles", target.Description, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("PDH/PDL ranking, ties, general final-target hierarchy, and universal full-exit behavior remain unresolved or human-validated", target.Description, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void H4BootstrapBoundaryMetadataSeparatesConfirmedProgressionFromHumanInitialization()
+    {
+        var context = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-H4-001");
+        var liquidity = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-002");
+        var target = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-TP-001");
+
+        Assert.Equal(RuleDefinitionStatus.Confirmed, context.DefinitionStatus);
+        Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, liquidity.DefinitionStatus);
+        Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, target.DefinitionStatus);
+
+        Assert.Contains("No fixed candle/day/session count, historical time window, scan count, or numeric pivot/fractal lookback defines 4H bootstrap", context.Description, StringComparison.Ordinal);
+        Assert.Contains("Initial structural anchor selection from arbitrary raw 4H candles", context.Description, StringComparison.Ordinal);
+        Assert.Contains("termination/boundary of that initial historical scan remain human-validation-required", context.Description, StringComparison.Ordinal);
+        Assert.Contains("latest strict formally closed body break above an upper reference inherits bullish context", context.Description, StringComparison.Ordinal);
+        Assert.Contains("latest strict formally closed body break below a lower reference inherits bearish context", context.Description, StringComparison.Ordinal);
+        Assert.Contains("equality and wick-only penetration do not qualify", context.Description, StringComparison.Ordinal);
+        Assert.Contains("future data cannot supply the break", context.Description, StringComparison.Ordinal);
+        Assert.Contains("latest HH plus originating/validated HL or latest LL plus originating/validated LH becomes the operational active pair", context.Description, StringComparison.Ordinal);
+        Assert.Contains("older structure remains audit evidence", context.Description, StringComparison.Ordinal);
+        Assert.Contains("viewport, zoom, screen width, arbitrary loaded-history count", context.Description, StringComparison.Ordinal);
+        Assert.Contains("weekly open, previous-day extrema, and Asia/London levels are not deterministic anchor selectors or mandatory seeds", context.Description, StringComparison.Ordinal);
+        Assert.Contains("Post-anchor structural mechanics remain causal and future-safe", context.Description, StringComparison.Ordinal);
+
+        Assert.Contains("Given a valid human-approved seeded structural context, structural points continue under the documented causal body-close and correction rules", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("Initial structural anchor selection from arbitrary raw 4H candles", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("termination/boundary of that initial historical scan remain human-reviewed", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("NQ-LIQ-001 session levels, weekly open, and previous-day extrema are liquidity/context references rather than automatic H4 structural seeds", liquidity.Description, StringComparison.Ordinal);
+
+        Assert.Contains("Once structure is established, structural fallback may use only causally validated 1H/4H points", target.Description, StringComparison.Ordinal);
+        Assert.Contains("remaining H4 bootstrap boundary is specifically initial structural anchor selection", target.Description, StringComparison.Ordinal);
+        Assert.Contains("termination/boundary of the initial historical scan", target.Description, StringComparison.Ordinal);
+        Assert.Contains("OHLC mitigation test", target.Description, StringComparison.Ordinal);
+        Assert.Contains("PDH/PDL ranking, ties", target.Description, StringComparison.Ordinal);
+        Assert.Contains("general final-target hierarchy, and universal full-exit behavior", target.Description, StringComparison.Ordinal);
+
+        Assert.All(new[] { context, liquidity, target }, rule =>
+        {
+            Assert.DoesNotContain("bootstrap selection", rule.Description, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("bootstrap/lookback", rule.Description, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("thresholds, gaps", rule.Description, StringComparison.OrdinalIgnoreCase);
+        });
+
+        AssertFrozenMetadata("NQ-LIQ-001", "Session liquidity levels", "Liquidity", 50, true, RuleDefinitionStatus.Confirmed);
+        AssertFrozenMetadata("NQ-TP-002", "Asia/London liquidity targets", "Take Profit", 220, false, RuleDefinitionStatus.HumanValidationRequired);
     }
 
     [Fact]
