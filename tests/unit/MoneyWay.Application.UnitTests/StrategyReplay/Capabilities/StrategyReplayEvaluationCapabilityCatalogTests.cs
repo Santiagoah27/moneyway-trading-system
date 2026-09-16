@@ -463,7 +463,8 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
             Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, declaration.Status);
             Assert.Contains("no individual candle ownership or first/last/timestamp/sequence tie-break is required", declaration.Reason, StringComparison.Ordinal);
             Assert.Contains("Near-doji/small-body threshold", declaration.Reason, StringComparison.OrdinalIgnoreCase);
-            Assert.Contains("remaining candle inclusivity", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("remaining prior-HH/LL boundary inclusivity whose exact subcases remain unspecified", declaration.Reason, StringComparison.Ordinal);
+            Assert.DoesNotContain("remaining candle inclusivity", declaration.Reason, StringComparison.Ordinal);
             Assert.Contains("near-equal structural zone tolerance", declaration.Reason, StringComparison.Ordinal);
             Assert.DoesNotContain("equal-coordinate candle identity", declaration.Reason, StringComparison.OrdinalIgnoreCase);
         });
@@ -681,6 +682,44 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         var forexAfter = afterCatalog.Find(forexDefinition.StrategyId, forexDefinition.Version)!;
         Assert.Equal((17, 15, 0, 0, 13, 4, 0, 15, false), Counts(forexBefore));
         Assert.Equal(Counts(forexBefore), Counts(forexAfter));
+    }
+
+    [Fact]
+    public void NasdaqCorrectionStartLifecycleCapabilityReasonsPreserveOnlyCurrentBlockers()
+    {
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
+        var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
+        var report = Catalog(evaluators, declarations).Find(Nasdaq.StrategyId, Nasdaq.Version)!;
+        var context = Assert.Single(declarations, item => item.RuleId == new RuleId("NQ-H4-001"));
+        var target = Assert.Single(declarations, item => item.RuleId == new RuleId("NQ-TP-001"));
+        var liquidity = report.Rules.Single(item => item.RuleId == new RuleId("NQ-LIQ-002"));
+
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, context.Status);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, target.Status);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, liquidity.CapabilityStatus);
+        Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, liquidity.CapabilityReason);
+
+        Assert.All(new[] { context, target }, declaration =>
+        {
+            Assert.Contains("remaining prior-HH/LL boundary inclusivity whose exact subcases remain unspecified", declaration.Reason, StringComparison.Ordinal);
+            Assert.DoesNotContain("remaining candle inclusivity", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("AwaitingCorrectionStart", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("StructureInvalidated", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("empty/inactive alone is insufficient", declaration.Reason, StringComparison.Ordinal);
+        });
+
+        Assert.Contains("Close < Open starts a bullish-structure correction", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("Close > Open starts a bearish-structure correction", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("Close == Open does not", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("same qualifying opposite-body candle may update it and become the first member", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("cannot auto-reverse or reconstruct valid opposite structure", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("cannot alter candidate-turn StructuralPrice or ProtectionAnchor", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("including one that updates its origin extreme, is the first member", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("cannot be reused as waiting", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("exact OHLC mitigation test", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("PDH/PDL cross-class ranking", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("universal full-exit behavior", target.Reason, StringComparison.Ordinal);
+        Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(report));
     }
 
     private static StrategyDefinition Forex => MoneyWayForexStrategyDefinition.Instance;

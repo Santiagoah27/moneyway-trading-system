@@ -19,5 +19,19 @@ Blocked("moneyway-nasdaq", "nasdaq-0.1.0-draft", "NQ-TP-001", "Session target ca
     ];
 
     private static ReplayRuleEvaluationCapabilityDeclaration Blocked(string strategyId, string version, string ruleId, string reason, string source) =>
-        new(new(strategyId), new(version), new(ruleId), ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, reason, source);
+        new(new(strategyId), new(version), new(ruleId), ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, ReconcileReason(ruleId, reason), source);
+
+    private static string ReconcileReason(string ruleId, string reason) =>
+        ruleId switch
+        {
+            "NQ-H4-001" => reason.Replace(
+                    "plus near-doji/small-body threshold, remaining candle inclusivity, near-equal structural zone tolerance, and other structural coordinate/boundary edge cases.",
+                    "plus near-doji/small-body threshold, remaining prior-HH/LL boundary inclusivity whose exact subcases remain unspecified, near-equal structural zone tolerance, and other structural coordinate/boundary edge cases.")
+                + " Exact correction start is confirmed on both sides: Close < Open starts a bullish-structure correction and Close > Open starts a bearish-structure correction; Close == Open does not. Before that start, same-direction, neutral, contained, and strict new-extreme candles are excluded from the future turn and its StructuralPrice and ProtectionAnchor. A strict new High/Low may update the origin extreme while waiting, and the same qualifying opposite-body candle may update it and become the first member without intrabar inference. Runtime preserves ActiveCorrection, AwaitingCorrectionStart, and StructureInvalidated: only AwaitingCorrectionStart may consume correction-start transition; empty/inactive alone is insufficient, and invalidation cannot auto-reverse or reconstruct valid opposite structure.",
+            "NQ-TP-001" => reason.Replace(
+                    "near-doji/small-body threshold, remaining candle inclusivity, near-equal structural zone tolerance, and other structural coordinate/boundary edge cases.",
+                    "near-doji/small-body threshold, remaining prior-HH/LL boundary inclusivity whose exact subcases remain unspecified, near-equal structural zone tolerance, and other structural coordinate/boundary edge cases.")
+                + " Structural fallback recognizes deterministic correction start: pre-start same-direction, neutral, contained, and strict new-extreme candles cannot alter candidate-turn StructuralPrice or ProtectionAnchor, while a qualifying opposite-body candle, including one that updates its origin extreme, is the first member. AwaitingCorrectionStart is distinct from StructureInvalidated; empty/inactive alone is insufficient, and invalidated structure cannot be reused as waiting or as an automatically reversed validated fallback.",
+            _ => reason,
+        };
 }
