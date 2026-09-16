@@ -937,7 +937,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
     }
 
     [Fact]
-    public void CorrectionStartLifecycleMetadataReconcilesOnlyConfirmedBoundaries()
+    public void PriorStructuralBoundaryMetadataReconcilesOnlyConfirmedBoundaries()
     {
         var context = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-H4-001");
         var liquidity = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-002");
@@ -949,12 +949,29 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
 
         Assert.All(new[] { context, liquidity, target }, rule =>
         {
-            Assert.Contains("remaining prior-HH/LL boundary inclusivity", rule.Description, StringComparison.Ordinal);
+            Assert.DoesNotContain("remaining prior-HH/LL boundary inclusivity", rule.Description, StringComparison.Ordinal);
             Assert.DoesNotContain("remaining candle inclusivity", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("prior HH/LL", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("wick-only penetration", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("Close > prior HH or Close < prior LL", rule.Description, StringComparison.Ordinal);
             Assert.Contains("AwaitingCorrectionStart", rule.Description, StringComparison.Ordinal);
             Assert.Contains("StructureInvalidated", rule.Description, StringComparison.Ordinal);
             Assert.Contains("empty/inactive", rule.Description, StringComparison.Ordinal);
         });
+
+        Assert.Contains("distinct from the current correction-origin ceiling/floor", context.Description, StringComparison.Ordinal);
+        Assert.Contains("that candle remains in the turn", context.Description, StringComparison.Ordinal);
+        Assert.Contains("eligible for StructuralPrice and ProtectionAnchor", context.Description, StringComparison.Ordinal);
+        Assert.Contains("The confirming candle is excluded", context.Description, StringComparison.Ordinal);
+        Assert.Contains("Strict High > current correction-origin ceiling or Low < current correction-origin floor", context.Description, StringComparison.Ordinal);
+
+        Assert.Contains("active candidate turn remains open", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("A raw price extreme alone is not a validated structural point", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("confirming candle is excluded from its geometry", liquidity.Description, StringComparison.Ordinal);
+
+        Assert.Contains("active candidate candle stays eligible for StructuralPrice and ProtectionAnchor", target.Description, StringComparison.Ordinal);
+        Assert.Contains("confirming candle is excluded from the candidate geometry", target.Description, StringComparison.Ordinal);
+        Assert.Contains("Only causally validated structural points may later serve as structural fallback", target.Description, StringComparison.Ordinal);
 
         Assert.Contains("Exact bearish bodies in bullish context and exact bullish bodies in bearish context start corrections", liquidity.Description, StringComparison.Ordinal);
         Assert.Contains("exact dojis do not", liquidity.Description, StringComparison.Ordinal);
