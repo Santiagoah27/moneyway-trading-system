@@ -87,6 +87,17 @@ These cases preserve observed or conceptual evidence. They do not establish succ
 - Human-review notes: retain the structural facts and narrow interpretation without inventing intrabar chronology or changing prior snapshots.
 - Automation impact: useful as a structural collision and gating-review case; insufficient to authorize RuleId mapping or runtime changes.
 
+## NQ-CASE-008 — Distinct extreme candle before correction
+
+- Case ID: `NQ-CASE-008`.
+- Status: `confirmed_structural_boundary_reference_case`.
+- Bullish: candle A produces the current HH with a bullish body, then distinct candle B is the first bearish body. A belongs to the preceding bullish impulse; the candidate HL correction turn begins with B, and A contributes no OHLC to that turn's structural price or protection anchor.
+- Bullish exact-doji variant: candle A produces the current HH with `Close == Open`; distinct candle B is the first bearish body. A remains outside the correction at the prior impulse boundary; B starts it.
+- Bearish mirror: candle A produces the current LL with a bearish body, then distinct candle B is the first bullish body. A belongs to the preceding bearish impulse; the candidate LH correction turn begins with B.
+- Same-candle boundary: if the new-High/new-Low reset candle itself has the opposite body direction, existing reset-and-start rules include that candle as the first member of the new turn; this distinct-candle case does not change that rule.
+- Rules not demonstrated: near-doji threshold, initial structural anchor selection, historical scan termination or other remaining scan inclusivity.
+- Automation impact: defines membership for these reviewed pre-start cases; supplied-turn geometry primitives do not select the turn automatically.
+
 ## Cross-case boundaries
 
 - No case supplies missing dates, prices, instruments, profits or losses.
