@@ -8,6 +8,50 @@ namespace MoneyWay.Application.MarketData.Candles;
 /// </summary>
 public sealed class CorrectionTurnLifecycleCalculator
 {
+    /// <summary>Applies an already-calculated start transition only to a valid pre-start lifecycle state.</summary>
+    public CorrectionTurnLifecycleResult Evaluate(
+        CorrectionTurnLifecycleResult currentLifecycle,
+        Candle currentCandle,
+        CorrectionStartTransitionResult transition)
+    {
+        ArgumentNullException.ThrowIfNull(currentLifecycle);
+        ArgumentNullException.ThrowIfNull(currentCandle);
+        ArgumentNullException.ThrowIfNull(transition);
+
+        if (currentLifecycle.Disposition != CorrectionTurnLifecycleDisposition.AwaitingCorrectionStart)
+        {
+            throw new ArgumentException("Correction start requires an awaiting lifecycle disposition.", nameof(currentLifecycle));
+        }
+
+        if (ReferenceEquals(currentLifecycle.LastProcessedCandle, currentCandle))
+        {
+            throw new ArgumentException("The current candle has already been processed by this lifecycle.", nameof(currentCandle));
+        }
+
+        return transition.TransitionKind switch
+        {
+            CorrectionStartTransitionKind.AwaitCorrectionStart
+                when transition.CurrentCandleMembership == CorrectionTurnCurrentCandleMembership.NoCorrectionTurn
+                    && transition.FirstTurnCandle is null => new(
+                        [],
+                        false,
+                        false,
+                        CorrectionTurnCurrentCandleMembership.NoCorrectionTurn,
+                        CorrectionTurnLifecycleDisposition.AwaitingCorrectionStart,
+                        currentCandle),
+            CorrectionStartTransitionKind.StartCorrection
+                when transition.CurrentCandleMembership == CorrectionTurnCurrentCandleMembership.NewTurn
+                    && ReferenceEquals(transition.FirstTurnCandle, currentCandle) => new(
+                        [currentCandle],
+                        true,
+                        false,
+                        CorrectionTurnCurrentCandleMembership.NewTurn,
+                        CorrectionTurnLifecycleDisposition.ActiveCorrection,
+                        currentCandle),
+            _ => throw new ArgumentException("Correction-start transition membership must match the current candle and transition kind.", nameof(transition)),
+        };
+    }
+
     public CorrectionTurnLifecycleResult Evaluate(
         IReadOnlyList<Candle> currentTurnCandles,
         Candle currentCandle,
@@ -73,25 +117,29 @@ public sealed class CorrectionTurnLifecycleCalculator
                 true,
                 false,
                 CorrectionTurnCurrentCandleMembership.ExistingTurn,
-                CorrectionTurnLifecycleDisposition.ActiveCorrection),
+                CorrectionTurnLifecycleDisposition.ActiveCorrection,
+                currentCandle),
             LifecycleAction.ResetAndStart => new(
                 [currentCandle],
                 true,
                 true,
                 CorrectionTurnCurrentCandleMembership.NewTurn,
-                CorrectionTurnLifecycleDisposition.ActiveCorrection),
+                CorrectionTurnLifecycleDisposition.ActiveCorrection,
+                currentCandle),
             LifecycleAction.AwaitCorrectionStart => new(
                 [],
                 false,
                 true,
                 CorrectionTurnCurrentCandleMembership.NoCorrectionTurn,
-                CorrectionTurnLifecycleDisposition.AwaitingCorrectionStart),
+                CorrectionTurnLifecycleDisposition.AwaitingCorrectionStart,
+                currentCandle),
             LifecycleAction.InvalidateStructure => new(
                 [],
                 false,
                 true,
                 CorrectionTurnCurrentCandleMembership.NoCorrectionTurn,
-                CorrectionTurnLifecycleDisposition.StructureInvalidated),
+                CorrectionTurnLifecycleDisposition.StructureInvalidated,
+                currentCandle),
             _ => throw new ArgumentOutOfRangeException(nameof(action), action, "The correction-turn lifecycle action is not supported."),
         };
     }

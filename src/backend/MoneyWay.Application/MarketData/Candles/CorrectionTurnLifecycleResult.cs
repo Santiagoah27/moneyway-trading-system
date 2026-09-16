@@ -14,7 +14,8 @@ public sealed class CorrectionTurnLifecycleResult
         bool isCorrectionTurnActive,
         bool wasPreviousTurnTerminated,
         CorrectionTurnCurrentCandleMembership currentCandleMembership,
-        CorrectionTurnLifecycleDisposition disposition)
+        CorrectionTurnLifecycleDisposition disposition,
+        Candle? lastProcessedCandle)
     {
         ArgumentNullException.ThrowIfNull(resultingTurnCandles);
         if (!Enum.IsDefined(currentCandleMembership))
@@ -43,7 +44,6 @@ public sealed class CorrectionTurnLifecycleResult
         }
 
         if (currentCandleMembership == CorrectionTurnCurrentCandleMembership.ExistingTurn && wasPreviousTurnTerminated
-            || currentCandleMembership == CorrectionTurnCurrentCandleMembership.NewTurn && !wasPreviousTurnTerminated
             || disposition == CorrectionTurnLifecycleDisposition.StructureInvalidated && !wasPreviousTurnTerminated)
         {
             throw new ArgumentException("Previous-turn termination must match current-candle membership.", nameof(wasPreviousTurnTerminated));
@@ -59,11 +59,12 @@ public sealed class CorrectionTurnLifecycleResult
         WasPreviousTurnTerminated = wasPreviousTurnTerminated;
         CurrentCandleMembership = currentCandleMembership;
         Disposition = disposition;
+        LastProcessedCandle = lastProcessedCandle;
     }
 
     /// <summary>Represents a valid structural context awaiting its first correction without a prior reset event.</summary>
     public static CorrectionTurnLifecycleResult CreateAwaitingCorrectionStart() =>
-        new([], false, false, CorrectionTurnCurrentCandleMembership.NoCorrectionTurn, CorrectionTurnLifecycleDisposition.AwaitingCorrectionStart);
+        new([], false, false, CorrectionTurnCurrentCandleMembership.NoCorrectionTurn, CorrectionTurnLifecycleDisposition.AwaitingCorrectionStart, null);
 
     public IReadOnlyList<Candle> ResultingTurnCandles { get; }
 
@@ -74,4 +75,6 @@ public sealed class CorrectionTurnLifecycleResult
     public CorrectionTurnCurrentCandleMembership CurrentCandleMembership { get; }
 
     public CorrectionTurnLifecycleDisposition Disposition { get; }
+
+    internal Candle? LastProcessedCandle { get; }
 }
