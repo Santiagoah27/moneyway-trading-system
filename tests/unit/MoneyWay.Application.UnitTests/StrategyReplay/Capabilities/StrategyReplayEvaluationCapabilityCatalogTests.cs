@@ -463,8 +463,10 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
             Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, declaration.Status);
             Assert.Contains("no individual candle ownership or first/last/timestamp/sequence tie-break is required", declaration.Reason, StringComparison.Ordinal);
             Assert.Contains("Near-doji/small-body threshold", declaration.Reason, StringComparison.OrdinalIgnoreCase);
-            Assert.Contains("remaining prior-HH/LL boundary inclusivity whose exact subcases remain unspecified", declaration.Reason, StringComparison.Ordinal);
+            Assert.DoesNotContain("remaining prior-HH/LL boundary inclusivity", declaration.Reason, StringComparison.Ordinal);
             Assert.DoesNotContain("remaining candle inclusivity", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("initial structural-anchor selection", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("historical scan termination/boundary", declaration.Reason, StringComparison.Ordinal);
             Assert.Contains("near-equal structural zone tolerance", declaration.Reason, StringComparison.Ordinal);
             Assert.DoesNotContain("equal-coordinate candle identity", declaration.Reason, StringComparison.OrdinalIgnoreCase);
         });
@@ -685,7 +687,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
     }
 
     [Fact]
-    public void NasdaqCorrectionStartLifecycleCapabilityReasonsPreserveOnlyCurrentBlockers()
+    public void NasdaqPriorStructuralBoundaryCapabilityReasonsPreserveOnlyCurrentBlockers()
     {
         var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
         var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
@@ -701,12 +703,26 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
 
         Assert.All(new[] { context, target }, declaration =>
         {
-            Assert.Contains("remaining prior-HH/LL boundary inclusivity whose exact subcases remain unspecified", declaration.Reason, StringComparison.Ordinal);
+            Assert.DoesNotContain("remaining prior-HH/LL boundary inclusivity", declaration.Reason, StringComparison.Ordinal);
             Assert.DoesNotContain("remaining candle inclusivity", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("prior HH/LL", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("wick-only penetration", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("Close > prior HH or Close < prior LL", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("implementation gap, not prior-HH/LL specification uncertainty", declaration.Reason, StringComparison.Ordinal);
             Assert.Contains("AwaitingCorrectionStart", declaration.Reason, StringComparison.Ordinal);
             Assert.Contains("StructureInvalidated", declaration.Reason, StringComparison.Ordinal);
             Assert.Contains("empty/inactive alone is insufficient", declaration.Reason, StringComparison.Ordinal);
         });
+
+        Assert.Contains("distinct from the current correction-origin ceiling/floor", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("candle remains in that turn", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("eligible for StructuralPrice and ProtectionAnchor", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("confirming candle is excluded from the candidate turn and its geometry", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("Strict High > current correction-origin ceiling or Low < current correction-origin floor", context.Reason, StringComparison.Ordinal);
+
+        Assert.Contains("candle remains eligible for candidate-turn StructuralPrice and ProtectionAnchor", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("confirming candle is excluded from candidate geometry", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("Only causally validated structural points may enter fallback", target.Reason, StringComparison.Ordinal);
 
         Assert.Contains("Close < Open starts a bullish-structure correction", context.Reason, StringComparison.Ordinal);
         Assert.Contains("Close > Open starts a bearish-structure correction", context.Reason, StringComparison.Ordinal);
