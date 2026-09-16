@@ -95,7 +95,7 @@ These cases preserve observed or conceptual evidence. They do not establish succ
 - Bullish exact-doji variant: candle A produces the current HH with `Close == Open`; distinct candle B is the first bearish body. A remains outside the correction at the prior impulse boundary; B starts it.
 - Bearish mirror: candle A produces the current LL with a bearish body, then distinct candle B is the first bullish body. A belongs to the preceding bearish impulse; the candidate LH correction turn begins with B.
 - Same-candle boundary: if the new-High/new-Low reset candle itself has the opposite body direction, existing reset-and-start rules include that candle as the first member of the new turn; this distinct-candle case does not change that rule.
-- Rules not demonstrated: near-doji threshold, initial structural anchor selection, historical scan termination or other remaining scan inclusivity.
+- Rules not demonstrated: near-doji threshold, initial structural anchor selection and historical scan termination.
 - Automation impact: defines membership for these reviewed pre-start cases; supplied-turn geometry primitives do not select the turn automatically.
 
 ## NQ-CASE-009 — Pre-start waiting candles
@@ -106,8 +106,18 @@ These cases preserve observed or conceptual evidence. They do not establish succ
 - Extreme extension while waiting: after an upper extreme of `100`, a bullish B prints `High = 102` and a following exact doji C remains waiting. The upper price extreme/ceiling updates under existing rules, but B/C do not start or join a correction. The first later bearish body starts it. A bearish waiting candle with a strict lower `Low` mirrors this floor update before the first bullish body.
 - Reset and await: a bullish-body new-High reset candle A terminates the old correction but starts no new one. Later bullish B and exact-doji C also remain outside. The first bearish D starts a new turn containing D, with no earlier reset/waiting candle included. The bearish-side mirror waits for the first bullish body.
 - Active-turn distinction: after D starts the correction, in-range candles of either body direction and exact dojis may remain in that turn under existing rules.
-- Rules not demonstrated: a near-doji threshold, numeric exhaustion-zone width, initial H4 anchor, remaining turn edges or a fully automatic detector.
-- Automation impact: the pre-start membership rule is deterministic when an extreme and direction are supplied; current primitives have no transition that consumes the waiting sequence and starts the first normal correction turn.
+- Rules not demonstrated: a near-doji threshold, numeric exhaustion-zone width, initial H4 anchor, historical scan termination or a fully automatic detector.
+- Automation impact: the pre-start membership rule is deterministic when an extreme and direction are supplied; current start/lifecycle primitives consume these observations, but no complete detector assembles candidate turns from arbitrary history.
+
+## NQ-CASE-010 — Prior structural validation boundary inside an active turn
+
+- Case ID: `NQ-CASE-010`.
+- Status: `confirmed_structural_boundary_reference_case`.
+- Bullish: with an active candidate-HL turn and prior structural HH `100`, a closed candle with `High = 100` or `Close = 100` does not confirm. Nor does `High = 101, Close = 100`. If no separate reset/invalidation event occurs, each candle remains in the same turn and its OHLC is eligible for the selected turn's `StructuralPrice` and `ProtectionAnchor`; a later deeper low may replace the candidate.
+- Distinct reset level: the current correction-origin ceiling can differ from prior HH. With ceiling `102`, `High = 101, Close = 100` is non-confirming and remains included absent invalidation. With `High = 103`, the existing strict ceiling reset governs even if `Close <= 100`; no confirmation-only membership rule overrides it.
+- Confirmation: a formally closed `Close > 100` validates the preceding candidate from that close and excludes the confirming candle from the old turn and its selected-turn geometry.
+- Bearish mirror: replace prior HH with prior LL, ceiling with floor, `High >` with `Low <`, and confirmation with a formally closed `Close < prior LL`. Equality and wick-only penetration remain included absent another terminal event; a strict floor reset still governs independently.
+- No intrabar chronology, new geometry formula, target-touch rule or liquidity-take rule follows from these examples.
 
 ## Cross-case boundaries
 
