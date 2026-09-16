@@ -488,6 +488,42 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
     }
 
     [Fact]
+    public void NasdaqDistinctExtremeCapabilityReasonsKeepPreStartBoundarySeparateFromActiveTurnMembership()
+    {
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
+        var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
+        var report = Catalog(evaluators, declarations).Find(Nasdaq.StrategyId, Nasdaq.Version)!;
+        var context = Assert.Single(declarations, item => item.RuleId == new RuleId("NQ-H4-001"));
+        var target = Assert.Single(declarations, item => item.RuleId == new RuleId("NQ-TP-001"));
+        var liquidity = report.Rules.Single(item => item.RuleId == new RuleId("NQ-LIQ-002"));
+
+        Assert.All(new[] { context, target }, declaration =>
+        {
+            Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, declaration.Status);
+            Assert.Contains("HH-producing candle is distinct, it remains in the prior bullish impulse and outside the new correction", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("exact-doji HH candle before that first bearish body is likewise excluded", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("LL-producing candle is distinct, it remains in the prior bearish impulse and outside the new correction", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("exact-doji LL candle before that first bullish body is likewise excluded", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("Open, Close, High, and Low cannot alter the new candidate turn StructuralPrice or ProtectionAnchor", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("all in-range bearish, bullish, and exact-doji candles remain in one correction turn", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("Near-doji/small-body thresholds remain unresolved", declaration.Reason, StringComparison.Ordinal);
+            Assert.DoesNotContain("distinct extreme candle membership remains unresolved", declaration.Reason, StringComparison.OrdinalIgnoreCase);
+        });
+
+        Assert.Contains("first member of the new bullish correction turn", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("Only causally validated structural points may enter fallback", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("exact OHLC mitigation test", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("PDH/PDL cross-class ranking", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("universal full-exit behavior", target.Reason, StringComparison.Ordinal);
+
+        Assert.DoesNotContain(declarations, item => item.RuleId == liquidity.RuleId);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, liquidity.CapabilityStatus);
+        Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, liquidity.CapabilityReason);
+        Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(report));
+        Assert.Equal(["NQ-LIQ-001", "NQ-TIME-001", "NQ-TIME-002"], evaluators.Select(item => item.RuleId.Value));
+    }
+
+    [Fact]
     public void NasdaqBullishCollisionCapabilityReasonsRepresentInvalidationDominanceWithoutChangingCoverage()
     {
         var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
