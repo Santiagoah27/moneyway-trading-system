@@ -89,5 +89,27 @@ public static class MoneyWayNasdaqStrategyDefinition
         bool isRequired,
         RuleDefinitionStatus status,
         string description) =>
-        new(new RuleId(id), name, stage, sequence, isRequired, status, description, CatalogReference);
+        new(new RuleId(id), name, stage, sequence, isRequired, status, ReconcileDescription(id, description), CatalogReference);
+
+    private static string ReconcileDescription(string id, string description) =>
+        id switch
+        {
+            "NQ-H4-001" => description
+                .Replace(
+                    "Near-doji/small-body thresholds, remaining candle inclusivity, and other structural coordinate/boundary edge cases remain visual/contextual rather than a deterministic raw-candle algorithm.",
+                    "Near-doji/small-body thresholds, remaining prior-HH/LL boundary inclusivity, and other structural coordinate/boundary edge cases remain visual/contextual rather than a deterministic raw-candle algorithm.")
+                + " Before the first qualifying opposite body, same-direction, neutral, contained, and strict new-extreme waiting candles remain outside the future correction turn and its StructuralPrice and ProtectionAnchor. A strict new High/Low updates the correction-origin extreme while still waiting unless that same candle has the qualifying opposite body; then it updates the extreme and starts the correction as its first member. Correction lifecycle disposition is explicit: AwaitingCorrectionStart retains a valid structural side and may consume this transition, while StructureInvalidated does not; empty/inactive alone is insufficient. ResetAndAwaitCorrectionStart produces AwaitingCorrectionStart, invalidation produces StructureInvalidated, and neither invalidation nor its collision automatically establishes opposite structure.",
+            "NQ-LIQ-002" => description
+                .Replace(
+                    "Near-doji/small-body thresholds, remaining candle inclusivity, other structural coordinate/boundary edge cases, OHLC mitigation semantics, body-zone reduction for other structural-point classes, PDH/PDL ranking, ties, and any universal 1H/4H priority remain unresolved or partially defined.",
+                    "Near-doji/small-body thresholds, remaining prior-HH/LL boundary inclusivity, other structural coordinate/boundary edge cases, OHLC mitigation semantics, body-zone reduction for other structural-point classes, PDH/PDL ranking, ties, and any universal 1H/4H priority remain unresolved or partially defined.")
+                + " Pre-start same-direction, neutral, contained, and strict new-extreme candles are excluded from a future structural turn and its geometry. Exact bearish bodies in bullish context and exact bullish bodies in bearish context start corrections, including when the same candle updates the applicable origin extreme; exact dojis do not. AwaitingCorrectionStart is distinct from StructureInvalidated, so an empty/inactive turn alone does not authorize correction-start processing or establish a structural point.",
+            "NQ-TP-001" => description
+                .Replace("Near-doji/small-body thresholds, remaining candle inclusivity remain partial.", "Near-doji/small-body thresholds and remaining prior-HH/LL boundary inclusivity remain partial.")
+                .Replace(
+                    "Near-doji/small-body thresholds, remaining candle inclusivity, other structural coordinate/boundary edge cases, body-zone reduction for other structural-point classes, OHLC mitigation test, PDH/PDL ranking, ties, general final-target hierarchy, and universal full-exit behavior remain unresolved or human-validated.",
+                    "Near-doji/small-body thresholds, remaining prior-HH/LL boundary inclusivity, other structural coordinate/boundary edge cases, body-zone reduction for other structural-point classes, OHLC mitigation test, PDH/PDL ranking, ties, general final-target hierarchy, and universal full-exit behavior remain unresolved or human-validated.")
+                + " Pre-start waiting candles, including exact dojis and strict origin-extreme updates, cannot alter a fallback candidate turn's StructuralPrice or ProtectionAnchor. Exact opposite-body correction start is deterministic, including a same-candle origin-extreme update, but only after a valid AwaitingCorrectionStart disposition; empty/inactive alone is insufficient. StructureInvalidated cannot be reused as waiting or as an automatically reversed, validated structural fallback.",
+            _ => description,
+        };
 }

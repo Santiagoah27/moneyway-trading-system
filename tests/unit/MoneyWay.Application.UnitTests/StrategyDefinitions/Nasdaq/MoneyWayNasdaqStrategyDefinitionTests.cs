@@ -936,6 +936,34 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.DoesNotContain("same-frame", inversion.Description, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public void CorrectionStartLifecycleMetadataReconcilesOnlyConfirmedBoundaries()
+    {
+        var context = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-H4-001");
+        var liquidity = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-002");
+        var target = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-TP-001");
+
+        Assert.Equal(RuleDefinitionStatus.Confirmed, context.DefinitionStatus);
+        Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, liquidity.DefinitionStatus);
+        Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, target.DefinitionStatus);
+
+        Assert.All(new[] { context, liquidity, target }, rule =>
+        {
+            Assert.Contains("remaining prior-HH/LL boundary inclusivity", rule.Description, StringComparison.Ordinal);
+            Assert.DoesNotContain("remaining candle inclusivity", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("AwaitingCorrectionStart", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("StructureInvalidated", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("empty/inactive", rule.Description, StringComparison.Ordinal);
+        });
+
+        Assert.Contains("Exact bearish bodies in bullish context and exact bullish bodies in bearish context start corrections", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("exact dojis do not", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("strict new-extreme waiting candles remain outside the future correction turn", context.Description, StringComparison.Ordinal);
+        Assert.Contains("updates the extreme and starts the correction as its first member", context.Description, StringComparison.Ordinal);
+        Assert.Contains("cannot alter a fallback candidate turn's StructuralPrice or ProtectionAnchor", target.Description, StringComparison.Ordinal);
+        Assert.Contains("cannot be reused as waiting", target.Description, StringComparison.Ordinal);
+    }
+
     private void AssertRule(string id, RuleDefinitionStatus status, bool required)
     {
         var rule = definition.Rules.Single(item => item.RuleId.Value == id);
