@@ -556,7 +556,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
 
         Assert.Contains("all in-range bearish, bullish, and exact-doji candles remain in one correction turn", context.Description, StringComparison.Ordinal);
         Assert.Contains("body-color alternation does not fragment it or create parallel HL candidates", context.Description, StringComparison.Ordinal);
-        Assert.Contains("High > current correction-origin ceiling first resets the old correction", context.Description, StringComparison.Ordinal);
+        Assert.Contains("Without a simultaneous strict Close > prior structural HH confirmation, a strict High > current correction-origin ceiling resets the old correction", context.Description, StringComparison.Ordinal);
         Assert.Contains("discards the current candidate HL without validating a structural HH", context.Description, StringComparison.Ordinal);
         Assert.Contains("when Close < Open, it is excluded from the old turn and included as the first member of the new bullish-correction turn", context.Description, StringComparison.Ordinal);
         Assert.Contains("when Close == Open or Close > Open, the reset occurs but the new correction does not start", context.Description, StringComparison.Ordinal);
@@ -571,6 +571,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.DoesNotContain("turn-segmentation cases", context.Description, StringComparison.Ordinal);
 
         Assert.Contains("all in-range bearish, bullish, and exact-doji candles remain in one correction turn", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("Without a simultaneous strict Close > prior structural HH confirmation", liquidity.Description, StringComparison.Ordinal);
         Assert.Contains("discards the current candidate HL without validating a structural HH", liquidity.Description, StringComparison.Ordinal);
         Assert.Contains("Close < prior validated HL invalidates the bullish structure", liquidity.Description, StringComparison.Ordinal);
         Assert.Contains("Reset or invalidation membership does not create a structural point by itself", liquidity.Description, StringComparison.Ordinal);
@@ -979,6 +980,40 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("updates the extreme and starts the correction as its first member", context.Description, StringComparison.Ordinal);
         Assert.Contains("cannot alter a fallback candidate turn's StructuralPrice or ProtectionAnchor", target.Description, StringComparison.Ordinal);
         Assert.Contains("cannot be reused as waiting", target.Description, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void CompoundCandidateConfirmationRolloverMetadataMatchesLatestSpecification()
+    {
+        var context = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-H4-001");
+        var liquidity = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-002");
+        var target = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-TP-001");
+
+        Assert.Equal(RuleDefinitionStatus.Confirmed, context.DefinitionStatus);
+        Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, liquidity.DefinitionStatus);
+        Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, target.DefinitionStatus);
+
+        Assert.All(new[] { context, liquidity, target }, rule =>
+        {
+            Assert.Contains("validates the old HL rather than discarding it", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("validates the old LH", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("excluded from old-turn", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("active pair rolls", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("exact corrective body direction includes that candle exactly once", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("AwaitingCorrectionStart with an empty next turn", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("simultaneous strict confirmation and opposite-point invalidation unreachable", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("ready for deterministic implementation with supplied valid references and an active candidate turn", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("do not make raw-history H4 bootstrap or broader structural detection complete", rule.Description, StringComparison.Ordinal);
+        });
+
+        Assert.DoesNotContain(
+            "A strict High > current correction-origin ceiling first resets the old correction",
+            context.Description,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "A strict Low < current correction-origin floor resets the old correction",
+            context.Description,
+            StringComparison.Ordinal);
     }
 
     private void AssertRule(string id, RuleDefinitionStatus status, bool required)
