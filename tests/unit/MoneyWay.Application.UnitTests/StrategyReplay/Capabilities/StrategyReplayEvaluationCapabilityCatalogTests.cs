@@ -404,6 +404,51 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
     }
 
     [Fact]
+    public void NasdaqH4BootstrapCapabilityReasonsSeparateConfirmedProgressionFromHumanInitialization()
+    {
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
+        var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
+        var report = Catalog(evaluators, declarations).Find(Nasdaq.StrategyId, Nasdaq.Version)!;
+        var context = Assert.Single(declarations, item => item.RuleId == new RuleId("NQ-H4-001"));
+        var target = Assert.Single(declarations, item => item.RuleId == new RuleId("NQ-TP-001"));
+        var liquidity = report.Rules.Single(item => item.RuleId == new RuleId("NQ-LIQ-002"));
+
+        Assert.All(new[] { context, target }, declaration =>
+            Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, declaration.Status));
+
+        Assert.Contains("No fixed candle/day/session count, historical time window, scan count, or numeric pivot/fractal lookback defines 4H bootstrap", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("initial structural anchor selection from arbitrary raw 4H candles", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("termination/boundary of that initial historical scan", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("latest strict formally closed body break above an upper reference inherits bullish context", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("latest strict formally closed body break below a lower reference inherits bearish context", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("equality and wick-only penetration do not qualify", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("future data cannot supply the break", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("latest HH plus originating/validated HL or latest LL plus originating/validated LH becomes the operational active pair", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("older structure remains audit evidence", context.Reason, StringComparison.Ordinal);
+        Assert.Contains("weekly open, previous-day extrema, and Asia/London levels are not deterministic anchor selectors or mandatory seeds", context.Reason, StringComparison.Ordinal);
+
+        Assert.Contains("Once structure is established, structural fallback may use only causally validated 1H/4H points", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("remaining H4 bootstrap boundary is initial structural anchor selection", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("termination/boundary of the initial historical scan", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("exact OHLC mitigation test", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("PDH/PDL cross-class ranking", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("universal full-exit behavior", target.Reason, StringComparison.Ordinal);
+
+        Assert.All(new[] { context, target }, declaration =>
+        {
+            Assert.DoesNotContain("visual macro bootstrap/lookback", declaration.Reason, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("threshold, gaps", declaration.Reason, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("bearish reset/invalidation symmetry", declaration.Reason, StringComparison.OrdinalIgnoreCase);
+        });
+
+        Assert.DoesNotContain(declarations, item => item.RuleId == liquidity.RuleId);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, liquidity.CapabilityStatus);
+        Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, liquidity.CapabilityReason);
+        Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(report));
+        Assert.Equal(["NQ-LIQ-001", "NQ-TIME-001", "NQ-TIME-002"], evaluators.Select(item => item.RuleId.Value));
+    }
+
+    [Fact]
     public void NasdaqBullishCollisionCapabilityReasonsRepresentInvalidationDominanceWithoutChangingCoverage()
     {
         var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
