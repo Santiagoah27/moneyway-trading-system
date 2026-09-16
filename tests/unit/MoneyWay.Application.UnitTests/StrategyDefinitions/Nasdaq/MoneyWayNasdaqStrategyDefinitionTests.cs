@@ -633,6 +633,40 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
     }
 
     [Fact]
+    public void OpeningGapMetadataHasNoStructuralRoleAndPreservesRemainingBlockers()
+    {
+        var context = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-H4-001");
+        var liquidity = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-002");
+        var target = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-TP-001");
+
+        Assert.Equal(RuleDefinitionStatus.Confirmed, context.DefinitionStatus);
+        Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, liquidity.DefinitionStatus);
+        Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, target.DefinitionStatus);
+
+        Assert.All(new[] { context, liquidity, target }, rule =>
+        {
+            Assert.Contains("previous Close != current Open neither starts nor fragments a correction", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("Exact body direction still governs correction start", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("strict High > current correction-origin ceiling or Low < current correction-origin floor governs reset", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("formally closed Close beyond prior validated HL/LH governs invalidation", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("an Open beyond a level is not an independent event", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("A gap Open across a prior validated HL/LH without the qualifying Close does not invalidate", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("Equality and wick-only penetration remain non-invalidating", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("No synthetic interpolation, candles, or interbar path is inferred", rule.Description, StringComparison.Ordinal);
+            Assert.Contains("Opening gaps are distinct from FVG/IFVG and do not resolve their geometry, size, fill, or 1M interaction", rule.Description, StringComparison.Ordinal);
+            Assert.DoesNotContain("thresholds, gaps, remaining candle inclusivity", rule.Description, StringComparison.Ordinal);
+        });
+
+        Assert.Contains("creates or validates HH/HL/LH/LL", context.Description, StringComparison.Ordinal);
+        Assert.Contains("within structural liquidity review", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("do not infer a liquidity-take evaluation or downstream workflow behavior", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("nor creates a structural target", target.Description, StringComparison.Ordinal);
+        Assert.Contains("Only causally validated structural points may enter fallback", target.Description, StringComparison.Ordinal);
+        Assert.Contains("Initial structural candidate/bootstrap selection", target.Description, StringComparison.Ordinal);
+        Assert.Contains("PDH/PDL ranking, ties, general final-target hierarchy, and universal full-exit behavior remain unresolved or human-validated", target.Description, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RuleIdentitiesRequiredFlagsSourcesAndCanonicalOrderRemainStable()
     {
         var expectedOrder = new[]
