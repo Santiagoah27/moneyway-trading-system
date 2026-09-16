@@ -119,6 +119,16 @@ These cases preserve observed or conceptual evidence. They do not establish succ
 - Bearish mirror: replace prior HH with prior LL, ceiling with floor, `High >` with `Low <`, and confirmation with a formally closed `Close < prior LL`. Equality and wick-only penetration remain included absent another terminal event; a strict floor reset still governs independently.
 - No intrabar chronology, new geometry formula, target-touch rule or liquidity-take rule follows from these examples.
 
+## NQ-CASE-011 — Bullish candidate confirmation and origin extension
+
+- Case ID: `NQ-CASE-011`.
+- Status: `confirmed_structural_boundary_reference_case` for old-candidate validation and active-pair rollover; next-turn membership remains `unresolved`.
+- An active candidate-HL turn has prior structural HH `100` and current correction-origin ceiling `102`. A formally closed candle with `High = 105`, `Open = 104`, `Close = 103` satisfies both strict `Close > prior HH` and strict `High > ceiling`.
+- The prior candidate HL validates from this close. Its existing selected-turn `StructuralPrice` and `ProtectionAnchor` exclude the confirming candle. That candle's upper extreme supplies the new HH-side reference; the operational pair becomes new HH plus newly validated HL. Generic reset does not discard the old candidate.
+- The candle has a bearish body (`Close < Open`). Whether it also starts the *next* bullish-structure correction is unresolved; do not apply ordinary reset/start membership to this compound event.
+- The bearish `Close < prior LL` plus `Low < origin floor` mirror lacks explicit collision precedence in the reviewed source. Reset plus invalidation remains a distinct, confirmed invalidation-dominant collision.
+- The prices are illustrative; this case defines no intrabar chronology, new HH geometry algorithm or trading workflow mapping.
+
 ## Cross-case boundaries
 
 - No case supplies missing dates, prices, instruments, profits or losses.
