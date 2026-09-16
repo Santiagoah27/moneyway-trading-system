@@ -148,8 +148,8 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.DoesNotContain("simultaneous bullish-body/new-low", context.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("confirming-candle scan participation", context.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("terminal/reset candle membership", context.Description, StringComparison.Ordinal);
-        Assert.Contains("equal-coordinate body identity", context.Description, StringComparison.Ordinal);
-        Assert.Contains("exact structural coordinates", context.Description, StringComparison.Ordinal);
+        Assert.Contains("one price-based StructuralPrice level", context.Description, StringComparison.Ordinal);
+        Assert.Contains("Near-equal coordinates remain unresolved", context.Description, StringComparison.Ordinal);
         Assert.Contains("rather than a deterministic raw-candle algorithm", context.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("automated", context.Description, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("implemented", context.Description, StringComparison.OrdinalIgnoreCase);
@@ -229,10 +229,10 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("No fixed candle/day/session count, historical time window, scan count, or numeric pivot/fractal lookback defines 4H bootstrap", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("Initial structural anchor selection from arbitrary raw 4H candles", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("termination/boundary of that initial historical scan remain human-reviewed", structuralLiquidity.Description, StringComparison.Ordinal);
-        Assert.Contains("other exact structural coordinates", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("other structural coordinate/boundary edge cases", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("OHLC mitigation semantics", structuralLiquidity.Description, StringComparison.Ordinal);
-        Assert.Contains("equal-coordinate body identity", structuralLiquidity.Description, StringComparison.Ordinal);
-        Assert.Contains("other exact structural coordinates", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("one price-based structural level", structuralLiquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("Near-equal coordinates remain unresolved", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("PDH/PDL ranking", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("any universal 1H/4H priority", structuralLiquidity.Description, StringComparison.Ordinal);
         Assert.Contains("remain unresolved", structuralLiquidity.Description, StringComparison.Ordinal);
@@ -410,8 +410,8 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.DoesNotContain("terminal/reset candle membership", target.Description, StringComparison.Ordinal);
         Assert.DoesNotContain("Exact structural-point detector", target.Description, StringComparison.Ordinal);
         Assert.Contains("OHLC mitigation test", target.Description, StringComparison.Ordinal);
-        Assert.Contains("other structural coordinates", target.Description, StringComparison.Ordinal);
-        Assert.Contains("equal-coordinate body identity", target.Description, StringComparison.Ordinal);
+        Assert.Contains("other structural coordinate/boundary edge cases", target.Description, StringComparison.Ordinal);
+        Assert.Contains("exact equal structural body coordinates within one selected turn form one candidate price level", target.Description, StringComparison.Ordinal);
         Assert.Contains("PDH/PDL ranking", target.Description, StringComparison.Ordinal);
         Assert.Contains("ties", target.Description, StringComparison.Ordinal);
         Assert.Contains("does not rescue an originally imagined scenario after a valid post-08:30 liquidity take", target.Description, StringComparison.Ordinal);
@@ -708,6 +708,46 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
             Assert.DoesNotContain("bootstrap selection", rule.Description, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("bootstrap/lookback", rule.Description, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("thresholds, gaps", rule.Description, StringComparison.OrdinalIgnoreCase);
+        });
+
+        AssertFrozenMetadata("NQ-LIQ-001", "Session liquidity levels", "Liquidity", 50, true, RuleDefinitionStatus.Confirmed);
+        AssertFrozenMetadata("NQ-TP-002", "Asia/London liquidity targets", "Take Profit", 220, false, RuleDefinitionStatus.HumanValidationRequired);
+    }
+
+    [Fact]
+    public void EqualPriceStructuralIdentityMetadataKeepsPriceLevelsAndRemainingBoundariesSeparate()
+    {
+        var context = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-H4-001");
+        var liquidity = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-002");
+        var target = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-TP-001");
+
+        Assert.Equal(RuleDefinitionStatus.Confirmed, context.DefinitionStatus);
+        Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, liquidity.DefinitionStatus);
+        Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, target.DefinitionStatus);
+
+        Assert.Contains("one price-based StructuralPrice level", context.Description, StringComparison.Ordinal);
+        Assert.Contains("no candle owner or first/last/timestamp/sequence tie-break is required", context.Description, StringComparison.Ordinal);
+        Assert.Contains("multiple supporting candles do not create duplicate HL/LH points", context.Description, StringComparison.Ordinal);
+        Assert.Contains("wick-based ProtectionAnchor may come from another candle in that turn", context.Description, StringComparison.Ordinal);
+        Assert.Contains("Near-equal coordinates remain unresolved", context.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("equal-coordinate body identity", context.Description, StringComparison.Ordinal);
+
+        Assert.Contains("one price-based structural level", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("multiple supporting candles do not create duplicate structural points", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("A price extreme alone remains insufficient to validate a structural point", liquidity.Description, StringComparison.Ordinal);
+        Assert.Contains("Near-equal coordinates remain unresolved", liquidity.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("equal-coordinate body identity", liquidity.Description, StringComparison.Ordinal);
+
+        Assert.Contains("one candidate price level", target.Description, StringComparison.Ordinal);
+        Assert.Contains("no candle owner or first/last/timestamp/sequence tie-break is required", target.Description, StringComparison.Ordinal);
+        Assert.Contains("only causally validated structural points may be used", target.Description, StringComparison.Ordinal);
+        Assert.Contains("Near-equal coordinates remain unresolved", target.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("equal-coordinate body identity", target.Description, StringComparison.Ordinal);
+
+        Assert.All(new[] { context, liquidity, target }, rule =>
+        {
+            Assert.DoesNotContain("Opening gaps are unresolved", rule.Description, StringComparison.Ordinal);
+            Assert.DoesNotContain("bearish reset/invalidation symmetry remain unresolved", rule.Description, StringComparison.Ordinal);
         });
 
         AssertFrozenMetadata("NQ-LIQ-001", "Session liquidity levels", "Liquidity", 50, true, RuleDefinitionStatus.Confirmed);
