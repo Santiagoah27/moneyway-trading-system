@@ -368,6 +368,42 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
     }
 
     [Fact]
+    public void NasdaqOpeningGapCapabilityReasonsHaveNoIndependentStructuralRole()
+    {
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
+        var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
+        var report = Catalog(evaluators, declarations).Find(Nasdaq.StrategyId, Nasdaq.Version)!;
+        var context = Assert.Single(declarations, item => item.RuleId == new RuleId("NQ-H4-001"));
+        var target = Assert.Single(declarations, item => item.RuleId == new RuleId("NQ-TP-001"));
+        var liquidity = report.Rules.Single(item => item.RuleId == new RuleId("NQ-LIQ-002"));
+
+        Assert.All(new[] { context, target }, declaration =>
+        {
+            Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, declaration.Status);
+            Assert.Contains("previous Close != current Open neither starts nor fragments a correction", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("Exact body direction governs correction start", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("strict High > current correction-origin ceiling or Low < current correction-origin floor governs reset", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("formally closed Close beyond prior validated HL/LH governs invalidation", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("not an independent reset or invalidation event", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("equality and wick-only penetration remain non-invalidating", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("No synthetic interpolation, candles, or interbar path is inferred", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("Opening gaps are distinct from FVG/IFVG and do not resolve their geometry, size, fill, or 1M interaction", declaration.Reason, StringComparison.Ordinal);
+            Assert.DoesNotContain("threshold, gaps, remaining candle inclusivity", declaration.Reason, StringComparison.Ordinal);
+        });
+
+        Assert.Contains("nor creates a structural target", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("Only causally validated structural points may enter fallback", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("exact OHLC mitigation test", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("PDH/PDL cross-class ranking", target.Reason, StringComparison.Ordinal);
+        Assert.Contains("universal full-exit behavior", target.Reason, StringComparison.Ordinal);
+
+        Assert.DoesNotContain(declarations, item => item.RuleId == liquidity.RuleId);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, liquidity.CapabilityStatus);
+        Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, liquidity.CapabilityReason);
+        Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(report));
+    }
+
+    [Fact]
     public void NasdaqBullishCollisionCapabilityReasonsRepresentInvalidationDominanceWithoutChangingCoverage()
     {
         var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
