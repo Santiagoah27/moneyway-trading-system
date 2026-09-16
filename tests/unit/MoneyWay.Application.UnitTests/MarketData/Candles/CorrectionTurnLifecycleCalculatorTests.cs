@@ -33,6 +33,7 @@ public sealed class CorrectionTurnLifecycleCalculatorTests
         Assert.True(result.IsCorrectionTurnActive);
         Assert.False(result.WasPreviousTurnTerminated);
         Assert.Equal(CorrectionTurnCurrentCandleMembership.ExistingTurn, result.CurrentCandleMembership);
+        Assert.Equal(CorrectionTurnLifecycleDisposition.ActiveCorrection, result.Disposition);
     }
 
     [Fact]
@@ -48,6 +49,7 @@ public sealed class CorrectionTurnLifecycleCalculatorTests
         Assert.True(result.IsCorrectionTurnActive);
         Assert.True(result.WasPreviousTurnTerminated);
         Assert.Equal(CorrectionTurnCurrentCandleMembership.NewTurn, result.CurrentCandleMembership);
+        Assert.Equal(CorrectionTurnLifecycleDisposition.ActiveCorrection, result.Disposition);
     }
 
     [Fact]
@@ -60,7 +62,7 @@ public sealed class CorrectionTurnLifecycleCalculatorTests
 
         Assert.Equal(BullishCorrectionTerminalTransitionKind.ResetAndAwaitCorrectionStart, transition.TransitionKind);
         Assert.Empty(result.ResultingTurnCandles);
-        AssertInactiveTerminatedWithoutMembership(result);
+        AssertInactiveTerminatedWithoutMembership(result, CorrectionTurnLifecycleDisposition.AwaitingCorrectionStart);
     }
 
     [Fact]
@@ -73,7 +75,7 @@ public sealed class CorrectionTurnLifecycleCalculatorTests
 
         Assert.Equal(BullishCorrectionTerminalTransitionKind.InvalidateBullishStructure, transition.TransitionKind);
         Assert.Empty(result.ResultingTurnCandles);
-        AssertInactiveTerminatedWithoutMembership(result);
+        AssertInactiveTerminatedWithoutMembership(result, CorrectionTurnLifecycleDisposition.StructureInvalidated);
     }
 
     [Fact]
@@ -89,7 +91,7 @@ public sealed class CorrectionTurnLifecycleCalculatorTests
         Assert.True(observation.WasPriorHlInvalidationObserved);
         Assert.Equal(BullishCorrectionTerminalTransitionKind.InvalidateBullishStructure, transition.TransitionKind);
         Assert.Empty(result.ResultingTurnCandles);
-        AssertInactiveTerminatedWithoutMembership(result);
+        AssertInactiveTerminatedWithoutMembership(result, CorrectionTurnLifecycleDisposition.StructureInvalidated);
     }
 
     [Fact]
@@ -105,6 +107,7 @@ public sealed class CorrectionTurnLifecycleCalculatorTests
         Assert.True(result.IsCorrectionTurnActive);
         Assert.False(result.WasPreviousTurnTerminated);
         Assert.Equal(CorrectionTurnCurrentCandleMembership.ExistingTurn, result.CurrentCandleMembership);
+        Assert.Equal(CorrectionTurnLifecycleDisposition.ActiveCorrection, result.Disposition);
     }
 
     [Fact]
@@ -120,6 +123,7 @@ public sealed class CorrectionTurnLifecycleCalculatorTests
         Assert.True(result.IsCorrectionTurnActive);
         Assert.True(result.WasPreviousTurnTerminated);
         Assert.Equal(CorrectionTurnCurrentCandleMembership.NewTurn, result.CurrentCandleMembership);
+        Assert.Equal(CorrectionTurnLifecycleDisposition.ActiveCorrection, result.Disposition);
     }
 
     [Fact]
@@ -132,7 +136,7 @@ public sealed class CorrectionTurnLifecycleCalculatorTests
 
         Assert.Equal(BearishCorrectionTerminalTransitionKind.ResetAndAwaitCorrectionStart, transition.TransitionKind);
         Assert.Empty(result.ResultingTurnCandles);
-        AssertInactiveTerminatedWithoutMembership(result);
+        AssertInactiveTerminatedWithoutMembership(result, CorrectionTurnLifecycleDisposition.AwaitingCorrectionStart);
     }
 
     [Fact]
@@ -145,7 +149,7 @@ public sealed class CorrectionTurnLifecycleCalculatorTests
 
         Assert.Equal(BearishCorrectionTerminalTransitionKind.InvalidateBearishStructure, transition.TransitionKind);
         Assert.Empty(result.ResultingTurnCandles);
-        AssertInactiveTerminatedWithoutMembership(result);
+        AssertInactiveTerminatedWithoutMembership(result, CorrectionTurnLifecycleDisposition.StructureInvalidated);
     }
 
     [Fact]
@@ -161,7 +165,7 @@ public sealed class CorrectionTurnLifecycleCalculatorTests
         Assert.True(observation.WasPriorLhInvalidationObserved);
         Assert.Equal(BearishCorrectionTerminalTransitionKind.InvalidateBearishStructure, transition.TransitionKind);
         Assert.Empty(result.ResultingTurnCandles);
-        AssertInactiveTerminatedWithoutMembership(result);
+        AssertInactiveTerminatedWithoutMembership(result, CorrectionTurnLifecycleDisposition.StructureInvalidated);
     }
 
     [Fact]
@@ -209,6 +213,38 @@ public sealed class CorrectionTurnLifecycleCalculatorTests
         Assert.Equal(first.WasPreviousTurnTerminated, second.WasPreviousTurnTerminated);
         Assert.Equal(first.CurrentCandleMembership, second.CurrentCandleMembership);
         Assert.Equal(first.ResultingTurnCandles, second.ResultingTurnCandles);
+        Assert.Equal(first.Disposition, second.Disposition);
+    }
+
+    [Fact]
+    public void NormalPreStartCanBeRepresentedWithoutFabricatingATerminalTransition()
+    {
+        var result = CorrectionTurnLifecycleResult.CreateAwaitingCorrectionStart();
+
+        Assert.Equal(CorrectionTurnLifecycleDisposition.AwaitingCorrectionStart, result.Disposition);
+        Assert.False(result.IsCorrectionTurnActive);
+        Assert.False(result.WasPreviousTurnTerminated);
+        Assert.Empty(result.ResultingTurnCandles);
+        Assert.Equal(CorrectionTurnCurrentCandleMembership.NoCorrectionTurn, result.CurrentCandleMembership);
+        Assert.Throws<NotSupportedException>(() =>
+            ((IList<Candle>)result.ResultingTurnCandles).Add(Candle(0, 100, 110, 90, 105)));
+    }
+
+    [Fact]
+    public void EmptyAwaitingAndInvalidatedTurnsHaveDistinctDispositions()
+    {
+        var (existing, awaitingCandle) = Turn(Candle(2, 100, 121, 95, 110));
+        var invalidatingCandle = Candle(2, 100, 119, 80, 89);
+
+        var awaiting = calculator.Evaluate(existing, awaitingCandle, BullishTransition(existing, awaitingCandle, 120, 90));
+        var invalidated = calculator.Evaluate(existing, invalidatingCandle, BullishTransition(existing, invalidatingCandle, 120, 90));
+
+        Assert.False(awaiting.IsCorrectionTurnActive);
+        Assert.False(invalidated.IsCorrectionTurnActive);
+        Assert.Empty(awaiting.ResultingTurnCandles);
+        Assert.Empty(invalidated.ResultingTurnCandles);
+        Assert.Equal(CorrectionTurnLifecycleDisposition.AwaitingCorrectionStart, awaiting.Disposition);
+        Assert.Equal(CorrectionTurnLifecycleDisposition.StructureInvalidated, invalidated.Disposition);
     }
 
     [Fact]
@@ -219,9 +255,32 @@ public sealed class CorrectionTurnLifecycleCalculatorTests
             .Single();
 
         var exception = Assert.Throws<TargetInvocationException>(() =>
-            constructor.Invoke([Array.Empty<Candle>(), false, true, (CorrectionTurnCurrentCandleMembership)99]));
+            constructor.Invoke([Array.Empty<Candle>(), false, true, (CorrectionTurnCurrentCandleMembership)99,
+                CorrectionTurnLifecycleDisposition.AwaitingCorrectionStart]));
 
         Assert.IsType<ArgumentOutOfRangeException>(exception.InnerException);
+    }
+
+    [Fact]
+    public void InvalidDispositionOrContradictoryStateIsRejected()
+    {
+        var constructor = typeof(CorrectionTurnLifecycleResult)
+            .GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic)
+            .Single();
+        var candle = Candle(0, 100, 110, 90, 105);
+
+        Assert.IsType<ArgumentOutOfRangeException>(Assert.Throws<TargetInvocationException>(() =>
+            constructor.Invoke([Array.Empty<Candle>(), false, true, CorrectionTurnCurrentCandleMembership.NoCorrectionTurn,
+                (CorrectionTurnLifecycleDisposition)99])).InnerException);
+        Assert.IsType<ArgumentException>(Assert.Throws<TargetInvocationException>(() =>
+            constructor.Invoke([new[] { candle }, false, true, CorrectionTurnCurrentCandleMembership.NewTurn,
+                CorrectionTurnLifecycleDisposition.ActiveCorrection])).InnerException);
+        Assert.IsType<ArgumentException>(Assert.Throws<TargetInvocationException>(() =>
+            constructor.Invoke([Array.Empty<Candle>(), true, true, CorrectionTurnCurrentCandleMembership.NoCorrectionTurn,
+                CorrectionTurnLifecycleDisposition.AwaitingCorrectionStart])).InnerException);
+        Assert.IsType<ArgumentException>(Assert.Throws<TargetInvocationException>(() =>
+            constructor.Invoke([new[] { candle }, false, true, CorrectionTurnCurrentCandleMembership.NoCorrectionTurn,
+                CorrectionTurnLifecycleDisposition.StructureInvalidated])).InnerException);
     }
 
     [Fact]
@@ -272,11 +331,14 @@ public sealed class CorrectionTurnLifecycleCalculatorTests
         return bearishObservationCalculator.EvaluateCurrentBoundary(context, Minute, floor, priorLh);
     }
 
-    private static void AssertInactiveTerminatedWithoutMembership(CorrectionTurnLifecycleResult result)
+    private static void AssertInactiveTerminatedWithoutMembership(
+        CorrectionTurnLifecycleResult result,
+        CorrectionTurnLifecycleDisposition disposition)
     {
         Assert.False(result.IsCorrectionTurnActive);
         Assert.True(result.WasPreviousTurnTerminated);
         Assert.Equal(CorrectionTurnCurrentCandleMembership.NoCorrectionTurn, result.CurrentCandleMembership);
+        Assert.Equal(disposition, result.Disposition);
     }
 
     private static (IReadOnlyList<Candle> Existing, Candle Current) Turn(Candle current) =>

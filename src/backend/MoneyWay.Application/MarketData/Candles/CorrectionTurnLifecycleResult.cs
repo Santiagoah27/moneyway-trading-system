@@ -4,7 +4,8 @@ using MoneyWay.Domain.MarketData;
 namespace MoneyWay.Application.MarketData.Candles;
 
 /// <summary>
-/// Reports correction-turn membership after applying an already-calculated terminal transition.
+/// Reports correction-turn membership and semantic disposition after a terminal transition,
+/// or an explicitly established normal pre-start context.
 /// </summary>
 public sealed class CorrectionTurnLifecycleResult
 {
@@ -12,7 +13,8 @@ public sealed class CorrectionTurnLifecycleResult
         IEnumerable<Candle> resultingTurnCandles,
         bool isCorrectionTurnActive,
         bool wasPreviousTurnTerminated,
-        CorrectionTurnCurrentCandleMembership currentCandleMembership)
+        CorrectionTurnCurrentCandleMembership currentCandleMembership,
+        CorrectionTurnLifecycleDisposition disposition)
     {
         ArgumentNullException.ThrowIfNull(resultingTurnCandles);
         if (!Enum.IsDefined(currentCandleMembership))
@@ -23,32 +25,45 @@ public sealed class CorrectionTurnLifecycleResult
                 "The current-candle correction-turn membership is not supported.");
         }
 
+        if (!Enum.IsDefined(disposition))
+        {
+            throw new ArgumentOutOfRangeException(nameof(disposition), disposition, "The correction-turn lifecycle disposition is not supported.");
+        }
+
         var snapshot = resultingTurnCandles.ToArray();
         if (snapshot.Any(candle => candle is null))
         {
             throw new ArgumentException("Resulting correction-turn candles cannot contain null elements.", nameof(resultingTurnCandles));
         }
 
-        if (isCorrectionTurnActive != (currentCandleMembership != CorrectionTurnCurrentCandleMembership.NoCorrectionTurn))
+        if (isCorrectionTurnActive != (disposition == CorrectionTurnLifecycleDisposition.ActiveCorrection)
+            || isCorrectionTurnActive != (currentCandleMembership != CorrectionTurnCurrentCandleMembership.NoCorrectionTurn))
         {
-            throw new ArgumentException("Correction-turn activity must match current-candle membership.", nameof(isCorrectionTurnActive));
+            throw new ArgumentException("Correction-turn activity must match disposition and current-candle membership.", nameof(isCorrectionTurnActive));
         }
 
-        if (wasPreviousTurnTerminated == (currentCandleMembership == CorrectionTurnCurrentCandleMembership.ExistingTurn))
+        if (currentCandleMembership == CorrectionTurnCurrentCandleMembership.ExistingTurn && wasPreviousTurnTerminated
+            || currentCandleMembership == CorrectionTurnCurrentCandleMembership.NewTurn && !wasPreviousTurnTerminated
+            || disposition == CorrectionTurnLifecycleDisposition.StructureInvalidated && !wasPreviousTurnTerminated)
         {
             throw new ArgumentException("Previous-turn termination must match current-candle membership.", nameof(wasPreviousTurnTerminated));
         }
 
-        if (!isCorrectionTurnActive && snapshot.Length != 0)
+        if (isCorrectionTurnActive != (snapshot.Length > 0))
         {
-            throw new ArgumentException("An inactive correction turn cannot contain candles.", nameof(resultingTurnCandles));
+            throw new ArgumentException("Correction-turn activity must match candle membership.", nameof(resultingTurnCandles));
         }
 
         ResultingTurnCandles = new ReadOnlyCollection<Candle>(snapshot);
         IsCorrectionTurnActive = isCorrectionTurnActive;
         WasPreviousTurnTerminated = wasPreviousTurnTerminated;
         CurrentCandleMembership = currentCandleMembership;
+        Disposition = disposition;
     }
+
+    /// <summary>Represents a valid structural context awaiting its first correction without a prior reset event.</summary>
+    public static CorrectionTurnLifecycleResult CreateAwaitingCorrectionStart() =>
+        new([], false, false, CorrectionTurnCurrentCandleMembership.NoCorrectionTurn, CorrectionTurnLifecycleDisposition.AwaitingCorrectionStart);
 
     public IReadOnlyList<Candle> ResultingTurnCandles { get; }
 
@@ -57,4 +72,6 @@ public sealed class CorrectionTurnLifecycleResult
     public bool WasPreviousTurnTerminated { get; }
 
     public CorrectionTurnCurrentCandleMembership CurrentCandleMembership { get; }
+
+    public CorrectionTurnLifecycleDisposition Disposition { get; }
 }

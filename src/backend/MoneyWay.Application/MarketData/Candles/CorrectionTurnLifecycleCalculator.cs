@@ -19,8 +19,8 @@ public sealed class CorrectionTurnLifecycleCalculator
         {
             BullishCorrectionTerminalTransitionKind.ContinueExistingCorrection => LifecycleAction.Continue,
             BullishCorrectionTerminalTransitionKind.ResetAndStartNewCorrection => LifecycleAction.ResetAndStart,
-            BullishCorrectionTerminalTransitionKind.ResetAndAwaitCorrectionStart => LifecycleAction.Terminate,
-            BullishCorrectionTerminalTransitionKind.InvalidateBullishStructure => LifecycleAction.Terminate,
+            BullishCorrectionTerminalTransitionKind.ResetAndAwaitCorrectionStart => LifecycleAction.AwaitCorrectionStart,
+            BullishCorrectionTerminalTransitionKind.InvalidateBullishStructure => LifecycleAction.InvalidateStructure,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(transition),
                 transition.TransitionKind,
@@ -41,8 +41,8 @@ public sealed class CorrectionTurnLifecycleCalculator
         {
             BearishCorrectionTerminalTransitionKind.ContinueExistingCorrection => LifecycleAction.Continue,
             BearishCorrectionTerminalTransitionKind.ResetAndStartNewCorrection => LifecycleAction.ResetAndStart,
-            BearishCorrectionTerminalTransitionKind.ResetAndAwaitCorrectionStart => LifecycleAction.Terminate,
-            BearishCorrectionTerminalTransitionKind.InvalidateBearishStructure => LifecycleAction.Terminate,
+            BearishCorrectionTerminalTransitionKind.ResetAndAwaitCorrectionStart => LifecycleAction.AwaitCorrectionStart,
+            BearishCorrectionTerminalTransitionKind.InvalidateBearishStructure => LifecycleAction.InvalidateStructure,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(transition),
                 transition.TransitionKind,
@@ -72,17 +72,26 @@ public sealed class CorrectionTurnLifecycleCalculator
                 [.. previousTurn, currentCandle],
                 true,
                 false,
-                CorrectionTurnCurrentCandleMembership.ExistingTurn),
+                CorrectionTurnCurrentCandleMembership.ExistingTurn,
+                CorrectionTurnLifecycleDisposition.ActiveCorrection),
             LifecycleAction.ResetAndStart => new(
                 [currentCandle],
                 true,
                 true,
-                CorrectionTurnCurrentCandleMembership.NewTurn),
-            LifecycleAction.Terminate => new(
+                CorrectionTurnCurrentCandleMembership.NewTurn,
+                CorrectionTurnLifecycleDisposition.ActiveCorrection),
+            LifecycleAction.AwaitCorrectionStart => new(
                 [],
                 false,
                 true,
-                CorrectionTurnCurrentCandleMembership.NoCorrectionTurn),
+                CorrectionTurnCurrentCandleMembership.NoCorrectionTurn,
+                CorrectionTurnLifecycleDisposition.AwaitingCorrectionStart),
+            LifecycleAction.InvalidateStructure => new(
+                [],
+                false,
+                true,
+                CorrectionTurnCurrentCandleMembership.NoCorrectionTurn,
+                CorrectionTurnLifecycleDisposition.StructureInvalidated),
             _ => throw new ArgumentOutOfRangeException(nameof(action), action, "The correction-turn lifecycle action is not supported."),
         };
     }
@@ -91,6 +100,7 @@ public sealed class CorrectionTurnLifecycleCalculator
     {
         Continue = 0,
         ResetAndStart = 1,
-        Terminate = 2,
+        AwaitCorrectionStart = 2,
+        InvalidateStructure = 3,
     }
 }
