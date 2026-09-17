@@ -76,7 +76,7 @@ Still unresolved for broader structural detection: deterministic first-anchor se
 - Step 1 market structure and Step 2 session-liquidity references are separate.
 - A Step-4 IFVG is not a direct entry and does not automatically satisfy the Step-5 FVG gate.
 - At `StrategyReplayContext.AsOfUtc`, future liquidity takes, FVGs or 1M realignments cannot change a prior eligibility state.
-- Preparation remains 08:00 and the operational entry-acquisition interval is `[08:30, 11:00)` in `America/Bogota`. The former 11:30 cutoff was an incorrect interpretation and is not a second limit.
+- Preparation starts from 08:00 and Steps 1 and 2 must complete in `[08:00, 08:30)` for the same session; the operational entry-acquisition interval is `[08:30, 11:00)` in `America/Bogota`. The former 11:30 cutoff was an incorrect interpretation and is not a second limit.
 - At 11:00, an unfinished pre-entry setup expires. A dead-zone signal cannot revive it; no forced close of an already-entered conceptual trade is established.
 - At or after 08:30, the first valid event that exceeds a relevant High or goes below a relevant Low is the effective Step 3 for the scenario it may orient; it is not target consumption before Step 3.
 - A Low take can orient a possible buy progression and a High take can orient a possible sell progression only when aligned with the Step-1 4H permitted direction. Without alignment, Step 4 is blocked, the prior imagined scenario remains discarded and price is not chased.
@@ -130,8 +130,11 @@ Confirmed conceptually: at 08:00 `America/Bogota`, Breakout `OR` Wickfill `OR` F
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |
 |---|---|---|---|---|---|
-| NQ-Q-SC-001 | ¿Qué días, feriados, cierres o sesiones se permiten? | Preparation is confirmed at 08:00 `America/Bogota`, but calendar eligibility remains undefined. | `unresolved` | `paper_trading` | Verified calendar policy and examples |
+| NQ-Q-SC-001 | ¿Qué días, feriados, cierres o sesiones se permiten? | Preparation starts at 08:00 and must complete before 08:30 `America/Bogota`, but calendar eligibility remains undefined. | `unresolved` | `paper_trading` | Verified calendar policy and examples |
 | NQ-Q-SC-002 | ¿Cómo se gestionan posiciones abiertas después de las 11:00? | The 11:00 cutoff governs acquisition of new entries; no forced close of an already-entered conceptual trade is confirmed. | `unresolved` | `paper_trading` | Explicit post-entry management examples after cutoff |
+| NQ-Q-SC-003 | ¿Cómo observa el replay que Steps 1 y 2 se completaron para el mismo día antes de 08:30? | Strategy semantics confirm both steps, `[08:00, 08:30)` and no late recovery, but current `StrategyReplayContext` exposes candles/prices rather than preparation identity, completion state and timestamp. Human-dependent `NQ-H4-001` and `NQ-LIQ-002` cannot be inferred from candles alone. | `unresolved` | `semi_automatic_backtesting` | Approved replay input/evidence contract with session identity and causal completion time; no storage or UI mechanism is selected here |
+
+The confirmed preparation prerequisite is not enforced by current canonical workflow metadata: `NQ-LIQ-003` lists `NQ-H4-001`, `NQ-LIQ-002` and `NQ-TIME-001`, but omits `NQ-TIME-003`. The current rule definition also marks `NQ-TIME-003` optional. Runtime metadata and prerequisite reconciliation are separate from this documentation change; a later Step 3 cannot repair missed preparation for day `D`.
 
 ## Liquidity sweep
 

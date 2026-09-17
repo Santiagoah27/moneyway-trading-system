@@ -27,12 +27,14 @@ The 4H bootstrap has a confirmed boundary. The mentor uses no fixed candle/day/s
 
 ## Canonical gated workflow
 
-1. At 08:00 `America/Bogota`, review the closed 4H context and permitted direction.
+1. From 08:00 `America/Bogota`, after the relevant 4H candle closes, review its context and permitted direction.
 2. Mark Asia/London extrema and relevant 1H/4H structural liquidity references; these levels do not seed 4H structure.
 3. From 08:30, the first valid liquidity take establishes the effective Step 3 for the scenario that may proceed; require alignment with the Step-1 4H permitted direction before enabling any 5M setup.
 4. On 5M, require Structural Change `OR` IFVG, whichever occurs first.
 5. Separately require the directional 5M FVG confirmation produced after the Step-4 trigger.
 6. On 1M, require a countertrend pullback toward/into that FVG and structural realignment before entry eligibility.
+
+For trading day `D`, preparation is complete only when Step 1 (review of the formally closed 4H candle, structural context, Breakout/Wickfill/Fakeout classification and bullish/bearish bias) and Step 2 (Asia/London highs and lows plus applicable relevant 1H/4H structural levels) have both actually been completed for that same session. Completion is eligible in `[08:00:00, 08:30:00)` `America/Bogota`; reaching 08:00 or merely having candles does not prove completion. At exactly 08:30, Step 3 can begin only if preparation was already complete. Missing that deadline means no trade for `D`, with no late recovery; preparation expires with the morning session and must be renewed for the next trading day. The runtime contract for observing human-dependent completion remains unresolved, so `NQ-TIME-003` has no complete evaluator.
 
 The operational entry-acquisition window is `[08:30, 11:00)` in `America/Bogota`. All pre-entry gates must complete before 11:00. At 11:00, any unfinished setup expires; do not continue into the mentor's "zona muerta," chase price or carry the incomplete setup into a later day. This cutoff does not define forced closure of a conceptual trade entered before 11:00.
 
