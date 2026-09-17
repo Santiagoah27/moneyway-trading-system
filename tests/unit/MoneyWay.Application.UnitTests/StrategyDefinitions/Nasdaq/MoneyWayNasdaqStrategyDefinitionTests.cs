@@ -62,7 +62,13 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("cannot recover D", preparation.Description, StringComparison.Ordinal);
         Assert.Contains("same D", preparation.Description, StringComparison.Ordinal);
         Assert.Contains("market-data availability alone does not prove completion", preparation.Description, StringComparison.Ordinal);
-        Assert.Contains("does not yet provide preparation identity, completion state, or completion timestamp", preparation.Description, StringComparison.Ordinal);
+        Assert.Contains("Canonical replay receives immutable same-session preparation-completion evidence", preparation.Description, StringComparison.Ordinal);
+        Assert.Contains("matched to the strategy and instrument", preparation.Description, StringComparison.Ordinal);
+        Assert.Contains("visible only at or before AsOfUtc", preparation.Description, StringComparison.Ordinal);
+        Assert.Contains("Missing or late completion", preparation.Description, StringComparison.Ordinal);
+        Assert.Contains("No NQ-TIME-003 replay rule evaluator is registered yet", preparation.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("does not yet provide preparation identity, completion state, or completion timestamp", preparation.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("implemented", preparation.Description, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Preparation start", preparation.Name, StringComparison.Ordinal);
 
         Assert.Equal((65, true, RuleDefinitionStatus.Confirmed), (start.Sequence, start.IsRequired, start.DefinitionStatus));
