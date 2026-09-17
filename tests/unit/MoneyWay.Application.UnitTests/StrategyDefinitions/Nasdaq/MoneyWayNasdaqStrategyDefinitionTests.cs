@@ -50,10 +50,20 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         var start = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-TIME-001");
         var end = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-TIME-002");
 
-        Assert.Equal((5, false, RuleDefinitionStatus.Confirmed), (preparation.Sequence, preparation.IsRequired, preparation.DefinitionStatus));
-        Assert.Contains("08:00 America/Bogota", preparation.Description, StringComparison.Ordinal);
-        Assert.Contains("preparation and analysis", preparation.Description, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("not the trading-window start", preparation.Description, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("NQ-TIME-003", preparation.RuleId.Value);
+        Assert.Equal("Session preparation completion", preparation.Name);
+        Assert.Equal((5, true, RuleDefinitionStatus.Confirmed), (preparation.Sequence, preparation.IsRequired, preparation.DefinitionStatus));
+        Assert.Contains("Step 1", preparation.Description, StringComparison.Ordinal);
+        Assert.Contains("Step 2", preparation.Description, StringComparison.Ordinal);
+        Assert.Contains("Asia High/Low", preparation.Description, StringComparison.Ordinal);
+        Assert.Contains("London High/Low", preparation.Description, StringComparison.Ordinal);
+        Assert.Contains("[08:00:00, 08:30:00) America/Bogota", preparation.Description, StringComparison.Ordinal);
+        Assert.Contains("08:30:00", preparation.Description, StringComparison.Ordinal);
+        Assert.Contains("cannot recover D", preparation.Description, StringComparison.Ordinal);
+        Assert.Contains("same D", preparation.Description, StringComparison.Ordinal);
+        Assert.Contains("market-data availability alone does not prove completion", preparation.Description, StringComparison.Ordinal);
+        Assert.Contains("does not yet provide preparation identity, completion state, or completion timestamp", preparation.Description, StringComparison.Ordinal);
+        Assert.DoesNotContain("Preparation start", preparation.Name, StringComparison.Ordinal);
 
         Assert.Equal((65, true, RuleDefinitionStatus.Confirmed), (start.Sequence, start.IsRequired, start.DefinitionStatus));
         Assert.Contains("08:30 America/Bogota", start.Description, StringComparison.Ordinal);
@@ -802,7 +812,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         };
         var expectedRequired = new[]
         {
-            "NQ-H4-001", "NQ-LIQ-001", "NQ-LIQ-002", "NQ-TIME-001", "NQ-LIQ-003", "NQ-M5-001",
+            "NQ-TIME-003", "NQ-H4-001", "NQ-LIQ-001", "NQ-LIQ-002", "NQ-TIME-001", "NQ-LIQ-003", "NQ-M5-001",
             "NQ-FVG-001", "NQ-FVG-002", "NQ-M1-001", "NQ-M1-002", "NQ-SL-001", "NQ-TIME-002", "NQ-RISK-001",
         };
 
