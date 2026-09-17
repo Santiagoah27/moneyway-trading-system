@@ -62,7 +62,7 @@ public sealed class StructuralCandidateTurnBoundaryCalculator
     {
         var observation = bullishObservationCalculator.EvaluateCurrentBoundary(context, timeframe, ceiling, priorHl);
         if (validation.IsValidated)
-            return Confirm(candle, validation, observation.PreviousCeiling, observation.ResultingCeiling,
+            return Confirm(candle, turn, validation, observation.PreviousCeiling, observation.ResultingCeiling,
                 observation.WasNewHighResetObserved, CorrectionOriginExtremeSide.Ceiling);
 
         var transition = bullishTransitionCalculator.Evaluate(observation);
@@ -75,7 +75,7 @@ public sealed class StructuralCandidateTurnBoundaryCalculator
             BullishCorrectionTerminalTransitionKind.InvalidateBullishStructure => StructuralCandidateTurnBoundaryKind.StructureInvalidated,
             _ => throw new ArgumentOutOfRangeException(nameof(transition)),
         };
-        return new(kind, candle, validation, lifecycle, observation.ResultingCeiling, null);
+        return new(kind, candle, validation, lifecycle, observation.ResultingCeiling, null, turn);
     }
 
     private StructuralCandidateTurnBoundaryResult EvaluateBearish(
@@ -84,7 +84,7 @@ public sealed class StructuralCandidateTurnBoundaryCalculator
     {
         var observation = bearishObservationCalculator.EvaluateCurrentBoundary(context, timeframe, floor, priorLh);
         if (validation.IsValidated)
-            return Confirm(candle, validation, observation.PreviousFloor, observation.ResultingFloor,
+            return Confirm(candle, turn, validation, observation.PreviousFloor, observation.ResultingFloor,
                 observation.WasNewLowResetObserved, CorrectionOriginExtremeSide.Floor);
 
         var transition = bearishTransitionCalculator.Evaluate(observation);
@@ -97,11 +97,11 @@ public sealed class StructuralCandidateTurnBoundaryCalculator
             BearishCorrectionTerminalTransitionKind.InvalidateBearishStructure => StructuralCandidateTurnBoundaryKind.StructureInvalidated,
             _ => throw new ArgumentOutOfRangeException(nameof(transition)),
         };
-        return new(kind, candle, validation, lifecycle, observation.ResultingFloor, null);
+        return new(kind, candle, validation, lifecycle, observation.ResultingFloor, null, turn);
     }
 
     private StructuralCandidateTurnBoundaryResult Confirm(
-        Candle candle, StructuralCandidateValidationResult validation,
+        Candle candle, IReadOnlyList<Candle> turn, StructuralCandidateValidationResult validation,
         decimal previousExtreme, decimal resultingExtreme, bool extendedOrigin, CorrectionOriginExtremeSide side)
     {
         if (!extendedOrigin)
@@ -110,7 +110,7 @@ public sealed class StructuralCandidateTurnBoundaryCalculator
                 CorrectionTurnCurrentCandleMembership.NoCorrectionTurn,
                 CorrectionTurnLifecycleDisposition.AwaitingCorrectionStart, candle);
             return new(StructuralCandidateTurnBoundaryKind.ConfirmCandidate, candle, validation,
-                awaiting, resultingExtreme, null);
+                awaiting, resultingExtreme, null, turn);
         }
 
         var boundary = boundaryObservationCalculator.Evaluate(previousExtreme, candle, side);
@@ -128,6 +128,6 @@ public sealed class StructuralCandidateTurnBoundaryCalculator
             ? StructuralCandidateTurnBoundaryKind.ConfirmCandidateAndAwaitNextCorrection
             : StructuralCandidateTurnBoundaryKind.ConfirmCandidateAndStartNextCorrection;
         var newExtreme = side == CorrectionOriginExtremeSide.Ceiling ? candle.High : candle.Low;
-        return new(kind, candle, validation, lifecycle, resultingExtreme, newExtreme);
+        return new(kind, candle, validation, lifecycle, resultingExtreme, newExtreme, turn);
     }
 }

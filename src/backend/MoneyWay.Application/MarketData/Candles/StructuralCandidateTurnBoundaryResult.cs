@@ -12,12 +12,16 @@ public sealed record StructuralCandidateTurnBoundaryResult
         StructuralCandidateValidationResult candidateValidation,
         CorrectionTurnLifecycleResult lifecycle,
         decimal resultingOriginExtreme,
-        decimal? newStructuralExtreme)
+        decimal? newStructuralExtreme,
+        IReadOnlyList<Candle> previousCandidateTurnCandles)
     {
         if (!Enum.IsDefined(kind)) throw new ArgumentOutOfRangeException(nameof(kind));
         ArgumentNullException.ThrowIfNull(currentCandle);
         ArgumentNullException.ThrowIfNull(candidateValidation);
         ArgumentNullException.ThrowIfNull(lifecycle);
+        ArgumentNullException.ThrowIfNull(previousCandidateTurnCandles);
+        if (previousCandidateTurnCandles.Count == 0 || previousCandidateTurnCandles.Any(candle => candle is null))
+            throw new ArgumentException("The previous candidate turn must contain candles.", nameof(previousCandidateTurnCandles));
 
         var confirms = kind is StructuralCandidateTurnBoundaryKind.ConfirmCandidate
             or StructuralCandidateTurnBoundaryKind.ConfirmCandidateAndStartNextCorrection
@@ -48,12 +52,14 @@ public sealed record StructuralCandidateTurnBoundaryResult
         Lifecycle = lifecycle;
         ResultingOriginExtreme = resultingOriginExtreme;
         NewStructuralExtreme = newStructuralExtreme;
+        PreviousCandidateTurnCandles = Array.AsReadOnly(previousCandidateTurnCandles.ToArray());
     }
 
     public StructuralCandidateTurnBoundaryKind Kind { get; }
     public Candle CurrentCandle { get; }
     public StructuralCandidateValidationResult CandidateValidation { get; }
     public CorrectionTurnLifecycleResult Lifecycle { get; }
+    public IReadOnlyList<Candle> PreviousCandidateTurnCandles { get; }
     public decimal ResultingOriginExtreme { get; }
 
     /// <summary>The confirming candle's HH/LL-side price in a compound event; null otherwise.</summary>
