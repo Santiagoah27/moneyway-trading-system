@@ -21,8 +21,9 @@ Blocked("moneyway-nasdaq", "nasdaq-0.1.0-draft", "NQ-TP-001", "Session target ca
     private static ReplayRuleEvaluationCapabilityDeclaration Blocked(string strategyId, string version, string ruleId, string reason, string source) =>
         new(new(strategyId), new(version), new(ruleId), ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, ReconcileReason(ruleId, reason), source);
 
-    private static string ReconcileReason(string ruleId, string reason) =>
-        ruleId switch
+    private static string ReconcileReason(string ruleId, string reason)
+    {
+        var reconciled = ruleId switch
         {
             "NQ-H4-001" => reason.Replace(
                     "plus near-doji/small-body threshold, remaining candle inclusivity, near-equal structural zone tolerance, and other structural coordinate/boundary edge cases.",
@@ -34,4 +35,19 @@ Blocked("moneyway-nasdaq", "nasdaq-0.1.0-draft", "NQ-TP-001", "Session target ca
                 + " For structural fallback, prior HH/LL is the candidate-validation reference, distinct from the correction-origin ceiling/floor. Equality or wick-only penetration is non-confirming and, absent an independent terminal event, the candle remains eligible for candidate-turn StructuralPrice and ProtectionAnchor. Only a formally closed Close > prior HH or Close < prior LL validates the preceding candidate; the confirming candle is excluded from candidate geometry. Only causally validated structural points may enter fallback. Structural fallback recognizes deterministic correction start: pre-start same-direction, neutral, contained, and strict new-extreme candles cannot alter candidate-turn StructuralPrice or ProtectionAnchor, while a qualifying opposite-body candle, including one that updates its origin extreme, is the first member. AwaitingCorrectionStart is distinct from StructureInvalidated; empty/inactive alone is insufficient, and invalidated structure cannot be reused as waiting or as an automatically reversed validated fallback. The missing automatic composition of this active-turn boundary is an implementation gap, not prior-HH/LL specification uncertainty.",
             _ => reason,
         };
+
+        return ruleId is "NQ-H4-001" or "NQ-TP-001"
+            ? ReconcileCompoundRolloverReason(reconciled)
+            : reconciled;
+    }
+
+    private static string ReconcileCompoundRolloverReason(string reason) =>
+        reason
+            .Replace(
+                "A strict High > current correction-origin ceiling resets the correction, updates the ceiling to that higher price extreme, and discards the current candidate HL without validating a structural HH.",
+                "Without simultaneous strict Close > prior structural HH confirmation, a strict High > current correction-origin ceiling resets the correction, updates the ceiling to that higher price extreme, and discards the current candidate HL without validating a structural HH.")
+            .Replace(
+                "A strict Low < current correction-origin floor resets the old correction, discards its candidate LH, and updates the floor without validating a structural LL.",
+                "Without simultaneous strict Close < prior structural LL confirmation, a strict Low < current correction-origin floor resets the old correction, discards its candidate LH, and updates the floor without validating a structural LL.")
+            + " A same formally closed candle with Close > prior structural HH and High > current correction-origin ceiling validates the old HL instead of discarding it. The candle is excluded from old-turn StructuralPrice and ProtectionAnchor, its High establishes the new HH-side extreme, and the active pair rolls to new HH plus validated HL. The exact bearish mirror—Close < prior structural LL and Low < current correction-origin floor—validates the old LH, excludes the candle from old-turn geometry, establishes the new LL-side extreme, and rolls the active pair to new LL plus validated LH. In either compound event, exact corrective body direction includes the candle exactly once as the first member of the next correction; non-corrective or exact-neutral body leaves the valid side AwaitingCorrectionStart with an empty next turn. Valid bullish prior validated HL < prior structural HH and bearish prior structural LL < prior validated LH ordering make simultaneous strict confirmation and opposite-point invalidation unreachable; wick penetration plus an invalidating Close remains invalidation. The scoped active-turn boundary is ready for deterministic implementation with valid references and an active candidate turn, but that runtime composition is not implemented and full H4 bootstrap, global structural detection, evaluator registration, and this capability status remain unchanged.";
 }

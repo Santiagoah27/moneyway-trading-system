@@ -738,6 +738,39 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(report));
     }
 
+    [Fact]
+    public void NasdaqCompoundCandidateRolloverCapabilityReasonsMatchLatestSpecification()
+    {
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
+        var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
+        var report = Catalog(evaluators, declarations).Find(Nasdaq.StrategyId, Nasdaq.Version)!;
+        var context = Assert.Single(declarations, item => item.RuleId == new RuleId("NQ-H4-001"));
+        var target = Assert.Single(declarations, item => item.RuleId == new RuleId("NQ-TP-001"));
+        var liquidity = report.Rules.Single(item => item.RuleId == new RuleId("NQ-LIQ-002"));
+
+        Assert.All(new[] { context, target }, declaration =>
+        {
+            Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, declaration.Status);
+            Assert.Contains("validates the old HL instead of discarding it", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("validates the old LH", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("excluded from old-turn", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("active pair rolls", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("exact corrective body direction includes the candle exactly once", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("AwaitingCorrectionStart with an empty next turn", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("simultaneous strict confirmation and opposite-point invalidation unreachable", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("ready for deterministic implementation", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("that runtime composition is not implemented", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("initial structural-anchor selection", declaration.Reason, StringComparison.Ordinal);
+            Assert.Contains("historical scan termination/boundary", declaration.Reason, StringComparison.Ordinal);
+        });
+
+        Assert.DoesNotContain("A strict High > current correction-origin ceiling resets the correction", context.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain("A strict Low < current correction-origin floor resets the old correction", context.Reason, StringComparison.Ordinal);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, liquidity.CapabilityStatus);
+        Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, liquidity.CapabilityReason);
+        Assert.Equal((32, 13, 3, 0, 25, 4, 3, 10, false), Counts(report));
+    }
+
     private static StrategyDefinition Forex => MoneyWayForexStrategyDefinition.Instance;
     private static StrategyDefinition Nasdaq => MoneyWayNasdaqStrategyDefinition.Instance;
     private static StrategyReplayEvaluationCapabilityCatalog Catalog(IEnumerable<IReplayRuleEvaluator> evaluators, IEnumerable<ReplayRuleEvaluationCapabilityDeclaration> declarations) => new(new StrategyDefinitionCatalog(), evaluators, declarations);
