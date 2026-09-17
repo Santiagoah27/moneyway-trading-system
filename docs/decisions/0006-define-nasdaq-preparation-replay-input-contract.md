@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. This specifies an input boundary for a future implementation; it does not add a runtime observation, evaluator or workflow prerequisite.
+Accepted. This decision specifies the input boundary; the observation and canonical context transport were subsequently implemented. It does not itself add an evaluator or workflow prerequisite.
 
 ## Date
 
@@ -10,9 +10,9 @@ Accepted. This specifies an input boundary for a future implementation; it does 
 
 ## Context
 
-`NQ-TIME-003` requires Step 1 and Step 2 to have actually completed for one Nasdaq morning session `D` in `[08:00:00, 08:30:00)` `America/Bogota`. The rule definition is required and confirmed, but its replay capability is `NotImplemented`: `StrategyReplayContext` currently exposes closed candles and optional chronological market-price observations, not preparation completion.
+`NQ-TIME-003` requires Step 1 and Step 2 to have actually completed for one Nasdaq morning session `D` in `[08:00:00, 08:30:00)` `America/Bogota`. At the time of this decision, its required and confirmed rule definition had `NotImplemented` replay capability and `StrategyReplayContext` exposed closed candles and optional chronological market-price observations, not preparation completion.
 
-`StrategyReplayContextObservation` is the *output* of rule evaluation. `HistoricalMarketPriceObservation` represents a numeric market price, not a human-reviewed workflow fact. The typed `StrategyReplayLifecycleEvidenceSnapshot` is captured after raw evaluation for a possible or active setup instance, so it cannot supply an input to `IReplayRuleEvaluator` before Step 3. None is a reusable pre-evaluation preparation observation contract. ADR 0004 establishes optional chronological market-price input and an `AsOfUtc` visibility boundary; ADR 0005 establishes immutable, replay-local evidence identity. Neither authorizes deriving preparation from market data.
+`StrategyReplayContextObservation` is the *output* of rule evaluation. `HistoricalMarketPriceObservation` represents a numeric market price, not a human-reviewed workflow fact. The typed `StrategyReplayLifecycleEvidenceSnapshot` is captured after raw evaluation for a possible or active setup instance, so it cannot supply an input to `IReplayRuleEvaluator` before Step 3. At adoption, none was a reusable pre-evaluation preparation observation contract. ADR 0004 establishes optional chronological market-price input and an `AsOfUtc` visibility boundary; ADR 0005 establishes immutable, replay-local evidence identity. Neither authorizes deriving preparation from market data.
 
 ## Decision
 
@@ -29,7 +29,7 @@ For a given exact replay identity and `D`, canonical input accepts **at most one
 
 At `StrategyReplayContext.AsOfUtc = T`, only an observation whose authoritative causal timestamp is `<= T` can be visible. A completion stamped 08:20 is absent from an 08:10 context and visible at 08:20 or later, subject to the exact session identity. Input supplied later in a dataset cannot rewrite earlier snapshots. Canonical synchronization or equivalent bounded context construction must preserve the observation's causal boundary and the 08:30 deadline; neither the presence of 4H/1H candles, calculated Asia/London extrema, `NQ-TIME-001` passing nor elapsed time creates the completion observation.
 
-Conceptual evaluation for `D`: before 08:30, no yet-visible timely completion means the deadline is still reachable, with no new runtime `RuleEvaluationResult` assigned by this decision. A visible matching completion in the interval satisfies the preparation timing requirement. At or after 08:30, if no timely completion for `D` was observable, the deadline is missed for `D`; a late assertion cannot recover it. The evaluator reports its rule result and evidence, not a `StrategyVerdict`. This contract cannot by itself establish correctness of `NQ-H4-001` or `NQ-LIQ-002`, or advance a downstream gate whose separate prerequisites have not passed.
+Conceptual evaluation for `D`: before 08:30, no yet-visible timely completion means the deadline is still reachable; this input-contract decision did not itself assign a runtime `RuleEvaluationResult`. A visible matching completion in the interval satisfies the preparation timing requirement. At or after 08:30, if no timely completion for `D` was observable, the deadline is missed for `D`; a late assertion cannot recover it. The evaluator reports its rule result and evidence, not a `StrategyVerdict`. This contract cannot by itself establish correctness of `NQ-H4-001` or `NQ-LIQ-002`, or advance a downstream gate whose separate prerequisites have not passed. The later [Nasdaq runtime state matrix](../strategies/nasdaq/strategy-specification.md#60-preparation-completion-nq-time-003) assigns the rule statuses.
 
 ## Alternatives considered
 
@@ -42,6 +42,6 @@ Conceptual evaluation for `D`: before 08:30, no yet-visible timely completion me
 
 ## Consequences
 
-The input contract is deterministically specified, but no runtime type, canonical transport or evaluator currently exists. The next implementation step is the canonical input primitive and its future-safe context integration; an `NQ-TIME-003` evaluator is not ready to consume an existing runtime abstraction. The provider of a timely source-backed assertion remains an integration choice, not a trading-rule decision. A source unable to provide an authentic causal timestamp cannot satisfy the contract.
+At adoption, the input contract was deterministically specified but no runtime type, canonical transport or evaluator existed. The input primitive and future-safe context integration have since been implemented; the `NQ-TIME-003` evaluator is still absent. The provider of a timely source-backed assertion remains an integration choice, not a trading-rule decision. A source unable to provide an authentic causal timestamp cannot satisfy the contract.
 
 The current `NQ-LIQ-003` workflow graph lists `NQ-H4-001`, `NQ-LIQ-002` and `NQ-TIME-001`, but omits the confirmed preparation prerequisite `NQ-TIME-003`. Reconcile that graph only after `NQ-TIME-003` can yield a deterministic runtime result. This decision changes no workflow code, evaluator capability or strategy rule metadata.
