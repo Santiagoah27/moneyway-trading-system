@@ -10,6 +10,7 @@ public static class MoneyWayReplayRuleEvaluators
     private static readonly IReadOnlyList<IReplayRuleEvaluator> Evaluators =
         new ReadOnlyCollection<IReplayRuleEvaluator>(
         [
+            new MoneyWayNasdaqSessionPreparationCompletionEvaluator(),
             new MoneyWayNasdaqSessionLiquidityEvaluator(new NasdaqSessionLiquidityCalculator()),
             new MoneyWayNasdaqTradingWindowStartEvaluator(),
             new MoneyWayNasdaqTradingWindowEndEvaluator(),

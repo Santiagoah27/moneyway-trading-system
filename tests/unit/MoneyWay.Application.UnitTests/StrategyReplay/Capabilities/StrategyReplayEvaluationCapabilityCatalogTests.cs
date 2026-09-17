@@ -104,7 +104,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
     }
 
     [Fact]
-    public void NasdaqTimingRulesAndPreparationUseFallbackUntilTheirEvaluatorsAreRegistered()
+    public void NasdaqTimingRulesAndPreparationUseFallbackWithoutEvaluators()
     {
         var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
         var report = Catalog([], declarations).Find(Nasdaq.StrategyId, Nasdaq.Version)!;
@@ -131,9 +131,11 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
 
         var registeredEvaluators = MoneyWayReplayRuleEvaluators.GetAll();
         var registeredReport = Catalog(registeredEvaluators, declarations).Find(Nasdaq.StrategyId, Nasdaq.Version)!;
-        Assert.Equal(3, registeredEvaluators.Count);
-        Assert.DoesNotContain(registeredEvaluators, evaluator => evaluator.RuleId == preparationRuleId);
-        Assert.Equal(11, registeredReport.RequiredEvaluatorGapCount);
+        Assert.Equal(4, registeredEvaluators.Count);
+        Assert.Single(registeredEvaluators, evaluator => evaluator.RuleId == preparationRuleId);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented,
+            registeredReport.Rules.Single(rule => rule.RuleId == preparationRuleId).CapabilityStatus);
+        Assert.Equal(10, registeredReport.RequiredEvaluatorGapCount);
         Assert.False(registeredReport.HasFullRequiredEvaluatorRegistration);
 
         Assert.Equal(
@@ -175,7 +177,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, capability.CapabilityStatus);
         Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, capability.CapabilityReason);
         Assert.Null(capability.CapabilitySourceReference);
-        Assert.Equal((32, 14, 3, 0, 25, 4, 3, 11, false), Counts(report));
+        Assert.Equal((32, 14, 4, 0, 24, 4, 4, 10, false), Counts(report));
     }
 
     [Fact]
@@ -200,7 +202,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("executable Stop Loss price/offset remain unresolved", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("separate from structural coordinates, including the single-candle origin Open", declaration.Reason, StringComparison.Ordinal);
         Assert.Contains("does not define an executable Stop Loss price, buffer, tick distance, spread/cost adjustment, broker order, or execution semantics", declaration.Reason, StringComparison.Ordinal);
-        Assert.Equal((32, 14, 3, 0, 25, 4, 3, 11, false), Counts(report));
+        Assert.Equal((32, 14, 4, 0, 24, 4, 4, 10, false), Counts(report));
     }
 
     [Fact]
@@ -330,7 +332,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
             .Find(Nasdaq.StrategyId, Nasdaq.Version)!;
 
         Assert.Equal(declaration.Status, capability.CapabilityStatus);
-        Assert.Equal((32, 14, 3, 0, 25, 4, 3, 11, false), Counts(report));
+        Assert.Equal((32, 14, 4, 0, 24, 4, 4, 10, false), Counts(report));
         Assert.Equal(Counts(reportWithPriorWording), Counts(report));
     }
 
@@ -381,7 +383,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
             evaluator.StrategyId == Nasdaq.StrategyId &&
             evaluator.StrategyVersion == Nasdaq.Version &&
             (evaluator.RuleId == context.RuleId || evaluator.RuleId == target.RuleId));
-        Assert.Equal((32, 14, 3, 0, 25, 4, 3, 11, false), Counts(report));
+        Assert.Equal((32, 14, 4, 0, 24, 4, 4, 10, false), Counts(report));
     }
 
     [Fact]
@@ -417,7 +419,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.DoesNotContain(declarations, item => item.RuleId == liquidity.RuleId);
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, liquidity.CapabilityStatus);
         Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, liquidity.CapabilityReason);
-        Assert.Equal((32, 14, 3, 0, 25, 4, 3, 11, false), Counts(report));
+        Assert.Equal((32, 14, 4, 0, 24, 4, 4, 10, false), Counts(report));
     }
 
     [Fact]
@@ -461,8 +463,8 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.DoesNotContain(declarations, item => item.RuleId == liquidity.RuleId);
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, liquidity.CapabilityStatus);
         Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, liquidity.CapabilityReason);
-        Assert.Equal((32, 14, 3, 0, 25, 4, 3, 11, false), Counts(report));
-        Assert.Equal(["NQ-LIQ-001", "NQ-TIME-001", "NQ-TIME-002"], evaluators.Select(item => item.RuleId.Value));
+        Assert.Equal((32, 14, 4, 0, 24, 4, 4, 10, false), Counts(report));
+        Assert.Equal(["NQ-TIME-003", "NQ-LIQ-001", "NQ-TIME-001", "NQ-TIME-002"], evaluators.Select(item => item.RuleId.Value));
     }
 
     [Fact]
@@ -503,8 +505,8 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.DoesNotContain(declarations, item => item.RuleId == liquidity.RuleId);
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, liquidity.CapabilityStatus);
         Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, liquidity.CapabilityReason);
-        Assert.Equal((32, 14, 3, 0, 25, 4, 3, 11, false), Counts(report));
-        Assert.Equal(["NQ-LIQ-001", "NQ-TIME-001", "NQ-TIME-002"], evaluators.Select(item => item.RuleId.Value));
+        Assert.Equal((32, 14, 4, 0, 24, 4, 4, 10, false), Counts(report));
+        Assert.Equal(["NQ-TIME-003", "NQ-LIQ-001", "NQ-TIME-001", "NQ-TIME-002"], evaluators.Select(item => item.RuleId.Value));
     }
 
     [Fact]
@@ -539,8 +541,8 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.DoesNotContain(declarations, item => item.RuleId == liquidity.RuleId);
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, liquidity.CapabilityStatus);
         Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, liquidity.CapabilityReason);
-        Assert.Equal((32, 14, 3, 0, 25, 4, 3, 11, false), Counts(report));
-        Assert.Equal(["NQ-LIQ-001", "NQ-TIME-001", "NQ-TIME-002"], evaluators.Select(item => item.RuleId.Value));
+        Assert.Equal((32, 14, 4, 0, 24, 4, 4, 10, false), Counts(report));
+        Assert.Equal(["NQ-TIME-003", "NQ-LIQ-001", "NQ-TIME-001", "NQ-TIME-002"], evaluators.Select(item => item.RuleId.Value));
     }
 
     [Fact]
@@ -586,9 +588,9 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("Only independently causally validated structural points may enter structural fallback", target.Reason, StringComparison.Ordinal);
         Assert.DoesNotContain("bearish reset/invalidation symmetry", target.Reason, StringComparison.Ordinal);
 
-        Assert.Equal((32, 14, 3, 0, 25, 4, 3, 11, false), Counts(report));
+        Assert.Equal((32, 14, 4, 0, 24, 4, 4, 10, false), Counts(report));
         Assert.Equal(
-            ["NQ-LIQ-001", "NQ-TIME-001", "NQ-TIME-002"],
+            ["NQ-TIME-003", "NQ-LIQ-001", "NQ-TIME-001", "NQ-TIME-002"],
             evaluators.Select(item => item.RuleId.Value));
     }
 
@@ -691,8 +693,8 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
             .Distinct()
             .Count());
 
-        Assert.Equal((32, 14, 3, 0, 26, 3, 3, 11, false), Counts(before));
-        Assert.Equal((32, 14, 3, 0, 25, 4, 3, 11, false), Counts(after));
+        Assert.Equal((32, 14, 4, 0, 25, 3, 4, 10, false), Counts(before));
+        Assert.Equal((32, 14, 4, 0, 24, 4, 4, 10, false), Counts(after));
         Assert.All(after.Rules.Where(item => item.RuleId != rule.RuleId), item =>
             Assert.Equal(beforeByRule[item.RuleId].CapabilityStatus, item.CapabilityStatus));
 
@@ -752,7 +754,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Contains("exact OHLC mitigation test", target.Reason, StringComparison.Ordinal);
         Assert.Contains("PDH/PDL cross-class ranking", target.Reason, StringComparison.Ordinal);
         Assert.Contains("universal full-exit behavior", target.Reason, StringComparison.Ordinal);
-        Assert.Equal((32, 14, 3, 0, 25, 4, 3, 11, false), Counts(report));
+        Assert.Equal((32, 14, 4, 0, 24, 4, 4, 10, false), Counts(report));
     }
 
     [Fact]
@@ -785,7 +787,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.DoesNotContain("A strict Low < current correction-origin floor resets the old correction", context.Reason, StringComparison.Ordinal);
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, liquidity.CapabilityStatus);
         Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, liquidity.CapabilityReason);
-        Assert.Equal((32, 14, 3, 0, 25, 4, 3, 11, false), Counts(report));
+        Assert.Equal((32, 14, 4, 0, 24, 4, 4, 10, false), Counts(report));
     }
 
     private static StrategyDefinition Forex => MoneyWayForexStrategyDefinition.Instance;

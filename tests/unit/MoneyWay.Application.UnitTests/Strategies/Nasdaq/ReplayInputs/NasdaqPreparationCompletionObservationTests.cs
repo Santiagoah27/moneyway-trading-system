@@ -138,7 +138,7 @@ public sealed class NasdaqPreparationCompletionObservationTests
     }
 
     [Fact]
-    public void CanonicalRunnerDeliversBoundedInputWithoutChangingCurrentEvaluations()
+    public void CanonicalRunnerDeliversBoundedInputAndOnlyChangesPreparationEvaluation()
     {
         var completion = Observation(Day, Start.AddMinutes(20));
         var series = CandleSeries(10, 20, 25);
@@ -161,11 +161,16 @@ public sealed class NasdaqPreparationCompletionObservationTests
             .Execute(Definition, [series], Series());
         var populated = new GenerateMultiTimeframeStrategyBacktestRunUseCase(new(), new(), new(MoneyWayReplayRuleEvaluators.GetAll()))
             .Execute(Definition, [series], Series(completion));
-        static IEnumerable<object> Evaluations(MultiTimeframeStrategyBacktestRun run) =>
-            run.StrategyObservations.SelectMany(item => item.Evaluations.Select(evaluation =>
+        static IEnumerable<object> ExistingEvaluations(MultiTimeframeStrategyBacktestRun run) =>
+            run.StrategyObservations.SelectMany(item => item.Evaluations
+                .Where(evaluation => evaluation.RuleId.Value != "NQ-TIME-003")
+                .Select(evaluation =>
                 (object)(item.AsOfUtc, evaluation.RuleId, evaluation.Result, evaluation.Reason)));
-        Assert.Equal(Evaluations(baseline), Evaluations(empty));
-        Assert.Equal(Evaluations(baseline), Evaluations(populated));
+        Assert.Equal(ExistingEvaluations(baseline), ExistingEvaluations(empty));
+        Assert.Equal(ExistingEvaluations(baseline), ExistingEvaluations(populated));
+        Assert.Equal([RuleEvaluationResult.Waiting, RuleEvaluationResult.Passed, RuleEvaluationResult.Passed],
+            populated.StrategyObservations.Select(item => item.Evaluations
+                .Single(evaluation => evaluation.RuleId.Value == "NQ-TIME-003").Result));
     }
 
     [Fact]
