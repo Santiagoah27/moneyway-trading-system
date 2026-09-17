@@ -104,11 +104,12 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
     }
 
     [Fact]
-    public void NasdaqTimingRulesUseNotImplementedFallbackAfterTimezoneReconciliation()
+    public void NasdaqTimingRulesKeepTimezoneRulesOnFallbackAndDeclarePreparationInputGap()
     {
         var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
         var report = Catalog([], declarations).Find(Nasdaq.StrategyId, Nasdaq.Version)!;
         var timingRuleIds = new[] { new RuleId("NQ-TIME-001"), new RuleId("NQ-TIME-002") };
+        var preparationRuleId = new RuleId("NQ-TIME-003");
 
         Assert.DoesNotContain(declarations, declaration => timingRuleIds.Contains(declaration.RuleId));
         foreach (var ruleId in timingRuleIds)
@@ -118,6 +119,19 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
             Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, capability.CapabilityReason);
             Assert.Null(capability.CapabilitySourceReference);
         }
+
+        var preparationDeclaration = Assert.Single(declarations, declaration =>
+            declaration.StrategyId == Nasdaq.StrategyId &&
+            declaration.StrategyVersion == Nasdaq.Version &&
+            declaration.RuleId == preparationRuleId);
+        var preparation = report.Rules.Single(rule => rule.RuleId == preparationRuleId);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, preparationDeclaration.Status);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, preparation.CapabilityStatus);
+        Assert.Equal(preparationDeclaration.Reason, preparation.CapabilityReason);
+        Assert.Equal("docs/strategies/nasdaq/rule-catalog.md", preparation.CapabilitySourceReference);
+        Assert.Contains("same-session [08:00, 08:30) America/Bogota preparation deadline is confirmed", preparation.CapabilityReason, StringComparison.Ordinal);
+        Assert.Contains("StrategyReplayContext has no source-backed observation", preparation.CapabilityReason, StringComparison.Ordinal);
+        Assert.Contains("Candle availability or clock time alone cannot establish completion", preparation.CapabilityReason, StringComparison.Ordinal);
 
         Assert.Equal(
             [new RuleId("NQ-H4-001"), new RuleId("NQ-M5-004"), new RuleId("NQ-SL-001"), new RuleId("NQ-TP-001")],
