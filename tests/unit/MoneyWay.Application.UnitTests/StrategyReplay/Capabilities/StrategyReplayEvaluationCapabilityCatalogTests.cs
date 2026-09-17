@@ -104,15 +104,16 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
     }
 
     [Fact]
-    public void NasdaqTimingRulesKeepTimezoneRulesOnFallbackAndDeclarePreparationEvaluatorGap()
+    public void NasdaqTimingRulesAndPreparationUseFallbackUntilTheirEvaluatorsAreRegistered()
     {
         var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
         var report = Catalog([], declarations).Find(Nasdaq.StrategyId, Nasdaq.Version)!;
         var timingRuleIds = new[] { new RuleId("NQ-TIME-001"), new RuleId("NQ-TIME-002") };
         var preparationRuleId = new RuleId("NQ-TIME-003");
 
-        Assert.DoesNotContain(declarations, declaration => timingRuleIds.Contains(declaration.RuleId));
-        foreach (var ruleId in timingRuleIds)
+        var fallbackRuleIds = timingRuleIds.Append(preparationRuleId).ToArray();
+        Assert.DoesNotContain(declarations, declaration => fallbackRuleIds.Contains(declaration.RuleId));
+        foreach (var ruleId in fallbackRuleIds)
         {
             var capability = report.Rules.Single(rule => rule.RuleId == ruleId);
             Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, capability.CapabilityStatus);
@@ -120,20 +121,20 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
             Assert.Null(capability.CapabilitySourceReference);
         }
 
-        var preparationDeclaration = Assert.Single(declarations, declaration =>
-            declaration.StrategyId == Nasdaq.StrategyId &&
-            declaration.StrategyVersion == Nasdaq.Version &&
-            declaration.RuleId == preparationRuleId);
         var preparation = report.Rules.Single(rule => rule.RuleId == preparationRuleId);
-        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, preparationDeclaration.Status);
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, preparation.CapabilityStatus);
-        Assert.Equal(preparationDeclaration.Reason, preparation.CapabilityReason);
-        Assert.Equal("docs/strategies/nasdaq/rule-catalog.md", preparation.CapabilitySourceReference);
-        Assert.Contains("same-session [08:00, 08:30) America/Bogota preparation deadline is confirmed", preparation.CapabilityReason, StringComparison.Ordinal);
-        Assert.Contains("observation for the exact session and causal UTC timestamp is now available through StrategyReplayContext", preparation.CapabilityReason, StringComparison.Ordinal);
-        Assert.Contains("only when observable at AsOfUtc", preparation.CapabilityReason, StringComparison.Ordinal);
-        Assert.Contains("no NQ-TIME-003 replay rule evaluator is registered", preparation.CapabilityReason, StringComparison.Ordinal);
-        Assert.Contains("Candle availability or clock time alone cannot establish completion", preparation.CapabilityReason, StringComparison.Ordinal);
+        Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.DefaultNotImplementedReason, preparation.CapabilityReason);
+        Assert.Null(preparation.CapabilitySourceReference);
+        var definition = Nasdaq.Rules.Single(rule => rule.RuleId == preparationRuleId);
+        Assert.True(definition.IsRequired);
+        Assert.Equal(RuleDefinitionStatus.Confirmed, definition.DefinitionStatus);
+
+        var registeredEvaluators = MoneyWayReplayRuleEvaluators.GetAll();
+        var registeredReport = Catalog(registeredEvaluators, declarations).Find(Nasdaq.StrategyId, Nasdaq.Version)!;
+        Assert.Equal(3, registeredEvaluators.Count);
+        Assert.DoesNotContain(registeredEvaluators, evaluator => evaluator.RuleId == preparationRuleId);
+        Assert.Equal(11, registeredReport.RequiredEvaluatorGapCount);
+        Assert.False(registeredReport.HasFullRequiredEvaluatorRegistration);
 
         Assert.Equal(
             [new RuleId("NQ-H4-001"), new RuleId("NQ-M5-004"), new RuleId("NQ-SL-001"), new RuleId("NQ-TP-001")],
