@@ -104,7 +104,7 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
     }
 
     [Fact]
-    public void NasdaqTimingRulesKeepTimezoneRulesOnFallbackAndDeclarePreparationInputGap()
+    public void NasdaqTimingRulesKeepTimezoneRulesOnFallbackAndDeclarePreparationEvaluatorGap()
     {
         var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
         var report = Catalog([], declarations).Find(Nasdaq.StrategyId, Nasdaq.Version)!;
@@ -130,7 +130,9 @@ public sealed class StrategyReplayEvaluationCapabilityCatalogTests
         Assert.Equal(preparationDeclaration.Reason, preparation.CapabilityReason);
         Assert.Equal("docs/strategies/nasdaq/rule-catalog.md", preparation.CapabilitySourceReference);
         Assert.Contains("same-session [08:00, 08:30) America/Bogota preparation deadline is confirmed", preparation.CapabilityReason, StringComparison.Ordinal);
-        Assert.Contains("StrategyReplayContext has no source-backed observation", preparation.CapabilityReason, StringComparison.Ordinal);
+        Assert.Contains("observation for the exact session and causal UTC timestamp is now available through StrategyReplayContext", preparation.CapabilityReason, StringComparison.Ordinal);
+        Assert.Contains("only when observable at AsOfUtc", preparation.CapabilityReason, StringComparison.Ordinal);
+        Assert.Contains("no NQ-TIME-003 replay rule evaluator is registered", preparation.CapabilityReason, StringComparison.Ordinal);
         Assert.Contains("Candle availability or clock time alone cannot establish completion", preparation.CapabilityReason, StringComparison.Ordinal);
 
         Assert.Equal(
