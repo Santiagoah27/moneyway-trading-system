@@ -1,4 +1,5 @@
 using MoneyWay.Application.MarketData.Replay;
+using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 using MoneyWay.Application.StrategyReplay;
 using MoneyWay.Application.StrategyReplay.Workflow;
 using MoneyWay.Domain.MarketData;
@@ -84,6 +85,21 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
     public MultiTimeframeStrategyBacktestRun Execute(
         StrategyDefinition strategyDefinition,
         IEnumerable<CandleSeries> series,
+        NasdaqPreparationCompletionObservationSeries preparationObservations)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series);
+        ArgumentNullException.ThrowIfNull(preparationObservations);
+        return ExecuteCore(
+            strategyDefinition,
+            consumeContext => replayUseCase.Execute(
+                series,
+                frame => consumeContext(contextUseCase.Execute(strategyDefinition, frame, preparationObservations))),
+            null);
+    }
+
+    public MultiTimeframeStrategyBacktestRun Execute(
+        StrategyDefinition strategyDefinition,
+        IEnumerable<CandleSeries> series,
         IStrategyReplayLifecycleEvidenceProducer evidenceProducer)
     {
         ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series); ArgumentNullException.ThrowIfNull(evidenceProducer);
@@ -107,6 +123,23 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
                 series,
                 marketPriceObservations,
                 frame => consumeContext(contextUseCase.ExecuteCanonical(strategyDefinition, frame))),
+            null);
+    }
+
+    public MultiTimeframeStrategyBacktestRun Execute(
+        StrategyDefinition strategyDefinition,
+        IEnumerable<CandleSeries> series,
+        HistoricalMarketPriceObservationSeries marketPriceObservations,
+        NasdaqPreparationCompletionObservationSeries preparationObservations)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series);
+        ArgumentNullException.ThrowIfNull(marketPriceObservations); ArgumentNullException.ThrowIfNull(preparationObservations);
+        return ExecuteCore(
+            strategyDefinition,
+            consumeContext => replayUseCase.Execute(
+                series,
+                marketPriceObservations,
+                frame => consumeContext(contextUseCase.ExecuteCanonical(strategyDefinition, frame, preparationObservations))),
             null);
     }
 

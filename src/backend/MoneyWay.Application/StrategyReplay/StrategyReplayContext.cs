@@ -7,15 +7,16 @@ using MoneyWay.Domain.Strategies;
 namespace MoneyWay.Application.StrategyReplay;
 
 /// <summary>
-/// Represents the market data observable for one exact strategy version at one canonical historical replay step.
-/// It exposes only already-closed candle frames and the bounded prefix of optional price observations visible at
+/// Represents the inputs observable for one exact strategy version at one canonical historical replay step.
+/// It exposes only already-closed candle frames and bounded optional observations visible at
 /// <see cref="AsOfUtc"/>. It contains no future scheduling information.
 /// </summary>
 public sealed class StrategyReplayContext
 {
     private readonly IReadOnlyDictionary<Timeframe, ReplayFrame> framesByTimeframe;
 
-    internal StrategyReplayContext(StrategyId strategyId, StrategyVersion strategyVersion, MultiTimeframeReplayFrame replayFrame)
+    internal StrategyReplayContext(StrategyId strategyId, StrategyVersion strategyVersion, MultiTimeframeReplayFrame replayFrame,
+        IEnumerable<IStrategyReplayInputObservation>? inputObservations = null)
     {
         ArgumentNullException.ThrowIfNull(strategyId); ArgumentNullException.ThrowIfNull(strategyVersion); ArgumentNullException.ThrowIfNull(replayFrame);
         StrategyId = strategyId; StrategyVersion = strategyVersion; ProviderId = replayFrame.ProviderId; Symbol = replayFrame.Symbol;
@@ -28,9 +29,11 @@ public sealed class StrategyReplayContext
         framesByTimeframe = new ReadOnlyDictionary<Timeframe, ReplayFrame>(frames);
         MarketDataAvailability = ReplayMarketDataAvailability.CandleOnly;
         MarketPriceObservations = new(ProviderId, Symbol, null, 0, 0);
+        InputObservations = BoundInputObservations(inputObservations);
     }
 
-    internal StrategyReplayContext(StrategyId strategyId, StrategyVersion strategyVersion, CanonicalMultiTimeframeReplayFrame replayFrame)
+    internal StrategyReplayContext(StrategyId strategyId, StrategyVersion strategyVersion, CanonicalMultiTimeframeReplayFrame replayFrame,
+        IEnumerable<IStrategyReplayInputObservation>? inputObservations = null)
     {
         ArgumentNullException.ThrowIfNull(strategyId); ArgumentNullException.ThrowIfNull(strategyVersion); ArgumentNullException.ThrowIfNull(replayFrame);
         StrategyId = strategyId; StrategyVersion = strategyVersion; ProviderId = replayFrame.ProviderId; Symbol = replayFrame.Symbol;
@@ -44,6 +47,7 @@ public sealed class StrategyReplayContext
         CurrentMarketPriceObservations = replayFrame.CurrentMarketPriceObservations;
         MarketPriceObservations = replayFrame.MarketPriceObservations;
         MarketDataAvailability = replayFrame.MarketDataAvailability;
+        InputObservations = BoundInputObservations(inputObservations);
     }
 
     public StrategyId StrategyId { get; }
@@ -58,9 +62,20 @@ public sealed class StrategyReplayContext
     public HistoricalMarketPriceObservationGroup? CurrentMarketPriceObservations { get; }
     public HistoricalMarketPriceObservationSnapshot MarketPriceObservations { get; }
     public ReplayMarketDataAvailability MarketDataAvailability { get; }
+    public IReadOnlyList<IStrategyReplayInputObservation> InputObservations { get; }
 
     public bool IsConfigured(Timeframe timeframe) { ArgumentNullException.ThrowIfNull(timeframe); return ConfiguredTimeframes.Contains(timeframe); }
     public bool IsAvailable(Timeframe timeframe) { ArgumentNullException.ThrowIfNull(timeframe); return framesByTimeframe.ContainsKey(timeframe); }
     public bool WasUpdated(Timeframe timeframe) { ArgumentNullException.ThrowIfNull(timeframe); return UpdatedTimeframes.Contains(timeframe); }
     public bool TryGetFrame(Timeframe timeframe, out ReplayFrame? frame) { ArgumentNullException.ThrowIfNull(timeframe); return framesByTimeframe.TryGetValue(timeframe, out frame); }
+
+    private IReadOnlyList<IStrategyReplayInputObservation> BoundInputObservations(IEnumerable<IStrategyReplayInputObservation>? input)
+    {
+        var snapshot = (input ?? []).ToArray();
+        if (snapshot.Any(item => item is null || item.StrategyId != StrategyId || item.StrategyVersion != StrategyVersion
+            || item.ProviderId != ProviderId || item.Symbol != Symbol || item.ObservedAtUtc.Offset != TimeSpan.Zero))
+            throw new ArgumentException("Input observations must match the context identity and use UTC timestamps.", nameof(input));
+        return new ReadOnlyCollection<IStrategyReplayInputObservation>(
+            snapshot.Where(item => item.ObservedAtUtc <= AsOfUtc).ToArray());
+    }
 }

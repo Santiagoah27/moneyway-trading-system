@@ -1,5 +1,6 @@
 using MoneyWay.Application.Backtesting.Diagnostics;
 using MoneyWay.Application.MarketData.Replay;
+using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 using MoneyWay.Domain.MarketData;
 using MoneyWay.Domain.Strategies;
 
@@ -54,6 +55,39 @@ public sealed class GenerateCanonicalMultiTimeframeBacktestUseCase(
         {
             throw new InvalidOperationException("Canonical diagnostics do not match the generated strategy outcome run.");
         }
+        return report;
+    }
+
+    public MultiTimeframeStrategyBacktestDiagnosticsReport Execute(
+        StrategyDefinition strategyDefinition,
+        IEnumerable<CandleSeries> series,
+        NasdaqPreparationCompletionObservationSeries preparationObservations)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series);
+        ArgumentNullException.ThrowIfNull(preparationObservations);
+        var outcomeRun = outcomeRunUseCase.Execute(strategyDefinition, series, preparationObservations);
+        var report = diagnosticsUseCase.Execute(strategyDefinition, outcomeRun);
+        if (!ReferenceEquals(report.OutcomeRun, outcomeRun)
+            || report.StrategyId != strategyDefinition.StrategyId
+            || report.StrategyVersion != strategyDefinition.Version)
+            throw new InvalidOperationException("Canonical diagnostics do not match the generated strategy outcome run.");
+        return report;
+    }
+
+    public MultiTimeframeStrategyBacktestDiagnosticsReport Execute(
+        StrategyDefinition strategyDefinition,
+        IEnumerable<CandleSeries> series,
+        HistoricalMarketPriceObservationSeries marketPriceObservations,
+        NasdaqPreparationCompletionObservationSeries preparationObservations)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series);
+        ArgumentNullException.ThrowIfNull(marketPriceObservations); ArgumentNullException.ThrowIfNull(preparationObservations);
+        var outcomeRun = outcomeRunUseCase.Execute(strategyDefinition, series, marketPriceObservations, preparationObservations);
+        var report = diagnosticsUseCase.Execute(strategyDefinition, outcomeRun);
+        if (!ReferenceEquals(report.OutcomeRun, outcomeRun)
+            || report.StrategyId != strategyDefinition.StrategyId
+            || report.StrategyVersion != strategyDefinition.Version)
+            throw new InvalidOperationException("Canonical diagnostics do not match the generated strategy outcome run.");
         return report;
     }
 }
