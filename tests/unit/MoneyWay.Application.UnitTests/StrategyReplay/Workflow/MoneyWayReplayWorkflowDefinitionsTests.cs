@@ -30,7 +30,7 @@ public sealed class MoneyWayReplayWorkflowDefinitionsTests
         Assert.Equal(new StrategyVersion("nasdaq-0.1.0-draft"), workflow.StrategyVersion);
         Assert.Collection(
             workflow.RulePrerequisites,
-            item => AssertDeclaration(item, "NQ-LIQ-003", "NQ-H4-001", "NQ-LIQ-002", "NQ-TIME-001"),
+            item => AssertDeclaration(item, "NQ-LIQ-003", "NQ-H4-001", "NQ-LIQ-002", "NQ-TIME-001", "NQ-TIME-003"),
             item => AssertDeclaration(item, "NQ-M5-001", "NQ-LIQ-003"),
             item => AssertDeclaration(item, "NQ-FVG-001", "NQ-M5-001"),
             item => AssertDeclaration(item, "NQ-M1-001", "NQ-FVG-001"),
@@ -55,7 +55,7 @@ public sealed class MoneyWayReplayWorkflowDefinitionsTests
     }
 
     [Fact]
-    public void CutoffSessionCalculationAndUnrelatedEarlierRulesAreNotInferredAsPrerequisites()
+    public void LiquidityTakeUsesTheExactPreparationAwarePrerequisitesOnly()
     {
         var workflow = Workflow();
         var everyPrerequisite = workflow.RulePrerequisites.SelectMany(item => item.PrerequisiteRuleIds).ToArray();
@@ -63,7 +63,11 @@ public sealed class MoneyWayReplayWorkflowDefinitionsTests
 
         Assert.DoesNotContain(new RuleId("NQ-TIME-002"), everyPrerequisite);
         Assert.DoesNotContain(new RuleId("NQ-LIQ-001"), everyPrerequisite);
-        Assert.DoesNotContain(new RuleId("NQ-TIME-003"), liquidityTakePrerequisites);
+        Assert.Equal(
+            [new RuleId("NQ-H4-001"), new RuleId("NQ-LIQ-002"), new RuleId("NQ-TIME-001"), new RuleId("NQ-TIME-003")],
+            liquidityTakePrerequisites);
+        Assert.Equal(liquidityTakePrerequisites.Count, liquidityTakePrerequisites.Distinct().Count());
+        Assert.Contains(new RuleId("NQ-TIME-003"), liquidityTakePrerequisites);
         Assert.DoesNotContain(new RuleId("NQ-H4-002"), liquidityTakePrerequisites);
         Assert.True(Nasdaq.Rules.Single(item => item.RuleId == new RuleId("NQ-TIME-002")).IsRequired);
         Assert.True(Nasdaq.Rules.Single(item => item.RuleId == new RuleId("NQ-LIQ-001")).IsRequired);
@@ -84,7 +88,7 @@ public sealed class MoneyWayReplayWorkflowDefinitionsTests
         var eligibility = Assert.Single(progression.RuleEligibility);
         Assert.False(eligibility.IsEligible);
         Assert.Equal(
-            [new RuleId("NQ-H4-001"), new RuleId("NQ-LIQ-002"), new RuleId("NQ-TIME-001")],
+            [new RuleId("NQ-H4-001"), new RuleId("NQ-LIQ-002"), new RuleId("NQ-TIME-001"), new RuleId("NQ-TIME-003")],
             eligibility.MissingPrerequisiteRuleIds);
         Assert.False(eligibility.EstablishesProgression);
     }
@@ -97,6 +101,7 @@ public sealed class MoneyWayReplayWorkflowDefinitionsTests
             new ControlledEvaluator("NQ-H4-001", context => context.Step == 1),
             new ControlledEvaluator("NQ-LIQ-002", context => context.Step == 1),
             new ControlledEvaluator("NQ-TIME-001", context => context.Step == 1),
+            new ControlledEvaluator("NQ-TIME-003", context => context.Step == 1),
             new ControlledEvaluator("NQ-LIQ-003", _ => true),
         };
         var run = new GenerateMultiTimeframeStrategyBacktestRunUseCase(
@@ -123,6 +128,7 @@ public sealed class MoneyWayReplayWorkflowDefinitionsTests
             Evaluation("NQ-H4-001", RuleEvaluationResult.Passed, 1),
             Evaluation("NQ-LIQ-002", RuleEvaluationResult.Passed, 1),
             Evaluation("NQ-TIME-001", RuleEvaluationResult.Passed, 1),
+            Evaluation("NQ-TIME-003", RuleEvaluationResult.Passed, 1),
             Evaluation("NQ-LIQ-003", RuleEvaluationResult.Passed, 1));
 
         Assert.False(Eligibility(first, "NQ-LIQ-003").IsEligible);
@@ -134,6 +140,72 @@ public sealed class MoneyWayReplayWorkflowDefinitionsTests
         Assert.Contains(new RuleId("NQ-LIQ-003"), second.EstablishedRuleIds);
     }
 
+    [Theory]
+    [InlineData(RuleEvaluationResult.Waiting)]
+    [InlineData(RuleEvaluationResult.Failed)]
+    [InlineData(RuleEvaluationResult.NotApplicable)]
+    public void PreparationStatesOtherThanPassedDoNotSatisfyLiquidityTakePrerequisite(RuleEvaluationResult preparationResult)
+    {
+        var prior = Advance(1,
+            null,
+            Evaluation("NQ-H4-001", RuleEvaluationResult.Passed, 1),
+            Evaluation("NQ-LIQ-002", RuleEvaluationResult.Passed, 1),
+            Evaluation("NQ-TIME-001", RuleEvaluationResult.Passed, 1));
+
+        var current = Advance(2,
+            prior,
+            Evaluation("NQ-TIME-003", preparationResult, 2),
+            Evaluation("NQ-LIQ-003", RuleEvaluationResult.Passed, 2));
+
+        var eligibility = Eligibility(current, "NQ-LIQ-003");
+        Assert.False(eligibility.IsEligible);
+        Assert.Equal([new RuleId("NQ-TIME-003")], eligibility.MissingPrerequisiteRuleIds);
+        Assert.DoesNotContain(new RuleId("NQ-LIQ-003"), current.EstablishedRuleIds);
+    }
+
+    [Fact]
+    public void NewlyPassedPreparationIsConsumedOnlyOnTheFollowingFrame()
+    {
+        var prior = Advance(1,
+            null,
+            Evaluation("NQ-H4-001", RuleEvaluationResult.Passed, 1),
+            Evaluation("NQ-LIQ-002", RuleEvaluationResult.Passed, 1),
+            Evaluation("NQ-TIME-001", RuleEvaluationResult.Passed, 1));
+
+        var firstPreparationPass = Advance(2,
+            prior,
+            Evaluation("NQ-TIME-003", RuleEvaluationResult.Passed, 2),
+            Evaluation("NQ-LIQ-003", RuleEvaluationResult.Passed, 2));
+        Assert.False(Eligibility(firstPreparationPass, "NQ-LIQ-003").IsEligible);
+        Assert.Equal([new RuleId("NQ-TIME-003")], Eligibility(firstPreparationPass, "NQ-LIQ-003").MissingPrerequisiteRuleIds);
+        Assert.Contains(new RuleId("NQ-TIME-003"), firstPreparationPass.EstablishedRuleIds);
+
+        var next = Advance(3, firstPreparationPass, Evaluation("NQ-LIQ-003", RuleEvaluationResult.Passed, 3));
+        Assert.True(Eligibility(next, "NQ-LIQ-003").IsEligible);
+        Assert.Contains(new RuleId("NQ-LIQ-003"), next.EstablishedRuleIds);
+    }
+
+    [Theory]
+    [InlineData("NQ-H4-001")]
+    [InlineData("NQ-LIQ-002")]
+    [InlineData("NQ-TIME-001")]
+    public void PreparationDoesNotWeakenAnyExistingLiquidityTakePrerequisite(string missingRuleId)
+    {
+        var upstreamRuleIds = new[] { "NQ-H4-001", "NQ-LIQ-002", "NQ-TIME-001", "NQ-TIME-003" };
+        var prior = Advance(1,
+            null,
+            upstreamRuleIds
+                .Where(ruleId => ruleId != missingRuleId)
+                .Select(ruleId => Evaluation(ruleId, RuleEvaluationResult.Passed, 1))
+                .ToArray());
+
+        var current = Advance(2, prior, Evaluation("NQ-LIQ-003", RuleEvaluationResult.Passed, 2));
+
+        var eligibility = Eligibility(current, "NQ-LIQ-003");
+        Assert.False(eligibility.IsEligible);
+        Assert.Equal([new RuleId(missingRuleId)], eligibility.MissingPrerequisiteRuleIds);
+    }
+
     [Fact]
     public void ExactNasdaqChainAdvancesOnlyThroughLaterEligibleObservations()
     {
@@ -142,7 +214,8 @@ public sealed class MoneyWayReplayWorkflowDefinitionsTests
             null,
             Evaluation("NQ-H4-001", RuleEvaluationResult.Passed, 1),
             Evaluation("NQ-LIQ-002", RuleEvaluationResult.Passed, 1),
-            Evaluation("NQ-TIME-001", RuleEvaluationResult.Passed, 1)));
+            Evaluation("NQ-TIME-001", RuleEvaluationResult.Passed, 1),
+            Evaluation("NQ-TIME-003", RuleEvaluationResult.Passed, 1)));
         var chain = new[] { "NQ-LIQ-003", "NQ-M5-001", "NQ-FVG-001", "NQ-M1-001", "NQ-M1-002", "NQ-M1-003" };
         for (var index = 0; index < chain.Length; index++)
         {
@@ -151,7 +224,7 @@ public sealed class MoneyWayReplayWorkflowDefinitionsTests
         }
 
         Assert.Equal(
-            ["NQ-H4-001", "NQ-LIQ-002", "NQ-TIME-001", .. chain],
+            ["NQ-TIME-003", "NQ-H4-001", "NQ-LIQ-002", "NQ-TIME-001", .. chain],
             snapshots[^1].EstablishedRuleIds.Select(item => item.Value));
         Assert.All(snapshots.Skip(1), snapshot => Assert.True(Assert.Single(snapshot.RuleEligibility).IsEligible));
     }
@@ -164,7 +237,8 @@ public sealed class MoneyWayReplayWorkflowDefinitionsTests
             first,
             Evaluation("NQ-H4-001", RuleEvaluationResult.Passed, 2),
             Evaluation("NQ-LIQ-002", RuleEvaluationResult.Passed, 2),
-            Evaluation("NQ-TIME-001", RuleEvaluationResult.Passed, 2));
+            Evaluation("NQ-TIME-001", RuleEvaluationResult.Passed, 2),
+            Evaluation("NQ-TIME-003", RuleEvaluationResult.Passed, 2));
         var third = Advance(3, second, Evaluation("NQ-LIQ-003", RuleEvaluationResult.Passed, 3));
 
         Assert.False(Eligibility(first, "NQ-M5-001").IsEligible);
@@ -207,7 +281,7 @@ public sealed class MoneyWayReplayWorkflowDefinitionsTests
         Symbol,
         step,
         Start.AddMinutes(step),
-        evaluations);
+        evaluations.OrderBy(item => item.Sequence));
 
     private static RuleEvaluation Evaluation(string ruleId, RuleEvaluationResult result, int step)
     {

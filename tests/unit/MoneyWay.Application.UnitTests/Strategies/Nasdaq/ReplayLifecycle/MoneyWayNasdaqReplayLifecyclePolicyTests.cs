@@ -48,6 +48,7 @@ public sealed class MoneyWayNasdaqReplayLifecyclePolicyTests
             new ControlledEvaluator("NQ-H4-001", context => context.Step == 1),
             new ControlledEvaluator("NQ-LIQ-002", context => context.Step == 1),
             new ControlledEvaluator("NQ-TIME-001", _ => true),
+            new ControlledEvaluator("NQ-TIME-003", context => context.Step == 1),
             new ControlledEvaluator("NQ-LIQ-003", context => context.Step >= 2),
             new MoneyWayNasdaqTradingWindowEndEvaluator(),
         };
@@ -130,6 +131,7 @@ public sealed class MoneyWayNasdaqReplayLifecyclePolicyTests
             Evaluation("NQ-H4-001", RuleEvaluationResult.Passed),
             Evaluation("NQ-LIQ-002", RuleEvaluationResult.Passed),
             Evaluation("NQ-TIME-001", RuleEvaluationResult.Passed),
+            Evaluation("NQ-TIME-003", RuleEvaluationResult.Passed),
             Cutoff(RuleEvaluationResult.Passed));
 
         state = Advance(state, AtLocal(hour, minute, second),
@@ -164,6 +166,7 @@ public sealed class MoneyWayNasdaqReplayLifecyclePolicyTests
             Evaluation("NQ-H4-001", RuleEvaluationResult.Passed),
             Evaluation("NQ-LIQ-002", RuleEvaluationResult.Passed),
             Evaluation("NQ-TIME-001", RuleEvaluationResult.Passed),
+            Evaluation("NQ-TIME-003", RuleEvaluationResult.Passed),
             Cutoff(RuleEvaluationResult.Failed));
 
         intended = Advance(intended, AtLocal(11), Cutoff(RuleEvaluationResult.Failed));
@@ -194,6 +197,7 @@ public sealed class MoneyWayNasdaqReplayLifecyclePolicyTests
             Evaluation("NQ-H4-001", RuleEvaluationResult.Passed),
             Evaluation("NQ-LIQ-002", RuleEvaluationResult.Passed),
             Evaluation("NQ-TIME-001", RuleEvaluationResult.Passed),
+            Evaluation("NQ-TIME-003", RuleEvaluationResult.Passed),
             Cutoff(RuleEvaluationResult.Passed));
         state = Advance(state, AtLocal(10, 59, 59),
             Evaluation("NQ-LIQ-003", RuleEvaluationResult.Passed),
@@ -208,6 +212,7 @@ public sealed class MoneyWayNasdaqReplayLifecyclePolicyTests
             Evaluation("NQ-H4-001", RuleEvaluationResult.Passed),
             Evaluation("NQ-LIQ-002", RuleEvaluationResult.Passed),
             Evaluation("NQ-TIME-001", RuleEvaluationResult.Passed),
+            Evaluation("NQ-TIME-003", RuleEvaluationResult.Passed),
             Cutoff(RuleEvaluationResult.Passed));
         state = Advance(state, AtLocal(10, 51),
             Evaluation("NQ-LIQ-003", RuleEvaluationResult.Passed),
