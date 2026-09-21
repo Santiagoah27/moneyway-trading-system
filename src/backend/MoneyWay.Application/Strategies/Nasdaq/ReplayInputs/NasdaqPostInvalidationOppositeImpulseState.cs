@@ -4,7 +4,7 @@ using MoneyWay.Domain.MarketData;
 namespace MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 
 /// <summary>
-/// Immutable initial opposite impulse established by one verified structural invalidation.
+/// Immutable opposite impulse established by one verified structural invalidation.
 /// It contains neither a correction turn nor a validated opposite structural pair.
 /// </summary>
 public sealed class NasdaqPostInvalidationOppositeImpulseState
@@ -14,10 +14,22 @@ public sealed class NasdaqPostInvalidationOppositeImpulseState
         StructuralTurnBodyCoordinateSide terminalSide,
         StructuralTurnGeometryResult originGeometry,
         StructuralTurnGeometryResult provisionalTerminal)
+        : this(invalidatingCandle, terminalSide, originGeometry, provisionalTerminal, invalidatingCandle, false)
+    {
+    }
+
+    internal NasdaqPostInvalidationOppositeImpulseState(
+        Candle invalidatingCandle,
+        StructuralTurnBodyCoordinateSide terminalSide,
+        StructuralTurnGeometryResult originGeometry,
+        StructuralTurnGeometryResult provisionalTerminal,
+        Candle lastProcessedCandle,
+        bool isTerminalFrozen)
     {
         ArgumentNullException.ThrowIfNull(invalidatingCandle);
         ArgumentNullException.ThrowIfNull(originGeometry);
         ArgumentNullException.ThrowIfNull(provisionalTerminal);
+        ArgumentNullException.ThrowIfNull(lastProcessedCandle);
 
         if (!Enum.IsDefined(terminalSide))
         {
@@ -33,7 +45,8 @@ public sealed class NasdaqPostInvalidationOppositeImpulseState
         TerminalSide = terminalSide;
         OriginGeometry = originGeometry;
         ProvisionalTerminal = provisionalTerminal;
-        LastProcessedCandle = invalidatingCandle;
+        LastProcessedCandle = lastProcessedCandle;
+        IsTerminalFrozen = isTerminalFrozen;
     }
 
     /// <summary>The exact closed candle that invalidated the former structural side.</summary>
@@ -45,9 +58,12 @@ public sealed class NasdaqPostInvalidationOppositeImpulseState
     /// <summary>Previously resolved human-reviewed departure-vertex geometry.</summary>
     public StructuralTurnGeometryResult OriginGeometry { get; }
 
-    /// <summary>Initial provisional terminal geometry, calculated only from the invalidating candle.</summary>
+    /// <summary>Provisional terminal geometry accumulated through the last processed candle.</summary>
     public StructuralTurnGeometryResult ProvisionalTerminal { get; }
 
     /// <summary>The last causal candle included in the emerging impulse.</summary>
     public Candle LastProcessedCandle { get; }
+
+    /// <summary>The final impulse terminal is frozen once this candle starts correction.</summary>
+    public bool IsTerminalFrozen { get; }
 }
