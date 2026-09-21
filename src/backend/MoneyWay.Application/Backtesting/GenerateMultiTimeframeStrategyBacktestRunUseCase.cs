@@ -100,6 +100,22 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
     public MultiTimeframeStrategyBacktestRun Execute(
         StrategyDefinition strategyDefinition,
         IEnumerable<CandleSeries> series,
+        IEnumerable<IStrategyReplayInputObservation> inputObservations)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series);
+        ArgumentNullException.ThrowIfNull(inputObservations);
+        var inputSnapshot = inputObservations.ToArray();
+        return ExecuteCore(
+            strategyDefinition,
+            consumeContext => replayUseCase.Execute(
+                series,
+                frame => consumeContext(contextUseCase.Execute(strategyDefinition, frame, inputSnapshot))),
+            null);
+    }
+
+    public MultiTimeframeStrategyBacktestRun Execute(
+        StrategyDefinition strategyDefinition,
+        IEnumerable<CandleSeries> series,
         IStrategyReplayLifecycleEvidenceProducer evidenceProducer)
     {
         ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series); ArgumentNullException.ThrowIfNull(evidenceProducer);
@@ -140,6 +156,24 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
                 series,
                 marketPriceObservations,
                 frame => consumeContext(contextUseCase.ExecuteCanonical(strategyDefinition, frame, preparationObservations))),
+            null);
+    }
+
+    public MultiTimeframeStrategyBacktestRun Execute(
+        StrategyDefinition strategyDefinition,
+        IEnumerable<CandleSeries> series,
+        HistoricalMarketPriceObservationSeries marketPriceObservations,
+        IEnumerable<IStrategyReplayInputObservation> inputObservations)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series);
+        ArgumentNullException.ThrowIfNull(marketPriceObservations); ArgumentNullException.ThrowIfNull(inputObservations);
+        var inputSnapshot = inputObservations.ToArray();
+        return ExecuteCore(
+            strategyDefinition,
+            consumeContext => replayUseCase.Execute(
+                series,
+                marketPriceObservations,
+                frame => consumeContext(contextUseCase.ExecuteCanonical(strategyDefinition, frame, inputSnapshot))),
             null);
     }
 

@@ -35,6 +35,15 @@ public sealed class GenerateMultiTimeframeStrategyOutcomeBacktestRunUseCase(
     public MultiTimeframeStrategyOutcomeBacktestRun Execute(
         StrategyDefinition strategyDefinition,
         IEnumerable<CandleSeries> series,
+        IEnumerable<IStrategyReplayInputObservation> inputObservations)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series); ArgumentNullException.ThrowIfNull(inputObservations);
+        return CreateOutcomes(strategyDefinition, strategyBacktestUseCase.Execute(strategyDefinition, series, inputObservations));
+    }
+
+    public MultiTimeframeStrategyOutcomeBacktestRun Execute(
+        StrategyDefinition strategyDefinition,
+        IEnumerable<CandleSeries> series,
         HistoricalMarketPriceObservationSeries marketPriceObservations)
     {
         ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series); ArgumentNullException.ThrowIfNull(marketPriceObservations);
@@ -50,6 +59,17 @@ public sealed class GenerateMultiTimeframeStrategyOutcomeBacktestRunUseCase(
         ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series);
         ArgumentNullException.ThrowIfNull(marketPriceObservations); ArgumentNullException.ThrowIfNull(preparationObservations);
         return CreateOutcomes(strategyDefinition, strategyBacktestUseCase.Execute(strategyDefinition, series, marketPriceObservations, preparationObservations));
+    }
+
+    public MultiTimeframeStrategyOutcomeBacktestRun Execute(
+        StrategyDefinition strategyDefinition,
+        IEnumerable<CandleSeries> series,
+        HistoricalMarketPriceObservationSeries marketPriceObservations,
+        IEnumerable<IStrategyReplayInputObservation> inputObservations)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series);
+        ArgumentNullException.ThrowIfNull(marketPriceObservations); ArgumentNullException.ThrowIfNull(inputObservations);
+        return CreateOutcomes(strategyDefinition, strategyBacktestUseCase.Execute(strategyDefinition, series, marketPriceObservations, inputObservations));
     }
 
     private MultiTimeframeStrategyOutcomeBacktestRun CreateOutcomes(

@@ -19,6 +19,14 @@ public sealed class CreateStrategyReplayContextUseCase
     }
 
     public StrategyReplayContext Execute(StrategyDefinition strategyDefinition, MultiTimeframeReplayFrame replayFrame,
+        IEnumerable<IStrategyReplayInputObservation> inputObservations)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(replayFrame);
+        ArgumentNullException.ThrowIfNull(inputObservations);
+        return new StrategyReplayContext(strategyDefinition.StrategyId, strategyDefinition.Version, replayFrame, inputObservations);
+    }
+
+    public StrategyReplayContext Execute(StrategyDefinition strategyDefinition, MultiTimeframeReplayFrame replayFrame,
         NasdaqPreparationCompletionObservationSeries preparationObservations)
     {
         ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(replayFrame);
@@ -31,6 +39,14 @@ public sealed class CreateStrategyReplayContextUseCase
     {
         ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(replayFrame);
         return new StrategyReplayContext(strategyDefinition.StrategyId, strategyDefinition.Version, replayFrame);
+    }
+
+    public StrategyReplayContext ExecuteCanonical(StrategyDefinition strategyDefinition, CanonicalMultiTimeframeReplayFrame replayFrame,
+        IEnumerable<IStrategyReplayInputObservation> inputObservations)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(replayFrame);
+        ArgumentNullException.ThrowIfNull(inputObservations);
+        return new StrategyReplayContext(strategyDefinition.StrategyId, strategyDefinition.Version, replayFrame, inputObservations);
     }
 
     public StrategyReplayContext ExecuteCanonical(StrategyDefinition strategyDefinition, CanonicalMultiTimeframeReplayFrame replayFrame,
