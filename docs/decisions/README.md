@@ -27,3 +27,4 @@ Las decisiones reales se registran y enumeran a continuación.
 - [ADR 0004: Support observable market-data resolution in canonical replay](0004-support-observable-market-data-resolution-in-canonical-replay.md) — Status: `Accepted`.
 - [ADR 0005: Transport strategy-owned evidence to replay lifecycle policies](0005-transport-strategy-owned-evidence-to-replay-lifecycle-policies.md) — Status: `Accepted`.
 - [ADR 0006: Define the Nasdaq preparation replay input contract](0006-define-nasdaq-preparation-replay-input-contract.md) — Status: `Accepted`.
+- [ADR 0007: Define the Nasdaq human-reviewed origin-vertex replay input](0007-define-nasdaq-human-origin-vertex-replay-input.md) — Status: `Accepted`.
