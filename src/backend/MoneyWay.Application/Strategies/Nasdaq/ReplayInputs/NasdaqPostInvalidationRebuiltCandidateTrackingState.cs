@@ -24,6 +24,34 @@ public sealed class NasdaqPostInvalidationRebuiltCandidateTrackingState
         LastProcessedCandle = firstTurnCandle;
     }
 
+    internal NasdaqPostInvalidationRebuiltCandidateTrackingState(
+        NasdaqPostInvalidationRebuiltCandidateTrackingState current,
+        Candle lastProcessedCandle)
+    {
+        ArgumentNullException.ThrowIfNull(current);
+        ArgumentNullException.ThrowIfNull(lastProcessedCandle);
+
+        if (lastProcessedCandle.ProviderId != current.LastProcessedCandle.ProviderId
+            || lastProcessedCandle.Symbol != current.LastProcessedCandle.Symbol
+            || lastProcessedCandle.Timeframe != NasdaqHumanOriginVertexObservation.H4
+            || lastProcessedCandle.OpenTimeUtc <= current.LastProcessedCandle.OpenTimeUtc
+            || lastProcessedCandle.OpenTimeUtc < current.LastProcessedCandle.CloseTimeUtc
+            || lastProcessedCandle.CloseTimeUtc <= current.LastProcessedCandle.CloseTimeUtc)
+        {
+            throw new ArgumentException("The tracking cursor must advance to a later candle in the same H4 series.", nameof(lastProcessedCandle));
+        }
+
+        InvalidatingCandle = current.InvalidatingCandle;
+        ImpulseTerminalSide = current.ImpulseTerminalSide;
+        CandidateSide = current.CandidateSide;
+        OriginGeometry = current.OriginGeometry;
+        FrozenImpulseTerminal = current.FrozenImpulseTerminal;
+        MigrationCandle = current.MigrationCandle;
+        KnownProtectionAnchor = current.KnownProtectionAnchor;
+        FirstTurnCandle = current.FirstTurnCandle;
+        LastProcessedCandle = lastProcessedCandle;
+    }
+
     public Candle InvalidatingCandle { get; }
     public StructuralTurnBodyCoordinateSide ImpulseTerminalSide { get; }
     public StructuralCandidateExtremeSide CandidateSide { get; }

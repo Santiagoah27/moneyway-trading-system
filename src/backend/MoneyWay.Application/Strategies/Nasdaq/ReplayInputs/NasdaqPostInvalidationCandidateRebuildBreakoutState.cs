@@ -29,12 +29,37 @@ public sealed class NasdaqPostInvalidationCandidateRebuildBreakoutState
         LastProcessedCandle = validatingCandle;
     }
 
+    internal NasdaqPostInvalidationCandidateRebuildBreakoutState(
+        NasdaqPostInvalidationRebuiltCandidateTrackingState tracking,
+        Candle validatingCandle,
+        bool hasStrictMigration,
+        decimal effectiveProtectionAnchor,
+        NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind collisionKind)
+    {
+        ArgumentNullException.ThrowIfNull(tracking);
+        ArgumentNullException.ThrowIfNull(validatingCandle);
+
+        InvalidatingCandle = tracking.InvalidatingCandle;
+        ImpulseTerminalSide = tracking.ImpulseTerminalSide;
+        CandidateSide = tracking.CandidateSide;
+        OriginGeometry = tracking.OriginGeometry;
+        FrozenImpulseTerminal = tracking.FrozenImpulseTerminal;
+        PriorMigrationCandle = tracking.MigrationCandle;
+        FirstTurnCandle = tracking.FirstTurnCandle;
+        ValidatingCandle = validatingCandle;
+        HasStrictMigration = hasStrictMigration;
+        EffectiveProtectionAnchor = effectiveProtectionAnchor;
+        CollisionKind = collisionKind;
+        LastProcessedCandle = validatingCandle;
+    }
+
     public Candle InvalidatingCandle { get; }
     public StructuralTurnBodyCoordinateSide ImpulseTerminalSide { get; }
     public StructuralCandidateExtremeSide CandidateSide { get; }
     public StructuralTurnGeometryResult OriginGeometry { get; }
     public StructuralTurnGeometryResult FrozenImpulseTerminal { get; }
     public Candle PriorMigrationCandle { get; }
+    public Candle? FirstTurnCandle { get; }
     public Candle ValidatingCandle { get; }
     public bool HasStrictMigration { get; }
     public decimal EffectiveProtectionAnchor { get; }

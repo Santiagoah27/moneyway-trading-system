@@ -66,6 +66,35 @@ public sealed class NasdaqPostInvalidationCandidateRebuildPendingState
         LastProcessedCandle = lastProcessedCandle;
     }
 
+    internal NasdaqPostInvalidationCandidateRebuildPendingState(
+        NasdaqPostInvalidationRebuiltCandidateTrackingState current,
+        Candle migrationCandle)
+    {
+        ArgumentNullException.ThrowIfNull(current);
+        ArgumentNullException.ThrowIfNull(migrationCandle);
+
+        if (migrationCandle.ProviderId != current.LastProcessedCandle.ProviderId
+            || migrationCandle.Symbol != current.LastProcessedCandle.Symbol
+            || migrationCandle.Timeframe != NasdaqHumanOriginVertexObservation.H4
+            || migrationCandle.OpenTimeUtc <= current.LastProcessedCandle.OpenTimeUtc
+            || migrationCandle.OpenTimeUtc < current.LastProcessedCandle.CloseTimeUtc
+            || migrationCandle.CloseTimeUtc <= current.LastProcessedCandle.CloseTimeUtc)
+        {
+            throw new ArgumentException("The reset candle must follow tracking in the same H4 series.", nameof(migrationCandle));
+        }
+
+        InvalidatingCandle = current.InvalidatingCandle;
+        ImpulseTerminalSide = current.ImpulseTerminalSide;
+        CandidateSide = current.CandidateSide;
+        OriginGeometry = current.OriginGeometry;
+        FrozenImpulseTerminal = current.FrozenImpulseTerminal;
+        MigrationCandle = migrationCandle;
+        KnownProtectionAnchor = current.CandidateSide == StructuralCandidateExtremeSide.Lower
+            ? migrationCandle.Low
+            : migrationCandle.High;
+        LastProcessedCandle = migrationCandle;
+    }
+
     public Candle InvalidatingCandle { get; }
 
     public StructuralTurnBodyCoordinateSide ImpulseTerminalSide { get; }
