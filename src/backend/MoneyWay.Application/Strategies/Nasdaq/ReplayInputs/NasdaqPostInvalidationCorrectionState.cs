@@ -17,12 +17,38 @@ public sealed class NasdaqPostInvalidationCorrectionState
         StructuralTurnGeometryResult frozenImpulseTerminal,
         Candle correctionStartCandle,
         StructuralTurnGeometryResult correctionGeometry)
+        : this(invalidatingCandle, impulseTerminalSide, candidateSide, originGeometry,
+            frozenImpulseTerminal, correctionStartCandle, [correctionStartCandle], correctionGeometry,
+            correctionStartCandle)
+    {
+    }
+
+    internal NasdaqPostInvalidationCorrectionState(
+        Candle invalidatingCandle,
+        StructuralTurnBodyCoordinateSide impulseTerminalSide,
+        StructuralCandidateExtremeSide candidateSide,
+        StructuralTurnGeometryResult originGeometry,
+        StructuralTurnGeometryResult frozenImpulseTerminal,
+        Candle correctionStartCandle,
+        IReadOnlyList<Candle> correctionTurnCandles,
+        StructuralTurnGeometryResult correctionGeometry,
+        Candle lastProcessedCandle)
     {
         ArgumentNullException.ThrowIfNull(invalidatingCandle);
         ArgumentNullException.ThrowIfNull(originGeometry);
         ArgumentNullException.ThrowIfNull(frozenImpulseTerminal);
         ArgumentNullException.ThrowIfNull(correctionStartCandle);
+        ArgumentNullException.ThrowIfNull(correctionTurnCandles);
         ArgumentNullException.ThrowIfNull(correctionGeometry);
+        ArgumentNullException.ThrowIfNull(lastProcessedCandle);
+
+        if (correctionTurnCandles.Count == 0
+            || !ReferenceEquals(correctionTurnCandles[0], correctionStartCandle)
+            || !ReferenceEquals(correctionTurnCandles[^1], lastProcessedCandle))
+        {
+            throw new ArgumentException("The correction members must begin and end at the supplied causal candles.",
+                nameof(correctionTurnCandles));
+        }
 
         if (!Enum.IsDefined(impulseTerminalSide) || !Enum.IsDefined(candidateSide))
         {
@@ -49,9 +75,9 @@ public sealed class NasdaqPostInvalidationCorrectionState
         OriginGeometry = originGeometry;
         FrozenImpulseTerminal = frozenImpulseTerminal;
         CorrectionStartCandle = correctionStartCandle;
-        CorrectionTurnCandles = new ReadOnlyCollection<Candle>([correctionStartCandle]);
+        CorrectionTurnCandles = new ReadOnlyCollection<Candle>(correctionTurnCandles.ToArray());
         CorrectionGeometry = correctionGeometry;
-        LastProcessedCandle = correctionStartCandle;
+        LastProcessedCandle = lastProcessedCandle;
     }
 
     public Candle InvalidatingCandle { get; }
