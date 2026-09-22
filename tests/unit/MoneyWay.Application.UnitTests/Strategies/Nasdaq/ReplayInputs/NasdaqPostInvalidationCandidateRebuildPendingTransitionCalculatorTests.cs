@@ -32,6 +32,7 @@ public sealed class NasdaqPostInvalidationCandidateRebuildPendingTransitionCalcu
         Assert.Same(pending.MigrationCandle, continued.MigrationCandle);
         Assert.Equal(pending.KnownProtectionAnchor, continued.KnownProtectionAnchor);
         Assert.Same(pending.FrozenImpulseTerminal, continued.FrozenImpulseTerminal);
+        Assert.Same(pending.Episode, continued.Episode);
     }
 
     [Theory]
@@ -41,12 +42,15 @@ public sealed class NasdaqPostInvalidationCandidateRebuildPendingTransitionCalcu
     {
         var candle = Candle(24, open, high, low, close);
 
-        var result = calculator.Evaluate(Pending(side), candle);
+        var pending = Pending(side);
+        var result = calculator.Evaluate(pending, candle);
 
         Assert.Equal(NasdaqPostInvalidationCandidateRebuildPendingTransitionKind.PendingReset, result.Kind);
         Assert.Same(candle, result.Pending!.MigrationCandle);
+        Assert.NotSame(pending.MigrationCandle, result.Pending.MigrationCandle);
         Assert.Same(candle, result.Pending.LastProcessedCandle);
         Assert.Equal(expectedAnchor, result.Pending.KnownProtectionAnchor);
+        Assert.Same(pending.Episode, result.Pending.Episode);
     }
 
     [Theory]
@@ -56,11 +60,13 @@ public sealed class NasdaqPostInvalidationCandidateRebuildPendingTransitionCalcu
     {
         var candle = Candle(24, open, high, low, close);
 
-        var result = calculator.Evaluate(Pending(side), candle);
+        var pending = Pending(side);
+        var result = calculator.Evaluate(pending, candle);
 
         Assert.Equal(NasdaqPostInvalidationCandidateRebuildPendingTransitionKind.TrackingStarted, result.Kind);
         Assert.Same(candle, result.Tracking!.FirstTurnCandle);
         Assert.Same(candle, result.Tracking.LastProcessedCandle);
+        Assert.Same(pending.Episode, result.Tracking.Episode);
         Assert.Null(result.Tracking.GetType().GetProperty("StructuralPrice"));
     }
 
@@ -86,12 +92,22 @@ public sealed class NasdaqPostInvalidationCandidateRebuildPendingTransitionCalcu
     {
         var candle = Candle(24, open, high, low, close);
 
-        var result = calculator.Evaluate(Pending(side), candle);
+        var pending = Pending(side);
+        var result = calculator.Evaluate(pending, candle);
 
         Assert.Equal(NasdaqPostInvalidationCandidateRebuildPendingTransitionKind.BreakoutDetected, result.Kind);
         Assert.False(result.Breakout!.HasStrictMigration);
         Assert.Equal(NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind.None, result.Breakout.CollisionKind);
         Assert.Same(candle, result.Breakout.LastProcessedCandle);
+        Assert.Same(pending.Episode, result.Breakout.Episode);
+        Assert.Equal(pending.Episode.StrategyId, result.Breakout.Episode.StrategyId);
+        Assert.Same(pending.Episode.StrategyVersion, result.Breakout.Episode.StrategyVersion);
+        Assert.Equal(pending.Episode.ProviderId, result.Breakout.Episode.ProviderId);
+        Assert.Equal(pending.Episode.Symbol, result.Breakout.Episode.Symbol);
+        Assert.Equal(H4, result.Breakout.Episode.Timeframe);
+        Assert.Equal(pending.InvalidatingCandle.OpenTimeUtc, result.Breakout.Episode.InvalidatingCandleOpenTimeUtc);
+        Assert.Equal(pending.MigrationCandle.OpenTimeUtc, result.Breakout.PriorMigrationCandle.OpenTimeUtc);
+        Assert.Equal(pending.CandidateSide, result.Breakout.CandidateSide);
         Assert.Null(result.Tracking);
     }
 

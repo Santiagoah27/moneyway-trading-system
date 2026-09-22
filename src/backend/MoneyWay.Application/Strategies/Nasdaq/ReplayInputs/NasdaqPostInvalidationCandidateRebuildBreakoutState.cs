@@ -16,6 +16,7 @@ public sealed class NasdaqPostInvalidationCandidateRebuildBreakoutState
         ArgumentNullException.ThrowIfNull(pending);
         ArgumentNullException.ThrowIfNull(validatingCandle);
 
+        Episode = pending.Episode;
         InvalidatingCandle = pending.InvalidatingCandle;
         ImpulseTerminalSide = pending.ImpulseTerminalSide;
         CandidateSide = pending.CandidateSide;
@@ -39,6 +40,7 @@ public sealed class NasdaqPostInvalidationCandidateRebuildBreakoutState
         ArgumentNullException.ThrowIfNull(tracking);
         ArgumentNullException.ThrowIfNull(validatingCandle);
 
+        Episode = tracking.Episode;
         InvalidatingCandle = tracking.InvalidatingCandle;
         ImpulseTerminalSide = tracking.ImpulseTerminalSide;
         CandidateSide = tracking.CandidateSide;
@@ -52,6 +54,8 @@ public sealed class NasdaqPostInvalidationCandidateRebuildBreakoutState
         CollisionKind = collisionKind;
         LastProcessedCandle = validatingCandle;
     }
+
+    public NasdaqHumanOriginVertexEpisode Episode { get; }
 
     public Candle InvalidatingCandle { get; }
     public StructuralTurnBodyCoordinateSide ImpulseTerminalSide { get; }

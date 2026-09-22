@@ -34,6 +34,7 @@ public sealed class NasdaqPostInvalidationOppositeImpulseTransitionCalculatorTes
         Assert.Equal(expectedBody, result.ResultingState.ProvisionalTerminal.StructuralPrice);
         Assert.Equal(expectedWick, result.ResultingState.ProvisionalTerminal.ProtectionAnchor);
         Assert.Same(origin, result.ResultingState.OriginGeometry);
+        Assert.Same(state.Episode, result.ResultingState.Episode);
         Assert.Same(state.InvalidatingCandle, result.ResultingState.InvalidatingCandle);
         Assert.Same(next, result.ResultingState.LastProcessedCandle);
         Assert.False(result.ResultingState.IsTerminalFrozen);

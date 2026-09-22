@@ -57,7 +57,7 @@ public sealed class NasdaqPostInvalidationCorrectionTransitionCalculator
                         observedProtection.ProtectionAnchor, candidateSide).ResultingExtreme,
                     protectionSide));
             var state = new NasdaqPostInvalidationCorrectionState(
-                current.InvalidatingCandle, current.ImpulseTerminalSide, candidateSide,
+                current.Episode, current.InvalidatingCandle, current.ImpulseTerminalSide, candidateSide,
                 current.OriginGeometry, current.FrozenImpulseTerminal, current.CorrectionStartCandle,
                 members, geometry, candle);
             return NasdaqPostInvalidationCorrectionTransitionResult.Continue(state);

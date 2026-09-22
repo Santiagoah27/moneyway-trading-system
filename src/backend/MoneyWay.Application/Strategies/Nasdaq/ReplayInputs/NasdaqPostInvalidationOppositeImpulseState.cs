@@ -10,15 +10,17 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 public sealed class NasdaqPostInvalidationOppositeImpulseState
 {
     internal NasdaqPostInvalidationOppositeImpulseState(
+        NasdaqHumanOriginVertexEpisode episode,
         Candle invalidatingCandle,
         StructuralTurnBodyCoordinateSide terminalSide,
         StructuralTurnGeometryResult originGeometry,
         StructuralTurnGeometryResult provisionalTerminal)
-        : this(invalidatingCandle, terminalSide, originGeometry, provisionalTerminal, invalidatingCandle, false)
+        : this(episode, invalidatingCandle, terminalSide, originGeometry, provisionalTerminal, invalidatingCandle, false)
     {
     }
 
     internal NasdaqPostInvalidationOppositeImpulseState(
+        NasdaqHumanOriginVertexEpisode episode,
         Candle invalidatingCandle,
         StructuralTurnBodyCoordinateSide terminalSide,
         StructuralTurnGeometryResult originGeometry,
@@ -26,6 +28,7 @@ public sealed class NasdaqPostInvalidationOppositeImpulseState
         Candle lastProcessedCandle,
         bool isTerminalFrozen)
     {
+        ArgumentNullException.ThrowIfNull(episode);
         ArgumentNullException.ThrowIfNull(invalidatingCandle);
         ArgumentNullException.ThrowIfNull(originGeometry);
         ArgumentNullException.ThrowIfNull(provisionalTerminal);
@@ -41,6 +44,15 @@ public sealed class NasdaqPostInvalidationOppositeImpulseState
             throw new ArgumentException("Origin and provisional terminal geometry must have opposite structural sides.");
         }
 
+        if (episode.ProviderId != invalidatingCandle.ProviderId
+            || episode.Symbol != invalidatingCandle.Symbol
+            || episode.Timeframe != invalidatingCandle.Timeframe
+            || episode.InvalidatingCandleOpenTimeUtc != invalidatingCandle.OpenTimeUtc)
+        {
+            throw new ArgumentException("The invalidating candle must match the origin reconstruction episode.", nameof(invalidatingCandle));
+        }
+
+        Episode = episode;
         InvalidatingCandle = invalidatingCandle;
         TerminalSide = terminalSide;
         OriginGeometry = originGeometry;
@@ -48,6 +60,9 @@ public sealed class NasdaqPostInvalidationOppositeImpulseState
         LastProcessedCandle = lastProcessedCandle;
         IsTerminalFrozen = isTerminalFrozen;
     }
+
+    /// <summary>The exact closed candle that invalidated the former structural side.</summary>
+    public NasdaqHumanOriginVertexEpisode Episode { get; }
 
     /// <summary>The exact closed candle that invalidated the former structural side.</summary>
     public Candle InvalidatingCandle { get; }

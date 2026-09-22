@@ -28,6 +28,13 @@ public sealed class NasdaqHumanOriginVertexMemberResolverTests
         var repeated = resolver.Evaluate(observation, context);
 
         Assert.Same(invalidating, result.InvalidatingCandle);
+        Assert.Equal(observation.StrategyId, result.Episode.StrategyId);
+        Assert.Same(observation.StrategyVersion, result.Episode.StrategyVersion);
+        Assert.Equal(observation.ProviderId, result.Episode.ProviderId);
+        Assert.Equal(observation.Symbol, result.Episode.Symbol);
+        Assert.Equal(observation.Timeframe, result.Episode.Timeframe);
+        Assert.Equal(observation.InvalidatingCandleOpenTimeUtc, result.Episode.InvalidatingCandleOpenTimeUtc);
+        Assert.Equal(result.Episode, repeated.Episode);
         Assert.Equal([first, selected], result.SelectedMembers);
         Assert.Same(first, result.SelectedMembers[0]);
         Assert.Same(selected, result.SelectedMembers[1]);

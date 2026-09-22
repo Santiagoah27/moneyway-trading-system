@@ -21,6 +21,7 @@ public sealed class NasdaqPostInvalidationCandidateState
             throw new ArgumentException("Candidate geometry must match the correction side.", nameof(candidateGeometry));
         }
 
+        Episode = correction.Episode;
         InvalidatingCandle = correction.InvalidatingCandle;
         ImpulseTerminalSide = correction.ImpulseTerminalSide;
         CandidateSide = correction.CandidateSide;
@@ -31,6 +32,8 @@ public sealed class NasdaqPostInvalidationCandidateState
         CandidateGeometry = candidateGeometry;
         TerminalCandle = terminalCandle;
     }
+
+    public NasdaqHumanOriginVertexEpisode Episode { get; }
 
     public Candle InvalidatingCandle { get; }
 

@@ -32,6 +32,7 @@ public sealed class NasdaqPostInvalidationRebuiltCandidateTrackingInitializerTes
         Assert.Equal(pending.KnownProtectionAnchor, state.KnownProtectionAnchor);
         Assert.Same(pending.FrozenImpulseTerminal, state.FrozenImpulseTerminal);
         Assert.Same(pending.InvalidatingCandle, state.InvalidatingCandle);
+        Assert.Same(pending.Episode, state.Episode);
         Assert.Same(pending.OriginGeometry, state.OriginGeometry);
         Assert.Same(pending.MigrationCandle, state.MigrationCandle);
         Assert.Same(turn, state.FirstTurnCandle);

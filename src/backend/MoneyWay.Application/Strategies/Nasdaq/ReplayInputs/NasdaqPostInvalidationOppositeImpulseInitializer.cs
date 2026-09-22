@@ -44,7 +44,7 @@ public sealed class NasdaqPostInvalidationOppositeImpulseInitializer
         }
 
         var terminal = geometryCalculator.Evaluate([invalidatingCandle], terminalSide);
-        return new NasdaqPostInvalidationOppositeImpulseState(invalidatingCandle, terminalSide, originGeometry, terminal);
+        return new NasdaqPostInvalidationOppositeImpulseState(members.Episode, invalidatingCandle, terminalSide, originGeometry, terminal);
     }
 
     private static StructuralTurnBodyCoordinateSide ToTerminalSide(StructuralCandidateExtremeSide candidateSide) =>

@@ -24,6 +24,7 @@ public sealed class NasdaqPostInvalidationCandidateRebuildPendingState
             throw new ArgumentException("The migration candle must belong to the same H4 series.", nameof(migrationCandle));
         }
 
+        Episode = supersededCandidate.Episode;
         InvalidatingCandle = supersededCandidate.InvalidatingCandle;
         ImpulseTerminalSide = supersededCandidate.ImpulseTerminalSide;
         CandidateSide = supersededCandidate.CandidateSide;
@@ -56,6 +57,7 @@ public sealed class NasdaqPostInvalidationCandidateRebuildPendingState
             throw new ArgumentException("The rebuilt pending cursor must remain in the effective migration H4 series.", nameof(lastProcessedCandle));
         }
 
+        Episode = current.Episode;
         InvalidatingCandle = current.InvalidatingCandle;
         ImpulseTerminalSide = current.ImpulseTerminalSide;
         CandidateSide = current.CandidateSide;
@@ -83,6 +85,7 @@ public sealed class NasdaqPostInvalidationCandidateRebuildPendingState
             throw new ArgumentException("The reset candle must follow tracking in the same H4 series.", nameof(migrationCandle));
         }
 
+        Episode = current.Episode;
         InvalidatingCandle = current.InvalidatingCandle;
         ImpulseTerminalSide = current.ImpulseTerminalSide;
         CandidateSide = current.CandidateSide;
@@ -94,6 +97,8 @@ public sealed class NasdaqPostInvalidationCandidateRebuildPendingState
             : migrationCandle.High;
         LastProcessedCandle = migrationCandle;
     }
+
+    public NasdaqHumanOriginVertexEpisode Episode { get; }
 
     public Candle InvalidatingCandle { get; }
 

@@ -45,6 +45,7 @@ public sealed class NasdaqPostInvalidationCorrectionTransitionCalculatorTests
         Assert.Same(next, continued.LastProcessedCandle);
         Assert.Same(state.InvalidatingCandle, continued.InvalidatingCandle);
         Assert.Same(state.OriginGeometry, continued.OriginGeometry);
+        Assert.Same(state.Episode, continued.Episode);
         Assert.Same(state.FrozenImpulseTerminal, continued.FrozenImpulseTerminal);
         Assert.Equal(state.CandidateSide, continued.CandidateSide);
         Assert.Equal(state.ImpulseTerminalSide, continued.ImpulseTerminalSide);
@@ -81,6 +82,7 @@ public sealed class NasdaqPostInvalidationCorrectionTransitionCalculatorTests
         Assert.Same(terminal, candidate.LastProcessedCandle);
         Assert.Same(state.InvalidatingCandle, candidate.InvalidatingCandle);
         Assert.Same(state.OriginGeometry, candidate.OriginGeometry);
+        Assert.Same(state.Episode, candidate.Episode);
         Assert.Same(state.FrozenImpulseTerminal, candidate.FrozenImpulseTerminal);
         Assert.Equal(state.ImpulseTerminalSide, candidate.ImpulseTerminalSide);
         Assert.Equal(state.CorrectionGeometry.StructuralPrice, candidate.CandidateGeometry.StructuralPrice);

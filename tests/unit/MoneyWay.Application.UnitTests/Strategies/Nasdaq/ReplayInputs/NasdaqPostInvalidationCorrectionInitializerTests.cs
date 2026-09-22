@@ -27,6 +27,7 @@ public sealed class NasdaqPostInvalidationCorrectionInitializerTests
         Assert.Equal(StructuralTurnBodyCoordinateSide.Lower, result.ImpulseTerminalSide);
         Assert.Same(origin, result.OriginGeometry);
         Assert.Same(transition.ResultingState.InvalidatingCandle, result.InvalidatingCandle);
+        Assert.Same(transition.ResultingState.Episode, result.Episode);
         Assert.Same(transition.ResultingState.ProvisionalTerminal, result.FrozenImpulseTerminal);
         Assert.Equal(70m, result.FrozenImpulseTerminal.StructuralPrice);
         Assert.Equal(65m, result.FrozenImpulseTerminal.ProtectionAnchor);

@@ -39,6 +39,7 @@ public sealed class NasdaqPostInvalidationRebuiltCandidateTrackingTransitionCalc
         Assert.Equal(current.KnownProtectionAnchor, next.KnownProtectionAnchor);
         Assert.Same(current.FrozenImpulseTerminal, next.FrozenImpulseTerminal);
         Assert.Same(current.OriginGeometry, next.OriginGeometry);
+        Assert.Same(current.Episode, next.Episode);
         Assert.Same(current.FirstTurnCandle, current.LastProcessedCandle);
         Assert.Null(next.GetType().GetProperty("StructuralPrice"));
     }
@@ -59,11 +60,13 @@ public sealed class NasdaqPostInvalidationRebuiltCandidateTrackingTransitionCalc
         Assert.Equal(NasdaqPostInvalidationRebuiltCandidateTrackingTransitionKind.PendingReset, result.Kind);
         var pending = Assert.IsType<NasdaqPostInvalidationCandidateRebuildPendingState>(result.Pending);
         Assert.Same(candle, pending.MigrationCandle);
+        Assert.NotSame(current.MigrationCandle, pending.MigrationCandle);
         Assert.Same(candle, pending.LastProcessedCandle);
         Assert.Equal(expectedAnchor, pending.KnownProtectionAnchor);
         Assert.Same(current.InvalidatingCandle, pending.InvalidatingCandle);
         Assert.Same(current.OriginGeometry, pending.OriginGeometry);
         Assert.Same(current.FrozenImpulseTerminal, pending.FrozenImpulseTerminal);
+        Assert.Same(current.Episode, pending.Episode);
         Assert.Null(pending.GetType().GetProperty("FirstTurnCandle"));
         Assert.Same(current.FirstTurnCandle, current.LastProcessedCandle);
     }
@@ -85,6 +88,7 @@ public sealed class NasdaqPostInvalidationRebuiltCandidateTrackingTransitionCalc
         Assert.Same(candle, restarted.FirstTurnCandle);
         Assert.Same(candle, restarted.LastProcessedCandle);
         Assert.Equal(expectedAnchor, restarted.KnownProtectionAnchor);
+        Assert.Same(current.Episode, restarted.Episode);
         Assert.Same(current.FirstTurnCandle, current.LastProcessedCandle);
     }
 
@@ -110,6 +114,7 @@ public sealed class NasdaqPostInvalidationRebuiltCandidateTrackingTransitionCalc
         Assert.Equal(current.KnownProtectionAnchor, breakout.EffectiveProtectionAnchor);
         Assert.Same(candle, breakout.ValidatingCandle);
         Assert.Same(candle, breakout.LastProcessedCandle);
+        Assert.Same(current.Episode, breakout.Episode);
         Assert.Null(result.Tracking);
     }
 

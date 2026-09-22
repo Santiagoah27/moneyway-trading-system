@@ -39,6 +39,12 @@ public sealed class NasdaqHumanOriginVertexMemberResolver
             members.Add(member);
         }
 
-        return new NasdaqHumanOriginVertexMemberResolution(invalidating, members);
+        var episode = new NasdaqHumanOriginVertexEpisode(
+            observation.StrategyId,
+            observation.StrategyVersion,
+            observation.ProviderId,
+            observation.Symbol,
+            observation.InvalidatingCandleOpenTimeUtc);
+        return new NasdaqHumanOriginVertexMemberResolution(episode, invalidating, members);
     }
 }

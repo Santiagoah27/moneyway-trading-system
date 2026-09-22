@@ -13,6 +13,7 @@ public sealed class NasdaqPostInvalidationRebuiltCandidateTrackingState
         ArgumentNullException.ThrowIfNull(pending);
         ArgumentNullException.ThrowIfNull(firstTurnCandle);
 
+        Episode = pending.Episode;
         InvalidatingCandle = pending.InvalidatingCandle;
         ImpulseTerminalSide = pending.ImpulseTerminalSide;
         CandidateSide = pending.CandidateSide;
@@ -41,6 +42,7 @@ public sealed class NasdaqPostInvalidationRebuiltCandidateTrackingState
             throw new ArgumentException("The tracking cursor must advance to a later candle in the same H4 series.", nameof(lastProcessedCandle));
         }
 
+        Episode = current.Episode;
         InvalidatingCandle = current.InvalidatingCandle;
         ImpulseTerminalSide = current.ImpulseTerminalSide;
         CandidateSide = current.CandidateSide;
@@ -51,6 +53,8 @@ public sealed class NasdaqPostInvalidationRebuiltCandidateTrackingState
         FirstTurnCandle = current.FirstTurnCandle;
         LastProcessedCandle = lastProcessedCandle;
     }
+
+    public NasdaqHumanOriginVertexEpisode Episode { get; }
 
     public Candle InvalidatingCandle { get; }
     public StructuralTurnBodyCoordinateSide ImpulseTerminalSide { get; }

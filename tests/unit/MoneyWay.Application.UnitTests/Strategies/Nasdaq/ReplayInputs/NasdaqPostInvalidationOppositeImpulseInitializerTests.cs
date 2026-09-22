@@ -37,6 +37,7 @@ public sealed class NasdaqPostInvalidationOppositeImpulseInitializerTests
         Assert.Equal(60m, result.ProvisionalTerminal.ProtectionAnchor);
         Assert.Equal(StructuralTurnBodyCoordinateSide.Lower, result.ProvisionalTerminal.Side);
         Assert.Same(invalidating, result.InvalidatingCandle);
+        Assert.Same(members.Episode, result.Episode);
         Assert.Same(invalidating, result.LastProcessedCandle);
         Assert.NotEqual(result.OriginGeometry.Side, result.ProvisionalTerminal.Side);
     }
@@ -63,6 +64,7 @@ public sealed class NasdaqPostInvalidationOppositeImpulseInitializerTests
         Assert.Equal(140m, result.ProvisionalTerminal.ProtectionAnchor);
         Assert.Equal(StructuralTurnBodyCoordinateSide.Upper, result.ProvisionalTerminal.Side);
         Assert.Same(invalidating, result.InvalidatingCandle);
+        Assert.Same(members.Episode, result.Episode);
         Assert.Same(invalidating, result.LastProcessedCandle);
         Assert.NotEqual(result.OriginGeometry.Side, result.ProvisionalTerminal.Side);
     }

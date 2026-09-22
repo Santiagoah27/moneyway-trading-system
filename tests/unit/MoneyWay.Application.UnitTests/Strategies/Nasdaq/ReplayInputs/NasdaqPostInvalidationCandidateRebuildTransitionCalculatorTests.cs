@@ -27,6 +27,7 @@ public sealed class NasdaqPostInvalidationCandidateRebuildTransitionCalculatorTe
         Assert.Same(migration, result.MigrationCandle);
         Assert.Same(migration, result.LastProcessedCandle);
         Assert.Same(candidate.InvalidatingCandle, result.InvalidatingCandle);
+        Assert.Same(candidate.Episode, result.Episode);
         Assert.Same(candidate.OriginGeometry, result.OriginGeometry);
         Assert.Same(candidate.FrozenImpulseTerminal, result.FrozenImpulseTerminal);
         Assert.Equal(candidate.CandidateSide, result.CandidateSide);

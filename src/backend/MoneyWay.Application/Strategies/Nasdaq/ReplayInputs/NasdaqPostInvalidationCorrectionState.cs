@@ -10,6 +10,7 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 public sealed class NasdaqPostInvalidationCorrectionState
 {
     internal NasdaqPostInvalidationCorrectionState(
+        NasdaqHumanOriginVertexEpisode episode,
         Candle invalidatingCandle,
         StructuralTurnBodyCoordinateSide impulseTerminalSide,
         StructuralCandidateExtremeSide candidateSide,
@@ -17,13 +18,14 @@ public sealed class NasdaqPostInvalidationCorrectionState
         StructuralTurnGeometryResult frozenImpulseTerminal,
         Candle correctionStartCandle,
         StructuralTurnGeometryResult correctionGeometry)
-        : this(invalidatingCandle, impulseTerminalSide, candidateSide, originGeometry,
+        : this(episode, invalidatingCandle, impulseTerminalSide, candidateSide, originGeometry,
             frozenImpulseTerminal, correctionStartCandle, [correctionStartCandle], correctionGeometry,
             correctionStartCandle)
     {
     }
 
     internal NasdaqPostInvalidationCorrectionState(
+        NasdaqHumanOriginVertexEpisode episode,
         Candle invalidatingCandle,
         StructuralTurnBodyCoordinateSide impulseTerminalSide,
         StructuralCandidateExtremeSide candidateSide,
@@ -34,6 +36,7 @@ public sealed class NasdaqPostInvalidationCorrectionState
         StructuralTurnGeometryResult correctionGeometry,
         Candle lastProcessedCandle)
     {
+        ArgumentNullException.ThrowIfNull(episode);
         ArgumentNullException.ThrowIfNull(invalidatingCandle);
         ArgumentNullException.ThrowIfNull(originGeometry);
         ArgumentNullException.ThrowIfNull(frozenImpulseTerminal);
@@ -69,6 +72,7 @@ public sealed class NasdaqPostInvalidationCorrectionState
             throw new ArgumentException("The correction, origin, and frozen impulse sides must match the opposite reconstruction.");
         }
 
+        Episode = episode;
         InvalidatingCandle = invalidatingCandle;
         ImpulseTerminalSide = impulseTerminalSide;
         CandidateSide = candidateSide;
@@ -79,6 +83,8 @@ public sealed class NasdaqPostInvalidationCorrectionState
         CorrectionGeometry = correctionGeometry;
         LastProcessedCandle = lastProcessedCandle;
     }
+
+    public NasdaqHumanOriginVertexEpisode Episode { get; }
 
     public Candle InvalidatingCandle { get; }
 

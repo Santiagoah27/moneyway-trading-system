@@ -38,6 +38,7 @@ public sealed class NasdaqPostInvalidationCorrectionInitializer
         var correctionGeometry = geometryCalculator.Evaluate([startCandle], geometrySide);
 
         return new NasdaqPostInvalidationCorrectionState(
+            impulse.Episode,
             impulse.InvalidatingCandle,
             impulse.TerminalSide,
             candidateSide,

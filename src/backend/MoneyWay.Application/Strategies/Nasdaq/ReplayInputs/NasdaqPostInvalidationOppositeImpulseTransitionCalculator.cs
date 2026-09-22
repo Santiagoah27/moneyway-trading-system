@@ -61,7 +61,7 @@ public sealed class NasdaqPostInvalidationOppositeImpulseTransitionCalculator
         var correctionStart = correctionStartCalculator.Evaluate(observation, candle);
         var startsCorrection = correctionStart.TransitionKind == CorrectionStartTransitionKind.StartCorrection;
         var resultingState = new NasdaqPostInvalidationOppositeImpulseState(
-            current.InvalidatingCandle, side, current.OriginGeometry, terminal, candle, startsCorrection);
+            current.Episode, current.InvalidatingCandle, side, current.OriginGeometry, terminal, candle, startsCorrection);
         return new NasdaqPostInvalidationOppositeImpulseTransitionResult(resultingState, correctionStart);
     }
 }
