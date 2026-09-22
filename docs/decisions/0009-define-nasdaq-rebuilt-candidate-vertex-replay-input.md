@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. This decision defines the semantic payload and validation boundary; it does not implement an observation type, transport, selector, pending state or evaluator.
+Accepted. This decision defines the semantic payload, validation boundary and reconstruction identity contract. Current implementation status and remaining runtime work are recorded under Consequences.
 
 ## Date
 
@@ -37,6 +37,31 @@ The causal lifecycle is `CandidateProvisional` → verified migration-only reset
 
 The first turn establishes provisional existence, not definitive multi-candle `StructuralPrice`. At the strict later `Close > frozen provisional H` for HL or `Close < frozen provisional L` for LH, the mentor classifies the final turning region retrospectively. Only then does this ADR's visible, nonconflicting human membership supply exact members for deterministic definitive geometry; the result must match the known migrated protection anchor. The existing member resolver and geometry calculator perform that deterministic calculation without making the earlier turn definitive. A breakout observed before human evidence becomes visible cannot acquire that evidence in its earlier replay frame; the missing-evidence evaluator status remains open. The existing complete `NasdaqPostInvalidationCandidateState` retains its original formation contract and must not be constructed from rebuilt geometry alone while its correction-member and terminal-candle invariants do not describe this route. Neither provisional tracking nor this input makes `NQ-H4-001` evaluator-ready.
 
+### Reconstruction identity propagation
+
+The exact strategy identity that owns a reconstruction is causal episode data, not ambient evaluator configuration. Once the origin-vertex episode is resolved, its `StrategyId` and immutable `StrategyVersion` must remain unchanged through opposite impulse, correction, candidate, rebuild pending, rebuilt tracking and breakout. A consumer must not substitute a Nasdaq constant, the latest/current version, a default or nullable value, or the identity of whichever `StrategyReplayContext` later happens to invoke completion. Evidence visibility (`ObservedAtUtc <= AsOfUtc`) and exact episode equality are independent requirements; satisfying either one does not satisfy the other.
+
+The existing `NasdaqHumanOriginVertexEpisode` is the smallest source-backed owner for the reconstruction's stable identity: strategy, version, provider, symbol, H4 and invalidating-candle identity. It must be retained by `NasdaqHumanOriginVertexMemberResolution` and propagated unchanged into every long-lived post-invalidation state. Rebuild-specific identity remains the stable reconstruction identity plus the effective migration candle and `CandidateSide`, as already represented by `NasdaqHumanRebuiltCandidateVertexEpisode`. A stricter migration may create a new rebuild episode, but it does not change the parent strategy/version binding.
+
+The current runtime flow does not yet satisfy that contract. Its identity inventory is:
+
+| Runtime value | StrategyId | StrategyVersion | Provider / symbol / H4 | Invalidation identity | Migration identity | CandidateSide |
+|---|---|---|---|---|---|---|
+| `StrategyReplayContext` | Yes | Yes | Yes | No | No | No |
+| `NasdaqHumanOriginVertexObservation` / `NasdaqHumanOriginVertexEpisode` | Yes | Yes | Yes | Yes | No | No |
+| `NasdaqHumanOriginVertexMemberResolution` | No | No | Via resolved candles | Via `InvalidatingCandle` | No | No |
+| `NasdaqPostInvalidationOppositeImpulseState` | No | No | Via candles | Yes | No | No; only `TerminalSide` |
+| `NasdaqPostInvalidationCorrectionState` | No | No | Via candles | Yes | No | Yes |
+| `NasdaqPostInvalidationCandidateState` | No | No | Via candles | Yes | No | Yes |
+| `NasdaqPostInvalidationCandidateRebuildPendingState` | No | No | Via candles | Yes | Yes | Yes |
+| `NasdaqPostInvalidationRebuiltCandidateTrackingState` | No | No | Via candles | Yes | Yes | Yes |
+| `NasdaqPostInvalidationCandidateRebuildBreakoutState` | No | No | Via candles | Yes | Yes | Yes |
+| `NasdaqHumanRebuiltCandidateVertexEpisode` / member resolution | Yes | Yes | Yes | Yes | Yes | Yes |
+
+Identity is first dropped when `NasdaqHumanOriginVertexMemberResolver` materializes `NasdaqHumanOriginVertexMemberResolution`: the source observation and replay context agree on strategy/version, but the resolution retains only candles. `NasdaqPostInvalidationOppositeImpulseInitializer` therefore cannot transfer strategy/version into the structural state, and every later transition preserves only market and structural fields. The rebuilt-member resolver currently constructs a rebuilt episode from its calling context plus pending-state candle identity; that proves which evidence is visible in that context, but it cannot prove that the pending or breakout state itself originated under the same strategy version.
+
+The minimum future runtime change is to retain `NasdaqHumanOriginVertexEpisode` in `NasdaqHumanOriginVertexMemberResolution`, copy it into `NasdaqPostInvalidationOppositeImpulseState`, and propagate the same value through `NasdaqPostInvalidationCorrectionState`, `NasdaqPostInvalidationCandidateState`, `NasdaqPostInvalidationCandidateRebuildPendingState`, `NasdaqPostInvalidationRebuiltCandidateTrackingState` and `NasdaqPostInvalidationCandidateRebuildBreakoutState`. Their existing initializers, constructors and one-candle transition calculators must copy rather than recreate it. `BreakoutState` must expose that stable identity, directly or through the typed episode, so ordinary completion can prove exact equality with `NasdaqHumanRebuiltCandidateVertexEpisode` across strategy, version, provider, symbol, H4, invalidation, effective migration and candidate side. This adds audit identity only; it changes no migration, breakout, body/wick geometry, membership or collision rule.
+
 ## Alternatives considered
 
 | Alternative | Assessment | Decision |
@@ -48,4 +73,4 @@ The first turn establishes provisional existence, not definitive multi-candle `S
 
 ## Consequences
 
-The rebuild-pending state, human observation, selector, exact member resolver and deterministic geometry calculator are implemented. The first-turn and chronological cursor semantics support a separate lightweight pre-breakout tracking state without definitive `StructuralPrice`; its runtime transitions and orchestration remain future work. Exact definitive multi-candle membership is still human-reviewed; correction/supersession, missing-evidence runtime result and downstream orchestration remain open. The reviewed directional same-candle migration-and-validation case retains its separate precedence, while contrary/doji-body `NQ-Q-H4-008` remains a distinct human `StructuralPrice` boundary. No evaluator, metadata, capability or live-order permission changes follow from this clarification.
+The rebuild-pending state, human observation, selector, exact member resolver, deterministic geometry calculator, rebuilt tracker and their one-candle transitions are implemented. Exact strategy/version propagation through that structural state chain remains a runtime prerequisite before a rebuilt membership can complete an ordinary breakout safely. Exact definitive multi-candle membership is still human-reviewed; correction/supersession, missing-evidence runtime result and downstream orchestration remain open. The reviewed directional same-candle migration-and-validation case retains its separate precedence, while contrary/doji-body `NQ-Q-H4-008` remains a distinct human `StructuralPrice` boundary. No evaluator, metadata, capability or live-order permission changes follow from this clarification.
