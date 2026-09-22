@@ -31,6 +31,39 @@ public sealed class NasdaqPostInvalidationCandidateRebuildPendingState
         FrozenImpulseTerminal = supersededCandidate.FrozenImpulseTerminal;
         MigrationCandle = migrationCandle;
         KnownProtectionAnchor = knownProtectionAnchor;
+        LastProcessedCandle = migrationCandle;
+    }
+
+    internal NasdaqPostInvalidationCandidateRebuildPendingState(
+        NasdaqPostInvalidationCandidateRebuildPendingState current,
+        Candle migrationCandle,
+        decimal knownProtectionAnchor,
+        Candle lastProcessedCandle)
+    {
+        ArgumentNullException.ThrowIfNull(current);
+        ArgumentNullException.ThrowIfNull(migrationCandle);
+        ArgumentNullException.ThrowIfNull(lastProcessedCandle);
+
+        if (migrationCandle.ProviderId != current.MigrationCandle.ProviderId
+            || migrationCandle.Symbol != current.MigrationCandle.Symbol
+            || migrationCandle.Timeframe != NasdaqHumanOriginVertexObservation.H4
+            || lastProcessedCandle.ProviderId != migrationCandle.ProviderId
+            || lastProcessedCandle.Symbol != migrationCandle.Symbol
+            || lastProcessedCandle.Timeframe != migrationCandle.Timeframe
+            || lastProcessedCandle.OpenTimeUtc < migrationCandle.OpenTimeUtc
+            || lastProcessedCandle.CloseTimeUtc < migrationCandle.CloseTimeUtc)
+        {
+            throw new ArgumentException("The rebuilt pending cursor must remain in the effective migration H4 series.", nameof(lastProcessedCandle));
+        }
+
+        InvalidatingCandle = current.InvalidatingCandle;
+        ImpulseTerminalSide = current.ImpulseTerminalSide;
+        CandidateSide = current.CandidateSide;
+        OriginGeometry = current.OriginGeometry;
+        FrozenImpulseTerminal = current.FrozenImpulseTerminal;
+        MigrationCandle = migrationCandle;
+        KnownProtectionAnchor = knownProtectionAnchor;
+        LastProcessedCandle = lastProcessedCandle;
     }
 
     public Candle InvalidatingCandle { get; }
@@ -49,5 +82,5 @@ public sealed class NasdaqPostInvalidationCandidateRebuildPendingState
     /// <summary>The known strict migration wick; this is not complete candidate geometry.</summary>
     public decimal KnownProtectionAnchor { get; }
 
-    public Candle LastProcessedCandle => MigrationCandle;
+    public Candle LastProcessedCandle { get; }
 }
