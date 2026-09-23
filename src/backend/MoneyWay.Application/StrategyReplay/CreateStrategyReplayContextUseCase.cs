@@ -26,6 +26,16 @@ public sealed class CreateStrategyReplayContextUseCase
         return new StrategyReplayContext(strategyDefinition.StrategyId, strategyDefinition.Version, replayFrame, inputObservations);
     }
 
+    public StrategyReplayContext ExecuteWithPreEvaluationState(StrategyDefinition strategyDefinition,
+        MultiTimeframeReplayFrame replayFrame, IStrategyReplayPreEvaluationState preEvaluationState,
+        IEnumerable<IStrategyReplayInputObservation>? inputObservations = null)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(replayFrame);
+        ArgumentNullException.ThrowIfNull(preEvaluationState);
+        return new StrategyReplayContext(strategyDefinition.StrategyId, strategyDefinition.Version, replayFrame,
+            inputObservations, preEvaluationState);
+    }
+
     public StrategyReplayContext Execute(StrategyDefinition strategyDefinition, MultiTimeframeReplayFrame replayFrame,
         NasdaqPreparationCompletionObservationSeries preparationObservations)
     {
@@ -47,6 +57,16 @@ public sealed class CreateStrategyReplayContextUseCase
         ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(replayFrame);
         ArgumentNullException.ThrowIfNull(inputObservations);
         return new StrategyReplayContext(strategyDefinition.StrategyId, strategyDefinition.Version, replayFrame, inputObservations);
+    }
+
+    public StrategyReplayContext ExecuteCanonicalWithPreEvaluationState(StrategyDefinition strategyDefinition,
+        CanonicalMultiTimeframeReplayFrame replayFrame, IStrategyReplayPreEvaluationState preEvaluationState,
+        IEnumerable<IStrategyReplayInputObservation>? inputObservations = null)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(replayFrame);
+        ArgumentNullException.ThrowIfNull(preEvaluationState);
+        return new StrategyReplayContext(strategyDefinition.StrategyId, strategyDefinition.Version, replayFrame,
+            inputObservations, preEvaluationState);
     }
 
     public StrategyReplayContext ExecuteCanonical(StrategyDefinition strategyDefinition, CanonicalMultiTimeframeReplayFrame replayFrame,

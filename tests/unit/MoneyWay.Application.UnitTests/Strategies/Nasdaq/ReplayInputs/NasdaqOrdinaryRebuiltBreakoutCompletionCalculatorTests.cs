@@ -32,6 +32,13 @@ public sealed class NasdaqOrdinaryRebuiltBreakoutCompletionCalculatorTests
         var fixture = Fixture(side);
 
         var result = calculator.Evaluate(fixture.Breakout, fixture.Resolution, fixture.Geometry);
+        var snapshot = new NasdaqH4ReconstructionSnapshot.Completed.Ordinary(result);
+
+        Assert.Equal(NasdaqH4ReconstructionSnapshotKind.Completed, snapshot.Kind);
+        Assert.Same(result, snapshot.Result);
+        Assert.Same(result.Breakout.Episode, snapshot.Episode);
+        Assert.Same(result.LastProcessedCandle, snapshot.MarketCursor);
+        Assert.Same(result.ValidatedCandidate, snapshot.ValidatedCandidate);
 
         Assert.True(result.ValidatedCandidate.IsValidated);
         Assert.Equal(side, result.ValidatedCandidate.CandidateSide);

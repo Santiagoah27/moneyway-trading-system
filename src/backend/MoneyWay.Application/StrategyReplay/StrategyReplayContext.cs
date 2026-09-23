@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using MoneyWay.Application.MarketData.Replay;
 using MoneyWay.Domain.MarketData;
 using MoneyWay.Domain.MarketData.Replay;
@@ -16,7 +17,8 @@ public sealed class StrategyReplayContext
     private readonly IReadOnlyDictionary<Timeframe, ReplayFrame> framesByTimeframe;
 
     internal StrategyReplayContext(StrategyId strategyId, StrategyVersion strategyVersion, MultiTimeframeReplayFrame replayFrame,
-        IEnumerable<IStrategyReplayInputObservation>? inputObservations = null)
+        IEnumerable<IStrategyReplayInputObservation>? inputObservations = null,
+        IStrategyReplayPreEvaluationState? preEvaluationState = null)
     {
         ArgumentNullException.ThrowIfNull(strategyId); ArgumentNullException.ThrowIfNull(strategyVersion); ArgumentNullException.ThrowIfNull(replayFrame);
         StrategyId = strategyId; StrategyVersion = strategyVersion; ProviderId = replayFrame.ProviderId; Symbol = replayFrame.Symbol;
@@ -30,10 +32,12 @@ public sealed class StrategyReplayContext
         MarketDataAvailability = ReplayMarketDataAvailability.CandleOnly;
         MarketPriceObservations = new(ProviderId, Symbol, null, 0, 0);
         InputObservations = BoundInputObservations(inputObservations);
+        PreEvaluationState = BoundPreEvaluationState(preEvaluationState);
     }
 
     internal StrategyReplayContext(StrategyId strategyId, StrategyVersion strategyVersion, CanonicalMultiTimeframeReplayFrame replayFrame,
-        IEnumerable<IStrategyReplayInputObservation>? inputObservations = null)
+        IEnumerable<IStrategyReplayInputObservation>? inputObservations = null,
+        IStrategyReplayPreEvaluationState? preEvaluationState = null)
     {
         ArgumentNullException.ThrowIfNull(strategyId); ArgumentNullException.ThrowIfNull(strategyVersion); ArgumentNullException.ThrowIfNull(replayFrame);
         StrategyId = strategyId; StrategyVersion = strategyVersion; ProviderId = replayFrame.ProviderId; Symbol = replayFrame.Symbol;
@@ -48,6 +52,7 @@ public sealed class StrategyReplayContext
         MarketPriceObservations = replayFrame.MarketPriceObservations;
         MarketDataAvailability = replayFrame.MarketDataAvailability;
         InputObservations = BoundInputObservations(inputObservations);
+        PreEvaluationState = BoundPreEvaluationState(preEvaluationState);
     }
 
     public StrategyId StrategyId { get; }
@@ -63,6 +68,14 @@ public sealed class StrategyReplayContext
     public HistoricalMarketPriceObservationSnapshot MarketPriceObservations { get; }
     public ReplayMarketDataAvailability MarketDataAvailability { get; }
     public IReadOnlyList<IStrategyReplayInputObservation> InputObservations { get; }
+    public IStrategyReplayPreEvaluationState? PreEvaluationState { get; }
+
+    public bool TryGetPreEvaluationState<T>([NotNullWhen(true)] out T? state)
+        where T : class, IStrategyReplayPreEvaluationState
+    {
+        state = PreEvaluationState as T;
+        return state is not null;
+    }
 
     public bool IsConfigured(Timeframe timeframe) { ArgumentNullException.ThrowIfNull(timeframe); return ConfiguredTimeframes.Contains(timeframe); }
     public bool IsAvailable(Timeframe timeframe) { ArgumentNullException.ThrowIfNull(timeframe); return framesByTimeframe.ContainsKey(timeframe); }
@@ -77,5 +90,13 @@ public sealed class StrategyReplayContext
             throw new ArgumentException("Input observations must match the context identity and use UTC timestamps.", nameof(input));
         return new ReadOnlyCollection<IStrategyReplayInputObservation>(
             snapshot.Where(item => item.ObservedAtUtc <= AsOfUtc).ToArray());
+    }
+
+    private IStrategyReplayPreEvaluationState? BoundPreEvaluationState(IStrategyReplayPreEvaluationState? state)
+    {
+        if (state is not null && (state.StrategyId != StrategyId || state.StrategyVersion != StrategyVersion
+            || state.ProviderId != ProviderId || state.Symbol != Symbol))
+            throw new ArgumentException("Pre-evaluation state must match the exact replay identity.", nameof(state));
+        return state;
     }
 }

@@ -34,6 +34,13 @@ public sealed class NasdaqHumanStructuralPriceBreakoutCompletionCalculatorTests
 
         var result = calculator.Evaluate(breakout, selection);
         var repeated = calculator.Evaluate(breakout, selection);
+        var snapshot = new NasdaqH4ReconstructionSnapshot.Completed.HumanStructuralPrice(result);
+
+        Assert.Equal(NasdaqH4ReconstructionSnapshotKind.Completed, snapshot.Kind);
+        Assert.Same(result, snapshot.Result);
+        Assert.Same(result.Breakout.Episode, snapshot.Episode);
+        Assert.Same(result.LastProcessedCandle, snapshot.MarketCursor);
+        Assert.Same(result.ValidatedCandidate, snapshot.ValidatedCandidate);
 
         Assert.Equal(NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind.NqQH4008HumanStructuralPriceRequired, breakout.CollisionKind);
         Assert.True(result.ValidatedCandidate.IsValidated);

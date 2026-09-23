@@ -28,6 +28,13 @@ public sealed class NasdaqDirectionalMigrationBreakoutCompletionCalculatorTests
         var breakout = Breakout(side, open, high, low, close);
 
         var result = calculator.Evaluate(breakout);
+        var snapshot = new NasdaqH4ReconstructionSnapshot.Completed.Directional(result);
+
+        Assert.Equal(NasdaqH4ReconstructionSnapshotKind.Completed, snapshot.Kind);
+        Assert.Same(result, snapshot.Result);
+        Assert.Same(result.Breakout.Episode, snapshot.Episode);
+        Assert.Same(result.LastProcessedCandle, snapshot.MarketCursor);
+        Assert.Same(result.ValidatedCandidate, snapshot.ValidatedCandidate);
 
         Assert.True(breakout.HasStrictMigration);
         Assert.Equal(NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind.NqQH4007DirectionalBody, breakout.CollisionKind);
