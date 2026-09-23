@@ -10,6 +10,7 @@
 - [ADR 0006](../decisions/0006-define-nasdaq-preparation-replay-input-contract.md) specifies the future source-backed, immutable preparation-completion input for `NQ-TIME-003` through the bounded canonical replay context.
 - [ADR 0011](../decisions/0011-define-nasdaq-h4-reconstruction-replay-lifecycle.md) defines the pre-evaluation, replay-local Nasdaq H4 structural snapshot boundary needed to preserve post-invalidation episodes across frames without evaluator state.
 - [ADR 0012](../decisions/0012-define-nasdaq-h4-reconstruction-snapshot-variants.md) closes the typed Nasdaq H4 snapshot variant set, including invalidation awaiting origin and terminal completed reconstruction evidence.
+- [ADR 0013](../decisions/0013-define-nasdaq-post-invalidation-candidate-transition-contract.md) refines the Candidate cursor and completion/breakout payloads needed for its closed-candle transition matrix; the eight snapshot variants remain unchanged.
 - The technical bootstrap is now authorized.
 - Detailed domain architecture and trading implementation remain pending.
 

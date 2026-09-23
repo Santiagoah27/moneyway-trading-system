@@ -33,3 +33,4 @@ Las decisiones reales se registran y enumeran a continuación.
 - [ADR 0010: Define the Nasdaq collision StructuralPrice replay input](0010-define-nasdaq-collision-structural-price-replay-input.md) — Status: `Accepted`.
 - [ADR 0011: Define Nasdaq H4 reconstruction replay lifecycle](0011-define-nasdaq-h4-reconstruction-replay-lifecycle.md) — Status: `Accepted`.
 - [ADR 0012: Define Nasdaq H4 reconstruction snapshot variants](0012-define-nasdaq-h4-reconstruction-snapshot-variants.md) — Status: `Accepted`.
+- [ADR 0013: Define Nasdaq post-invalidation candidate transition contract](0013-define-nasdaq-post-invalidation-candidate-transition-contract.md) — Status: `Accepted`.
