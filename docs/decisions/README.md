@@ -35,3 +35,4 @@ Las decisiones reales se registran y enumeran a continuación.
 - [ADR 0012: Define Nasdaq H4 reconstruction snapshot variants](0012-define-nasdaq-h4-reconstruction-snapshot-variants.md) — Status: `Accepted`.
 - [ADR 0013: Define Nasdaq post-invalidation candidate transition contract](0013-define-nasdaq-post-invalidation-candidate-transition-contract.md) — Status: `Accepted`.
 - [ADR 0014: Clarify Nasdaq H4 breakout human-evidence lifecycle](0014-clarify-nasdaq-breakout-human-evidence-lifecycle.md) — Status: `Accepted`.
+- [ADR 0015: Define Nasdaq H4 breakout evidence waiting policy](0015-define-nasdaq-breakout-evidence-waiting-policy.md) — Status: `Accepted`.
