@@ -33,7 +33,7 @@ public sealed class NasdaqHumanRebuiltCandidateVertexMemberResolverTests
         var context = Context([migration, adjacent, unselected], adjacent.CloseTimeUtc, observation);
         var selection = Select(context, pending);
 
-        var result = resolver.Evaluate(pending, selection, context);
+        var result = resolver.Evaluate(NasdaqHumanRebuiltCandidateVertexResolutionContext.From(pending), selection, context);
 
         Assert.Same(migration, result.MigrationCandle);
         Assert.Equal([migration, adjacent], result.SelectedMembers);
@@ -57,7 +57,7 @@ public sealed class NasdaqHumanRebuiltCandidateVertexMemberResolverTests
         var mismatchObservation = Observation(pending, [migration.OpenTimeUtc, mismatching.OpenTimeUtc], mismatching.CloseTimeUtc);
         var mismatchContext = Context([migration, mismatching], mismatching.CloseTimeUtc, mismatchObservation);
 
-        Assert.Throws<InvalidOperationException>(() => resolver.Evaluate(pending, Select(mismatchContext, pending), mismatchContext));
+        Assert.Throws<InvalidOperationException>(() => resolver.Evaluate(NasdaqHumanRebuiltCandidateVertexResolutionContext.From(pending), Select(mismatchContext, pending), mismatchContext));
 
         var missingTime = Start.AddHours(24);
         var missingObservation = Observation(pending, [migration.OpenTimeUtc, missingTime], Start.AddHours(28));
@@ -65,7 +65,7 @@ public sealed class NasdaqHumanRebuiltCandidateVertexMemberResolverTests
         var trigger = new Candle(Provider, Symbol, minute, Start.AddHours(28), Start.AddHours(29), 100, 101, 99, 100, null);
         var missingContext = Context([migration], trigger.CloseTimeUtc, missingObservation, new CandleSeries(Provider, Symbol, minute, [trigger]));
 
-        Assert.Throws<InvalidOperationException>(() => resolver.Evaluate(pending, Select(missingContext, pending), missingContext));
+        Assert.Throws<InvalidOperationException>(() => resolver.Evaluate(NasdaqHumanRebuiltCandidateVertexResolutionContext.From(pending), Select(missingContext, pending), missingContext));
     }
 
     [Fact]
@@ -88,9 +88,9 @@ public sealed class NasdaqHumanRebuiltCandidateVertexMemberResolverTests
             Provider, Symbol, pending.InvalidatingCandle.OpenTimeUtc.AddHours(4), migration.OpenTimeUtc, pending.CandidateSide);
         var otherEpisodeSelection = selector.Select(otherContext, otherEpisode);
 
-        Assert.Throws<ArgumentException>(() => resolver.Evaluate(pending, missing, context));
-        Assert.Throws<ArgumentException>(() => resolver.Evaluate(pending, conflict, context));
-        Assert.Throws<ArgumentException>(() => resolver.Evaluate(pending, otherEpisodeSelection, context));
+        Assert.Throws<ArgumentException>(() => resolver.Evaluate(NasdaqHumanRebuiltCandidateVertexResolutionContext.From(pending), missing, context));
+        Assert.Throws<ArgumentException>(() => resolver.Evaluate(NasdaqHumanRebuiltCandidateVertexResolutionContext.From(pending), conflict, context));
+        Assert.Throws<ArgumentException>(() => resolver.Evaluate(NasdaqHumanRebuiltCandidateVertexResolutionContext.From(pending), otherEpisodeSelection, context));
     }
 
     [Fact]
@@ -102,14 +102,58 @@ public sealed class NasdaqHumanRebuiltCandidateVertexMemberResolverTests
         var earlier = Context([migration], migration.CloseTimeUtc, observation);
         var extended = Context([migration, future], migration.CloseTimeUtc, observation);
 
-        var first = resolver.Evaluate(pending, Select(earlier, pending), earlier);
-        var second = resolver.Evaluate(pending, Select(extended, pending), extended);
-        var repeated = resolver.Evaluate(pending, Select(earlier, pending), earlier);
+        var resolutionContext = NasdaqHumanRebuiltCandidateVertexResolutionContext.From(pending);
+        var first = resolver.Evaluate(resolutionContext, Select(earlier, pending), earlier);
+        var second = resolver.Evaluate(resolutionContext, Select(extended, pending), extended);
+        var repeated = resolver.Evaluate(resolutionContext, Select(earlier, pending), earlier);
 
         Assert.Equal([migration], first.SelectedMembers);
         Assert.Equal(first.SelectedMembers, second.SelectedMembers);
         Assert.Equal(first.SelectedMembers, repeated.SelectedMembers);
         Assert.DoesNotContain(future, second.SelectedMembers);
+    }
+
+    [Fact]
+    public void FrozenOrdinaryRebuildBreakoutUsesTheSameResolutionContextWithoutReconstructingPendingState()
+    {
+        var (pending, migration) = Pending(StructuralCandidateExtremeSide.Lower);
+        var validating = Candle(24, 100, 140, 60, 131);
+        var breakout = new NasdaqPostInvalidationCandidateRebuildPendingTransitionCalculator()
+            .Evaluate(pending, validating).Breakout!;
+        var fromPending = NasdaqHumanRebuiltCandidateVertexResolutionContext.From(pending);
+        var fromBreakout = NasdaqHumanRebuiltCandidateVertexResolutionContext.From(breakout);
+        var rebuildOrigin = Assert.IsType<NasdaqPostInvalidationBreakoutOrigin.Rebuild>(breakout.Origin);
+        var observation = Observation(pending, [migration.OpenTimeUtc], validating.CloseTimeUtc);
+        var context = Context([migration, validating], validating.CloseTimeUtc, observation);
+        var selection = selector.Select(context, fromBreakout.Episode);
+
+        var result = resolver.Evaluate(fromBreakout, selection, context);
+
+        Assert.Equal(NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind.None, breakout.CollisionKind);
+        Assert.False(breakout.HasStrictMigration);
+        Assert.Equal(fromPending.Episode, fromBreakout.Episode);
+        Assert.Equal(fromPending.CandidateSide, fromBreakout.CandidateSide);
+        Assert.Same(pending.MigrationCandle, fromPending.MigrationCandle);
+        Assert.Same(rebuildOrigin.PriorMigrationCandle, fromBreakout.MigrationCandle);
+        Assert.Equal(fromPending.KnownProtectionAnchor, fromBreakout.KnownProtectionAnchor);
+        Assert.Equal(breakout.PreviousProtectionAnchor, fromBreakout.KnownProtectionAnchor);
+        Assert.NotSame(validating, fromBreakout.MigrationCandle);
+        Assert.Same(migration, result.MigrationCandle);
+        Assert.Equal([migration], result.SelectedMembers);
+        Assert.Same(validating, breakout.ValidatingCandle);
+    }
+
+    [Fact]
+    public void CandidateOriginBreakoutCannotCreateRebuiltMembershipResolutionContext()
+    {
+        var correction = InitialCorrection(StructuralCandidateExtremeSide.Lower);
+        var candidate = new NasdaqPostInvalidationCorrectionTransitionCalculator()
+            .Evaluate(correction, Candle(16, 80, 100, 60, 90)).Candidate!;
+        var candidateOriginBreakout = new NasdaqPostInvalidationCandidateCollisionBreakoutTransitionCalculator()
+            .Evaluate(candidate, Candle(20, 100, 140, 50, 131));
+
+        Assert.IsType<NasdaqPostInvalidationBreakoutOrigin.Candidate>(candidateOriginBreakout.Origin);
+        Assert.Throws<ArgumentException>(() => NasdaqHumanRebuiltCandidateVertexResolutionContext.From(candidateOriginBreakout));
     }
 
     private NasdaqHumanRebuiltCandidateVertexObservationSelection Select(

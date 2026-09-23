@@ -86,7 +86,8 @@ public sealed class NasdaqHumanRebuiltCandidateVertexGeometryCalculatorTests
         var episode = new NasdaqHumanRebuiltCandidateVertexEpisode(
             definition.StrategyId, definition.Version, Provider, Symbol, pending.InvalidatingCandle.OpenTimeUtc, migration.OpenTimeUtc, side);
         var selection = new NasdaqHumanRebuiltCandidateVertexObservationSelector().Select(context, episode);
-        return new NasdaqHumanRebuiltCandidateVertexMemberResolver().Evaluate(pending, selection, context);
+        return new NasdaqHumanRebuiltCandidateVertexMemberResolver().Evaluate(
+            NasdaqHumanRebuiltCandidateVertexResolutionContext.From(pending), selection, context);
     }
 
     private static NasdaqPostInvalidationCandidateRebuildPendingState Pending(StructuralCandidateExtremeSide side, Candle migration)
