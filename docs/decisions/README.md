@@ -30,3 +30,4 @@ Las decisiones reales se registran y enumeran a continuación.
 - [ADR 0007: Define the Nasdaq human-reviewed origin-vertex replay input](0007-define-nasdaq-human-origin-vertex-replay-input.md) — Status: `Accepted`.
 - [ADR 0008: Define the Nasdaq human origin-vertex conflict policy](0008-define-nasdaq-human-origin-vertex-conflict-policy.md) — Status: `Accepted`.
 - [ADR 0009: Define the Nasdaq human-reviewed rebuilt-candidate vertex replay input](0009-define-nasdaq-rebuilt-candidate-vertex-replay-input.md) — Status: `Accepted`.
+- [ADR 0010: Define the Nasdaq collision StructuralPrice replay input](0010-define-nasdaq-collision-structural-price-replay-input.md) — Status: `Accepted`.
