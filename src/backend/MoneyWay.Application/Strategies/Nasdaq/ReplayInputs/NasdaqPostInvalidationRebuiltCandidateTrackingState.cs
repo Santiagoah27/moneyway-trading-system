@@ -7,6 +7,27 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 public sealed class NasdaqPostInvalidationRebuiltCandidateTrackingState
 {
     internal NasdaqPostInvalidationRebuiltCandidateTrackingState(
+        NasdaqPostInvalidationCandidateState candidate,
+        Candle migrationAndFirstTurnCandle)
+    {
+        ArgumentNullException.ThrowIfNull(candidate);
+        ArgumentNullException.ThrowIfNull(migrationAndFirstTurnCandle);
+
+        Episode = candidate.Episode;
+        InvalidatingCandle = candidate.InvalidatingCandle;
+        ImpulseTerminalSide = candidate.ImpulseTerminalSide;
+        CandidateSide = candidate.CandidateSide;
+        OriginGeometry = candidate.OriginGeometry;
+        FrozenImpulseTerminal = candidate.FrozenImpulseTerminal;
+        MigrationCandle = migrationAndFirstTurnCandle;
+        KnownProtectionAnchor = candidate.CandidateSide == StructuralCandidateExtremeSide.Lower
+            ? migrationAndFirstTurnCandle.Low
+            : migrationAndFirstTurnCandle.High;
+        FirstTurnCandle = migrationAndFirstTurnCandle;
+        LastProcessedCandle = migrationAndFirstTurnCandle;
+    }
+
+    internal NasdaqPostInvalidationRebuiltCandidateTrackingState(
         NasdaqPostInvalidationCandidateRebuildPendingState pending,
         Candle firstTurnCandle)
     {
