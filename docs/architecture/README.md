@@ -9,6 +9,7 @@
 - [ADR 0005](../decisions/0005-transport-strategy-owned-evidence-to-replay-lifecycle-policies.md) defines immutable, replay-local and instance-bound transport of typed strategy-owned evidence from canonical replay orchestration to lifecycle policies without coupling generic infrastructure to Nasdaq.
 - [ADR 0006](../decisions/0006-define-nasdaq-preparation-replay-input-contract.md) specifies the future source-backed, immutable preparation-completion input for `NQ-TIME-003` through the bounded canonical replay context.
 - [ADR 0011](../decisions/0011-define-nasdaq-h4-reconstruction-replay-lifecycle.md) defines the pre-evaluation, replay-local Nasdaq H4 structural snapshot boundary needed to preserve post-invalidation episodes across frames without evaluator state.
+- [ADR 0012](../decisions/0012-define-nasdaq-h4-reconstruction-snapshot-variants.md) closes the typed Nasdaq H4 snapshot variant set, including invalidation awaiting origin and terminal completed reconstruction evidence.
 - The technical bootstrap is now authorized.
 - Detailed domain architecture and trading implementation remain pending.
 
