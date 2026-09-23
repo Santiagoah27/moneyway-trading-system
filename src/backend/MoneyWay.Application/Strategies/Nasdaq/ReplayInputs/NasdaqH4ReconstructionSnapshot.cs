@@ -95,6 +95,16 @@ public abstract record NasdaqH4ReconstructionSnapshot : IStrategyReplayPreEvalua
         public sealed override NasdaqH4ReconstructionSnapshotKind Kind => NasdaqH4ReconstructionSnapshotKind.Completed;
         public abstract StructuralCandidateValidationResult ValidatedCandidate { get; }
 
+        public sealed record DirectCandidate : Completed
+        {
+            public DirectCandidate(NasdaqDirectCandidateBreakoutCompletionResult result) =>
+                Result = result ?? throw new ArgumentNullException(nameof(result));
+            public NasdaqDirectCandidateBreakoutCompletionResult Result { get; }
+            public override NasdaqHumanOriginVertexEpisode Episode => Result.Candidate.Episode;
+            public override Candle MarketCursor => Result.ValidatingCandle;
+            public override StructuralCandidateValidationResult ValidatedCandidate => Result.ValidatedCandidate;
+        }
+
         public sealed record Ordinary : Completed
         {
             public Ordinary(NasdaqOrdinaryRebuiltBreakoutCompletionResult result) =>
