@@ -245,20 +245,21 @@ public sealed class NasdaqOrdinaryRebuiltBreakoutCompletionCalculatorTests
         NasdaqPostInvalidationCandidateRebuildBreakoutState breakout,
         IReadOnlyList<Candle> members)
     {
+        var origin = (NasdaqPostInvalidationBreakoutOrigin.Rebuild)breakout.Origin;
         var episode = new NasdaqHumanRebuiltCandidateVertexEpisode(
             breakout.Episode.StrategyId,
             breakout.Episode.StrategyVersion,
             breakout.Episode.ProviderId,
             breakout.Episode.Symbol,
             breakout.Episode.InvalidatingCandleOpenTimeUtc,
-            breakout.PriorMigrationCandle.OpenTimeUtc,
+            origin.PriorMigrationCandle.OpenTimeUtc,
             breakout.CandidateSide);
         var knownProtectionAnchor = breakout.CandidateSide == StructuralCandidateExtremeSide.Lower
-            ? breakout.PriorMigrationCandle.Low
-            : breakout.PriorMigrationCandle.High;
+            ? origin.PriorMigrationCandle.Low
+            : origin.PriorMigrationCandle.High;
         return CreateResolution(
             episode,
-            breakout.PriorMigrationCandle,
+            origin.PriorMigrationCandle,
             members,
             knownProtectionAnchor);
     }

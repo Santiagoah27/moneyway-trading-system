@@ -109,8 +109,12 @@ public sealed class NasdaqPostInvalidationRebuiltCandidateTrackingTransitionCalc
         var breakout = Assert.IsType<NasdaqPostInvalidationCandidateRebuildBreakoutState>(result.Breakout);
         Assert.False(breakout.HasStrictMigration);
         Assert.Equal(NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind.None, breakout.CollisionKind);
+        Assert.Equal(current.KnownProtectionAnchor, breakout.PreviousProtectionAnchor);
+        Assert.Equal(breakout.PreviousProtectionAnchor, breakout.EffectiveProtectionAnchor);
         Assert.Same(current.FirstTurnCandle, breakout.FirstTurnCandle);
-        Assert.Same(current.MigrationCandle, breakout.PriorMigrationCandle);
+        var origin = Assert.IsType<NasdaqPostInvalidationBreakoutOrigin.Rebuild>(breakout.Origin);
+        Assert.Same(current.MigrationCandle, origin.PriorMigrationCandle);
+        Assert.Equal(current.KnownProtectionAnchor, breakout.PreviousProtectionAnchor);
         Assert.Equal(current.KnownProtectionAnchor, breakout.EffectiveProtectionAnchor);
         Assert.Same(candle, breakout.ValidatingCandle);
         Assert.Same(candle, breakout.LastProcessedCandle);
@@ -137,6 +141,8 @@ public sealed class NasdaqPostInvalidationRebuiltCandidateTrackingTransitionCalc
         Assert.Equal(NasdaqPostInvalidationRebuiltCandidateTrackingTransitionKind.BreakoutDetected, result.Kind);
         var breakout = Assert.IsType<NasdaqPostInvalidationCandidateRebuildBreakoutState>(result.Breakout);
         Assert.True(breakout.HasStrictMigration);
+        Assert.IsType<NasdaqPostInvalidationBreakoutOrigin.Rebuild>(breakout.Origin);
+        Assert.Equal(current.KnownProtectionAnchor, breakout.PreviousProtectionAnchor);
         Assert.Equal(expected, breakout.CollisionKind);
         Assert.Equal(side == StructuralCandidateExtremeSide.Lower ? low : high, breakout.EffectiveProtectionAnchor);
         Assert.Same(current.FirstTurnCandle, breakout.FirstTurnCandle);

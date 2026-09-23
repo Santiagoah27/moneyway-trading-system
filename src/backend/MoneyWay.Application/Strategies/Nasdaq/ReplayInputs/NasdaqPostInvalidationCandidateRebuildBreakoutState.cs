@@ -3,7 +3,7 @@ using MoneyWay.Domain.MarketData;
 
 namespace MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 
-/// <summary>Preserves one rebuilt-pending frozen-terminal breakout without fabricating definitive vertex geometry.</summary>
+/// <summary>Preserves one frozen-terminal breakout and its typed causal origin without fabricating definitive vertex geometry.</summary>
 public sealed class NasdaqPostInvalidationCandidateRebuildBreakoutState
 {
     internal NasdaqPostInvalidationCandidateRebuildBreakoutState(
@@ -22,7 +22,8 @@ public sealed class NasdaqPostInvalidationCandidateRebuildBreakoutState
         CandidateSide = pending.CandidateSide;
         OriginGeometry = pending.OriginGeometry;
         FrozenImpulseTerminal = pending.FrozenImpulseTerminal;
-        PriorMigrationCandle = pending.MigrationCandle;
+        Origin = new NasdaqPostInvalidationBreakoutOrigin.Rebuild(pending.MigrationCandle, null);
+        PreviousProtectionAnchor = pending.KnownProtectionAnchor;
         ValidatingCandle = validatingCandle;
         HasStrictMigration = hasStrictMigration;
         EffectiveProtectionAnchor = effectiveProtectionAnchor;
@@ -46,10 +47,34 @@ public sealed class NasdaqPostInvalidationCandidateRebuildBreakoutState
         CandidateSide = tracking.CandidateSide;
         OriginGeometry = tracking.OriginGeometry;
         FrozenImpulseTerminal = tracking.FrozenImpulseTerminal;
-        PriorMigrationCandle = tracking.MigrationCandle;
-        FirstTurnCandle = tracking.FirstTurnCandle;
+        Origin = new NasdaqPostInvalidationBreakoutOrigin.Rebuild(tracking.MigrationCandle, tracking.FirstTurnCandle);
+        PreviousProtectionAnchor = tracking.KnownProtectionAnchor;
         ValidatingCandle = validatingCandle;
         HasStrictMigration = hasStrictMigration;
+        EffectiveProtectionAnchor = effectiveProtectionAnchor;
+        CollisionKind = collisionKind;
+        LastProcessedCandle = validatingCandle;
+    }
+
+    internal NasdaqPostInvalidationCandidateRebuildBreakoutState(
+        NasdaqPostInvalidationCandidateState candidate,
+        Candle validatingCandle,
+        decimal effectiveProtectionAnchor,
+        NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind collisionKind)
+    {
+        ArgumentNullException.ThrowIfNull(candidate);
+        ArgumentNullException.ThrowIfNull(validatingCandle);
+
+        Episode = candidate.Episode;
+        InvalidatingCandle = candidate.InvalidatingCandle;
+        ImpulseTerminalSide = candidate.ImpulseTerminalSide;
+        CandidateSide = candidate.CandidateSide;
+        OriginGeometry = candidate.OriginGeometry;
+        FrozenImpulseTerminal = candidate.FrozenImpulseTerminal;
+        Origin = new NasdaqPostInvalidationBreakoutOrigin.Candidate(candidate);
+        PreviousProtectionAnchor = candidate.CandidateGeometry.ProtectionAnchor;
+        ValidatingCandle = validatingCandle;
+        HasStrictMigration = true;
         EffectiveProtectionAnchor = effectiveProtectionAnchor;
         CollisionKind = collisionKind;
         LastProcessedCandle = validatingCandle;
@@ -62,8 +87,10 @@ public sealed class NasdaqPostInvalidationCandidateRebuildBreakoutState
     public StructuralCandidateExtremeSide CandidateSide { get; }
     public StructuralTurnGeometryResult OriginGeometry { get; }
     public StructuralTurnGeometryResult FrozenImpulseTerminal { get; }
-    public Candle PriorMigrationCandle { get; }
-    public Candle? FirstTurnCandle { get; }
+    public NasdaqPostInvalidationBreakoutOrigin Origin { get; }
+    /// <summary>The effective candidate protection anchor before the validating candle was processed.</summary>
+    public decimal PreviousProtectionAnchor { get; }
+    public Candle? FirstTurnCandle => (Origin as NasdaqPostInvalidationBreakoutOrigin.Rebuild)?.FirstTurnCandle;
     public Candle ValidatingCandle { get; }
     public bool HasStrictMigration { get; }
     public decimal EffectiveProtectionAnchor { get; }

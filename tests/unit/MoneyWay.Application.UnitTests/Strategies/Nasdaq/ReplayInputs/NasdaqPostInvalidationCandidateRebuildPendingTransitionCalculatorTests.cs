@@ -98,6 +98,8 @@ public sealed class NasdaqPostInvalidationCandidateRebuildPendingTransitionCalcu
         Assert.Equal(NasdaqPostInvalidationCandidateRebuildPendingTransitionKind.BreakoutDetected, result.Kind);
         Assert.False(result.Breakout!.HasStrictMigration);
         Assert.Equal(NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind.None, result.Breakout.CollisionKind);
+        Assert.Equal(pending.KnownProtectionAnchor, result.Breakout.PreviousProtectionAnchor);
+        Assert.Equal(result.Breakout.PreviousProtectionAnchor, result.Breakout.EffectiveProtectionAnchor);
         Assert.Same(candle, result.Breakout.LastProcessedCandle);
         Assert.Same(pending.Episode, result.Breakout.Episode);
         Assert.Equal(pending.Episode.StrategyId, result.Breakout.Episode.StrategyId);
@@ -106,7 +108,9 @@ public sealed class NasdaqPostInvalidationCandidateRebuildPendingTransitionCalcu
         Assert.Equal(pending.Episode.Symbol, result.Breakout.Episode.Symbol);
         Assert.Equal(H4, result.Breakout.Episode.Timeframe);
         Assert.Equal(pending.InvalidatingCandle.OpenTimeUtc, result.Breakout.Episode.InvalidatingCandleOpenTimeUtc);
-        Assert.Equal(pending.MigrationCandle.OpenTimeUtc, result.Breakout.PriorMigrationCandle.OpenTimeUtc);
+        var origin = Assert.IsType<NasdaqPostInvalidationBreakoutOrigin.Rebuild>(result.Breakout.Origin);
+        Assert.Equal(pending.MigrationCandle.OpenTimeUtc, origin.PriorMigrationCandle.OpenTimeUtc);
+        Assert.Equal(pending.KnownProtectionAnchor, result.Breakout.PreviousProtectionAnchor);
         Assert.Equal(pending.CandidateSide, result.Breakout.CandidateSide);
         Assert.Null(result.Tracking);
     }
@@ -119,10 +123,13 @@ public sealed class NasdaqPostInvalidationCandidateRebuildPendingTransitionCalcu
     public void MigrationBreakoutClassifiesDirectionalAndHumanStructuralPriceBranches(StructuralCandidateExtremeSide side, decimal open, decimal high, decimal low, decimal close, NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind expected)
     {
         var candle = Candle(24, open, high, low, close);
+        var pending = Pending(side);
 
-        var breakout = calculator.Evaluate(Pending(side), candle).Breakout!;
+        var breakout = calculator.Evaluate(pending, candle).Breakout!;
 
         Assert.True(breakout.HasStrictMigration);
+        Assert.IsType<NasdaqPostInvalidationBreakoutOrigin.Rebuild>(breakout.Origin);
+        Assert.Equal(pending.KnownProtectionAnchor, breakout.PreviousProtectionAnchor);
         Assert.Equal(expected, breakout.CollisionKind);
         Assert.Equal(side == StructuralCandidateExtremeSide.Lower ? low : high, breakout.EffectiveProtectionAnchor);
         Assert.Null(breakout.GetType().GetProperty("StructuralPrice"));

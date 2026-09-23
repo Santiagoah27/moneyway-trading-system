@@ -38,8 +38,8 @@ public sealed class NasdaqHumanStructuralPriceBreakoutCompletionCalculator
             _ => throw new ArgumentOutOfRangeException(nameof(breakout), "The candidate side is not supported."),
         };
         var strictMigration = lower
-            ? candle.Low < breakout.PriorMigrationCandle.Low
-            : candle.High > breakout.PriorMigrationCandle.High;
+            ? candle.Low < breakout.PreviousProtectionAnchor
+            : candle.High > breakout.PreviousProtectionAnchor;
         var anchor = lower ? candle.Low : candle.High;
         var directionalBody = lower ? candle.Close > candle.Open : candle.Close < candle.Open;
         var reference = breakout.FrozenImpulseTerminal.StructuralPrice;

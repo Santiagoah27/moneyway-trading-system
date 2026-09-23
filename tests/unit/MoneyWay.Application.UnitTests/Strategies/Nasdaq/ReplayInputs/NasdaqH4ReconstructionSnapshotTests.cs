@@ -1,3 +1,4 @@
+using System.Reflection;
 using MoneyWay.Application.MarketData.Candles;
 using MoneyWay.Application.MarketData.Replay;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
@@ -89,6 +90,67 @@ public sealed class NasdaqH4ReconstructionSnapshotTests
         Assert.Same(later, advancedSnapshot.MarketCursor);
         Assert.Same(fixture.Candidate.TerminalCandle, originalSnapshot.MarketCursor);
         Assert.Throws<ArgumentException>(() => fixture.Candidate.WithLastProcessedCandle(fixture.Candidate.LastProcessedCandle));
+    }
+
+    [Fact]
+    public void CandidateOriginBreakoutNeedsNoPriorRebuildMigrationCandle()
+    {
+        var fixture = CreateFixture();
+        var candidate = fixture.Candidate;
+        var validating = Candle(20, 100, 140, 50, 69);
+        var constructor = typeof(NasdaqPostInvalidationCandidateRebuildBreakoutState)
+            .GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic)
+            .Single(item => item.GetParameters()[0].ParameterType == typeof(NasdaqPostInvalidationCandidateState));
+        var breakout = (NasdaqPostInvalidationCandidateRebuildBreakoutState)constructor.Invoke(
+            [candidate, validating, validating.High,
+                NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind.NqQH4007DirectionalBody]);
+        var origin = Assert.IsType<NasdaqPostInvalidationBreakoutOrigin.Candidate>(breakout.Origin);
+        var snapshot = new NasdaqH4ReconstructionSnapshot.BreakoutAwaitingCompletion(breakout);
+        var completed = new NasdaqH4ReconstructionSnapshot.Completed.Directional(
+            new NasdaqDirectionalMigrationBreakoutCompletionCalculator().Evaluate(breakout));
+
+        Assert.Same(candidate, origin.State);
+        Assert.Equal(candidate.CandidateGeometry.ProtectionAnchor, breakout.PreviousProtectionAnchor);
+        Assert.True(validating.High > breakout.PreviousProtectionAnchor);
+        Assert.Equal(validating.High, breakout.EffectiveProtectionAnchor);
+        Assert.Null(breakout.FirstTurnCandle);
+        Assert.Same(candidate.Episode, breakout.Episode);
+        Assert.Same(validating, breakout.ValidatingCandle);
+        Assert.Same(validating, snapshot.MarketCursor);
+        Assert.Same(candidate.Episode, completed.Episode);
+        Assert.Same(validating, completed.MarketCursor);
+    }
+
+    [Fact]
+    public void CandidateOrigin008KeepsTheSameHumanCollisionIdentity()
+    {
+        var candidate = CreateFixture().Candidate;
+        var validating = Candle(20, 60, 140, 50, 69);
+        var constructor = typeof(NasdaqPostInvalidationCandidateRebuildBreakoutState)
+            .GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic)
+            .Single(item => item.GetParameters()[0].ParameterType == typeof(NasdaqPostInvalidationCandidateState));
+        var breakout = (NasdaqPostInvalidationCandidateRebuildBreakoutState)constructor.Invoke(
+            [candidate, validating, validating.High,
+                NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind.NqQH4008HumanStructuralPriceRequired]);
+        var episode = new NasdaqHumanCollisionStructuralPriceEpisode(
+            breakout.Episode, breakout.ValidatingCandle.OpenTimeUtc, breakout.CandidateSide);
+        var observation = new NasdaqHumanCollisionStructuralPriceObservation(
+            candidate.Episode, validating.OpenTimeUtc, candidate.CandidateSide,
+            111.2345m, validating.CloseTimeUtc, "review:candidate-collision");
+        var selectionConstructor = typeof(NasdaqHumanCollisionStructuralPriceObservationSelection)
+            .GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic).Single();
+        var selection = (NasdaqHumanCollisionStructuralPriceObservationSelection)selectionConstructor.Invoke(
+            [NasdaqHumanCollisionStructuralPriceObservationSelectionKind.Unique,
+                observation.StructuralPrice, new[] { observation }, new[] { observation.StructuralPrice }]);
+        var completion = new NasdaqHumanStructuralPriceBreakoutCompletionCalculator().Evaluate(breakout, selection);
+
+        Assert.IsType<NasdaqPostInvalidationBreakoutOrigin.Candidate>(breakout.Origin);
+        Assert.True(episode.Matches(observation));
+        Assert.Equal(candidate.CandidateGeometry.ProtectionAnchor, breakout.PreviousProtectionAnchor);
+        Assert.Equal(validating.High, breakout.EffectiveProtectionAnchor);
+        Assert.Same(candidate.Episode, completion.Breakout.Episode);
+        Assert.Same(validating, completion.LastProcessedCandle);
+        Assert.Same(observation, Assert.Single(completion.HumanPriceSelection.SupportingObservations));
     }
 
     [Fact]

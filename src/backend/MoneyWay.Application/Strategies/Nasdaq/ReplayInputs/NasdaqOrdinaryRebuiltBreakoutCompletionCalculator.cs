@@ -18,12 +18,13 @@ public sealed class NasdaqOrdinaryRebuiltBreakoutCompletionCalculator
         ArgumentNullException.ThrowIfNull(candidateGeometry);
 
         if (breakout.HasStrictMigration
-            || breakout.CollisionKind != NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind.None)
+            || breakout.CollisionKind != NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind.None
+            || breakout.Origin is not NasdaqPostInvalidationBreakoutOrigin.Rebuild rebuild)
         {
             throw new ArgumentException("Only an ordinary rebuilt breakout can be completed by this calculator.", nameof(breakout));
         }
 
-        EnsureMatchingEpisode(breakout, memberResolution);
+        EnsureMatchingEpisode(breakout, rebuild, memberResolution);
 
         if (memberResolution.SelectedMembers.Any(member =>
                 member.OpenTimeUtc >= breakout.ValidatingCandle.OpenTimeUtc))
@@ -83,6 +84,7 @@ public sealed class NasdaqOrdinaryRebuiltBreakoutCompletionCalculator
 
     private static void EnsureMatchingEpisode(
         NasdaqPostInvalidationCandidateRebuildBreakoutState breakout,
+        NasdaqPostInvalidationBreakoutOrigin.Rebuild rebuild,
         NasdaqHumanRebuiltCandidateVertexMemberResolution memberResolution)
     {
         var origin = breakout.Episode;
@@ -93,13 +95,13 @@ public sealed class NasdaqOrdinaryRebuiltBreakoutCompletionCalculator
             || origin.Symbol != rebuilt.Symbol
             || origin.Timeframe != rebuilt.Timeframe
             || origin.InvalidatingCandleOpenTimeUtc != rebuilt.InvalidatingCandleOpenTimeUtc
-            || breakout.PriorMigrationCandle.OpenTimeUtc != rebuilt.MigrationCandleOpenTimeUtc
+            || rebuild.PriorMigrationCandle.OpenTimeUtc != rebuilt.MigrationCandleOpenTimeUtc
             || breakout.CandidateSide != rebuilt.CandidateSide
-            || memberResolution.MigrationCandle.ProviderId != breakout.PriorMigrationCandle.ProviderId
-            || memberResolution.MigrationCandle.Symbol != breakout.PriorMigrationCandle.Symbol
-            || memberResolution.MigrationCandle.Timeframe != breakout.PriorMigrationCandle.Timeframe
-            || memberResolution.MigrationCandle.OpenTimeUtc != breakout.PriorMigrationCandle.OpenTimeUtc
-            || memberResolution.MigrationCandle.CloseTimeUtc != breakout.PriorMigrationCandle.CloseTimeUtc)
+            || memberResolution.MigrationCandle.ProviderId != rebuild.PriorMigrationCandle.ProviderId
+            || memberResolution.MigrationCandle.Symbol != rebuild.PriorMigrationCandle.Symbol
+            || memberResolution.MigrationCandle.Timeframe != rebuild.PriorMigrationCandle.Timeframe
+            || memberResolution.MigrationCandle.OpenTimeUtc != rebuild.PriorMigrationCandle.OpenTimeUtc
+            || memberResolution.MigrationCandle.CloseTimeUtc != rebuild.PriorMigrationCandle.CloseTimeUtc)
         {
             throw new ArgumentException(
                 "The rebuilt candidate membership must match the exact breakout episode.",

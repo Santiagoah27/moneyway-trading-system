@@ -32,8 +32,8 @@ public sealed class NasdaqDirectionalMigrationBreakoutCompletionCalculator
             ? candle.Close > candle.Open
             : candle.Close < candle.Open;
         var strictMigration = direction == StructuralBreakDirection.Upper
-            ? candle.Low < breakout.PriorMigrationCandle.Low
-            : candle.High > breakout.PriorMigrationCandle.High;
+            ? candle.Low < breakout.PreviousProtectionAnchor
+            : candle.High > breakout.PreviousProtectionAnchor;
         var reference = breakout.FrozenImpulseTerminal.StructuralPrice;
         var strictBreak = direction == StructuralBreakDirection.Upper
             ? candle.Close > reference
