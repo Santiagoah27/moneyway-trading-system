@@ -31,6 +31,39 @@ public sealed class NasdaqPostInvalidationCandidateState
         CorrectionTurnCandles = new ReadOnlyCollection<Candle>(correction.CorrectionTurnCandles.ToArray());
         CandidateGeometry = candidateGeometry;
         TerminalCandle = terminalCandle;
+        LastProcessedCandle = terminalCandle;
+    }
+
+    private NasdaqPostInvalidationCandidateState(
+        NasdaqPostInvalidationCandidateState current,
+        Candle lastProcessedCandle)
+    {
+        ArgumentNullException.ThrowIfNull(current);
+        ArgumentNullException.ThrowIfNull(lastProcessedCandle);
+
+        var previous = current.LastProcessedCandle;
+        if (lastProcessedCandle.ProviderId != previous.ProviderId
+            || lastProcessedCandle.Symbol != previous.Symbol
+            || lastProcessedCandle.Timeframe != NasdaqHumanOriginVertexObservation.H4
+            || lastProcessedCandle.Timeframe != previous.Timeframe
+            || lastProcessedCandle.OpenTimeUtc <= previous.OpenTimeUtc
+            || lastProcessedCandle.OpenTimeUtc < previous.CloseTimeUtc
+            || lastProcessedCandle.CloseTimeUtc <= previous.CloseTimeUtc)
+        {
+            throw new ArgumentException("The candidate cursor must advance to a later closed candle in the same H4 series.", nameof(lastProcessedCandle));
+        }
+
+        Episode = current.Episode;
+        InvalidatingCandle = current.InvalidatingCandle;
+        ImpulseTerminalSide = current.ImpulseTerminalSide;
+        CandidateSide = current.CandidateSide;
+        OriginGeometry = current.OriginGeometry;
+        FrozenImpulseTerminal = current.FrozenImpulseTerminal;
+        CorrectionStartCandle = current.CorrectionStartCandle;
+        CorrectionTurnCandles = new ReadOnlyCollection<Candle>(current.CorrectionTurnCandles.ToArray());
+        CandidateGeometry = current.CandidateGeometry;
+        TerminalCandle = current.TerminalCandle;
+        LastProcessedCandle = lastProcessedCandle;
     }
 
     public NasdaqHumanOriginVertexEpisode Episode { get; }
@@ -56,5 +89,10 @@ public sealed class NasdaqPostInvalidationCandidateState
     /// <summary>The correction terminal and first candle of the next opposite impulse.</summary>
     public Candle TerminalCandle { get; }
 
-    public Candle LastProcessedCandle => TerminalCandle;
+    /// <summary>The latest closed H4 candle consumed while this candidate remains active.</summary>
+    public Candle LastProcessedCandle { get; }
+
+    /// <summary>Returns an equivalent candidate with a later consumed H4 cursor and unchanged structural fields.</summary>
+    public NasdaqPostInvalidationCandidateState WithLastProcessedCandle(Candle lastProcessedCandle) =>
+        new(this, lastProcessedCandle);
 }

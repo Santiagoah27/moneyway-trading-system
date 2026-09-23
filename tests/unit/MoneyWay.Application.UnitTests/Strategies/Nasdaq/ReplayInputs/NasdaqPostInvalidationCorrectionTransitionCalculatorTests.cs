@@ -80,6 +80,7 @@ public sealed class NasdaqPostInvalidationCorrectionTransitionCalculatorTests
         Assert.Same(state.CorrectionStartCandle, candidate.CorrectionTurnCandles[0]);
         Assert.Same(terminal, candidate.TerminalCandle);
         Assert.Same(terminal, candidate.LastProcessedCandle);
+        Assert.Null(candidate.GetType().GetProperty(nameof(candidate.LastProcessedCandle))?.SetMethod);
         Assert.Same(state.InvalidatingCandle, candidate.InvalidatingCandle);
         Assert.Same(state.OriginGeometry, candidate.OriginGeometry);
         Assert.Same(state.Episode, candidate.Episode);

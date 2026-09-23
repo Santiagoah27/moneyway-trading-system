@@ -56,7 +56,7 @@ public abstract record NasdaqH4ReconstructionSnapshot : IStrategyReplayPreEvalua
         public NasdaqPostInvalidationCandidateState State { get; }
         public override NasdaqH4ReconstructionSnapshotKind Kind => NasdaqH4ReconstructionSnapshotKind.Candidate;
         public override NasdaqHumanOriginVertexEpisode Episode => State.Episode;
-        public override Candle MarketCursor => State.TerminalCandle;
+        public override Candle MarketCursor => State.LastProcessedCandle;
     }
 
     public sealed record RebuildPending : NasdaqH4ReconstructionSnapshot

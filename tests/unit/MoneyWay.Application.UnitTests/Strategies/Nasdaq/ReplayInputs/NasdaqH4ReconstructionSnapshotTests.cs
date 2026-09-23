@@ -47,7 +47,7 @@ public sealed class NasdaqH4ReconstructionSnapshotTests
         Assert.Same(fixture.Correction, Assert.IsType<NasdaqH4ReconstructionSnapshot.Correction>(snapshots[2]).State);
         Assert.Same(fixture.Correction.LastProcessedCandle, snapshots[2].MarketCursor);
         Assert.Same(fixture.Candidate, Assert.IsType<NasdaqH4ReconstructionSnapshot.Candidate>(snapshots[3]).State);
-        Assert.Same(fixture.Candidate.TerminalCandle, snapshots[3].MarketCursor);
+        Assert.Same(fixture.Candidate.LastProcessedCandle, snapshots[3].MarketCursor);
         Assert.Same(fixture.Pending, Assert.IsType<NasdaqH4ReconstructionSnapshot.RebuildPending>(snapshots[4]).State);
         Assert.Same(fixture.Pending.LastProcessedCandle, snapshots[4].MarketCursor);
         Assert.Same(fixture.Tracking, Assert.IsType<NasdaqH4ReconstructionSnapshot.RebuiltTracking>(snapshots[5]).State);
@@ -67,6 +67,28 @@ public sealed class NasdaqH4ReconstructionSnapshotTests
         Assert.Throws<ArgumentException>(() => new NasdaqH4InvalidatedAwaitingOriginState(wrongEpisode, fixture.Awaiting.Invalidation));
         Assert.Same(fixture.Awaiting.Invalidation.CurrentCandle, fixture.Awaiting.LastProcessedCandle);
         Assert.Equal(StructuralCandidateTurnBoundaryKind.StructureInvalidated, fixture.Awaiting.Invalidation.Kind);
+    }
+
+    [Fact]
+    public void CandidateSnapshotUsesIndependentCausalCursorWithoutMutatingStructuralTerminal()
+    {
+        var fixture = CreateFixture();
+        var later = Candle(20, 100, 130, 90, 99);
+        var advanced = fixture.Candidate.WithLastProcessedCandle(later);
+        var originalSnapshot = new NasdaqH4ReconstructionSnapshot.Candidate(fixture.Candidate);
+        var advancedSnapshot = new NasdaqH4ReconstructionSnapshot.Candidate(advanced);
+
+        Assert.Same(fixture.Candidate.TerminalCandle, fixture.Candidate.LastProcessedCandle);
+        Assert.Same(fixture.Candidate.TerminalCandle, advanced.TerminalCandle);
+        Assert.Same(later, advanced.LastProcessedCandle);
+        Assert.NotSame(advanced, fixture.Candidate);
+        Assert.Same(fixture.Candidate.Episode, advanced.Episode);
+        Assert.Same(fixture.Candidate.CandidateGeometry, advanced.CandidateGeometry);
+        Assert.Equal(fixture.Candidate.CorrectionTurnCandles, advanced.CorrectionTurnCandles);
+        Assert.Same(fixture.Candidate.LastProcessedCandle, originalSnapshot.MarketCursor);
+        Assert.Same(later, advancedSnapshot.MarketCursor);
+        Assert.Same(fixture.Candidate.TerminalCandle, originalSnapshot.MarketCursor);
+        Assert.Throws<ArgumentException>(() => fixture.Candidate.WithLastProcessedCandle(fixture.Candidate.LastProcessedCandle));
     }
 
     [Fact]
