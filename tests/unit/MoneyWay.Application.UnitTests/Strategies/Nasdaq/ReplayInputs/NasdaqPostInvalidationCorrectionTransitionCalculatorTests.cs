@@ -14,6 +14,30 @@ public sealed class NasdaqPostInvalidationCorrectionTransitionCalculatorTests
     private static readonly Timeframe H4 = NasdaqHumanOriginVertexObservation.H4;
     private static readonly DateTimeOffset Start = new(2026, 9, 21, 0, 0, 0, TimeSpan.Zero);
     private readonly NasdaqPostInvalidationCorrectionTransitionCalculator calculator = new();
+    private readonly NasdaqH4CorrectionSnapshotReducer snapshotReducer = new();
+
+    [Fact]
+    public void SnapshotReducerMapsContinuationAndCandidateWithoutAdvancingAgain()
+    {
+        var state = Initial(StructuralCandidateExtremeSide.Upper);
+        var input = new NasdaqH4ReconstructionSnapshot.Correction(state);
+        var continuingCandle = Candle(16, 100, 120, 90, 110);
+        var terminalCandle = Candle(16, 100, 130, 90, 99);
+
+        var continuing = Assert.IsType<NasdaqH4ReconstructionSnapshot.Correction>(
+            snapshotReducer.Reduce(input, continuingCandle));
+        var candidate = Assert.IsType<NasdaqH4ReconstructionSnapshot.Candidate>(
+            snapshotReducer.Reduce(input, terminalCandle));
+
+        Assert.Same(continuingCandle, continuing.MarketCursor);
+        Assert.Same(state.Episode, continuing.Episode);
+        Assert.Same(terminalCandle, candidate.State.TerminalCandle);
+        Assert.Same(terminalCandle, candidate.State.LastProcessedCandle);
+        Assert.Same(state.Episode, candidate.Episode);
+        Assert.Equal(NasdaqH4ReconstructionSnapshotKind.Candidate, candidate.Kind);
+        Assert.Same(state.LastProcessedCandle, input.MarketCursor);
+    }
+
 
     [Theory]
     [InlineData(StructuralCandidateExtremeSide.Upper, 100, 120, 90, 110, 110, 120)]
