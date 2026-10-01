@@ -40,3 +40,4 @@ Las decisiones reales se registran y enumeran a continuación.
 - [ADR 0017: Clarify Nasdaq invalidated-origin evidence replay lifecycle](0017-clarify-nasdaq-invalidated-origin-evidence-replay-lifecycle.md) — Status: `Accepted`.
 - [ADR 0018: Define Nasdaq invalidated-origin late-evidence catch-up](0018-define-nasdaq-invalidated-origin-late-evidence-catch-up.md) — Status: `Accepted`.
 - [ADR 0019: Clarify Nasdaq post-completion H4 lifecycle](0019-clarify-nasdaq-post-completion-h4-lifecycle.md) — Status: `Accepted`.
+- [ADR 0020: Define Nasdaq post-completion active structural handoff](0020-define-nasdaq-post-completion-active-structural-handoff.md) — Status: `Accepted`.
