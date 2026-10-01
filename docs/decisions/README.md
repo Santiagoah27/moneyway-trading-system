@@ -38,3 +38,4 @@ Las decisiones reales se registran y enumeran a continuación.
 - [ADR 0015: Define Nasdaq H4 breakout evidence waiting policy](0015-define-nasdaq-breakout-evidence-waiting-policy.md) — Status: `Accepted`.
 - [ADR 0016: Decouple Nasdaq rebuilt membership resolution from lifecycle state](0016-decouple-nasdaq-rebuilt-membership-resolution.md) — Status: `Accepted`.
 - [ADR 0017: Clarify Nasdaq invalidated-origin evidence replay lifecycle](0017-clarify-nasdaq-invalidated-origin-evidence-replay-lifecycle.md) — Status: `Accepted`.
+- [ADR 0018: Define Nasdaq invalidated-origin late-evidence catch-up](0018-define-nasdaq-invalidated-origin-late-evidence-catch-up.md) — Status: `Accepted`.
