@@ -43,3 +43,4 @@ Las decisiones reales se registran y enumeran a continuación.
 - [ADR 0020: Define Nasdaq post-completion active structural handoff](0020-define-nasdaq-post-completion-active-structural-handoff.md) — Status: `Accepted`.
 - [ADR 0021: Define Nasdaq active-extreme final-cluster membership](0021-define-nasdaq-active-extreme-final-cluster-membership.md) — Status: `Accepted`.
 - [ADR 0022: Define Nasdaq post-completion active-extreme evidence lifecycle](0022-define-nasdaq-post-completion-active-extreme-evidence-lifecycle.md) — Status: `Accepted`.
+- [ADR 0023: Clarify Nasdaq active-extreme membership validity and data availability](0023-clarify-nasdaq-active-extreme-membership-validity-and-data-availability.md) — Status: `Accepted`.
