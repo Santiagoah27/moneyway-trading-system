@@ -42,3 +42,4 @@ Las decisiones reales se registran y enumeran a continuación.
 - [ADR 0019: Clarify Nasdaq post-completion H4 lifecycle](0019-clarify-nasdaq-post-completion-h4-lifecycle.md) — Status: `Accepted`.
 - [ADR 0020: Define Nasdaq post-completion active structural handoff](0020-define-nasdaq-post-completion-active-structural-handoff.md) — Status: `Accepted`.
 - [ADR 0021: Define Nasdaq active-extreme final-cluster membership](0021-define-nasdaq-active-extreme-final-cluster-membership.md) — Status: `Accepted`.
+- [ADR 0022: Define Nasdaq post-completion active-extreme evidence lifecycle](0022-define-nasdaq-post-completion-active-extreme-evidence-lifecycle.md) — Status: `Accepted`.
