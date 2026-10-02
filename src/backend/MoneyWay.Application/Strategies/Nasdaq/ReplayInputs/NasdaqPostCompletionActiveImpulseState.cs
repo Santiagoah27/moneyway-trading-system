@@ -14,6 +14,15 @@ public sealed class NasdaqPostCompletionActiveImpulseState
     {
         ArgumentNullException.ThrowIfNull(episode);
         Episode = episode;
+        MarketCursor = episode.ConfirmingCandle;
+    }
+
+    internal NasdaqPostCompletionActiveImpulseState(NasdaqPostCompletionActiveImpulseState previous, Candle marketCursor)
+    {
+        ArgumentNullException.ThrowIfNull(previous);
+        ArgumentNullException.ThrowIfNull(marketCursor);
+        Episode = previous.Episode;
+        MarketCursor = marketCursor;
     }
 
     public NasdaqPostCompletionEpisode Episode { get; }
@@ -22,5 +31,5 @@ public sealed class NasdaqPostCompletionActiveImpulseState
     public StructuralCandidateValidationResult ValidatedProtectedTurn => Completion.ValidatedCandidate;
     public StructuralTurnGeometryResult ProtectedTurnGeometry => ValidatedProtectedTurn.CandidateGeometry;
     public Candle ConfirmingCandle => Episode.ConfirmingCandle;
-    public Candle MarketCursor => ConfirmingCandle;
+    public Candle MarketCursor { get; }
 }
