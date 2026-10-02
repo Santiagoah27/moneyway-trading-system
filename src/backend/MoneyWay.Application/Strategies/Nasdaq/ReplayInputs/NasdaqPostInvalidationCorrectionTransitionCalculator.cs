@@ -7,10 +7,7 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 public sealed class NasdaqPostInvalidationCorrectionTransitionCalculator
 {
     private readonly CandleBodyDirectionCalculator bodyDirectionCalculator = new();
-    private readonly CorrectionBodyDirectionCalculator correctionDirectionCalculator = new();
-    private readonly StructuralTurnBodyCoordinateCalculator bodyCalculator = new();
-    private readonly StructuralTurnProtectionAnchorCalculator protectionCalculator = new();
-    private readonly StructuralCandidateExtremeCalculator extremeCalculator = new();
+    private readonly CorrectionCandidateTurnCalculator turnCalculator = new();
 
     public NasdaqPostInvalidationCorrectionTransitionResult Evaluate(
         NasdaqPostInvalidationCorrectionState current,
@@ -33,44 +30,19 @@ public sealed class NasdaqPostInvalidationCorrectionTransitionCalculator
             throw new ArgumentException("The next closed candle must follow the last processed candle without overlap.", nameof(candle));
         }
 
-        var candidateSide = current.CandidateSide;
-        var correctionExtremeSide = candidateSide == StructuralCandidateExtremeSide.Upper
-            ? CorrectionOriginExtremeSide.Floor
-            : CorrectionOriginExtremeSide.Ceiling;
-        var protectionSide = candidateSide == StructuralCandidateExtremeSide.Upper
-            ? StructuralTurnProtectionSide.Upper
-            : StructuralTurnProtectionSide.Lower;
-        var bodyDirection = bodyDirectionCalculator.Evaluate(candle);
-        if (bodyDirection == CandleBodyDirection.Neutral
-            || correctionDirectionCalculator.Evaluate(correctionExtremeSide, bodyDirection))
+        var result = turnCalculator.Evaluate(current.CorrectionTurnCandles, current.CorrectionGeometry,
+            current.CandidateSide, candle, bodyDirectionCalculator.Evaluate(candle));
+        return result switch
         {
-            var members = current.CorrectionTurnCandles.Append(candle).ToArray();
-            var observedBody = bodyCalculator.Evaluate([candle], current.CorrectionGeometry.Side);
-            var observedProtection = protectionCalculator.Evaluate([candle], protectionSide);
-            var geometry = new StructuralTurnGeometryResult(
-                new StructuralTurnBodyCoordinateResult(
-                    extremeCalculator.Evaluate(current.CorrectionGeometry.StructuralPrice,
-                        observedBody.StructuralPrice, candidateSide).ResultingExtreme,
-                    current.CorrectionGeometry.Side),
-                new StructuralTurnProtectionAnchorResult(
-                    extremeCalculator.Evaluate(current.CorrectionGeometry.ProtectionAnchor,
-                        observedProtection.ProtectionAnchor, candidateSide).ResultingExtreme,
-                    protectionSide));
-            var state = new NasdaqPostInvalidationCorrectionState(
-                current.Episode, current.InvalidatingCandle, current.ImpulseTerminalSide, candidateSide,
-                current.OriginGeometry, current.FrozenImpulseTerminal, current.CorrectionStartCandle,
-                members, geometry, candle);
-            return NasdaqPostInvalidationCorrectionTransitionResult.Continue(state);
-        }
-
-        var terminalProtection = protectionCalculator.Evaluate([candle], protectionSide).ProtectionAnchor;
-        var resultingProtection = extremeCalculator.Evaluate(
-            current.CorrectionGeometry.ProtectionAnchor, terminalProtection, candidateSide).ResultingExtreme;
-        var candidateGeometry = new StructuralTurnGeometryResult(
-            new StructuralTurnBodyCoordinateResult(current.CorrectionGeometry.StructuralPrice,
-                current.CorrectionGeometry.Side),
-            new StructuralTurnProtectionAnchorResult(resultingProtection, protectionSide));
-        var candidate = new NasdaqPostInvalidationCandidateState(current, candidateGeometry, candle);
-        return NasdaqPostInvalidationCorrectionTransitionResult.FormCandidate(candidate);
+            CorrectionCandidateTurnResult.ContinuingCorrection continuing =>
+                NasdaqPostInvalidationCorrectionTransitionResult.Continue(new NasdaqPostInvalidationCorrectionState(
+                    current.Episode, current.InvalidatingCandle, current.ImpulseTerminalSide, current.CandidateSide,
+                    current.OriginGeometry, current.FrozenImpulseTerminal, current.CorrectionStartCandle,
+                    continuing.CorrectionTurnCandles, continuing.Geometry, continuing.MarketCursor)),
+            CorrectionCandidateTurnResult.CandidateProvisional candidate =>
+                NasdaqPostInvalidationCorrectionTransitionResult.FormCandidate(
+                    new NasdaqPostInvalidationCandidateState(current, candidate.Geometry, candidate.TerminalCandle)),
+            _ => throw new InvalidOperationException("The correction turn result is not supported."),
+        };
     }
 }
