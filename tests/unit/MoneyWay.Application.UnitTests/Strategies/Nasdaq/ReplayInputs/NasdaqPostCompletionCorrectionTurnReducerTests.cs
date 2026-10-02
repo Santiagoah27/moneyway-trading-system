@@ -139,7 +139,7 @@ public sealed class NasdaqPostCompletionCorrectionTurnReducerTests
         var candidate = typeof(NasdaqPostCompletionCandidateState);
         Assert.Empty(candidate.GetConstructors());
         Assert.All(candidate.GetProperties(), property => Assert.Null(property.SetMethod));
-        Assert.Equal(new[] { "ActivePair", "CandidateFacts", "CandidateGeometry", "CandidateSide", "CorrectionStartCandle", "CorrectionTurnCandles", "Episode", "MarketCursor", "Provisional", "SourceCorrection", "TerminalCandle" },
+        Assert.Equal(new[] { "ActivePair", "CandidateFacts", "CandidateGeometry", "CandidateSide", "Continuation", "CorrectionStartCandle", "CorrectionTurnCandles", "Episode", "MarketCursor", "Provisional", "SourceCorrection", "TerminalCandle" },
             candidate.GetProperties().Select(p => p.Name).Order());
         Assert.DoesNotContain(candidate.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly), m => !m.IsSpecialName);
     }
