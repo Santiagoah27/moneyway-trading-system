@@ -84,7 +84,8 @@ public sealed class NasdaqPostCompletionActiveCorrectionInitializerTests
             Assert.Empty(type.GetConstructors());
             Assert.All(type.GetProperties(), property => Assert.Null(property.SetMethod));
         }
-        Assert.Equal(new[] { "ActivePair", "Completion", "CorrectionStartCandle", "CorrectionTurnCandles", "Episode", "GeometryReady", "MarketCursor" },
+        Assert.Null(initializer.Initialize(Ready(false, false, false)).CorrectionProgression);
+        Assert.Equal(new[] { "ActivePair", "Completion", "CorrectionProgression", "CorrectionStartCandle", "CorrectionTurnCandles", "Episode", "GeometryReady", "MarketCursor" },
             typeof(NasdaqPostCompletionActiveCorrectionState).GetProperties().Select(p => p.Name).Order());
         Assert.Equal(new[] { "ActiveExtreme", "ActiveExtremeGeometry", "ActiveExtremeSide", "ProtectedTurn", "ProtectedTurnGeometry" },
             typeof(NasdaqPostCompletionStructuralPair).GetProperties().Select(p => p.Name).Order());

@@ -3,7 +3,7 @@ using MoneyWay.Domain.MarketData;
 
 namespace MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 
-/// <summary>A resolved active pair whose correction has consumed exactly its first candle.</summary>
+/// <summary>A resolved active pair with its immutable, already-consumed correction progression.</summary>
 public sealed class NasdaqPostCompletionActiveCorrectionState
 {
     internal NasdaqPostCompletionActiveCorrectionState(NasdaqPostCompletionExtremeGeometryReady geometryReady)
@@ -14,6 +14,17 @@ public sealed class NasdaqPostCompletionActiveCorrectionState
         GeometryReady = geometryReady;
         ActivePair = new(geometryReady.ExtremeGeometry, geometryReady.PendingState.ValidatedProtectedTurn);
         CorrectionTurnCandles = new ReadOnlyCollection<Candle>([CorrectionStartCandle]);
+        MarketCursor = CorrectionStartCandle;
+    }
+
+    internal NasdaqPostCompletionActiveCorrectionState(NasdaqPostCompletionCorrectionTurnResult.ContinuingCorrection progression)
+    {
+        ArgumentNullException.ThrowIfNull(progression);
+        CorrectionProgression = progression;
+        GeometryReady = progression.SourceState.GeometryReady;
+        ActivePair = progression.ActivePair;
+        CorrectionTurnCandles = progression.TurnResult.CorrectionTurnCandles;
+        MarketCursor = progression.MarketCursor;
     }
 
     public NasdaqPostCompletionExtremeGeometryReady GeometryReady { get; }
@@ -22,5 +33,7 @@ public sealed class NasdaqPostCompletionActiveCorrectionState
     public NasdaqH4ReconstructionSnapshot.Completed Completion => Episode.Completion;
     public Candle CorrectionStartCandle => GeometryReady.PendingState.CorrectionStartCandle;
     public IReadOnlyList<Candle> CorrectionTurnCandles { get; }
-    public Candle MarketCursor => CorrectionStartCandle;
+    /// <summary>Absent only for the initial correction seed; retains the complete prior progression chain.</summary>
+    public NasdaqPostCompletionCorrectionTurnResult.ContinuingCorrection? CorrectionProgression { get; }
+    public Candle MarketCursor { get; }
 }
