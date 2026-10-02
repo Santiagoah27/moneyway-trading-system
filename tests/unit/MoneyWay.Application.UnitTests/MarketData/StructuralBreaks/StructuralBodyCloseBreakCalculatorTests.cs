@@ -16,6 +16,67 @@ public sealed class StructuralBodyCloseBreakCalculatorTests
     private static readonly DateTimeOffset Start = new(2026, 1, 1, 8, 0, 0, TimeSpan.Zero);
     private readonly StructuralBodyCloseBreakCalculator calculator = new();
 
+    [Theory]
+    [InlineData(StructuralBreakDirection.Upper, 99, 102, 98, 101, true)]
+    [InlineData(StructuralBreakDirection.Upper, 99, 102, 98, 100, false)]
+    [InlineData(StructuralBreakDirection.Upper, 99, 102, 98, 99, false)]
+    [InlineData(StructuralBreakDirection.Upper, 101, 102, 98, 99, false)]
+    [InlineData(StructuralBreakDirection.Upper, 102, 103, 99, 101, true)]
+    [InlineData(StructuralBreakDirection.Upper, 101, 102, 99, 101, true)]
+    [InlineData(StructuralBreakDirection.Upper, 100, 102, 98, 100, false)]
+    [InlineData(StructuralBreakDirection.Lower, 101, 102, 98, 99, true)]
+    [InlineData(StructuralBreakDirection.Lower, 101, 102, 98, 100, false)]
+    [InlineData(StructuralBreakDirection.Lower, 101, 102, 98, 101, false)]
+    [InlineData(StructuralBreakDirection.Lower, 99, 102, 98, 101, false)]
+    [InlineData(StructuralBreakDirection.Lower, 98, 102, 97, 99, true)]
+    [InlineData(StructuralBreakDirection.Lower, 99, 102, 98, 99, true)]
+    [InlineData(StructuralBreakDirection.Lower, 100, 102, 98, 100, false)]
+    public void PureCloseSemanticsMatchContextForBreakEqualityWickOpenAndBodyShapes(
+        StructuralBreakDirection direction, decimal open, decimal high, decimal low, decimal close, bool expected)
+    {
+        var candle = Candle(FourHours, Start, Start.AddHours(4), open, high, low, close);
+        var context = ContextAt(candle.CloseTimeUtc, Series(candle));
+        var result = calculator.Evaluate(candle, 100, direction);
+
+        Assert.Equal(expected, result.IsConfirmed);
+        Assert.Equal(calculator.EvaluateCurrentBoundary(context, FourHours, 100, direction), result);
+        Assert.Equal(result, calculator.Evaluate(candle, 100, direction));
+        Assert.Same(candle, result.Candle);
+        Assert.Equal((Provider, Symbol, FourHours, 100m, direction, candle.CloseTimeUtc),
+            (result.ProviderId, result.Symbol, result.Timeframe, result.ReferenceLevel, result.Direction, result.AsOfUtc));
+        Assert.Equal((open, high, low, close), (candle.Open, candle.High, candle.Low, candle.Close));
+    }
+
+    [Fact]
+    public void PureOperationRejectsNullCandleAndUnknownDirection()
+    {
+        var candle = Candle(FourHours, Start, Start.AddHours(4), 99, 102, 98, 101);
+        Assert.Throws<ArgumentNullException>(() => calculator.Evaluate(null!, 100, StructuralBreakDirection.Upper));
+        Assert.Throws<ArgumentOutOfRangeException>(() => calculator.Evaluate(candle, 100, (StructuralBreakDirection)99));
+    }
+
+    [Fact]
+    public void ContextDoesNotReuseAnAvailableStaleCandleOrSubstituteAnotherTimeframe()
+    {
+        var h4 = Candle(FourHours, Start, Start.AddHours(4), 99, 102, 98, 101);
+        var minute = Candle(Minute, Start.AddHours(4), Start.AddHours(4).AddMinutes(1), 99, 102, 98, 101);
+        var context = ContextAt(minute.CloseTimeUtc, Series(h4), Series(minute));
+        Assert.True(context.IsAvailable(FourHours));
+        Assert.False(context.WasUpdated(FourHours));
+        var stale = calculator.EvaluateCurrentBoundary(context, FourHours, 100, StructuralBreakDirection.Upper);
+        Assert.Null(stale.Candle);
+        Assert.False(stale.IsConfirmed);
+        Assert.Equal(context.AsOfUtc, stale.AsOfUtc);
+        Assert.True(calculator.Evaluate(h4, 100, StructuralBreakDirection.Upper).IsConfirmed);
+
+        var absent = ContextAt(minute.CloseTimeUtc, Series(minute));
+        var missing = calculator.EvaluateCurrentBoundary(absent, FourHours, 100, StructuralBreakDirection.Upper);
+        Assert.Null(missing.Candle);
+        Assert.False(missing.IsConfirmed);
+        Assert.Equal(FourHours, missing.Timeframe);
+        Assert.Throws<ArgumentOutOfRangeException>(() => calculator.EvaluateCurrentBoundary(absent, FourHours, 100, (StructuralBreakDirection)99));
+    }
+
     [Fact]
     public void UpperCloseStrictlyAboveReferenceConfirmsBreak()
     {
