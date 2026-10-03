@@ -215,7 +215,7 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
                 context.UpdatedTimeframes,
                 context.AvailableTimeframes,
                 context.MarketDataAvailability);
-            var strategyObservation = evaluationUseCase.Execute(strategyDefinition, context);
+            var strategyObservation = evaluationUseCase.Execute(strategyDefinition, context.WithPriorObservations(strategyObservations));
             if (workflow is not null)
             {
                 if (lifecyclePolicy is null)

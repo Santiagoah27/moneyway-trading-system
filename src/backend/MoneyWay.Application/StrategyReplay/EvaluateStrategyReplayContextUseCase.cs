@@ -35,13 +35,19 @@ public sealed class EvaluateStrategyReplayContextUseCase
         if (matching.Any(x => !rules.ContainsKey(x.Key.RuleId)))
             throw new InvalidOperationException("An evaluator is registered for an unknown rule.");
         var results = new List<RuleEvaluation>();
+        var facts = new List<StrategyReplayRuleFact>();
         foreach (var rule in strategyDefinition.Rules)
         {
             if (!evaluators.TryGetValue(new(strategyDefinition.StrategyId, strategyDefinition.Version, rule.RuleId), out var evaluator)) continue;
-            var decision = evaluator.Evaluate(context) ?? throw new InvalidOperationException("Evaluator returned null.");
+            var gate = context.PriorObservations.SelectMany(o => o.RuleFacts).Concat(facts).Select(f => f.Fact)
+                .OfType<IReplayRuleGateFact>().FirstOrDefault(f => f.Blocks(context, rule.RuleId));
+            var decision = gate is null
+                ? evaluator.Evaluate(context) ?? throw new InvalidOperationException("Evaluator returned null.")
+                : new ReplayRuleEvaluationDecision(RuleEvaluationResult.Failed, "A terminal session fact blocks this downstream rule.", gate.EvidenceReference);
+            if (decision.Fact is not null) facts.Add(new(rule.RuleId, decision.Fact));
             results.Add(new(rule.RuleId, rule.DefinitionStatus, decision.Result, rule.Sequence, rule.IsRequired, decision.Reason, context.AsOfUtc, decision.EvidenceReference));
         }
-        return new(strategyDefinition.StrategyId, strategyDefinition.Version, context.ProviderId, context.Symbol, context.Step, context.AsOfUtc, results);
+        return new(strategyDefinition.StrategyId, strategyDefinition.Version, context.ProviderId, context.Symbol, context.Step, context.AsOfUtc, results, ruleFacts: facts);
     }
 
     private sealed record EvaluatorKey(StrategyId StrategyId, StrategyVersion Version, RuleId RuleId);

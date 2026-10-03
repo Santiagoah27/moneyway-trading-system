@@ -1,3 +1,4 @@
+using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 using MoneyWay.Application.StrategyDefinitions.Nasdaq;
 using MoneyWay.Application.StrategyReplay;
 using MoneyWay.Domain.Strategies;
@@ -37,7 +38,7 @@ public sealed class MoneyWayNasdaqTradingWindowEndEvaluator : IReplayRuleEvaluat
             ? "The replay context is at or after the 11:00 America/Bogota pre-entry operational cutoff."
             : "The replay context is before the 11:00 America/Bogota pre-entry operational cutoff.";
 
-        return new ReplayRuleEvaluationDecision(result, reason, null);
+        return new ReplayRuleEvaluationDecision(result, reason, null, new NasdaqTradingWindowFact(context.AsOfUtc, StrategyTimeZone));
     }
 
     private static TimeZoneInfo ResolveStrategyTimeZone()

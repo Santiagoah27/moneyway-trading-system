@@ -1,3 +1,4 @@
+using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 using MoneyWay.Application.StrategyDefinitions.Nasdaq;
 using MoneyWay.Application.StrategyReplay.Workflow;
 using MoneyWay.Domain.Strategies;
@@ -28,6 +29,10 @@ public sealed class MoneyWayNasdaqReplayLifecyclePolicy : IStrategyReplayLifecyc
         var cutoffEvaluation = context.Observation.Evaluations.SingleOrDefault(item => item.RuleId == CutoffRuleId);
         var cutoffReached = cutoffEvaluation?.Result == RuleEvaluationResult.Failed;
         var active = context.PreviousLifecycle?.ActiveInstance;
+        var invalidated = context.Observation.RuleFacts.Select(f => f.Fact).OfType<NasdaqLiquidityTakeRuleFact>()
+            .Any(f => f.IsSessionInvalidated);
+        if (invalidated)
+            return active is null ? StrategyReplayLifecycleTransition.None : StrategyReplayLifecycleTransition.Cancel();
         if (active is not null)
         {
             var completedBeforeCurrentFrame = active.WorkflowProgression.EstablishedRuleIds.Contains(CompletionRuleId);

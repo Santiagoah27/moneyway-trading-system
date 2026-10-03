@@ -133,7 +133,7 @@ public sealed class MoneyWayNasdaqHumanH4ContextEvaluatorTests
             .Execute(H4ContextFixture.Definition, context);
         var definition = H4ContextFixture.Definition.Rules.Single(item => item.RuleId == evaluator.RuleId);
         var actual = Assert.Single(observation.Evaluations, item => item.RuleId == evaluator.RuleId);
-        Assert.Equal(6, observation.Evaluations.Count);
+        Assert.Equal(7, observation.Evaluations.Count);
         Assert.Equal(definition.DefinitionStatus, actual.DefinitionStatus);
         Assert.Equal(definition.IsRequired, actual.IsRequired);
         Assert.Equal(definition.Sequence, actual.Sequence);
@@ -146,7 +146,7 @@ public sealed class MoneyWayNasdaqHumanH4ContextEvaluatorTests
     [Fact]
     public void RegisteredHumanAdapterChangesOnlyH4CoverageNotDefinitionOrOtherCapabilities()
     {
-        var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll().Where(item => item.RuleId.Value != "NQ-LIQ-003").ToArray();
         Assert.IsType<MoneyWayNasdaqHumanH4ContextEvaluator>(Assert.Single(evaluators, item => item.RuleId == evaluator.RuleId));
         var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
         Assert.DoesNotContain(declarations, item => item.RuleId == evaluator.RuleId);

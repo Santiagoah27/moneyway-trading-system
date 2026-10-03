@@ -37,7 +37,7 @@ public sealed class MoneyWayNasdaqHumanH4ContextEvaluator : IReplayRuleEvaluator
                     || unique.Fact.ContextKind == NasdaqHumanH4ContextKind.Unresolved
                     ? "The unique human H4 review explicitly leaves context or permitted direction unresolved."
                     : "A source-observable same-session human H4 review establishes context and permitted direction; no autonomous H4 algorithm is implied.",
-                Evidence(unique.SupportingObservations)),
+                Evidence(unique.SupportingObservations), new NasdaqHumanH4ContextRuleFact(unique)),
             _ => throw new InvalidOperationException("Unknown H4 evidence selection."),
         };
     }

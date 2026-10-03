@@ -189,7 +189,7 @@ public sealed class MoneyWayNasdaqHumanStructuralLiquidityEvaluatorTests
     [Fact]
     public void RegistrationAloneChangesOnlyStructuralLiquidityCoverage()
     {
-        var registry = MoneyWayReplayRuleEvaluators.GetAll();
+        var registry = MoneyWayReplayRuleEvaluators.GetAll().Where(item => item.RuleId.Value != "NQ-LIQ-003").ToArray();
         Assert.Single(registry, item => item.RuleId == evaluator.RuleId);
         var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
         Assert.DoesNotContain(declarations, item => item.RuleId == evaluator.RuleId);

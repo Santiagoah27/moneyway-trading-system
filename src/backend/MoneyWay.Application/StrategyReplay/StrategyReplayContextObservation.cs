@@ -22,7 +22,8 @@ public sealed class StrategyReplayContextObservation
         IEnumerable<RuleEvaluation> evaluations,
         StrategyReplayProgressionSnapshot? workflowProgression = null,
         StrategyReplayLifecycleSnapshot? lifecycleProgression = null,
-        IEnumerable<ReplayMarketDataObservabilityAssessment>? marketDataObservability = null)
+        IEnumerable<ReplayMarketDataObservabilityAssessment>? marketDataObservability = null,
+        IEnumerable<StrategyReplayRuleFact>? ruleFacts = null)
     {
         ArgumentNullException.ThrowIfNull(strategyId);
         ArgumentNullException.ThrowIfNull(strategyVersion);
@@ -32,6 +33,11 @@ public sealed class StrategyReplayContextObservation
         if (step <= 0) throw new ArgumentOutOfRangeException(nameof(step));
         if (asOfUtc.Offset != TimeSpan.Zero) throw new ArgumentException("Timestamp must be UTC.", nameof(asOfUtc));
         var snapshot = evaluations.ToArray();
+        var facts = (ruleFacts ?? []).ToArray();
+        if (facts.Any(f => f is null || !snapshot.Any(e => e.RuleId == f.RuleId))
+            || facts.Select(f => f.RuleId).Distinct().Count() != facts.Length)
+            throw new ArgumentException("Rule facts must bind unique evaluated rules.", nameof(ruleFacts));
+        RuleFacts = new ReadOnlyCollection<StrategyReplayRuleFact>(facts);
         var observabilityInput = (marketDataObservability ?? []).ToArray();
         if (snapshot.Any(x => x is null)) throw new ArgumentException("Evaluations cannot contain null.", nameof(evaluations));
         if (observabilityInput.Any(item => item is null))
@@ -84,6 +90,7 @@ public sealed class StrategyReplayContextObservation
         MarketDataObservability = new ReadOnlyCollection<ReplayMarketDataObservabilityAssessment>(observability);
     }
 
+    public IReadOnlyList<StrategyReplayRuleFact> RuleFacts { get; }
     public StrategyId StrategyId { get; }
     public StrategyVersion StrategyVersion { get; }
     public MarketDataProviderId ProviderId { get; }
@@ -101,7 +108,7 @@ public sealed class StrategyReplayContextObservation
         ArgumentNullException.ThrowIfNull(workflowProgression);
         if (WorkflowProgression is not null)
             throw new InvalidOperationException("Workflow progression is already attached to this observation.");
-        return new(StrategyId, StrategyVersion, ProviderId, Symbol, Step, AsOfUtc, Evaluations, workflowProgression, marketDataObservability: MarketDataObservability);
+        return new(StrategyId, StrategyVersion, ProviderId, Symbol, Step, AsOfUtc, Evaluations, workflowProgression, marketDataObservability: MarketDataObservability, ruleFacts: RuleFacts);
     }
 
     public StrategyReplayContextObservation WithProgressions(
@@ -122,7 +129,7 @@ public sealed class StrategyReplayContextObservation
             Evaluations,
             workflowProgression,
             lifecycleProgression,
-            MarketDataObservability);
+            MarketDataObservability, RuleFacts);
     }
 
     public StrategyReplayContextObservation WithMarketDataObservability(
@@ -141,6 +148,6 @@ public sealed class StrategyReplayContextObservation
             Evaluations,
             WorkflowProgression,
             LifecycleProgression,
-            marketDataObservability);
+            marketDataObservability, RuleFacts);
     }
 }

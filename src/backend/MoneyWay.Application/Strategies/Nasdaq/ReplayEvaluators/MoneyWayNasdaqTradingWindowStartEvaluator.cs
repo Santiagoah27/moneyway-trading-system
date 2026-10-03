@@ -1,3 +1,4 @@
+using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 using MoneyWay.Application.StrategyDefinitions.Nasdaq;
 using MoneyWay.Application.StrategyReplay;
 using MoneyWay.Domain.Strategies;
@@ -36,7 +37,7 @@ public sealed class MoneyWayNasdaqTradingWindowStartEvaluator : IReplayRuleEvalu
             ? "The replay context is before the 08:30 America/Bogota trading-window start."
             : "The replay context is at or after the 08:30 America/Bogota trading-window start.";
 
-        return new ReplayRuleEvaluationDecision(result, reason, null);
+        return new ReplayRuleEvaluationDecision(result, reason, null, new NasdaqTradingWindowFact(context.AsOfUtc, StrategyTimeZone));
     }
 
     private static TimeZoneInfo ResolveStrategyTimeZone()

@@ -55,6 +55,30 @@ public sealed class StrategyReplayContext
         PreEvaluationState = BoundPreEvaluationState(preEvaluationState);
     }
 
+    private StrategyReplayContext(StrategyReplayContext source, IEnumerable<StrategyReplayContextObservation> priorObservations)
+    {
+        var prior = priorObservations.ToArray();
+        if (prior.Any(o => o is null || o.StrategyId != source.StrategyId || o.StrategyVersion != source.StrategyVersion
+            || o.ProviderId != source.ProviderId || o.Symbol != source.Symbol || o.AsOfUtc >= source.AsOfUtc || o.Step >= source.Step)
+            || prior.Where((o, i) => i > 0 && (o.AsOfUtc <= prior[i - 1].AsOfUtc || o.Step <= prior[i - 1].Step)).Any())
+            throw new ArgumentException("Prior observations must match identity and be strictly chronological before this frame.", nameof(priorObservations));
+        StrategyId = source.StrategyId; StrategyVersion = source.StrategyVersion; ProviderId = source.ProviderId; Symbol = source.Symbol;
+        Step = source.Step; AsOfUtc = source.AsOfUtc; ConfiguredTimeframes = source.ConfiguredTimeframes;
+        UpdatedTimeframes = source.UpdatedTimeframes; AvailableTimeframes = source.AvailableTimeframes;
+        framesByTimeframe = source.framesByTimeframe; CurrentMarketPriceObservations = source.CurrentMarketPriceObservations;
+        MarketPriceObservations = source.MarketPriceObservations; MarketDataAvailability = source.MarketDataAvailability;
+        InputObservations = source.InputObservations; PreEvaluationState = source.PreEvaluationState;
+        PriorObservations = new ReadOnlyCollection<StrategyReplayContextObservation>(prior);
+    }
+
+    public StrategyReplayContext WithPriorObservations(IEnumerable<StrategyReplayContextObservation> priorObservations)
+    {
+        ArgumentNullException.ThrowIfNull(priorObservations);
+        return new(this, priorObservations);
+    }
+
+    public IReadOnlyList<StrategyReplayContextObservation> PriorObservations { get; } = Array.Empty<StrategyReplayContextObservation>();
+
     public StrategyId StrategyId { get; }
     public StrategyVersion StrategyVersion { get; }
     public MarketDataProviderId ProviderId { get; }

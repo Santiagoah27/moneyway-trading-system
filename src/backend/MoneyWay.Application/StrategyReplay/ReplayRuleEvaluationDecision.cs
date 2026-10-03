@@ -5,14 +5,16 @@ namespace MoneyWay.Application.StrategyReplay;
 /// <summary>Contains only evaluator-owned output; structural metadata comes from the strategy definition.</summary>
 public sealed class ReplayRuleEvaluationDecision
 {
-    public ReplayRuleEvaluationDecision(RuleEvaluationResult result, string reason, string? evidenceReference)
+    public ReplayRuleEvaluationDecision(RuleEvaluationResult result, string reason, string? evidenceReference, IReplayRuleFact? fact = null)
     {
         Validate(reason, nameof(reason));
         if (evidenceReference is not null) Validate(evidenceReference, nameof(evidenceReference));
+        Fact = fact;
         Result = result;
         Reason = reason;
         EvidenceReference = evidenceReference;
     }
+    public IReplayRuleFact? Fact { get; }
     public RuleEvaluationResult Result { get; }
     public string Reason { get; }
     public string? EvidenceReference { get; }
