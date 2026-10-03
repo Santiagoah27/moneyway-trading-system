@@ -12,20 +12,11 @@ public sealed class NasdaqHumanCollisionStructuralPriceObservationSelector
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(episode);
 
-        var supporting = context.InputObservations
+        var (supporting, prices) = StructuralPriceEvidenceSelector.Select(context.InputObservations
             .OfType<NasdaqHumanCollisionStructuralPriceObservation>()
-            .Where(episode.Matches)
-            .OrderBy(item => item.ObservedAtUtc)
-            .ThenBy(item => item.SourceReference, StringComparer.Ordinal)
-            .ThenBy(item => item.StructuralPrice)
-            .ToArray();
-        var prices = supporting
-            .Select(item => item.StructuralPrice)
-            .Distinct()
-            .OrderBy(item => item)
-            .ToArray();
+            .Where(episode.Matches), item => item.StructuralPrice, item => item.SourceReference);
 
-        return prices.Length switch
+        return prices.Count switch
         {
             0 => new(NasdaqHumanCollisionStructuralPriceObservationSelectionKind.Missing, null, [], []),
             1 => new(NasdaqHumanCollisionStructuralPriceObservationSelectionKind.Unique, prices[0], supporting, prices),
