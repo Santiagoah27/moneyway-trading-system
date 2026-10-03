@@ -7,23 +7,26 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 /// <summary>A completed current episode, validated turn and consumed confirmation; no successor extreme or episode is established.</summary>
 public sealed class NasdaqPostCompletionStructuralCompletion
 {
-    internal NasdaqPostCompletionStructuralCompletion(NasdaqPostCompletionCandidateLifecycleResult lifecycleResult,
-        StructuralCandidateValidationResult validatedTurn)
+    internal NasdaqPostCompletionStructuralCompletion(NasdaqPostCompletionStructuralCompletionSource source)
     {
-        ArgumentNullException.ThrowIfNull(lifecycleResult);
-        ArgumentNullException.ThrowIfNull(validatedTurn);
+        ArgumentNullException.ThrowIfNull(source);
+        var lifecycleResult = source.LifecycleResult;
+        var validatedTurn = source.ValidatedTurn;
         if (!validatedTurn.IsValidated || validatedTurn.CandidateSide != lifecycleResult.SourceState.CandidateSide
-            || !ReferenceEquals(validatedTurn.BreakObservation, lifecycleResult.Decision.Breakout))
-            throw new ArgumentException("Completion must retain the canonical validated turn and confirming breakout.", nameof(validatedTurn));
-        LifecycleResult = lifecycleResult;
-        ValidatedTurn = validatedTurn;
+            || !ReferenceEquals(validatedTurn.BreakObservation, lifecycleResult.Decision.Breakout)
+            || !ReferenceEquals(lifecycleResult.Decision.CandidateGeometry, lifecycleResult.SourceState.CandidateGeometry)
+            || !ReferenceEquals(lifecycleResult.Decision.FrozenTerminal, lifecycleResult.SourceState.ActivePair.ActiveExtremeGeometry)
+            || !ReferenceEquals(lifecycleResult.Decision.PreviousCursor, lifecycleResult.SourceState.MarketCursor))
+            throw new ArgumentException("Completion must retain the canonical validated turn and confirming breakout.", nameof(source));
+        Source = source;
     }
 
-    public NasdaqPostCompletionCandidateLifecycleResult LifecycleResult { get; }
+    public NasdaqPostCompletionStructuralCompletionSource Source { get; }
+    public NasdaqPostCompletionCandidateLifecycleResult LifecycleResult => Source.LifecycleResult;
     /// <summary>The truthful Candidate breakout origin, including correction and initial completion provenance.</summary>
     public NasdaqPostCompletionCandidateState SourceCandidate => LifecycleResult.SourceState;
     public NasdaqPostCompletionEpisode Episode => SourceCandidate.Episode;
-    public StructuralCandidateValidationResult ValidatedTurn { get; }
+    public StructuralCandidateValidationResult ValidatedTurn => Source.ValidatedTurn;
     public StructuralCandidateValidationResult PreviousProtectedTurn => SourceCandidate.ActivePair.ProtectedTurn;
     /// <summary>The prior HH/LL broken by confirmation, not a finalized successor extreme.</summary>
     public StructuralTurnGeometryResult FrozenBreakoutTerminal => LifecycleResult.Decision.FrozenTerminal;

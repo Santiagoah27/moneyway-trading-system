@@ -27,6 +27,10 @@ public sealed class NasdaqPostCompletionDirectionalCollisionCompletionMaterializ
         var collision = Assert.IsType<NasdaqCandidateLifecycleDecision.CollisionBreakout>(lifecycle.Decision);
         var directional = Assert.IsType<NasdaqCollisionCandidateResolution.Directional>(collision.CandidateResolution);
         var completion = materializer.Materialize(lifecycle);
+        var provenance = Assert.IsType<NasdaqPostCompletionStructuralCompletionSource.DirectionalCollision>(completion.Source);
+        Assert.Same(lifecycle, provenance.LifecycleResult);
+        Assert.Same(directional, provenance.Resolution);
+        Assert.Same(directional.Validation, provenance.ValidatedTurn);
         Assert.IsType<NasdaqPostCompletionStructuralCompletion>(completion);
         Assert.Same(directional.Validation, completion.ValidatedTurn);
         Assert.Same(directional.Validation.CandidateGeometry, completion.ValidatedTurn.CandidateGeometry);
@@ -141,7 +145,7 @@ public sealed class NasdaqPostCompletionDirectionalCollisionCompletionMaterializ
         Assert.Equal(completionType, method.ReturnType);
         Assert.Empty(completionType.GetConstructors());
         Assert.All(completionType.GetProperties(), p => Assert.Null(p.SetMethod));
-        Assert.Equal(new[] { "BodyDirection", "ConfirmingCandle", "Episode", "FrozenBreakoutTerminal", "LifecycleResult", "MarketCursor", "PreviousProtectedTurn", "SourceCandidate", "ValidatedTurn" }, completionType.GetProperties().Select(p => p.Name).Order());
+        Assert.Equal(new[] { "BodyDirection", "ConfirmingCandle", "Episode", "FrozenBreakoutTerminal", "LifecycleResult", "MarketCursor", "PreviousProtectedTurn", "Source", "SourceCandidate", "ValidatedTurn" }, completionType.GetProperties().Select(p => p.Name).Order());
         Assert.DoesNotContain(completionType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly), m => !m.IsSpecialName);
     }
 

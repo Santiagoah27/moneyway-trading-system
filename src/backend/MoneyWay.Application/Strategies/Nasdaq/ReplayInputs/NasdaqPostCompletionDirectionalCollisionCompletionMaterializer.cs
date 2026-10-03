@@ -17,6 +17,6 @@ public sealed class NasdaqPostCompletionDirectionalCollisionCompletionMaterializ
             || !ReferenceEquals(collision.PreviousCursor, source.MarketCursor)
             || !ReferenceEquals(directional.Member, result.MarketCursor))
             throw new ArgumentException("The collision must retain the exact source candidate, frozen terminal and consumed candle.", nameof(result));
-        return new(result, directional.Validation);
+        return new(new NasdaqPostCompletionStructuralCompletionSource.DirectionalCollision(result));
     }
 }

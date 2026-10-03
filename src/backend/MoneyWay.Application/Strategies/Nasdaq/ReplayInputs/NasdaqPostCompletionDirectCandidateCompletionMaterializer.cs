@@ -15,6 +15,6 @@ public sealed class NasdaqPostCompletionDirectCandidateCompletionMaterializer
             || !ReferenceEquals(direct.PreviousCursor, source.MarketCursor)
             || !ReferenceEquals(direct.Validation.CandidateGeometry, source.CandidateGeometry))
             throw new ArgumentException("The direct completion must retain the exact source candidate and frozen terminal.", nameof(result));
-        return new(result, direct.Validation);
+        return new(new NasdaqPostCompletionStructuralCompletionSource.Direct(result));
     }
 }
