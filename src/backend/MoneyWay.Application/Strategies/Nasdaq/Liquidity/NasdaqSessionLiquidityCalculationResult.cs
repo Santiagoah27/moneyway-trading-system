@@ -1,3 +1,5 @@
+using MoneyWay.Application.StrategyReplay;
+
 namespace MoneyWay.Application.Strategies.Nasdaq.Liquidity;
 
 /// <summary>
@@ -18,6 +20,12 @@ public sealed record NasdaqSessionLiquidityCalculationResult
         Levels = levels;
         Reason = reason;
     }
+
+    // Only the existing calculator can bind an available output to its actual bounded source context.
+    internal NasdaqSessionLiquidityCalculationResult(NasdaqSessionLiquidityLevels levels, string reason, StrategyReplayContext sourceContext)
+        : this(levels, reason) => SourceContext = sourceContext;
+
+    internal StrategyReplayContext? SourceContext { get; }
 
     public bool IsAvailable => Levels is not null;
 

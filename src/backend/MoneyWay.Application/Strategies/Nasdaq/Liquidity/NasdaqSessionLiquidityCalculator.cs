@@ -67,7 +67,7 @@ public sealed class NasdaqSessionLiquidityCalculator
             londonCandles.Max(candle => candle.High),
             londonCandles.Min(candle => candle.Low));
 
-        return new(levels, AvailableReason);
+        return new(levels, AvailableReason, context);
     }
 
     private static IReadOnlyList<DateTimeOffset> ExpectedOpenTimes(
