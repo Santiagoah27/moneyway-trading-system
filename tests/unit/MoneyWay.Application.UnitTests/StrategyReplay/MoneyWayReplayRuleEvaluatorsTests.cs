@@ -11,7 +11,7 @@ namespace MoneyWay.Application.UnitTests.StrategyReplay;
 public sealed class MoneyWayReplayRuleEvaluatorsTests
 {
     [Fact]
-    public void RegistryContainsExactlyFourStableCanonicalEvaluators()
+    public void RegistryContainsExactlyFiveStableCanonicalEvaluators()
     {
         var first = MoneyWayReplayRuleEvaluators.GetAll();
         var second = MoneyWayReplayRuleEvaluators.GetAll();
@@ -19,6 +19,7 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
         Assert.NotNull(first);
         Assert.Collection(first,
             evaluator => Assert.IsType<MoneyWayNasdaqSessionPreparationCompletionEvaluator>(evaluator),
+            evaluator => Assert.IsType<MoneyWayNasdaqHumanH4ContextEvaluator>(evaluator),
             evaluator => Assert.IsType<MoneyWayNasdaqSessionLiquidityEvaluator>(evaluator),
             evaluator => Assert.IsType<MoneyWayNasdaqTradingWindowStartEvaluator>(evaluator),
             evaluator => Assert.IsType<MoneyWayNasdaqTradingWindowEndEvaluator>(evaluator));
@@ -39,13 +40,13 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
                 new MoneyWayNasdaqTradingWindowStartEvaluator(), new MoneyWayNasdaqTradingWindowEndEvaluator()],
             declarations);
         var afterCatalog = new StrategyReplayEvaluationCapabilityCatalog(
-            new StrategyDefinitionCatalog(), MoneyWayReplayRuleEvaluators.GetAll(), declarations);
+            new StrategyDefinitionCatalog(), MoneyWayReplayRuleEvaluators.GetAll().Where(item => item.RuleId.Value != "NQ-H4-001"), declarations);
         var definition = MoneyWayNasdaqStrategyDefinition.Instance;
         var before = beforeCatalog.Find(definition.StrategyId, definition.Version)!;
         var after = afterCatalog.Find(definition.StrategyId, definition.Version)!;
 
-        Assert.Equal((32, 14, 3, 0, 25, 4, 3, 11, false), Counts(before));
-        Assert.Equal((32, 14, 4, 0, 24, 4, 4, 10, false), Counts(after));
+        Assert.Equal((32, 14, 3, 0, 26, 3, 3, 11, false), Counts(before));
+        Assert.Equal((32, 14, 4, 0, 25, 3, 4, 10, false), Counts(after));
 
         var beforeByRule = before.Rules.ToDictionary(rule => rule.RuleId);
         var afterByRule = after.Rules.ToDictionary(rule => rule.RuleId);
@@ -100,7 +101,7 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented, capability.CapabilityStatus);
         Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.ImplementedReason, capability.CapabilityReason);
         Assert.Null(capability.CapabilitySourceReference);
-        Assert.Equal((32, 14, 4, 0, 24, 4, 4, 10, false), Counts(report));
+        Assert.Equal((32, 14, 5, 0, 24, 3, 5, 9, false), Counts(report));
     }
 
     private static (string StrategyId, string Version, string RuleId) Identity(IReplayRuleEvaluator evaluator) =>

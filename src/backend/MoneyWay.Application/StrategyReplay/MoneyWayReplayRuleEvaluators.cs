@@ -11,6 +11,7 @@ public static class MoneyWayReplayRuleEvaluators
         new ReadOnlyCollection<IReplayRuleEvaluator>(
         [
             new MoneyWayNasdaqSessionPreparationCompletionEvaluator(),
+            new MoneyWayNasdaqHumanH4ContextEvaluator(),
             new MoneyWayNasdaqSessionLiquidityEvaluator(new NasdaqSessionLiquidityCalculator()),
             new MoneyWayNasdaqTradingWindowStartEvaluator(),
             new MoneyWayNasdaqTradingWindowEndEvaluator(),

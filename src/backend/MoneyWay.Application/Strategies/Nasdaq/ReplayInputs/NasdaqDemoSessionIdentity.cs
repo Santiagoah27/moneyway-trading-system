@@ -25,7 +25,9 @@ public sealed record NasdaqDemoSessionIdentity
     public MarketSymbol Symbol { get; }
     public DateOnly TradingDay { get; }
 
-    internal bool Matches(StrategyReplayContext context) => StrategyId == context.StrategyId
-        && StrategyVersion == context.StrategyVersion && ProviderId == context.ProviderId && Symbol == context.Symbol
-        && TradingDay == DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(context.AsOfUtc, StrategyTimeZone).DateTime);
+    internal static NasdaqDemoSessionIdentity FromContext(StrategyReplayContext context) => new(
+        context.StrategyId, context.StrategyVersion, context.ProviderId, context.Symbol,
+        DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(context.AsOfUtc, StrategyTimeZone).DateTime));
+
+    internal bool Matches(StrategyReplayContext context) => this == FromContext(context);
 }
