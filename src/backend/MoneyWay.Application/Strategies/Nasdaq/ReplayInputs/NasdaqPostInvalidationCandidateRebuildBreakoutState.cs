@@ -7,6 +7,16 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 public sealed class NasdaqPostInvalidationCandidateRebuildBreakoutState
 {
     internal NasdaqPostInvalidationCandidateRebuildBreakoutState(
+        NasdaqCandidateLifecycleDecision.CollisionBreakout decision, NasdaqPostInvalidationCandidateState candidate)
+        : this(candidate, decision.MarketCursor, decision.EffectiveProtectionAnchor, decision.CollisionKind)
+    {
+        CandidateDecision = decision;
+    }
+
+    /// <summary>Canonical consumed Candidate-origin collision; rebuild origins retain their existing provenance.</summary>
+    public NasdaqCandidateLifecycleDecision.CollisionBreakout? CandidateDecision { get; }
+
+    internal NasdaqPostInvalidationCandidateRebuildBreakoutState(
         NasdaqPostInvalidationCandidateRebuildPendingState pending,
         Candle validatingCandle,
         bool hasStrictMigration,

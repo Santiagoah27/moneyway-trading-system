@@ -10,7 +10,6 @@ public sealed class NasdaqPostInvalidationCandidateTransitionCalculator
     private readonly NasdaqDirectCandidateBreakoutCompletionCalculator directBreakoutCalculator = new();
     private readonly NasdaqPostInvalidationCandidateRebuildTransitionCalculator rebuildCalculator = new();
     private readonly NasdaqPostInvalidationCandidateTrackingStartCalculator trackingStartCalculator = new();
-    private readonly NasdaqPostInvalidationCandidateCollisionBreakoutTransitionCalculator collisionCalculator = new();
     private readonly NasdaqCandidateLifecycleDecisionCalculator decisionCalculator = new();
 
     public NasdaqPostInvalidationCandidateTransitionResult Evaluate(
@@ -27,8 +26,9 @@ public sealed class NasdaqPostInvalidationCandidateTransitionCalculator
                 new NasdaqPostInvalidationCandidateTransitionResult.CandidateContinues(continuationCalculator.Evaluate(current, candle)),
             NasdaqCandidateLifecycleDecision.DirectCompleted =>
                 new NasdaqPostInvalidationCandidateTransitionResult.DirectCompleted(directBreakoutCalculator.Evaluate(current, candle)),
-            NasdaqCandidateLifecycleDecision.CollisionBreakout =>
-                new NasdaqPostInvalidationCandidateTransitionResult.CollisionBreakout(collisionCalculator.Evaluate(current, candle)),
+            NasdaqCandidateLifecycleDecision.CollisionBreakout collision =>
+                new NasdaqPostInvalidationCandidateTransitionResult.CollisionBreakout(
+                    NasdaqPostInvalidationCandidateCollisionBreakoutTransitionCalculator.Materialize(current, collision)),
             NasdaqCandidateLifecycleDecision.RebuiltTracking =>
                 new NasdaqPostInvalidationCandidateTransitionResult.RebuiltTracking(trackingStartCalculator.Evaluate(current, candle)),
             NasdaqCandidateLifecycleDecision.RebuildPending =>

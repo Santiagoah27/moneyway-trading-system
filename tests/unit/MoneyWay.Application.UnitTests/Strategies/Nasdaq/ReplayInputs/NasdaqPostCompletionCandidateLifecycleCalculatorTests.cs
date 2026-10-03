@@ -175,6 +175,77 @@ public sealed class NasdaqPostCompletionCandidateLifecycleCalculatorTests
         Assert.Throws<ArgumentException>(() => core.Evaluate(side, geometry, geometry, source.MarketCursor, candle));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DirectionalCollisionCarriesDefinitiveMigratedVertexAndOldCompletionReusesIt(bool bearish)
+    {
+        var source = Candidate(bearish);
+        var incoming = Candle(80, 130, 180, 80, 132, bearish);
+        var result = calculator.Evaluate(source, incoming);
+        var collision = Assert.IsType<NasdaqCandidateLifecycleDecision.CollisionBreakout>(result.Decision);
+        var definitive = Assert.IsType<NasdaqCollisionCandidateResolution.Directional>(collision.CandidateResolution);
+        var validation = definitive.Validation;
+        Assert.True(validation.IsValidated);
+        Assert.Equal(source.CandidateSide, validation.CandidateSide);
+        Assert.Equal(bearish ? 70m : 130m, validation.StructuralPrice);
+        Assert.Equal(bearish ? 120m : 80m, validation.ProtectionAnchor);
+        Assert.NotEqual(source.CandidateGeometry, validation.CandidateGeometry);
+        Assert.Same(source.CandidateGeometry, collision.CandidateGeometry);
+        Assert.Same(collision.Breakout, validation.BreakObservation);
+        Assert.Same(incoming, definitive.Member);
+        Assert.Same(incoming, result.MarketCursor);
+        Assert.Same(source.ActivePair.ActiveExtremeGeometry, collision.FrozenTerminal);
+        Assert.Same(source.MarketCursor, collision.PreviousCursor);
+        Assert.Equal(bearish ? CandleBodyDirection.Bearish : CandleBodyDirection.Bullish, collision.BodyDirection);
+        Assert.Same(source.SourceCorrection.GeometryReady, result.SourceState.SourceCorrection.GeometryReady);
+
+        var legacy = EquivalentCandidate(bearish, source.CorrectionStartCandle, source.TerminalCandle);
+        var transition = Assert.IsType<NasdaqPostInvalidationCandidateTransitionResult.CollisionBreakout>(
+            new NasdaqPostInvalidationCandidateTransitionCalculator().Evaluate(legacy, incoming));
+        var oldDecision = transition.State.CandidateDecision!;
+        var oldDefinitive = Assert.IsType<NasdaqCollisionCandidateResolution.Directional>(oldDecision.CandidateResolution);
+        var completionCalculator = new NasdaqDirectionalMigrationBreakoutCompletionCalculator();
+        var completion = completionCalculator.Evaluate(transition.State);
+        Assert.Same(oldDefinitive.Validation, completion.ValidatedCandidate);
+        Assert.Same(oldDefinitive.Validation.CandidateGeometry, completion.CandidateGeometry);
+        Assert.Equal(validation, completion.ValidatedCandidate);
+        Assert.Same(oldDecision.Breakout, completion.ValidatedCandidate.BreakObservation);
+        Assert.Same(legacy, Assert.IsType<NasdaqPostInvalidationBreakoutOrigin.Candidate>(transition.State.Origin).State);
+        Assert.Same(incoming, completion.LastProcessedCandle);
+        Assert.Same(completion.ValidatedCandidate, completionCalculator.Evaluate(transition.State).ValidatedCandidate);
+        Assert.Same(source.TerminalCandle, source.MarketCursor);
+        Assert.Single(source.CorrectionTurnCandles);
+        var repeated = Assert.IsType<NasdaqCandidateLifecycleDecision.CollisionBreakout>(calculator.Evaluate(source, incoming).Decision);
+        Assert.Equal(validation, Assert.IsType<NasdaqCollisionCandidateResolution.Directional>(repeated.CandidateResolution).Validation);
+        var primitive = new NasdaqDirectionalMigrationBreakoutCandidateCalculator();
+        Assert.Throws<ArgumentNullException>(() => primitive.Evaluate(null!, collision.Breakout, collision.BodyDirection));
+        Assert.Throws<ArgumentNullException>(() => primitive.Evaluate(collision.Migration, null!, collision.BodyDirection));
+        Assert.Throws<ArgumentException>(() => primitive.Evaluate(collision.Migration, collision.Breakout, CandleBodyDirection.Neutral));
+        var noMigration = new StructuralCandidateExtremeCalculator().Evaluate(validation.ProtectionAnchor,
+            validation.ProtectionAnchor, source.CandidateSide);
+        Assert.Throws<ArgumentException>(() => primitive.Evaluate(noMigration, collision.Breakout, collision.BodyDirection));
+    }
+
+    [Theory]
+    [InlineData(false, 140)]
+    [InlineData(true, 140)]
+    [InlineData(false, 132)]
+    [InlineData(true, 132)]
+    public void OppositeAndExactDojiCollisionsCarryOnlyUnresolvedPriceOwnership(bool bearish, decimal open)
+    {
+        var source = Candidate(bearish);
+        var incoming = Candle(80, open, 180, 80, 132, bearish);
+        var collision = Assert.IsType<NasdaqCandidateLifecycleDecision.CollisionBreakout>(calculator.Evaluate(source, incoming).Decision);
+        Assert.Equal(NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind.NqQH4008HumanStructuralPriceRequired, collision.CollisionKind);
+        Assert.IsType<NasdaqCollisionCandidateResolution.HumanStructuralPriceRequired>(collision.CandidateResolution);
+        Assert.Empty(collision.CandidateResolution.GetType().GetProperties());
+        var legacy = EquivalentCandidate(bearish, source.CorrectionStartCandle, source.TerminalCandle);
+        var breakout = new NasdaqPostInvalidationCandidateCollisionBreakoutTransitionCalculator().Evaluate(legacy, incoming);
+        Assert.IsType<NasdaqCollisionCandidateResolution.HumanStructuralPriceRequired>(breakout.CandidateDecision!.CandidateResolution);
+        Assert.Throws<ArgumentException>(() => new NasdaqDirectionalMigrationBreakoutCompletionCalculator().Evaluate(breakout));
+    }
+
     private static NasdaqPostCompletionCandidateState Candidate(bool bearish)
     {
         var correction = new NasdaqPostCompletionActiveCorrectionInitializer().Initialize(Ready(bearish, false, false));

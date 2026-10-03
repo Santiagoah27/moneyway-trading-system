@@ -76,9 +76,16 @@ public abstract class NasdaqCandidateLifecycleDecision
         internal CollisionBreakout(StructuralTurnGeometryResult geometry, StructuralTurnGeometryResult terminal,
             Candle previousCursor, StructuralCandidateExtremeResult migration, StructuralBodyCloseBreakResult breakout,
             CandleBodyDirection body, NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind collisionKind)
-            : base(geometry, terminal, previousCursor, migration, breakout, body) => CollisionKind = collisionKind;
+            : base(geometry, terminal, previousCursor, migration, breakout, body)
+        {
+            CollisionKind = collisionKind;
+            CandidateResolution = collisionKind == NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind.NqQH4007DirectionalBody
+                ? new NasdaqDirectionalMigrationBreakoutCandidateCalculator().Evaluate(migration, breakout, body)
+                : new NasdaqCollisionCandidateResolution.HumanStructuralPriceRequired();
+        }
         public override NasdaqPostInvalidationCandidateTransitionKind Kind => NasdaqPostInvalidationCandidateTransitionKind.CollisionBreakout;
         public decimal EffectiveProtectionAnchor => Migration.ResultingExtreme;
         public NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind CollisionKind { get; }
+        public NasdaqCollisionCandidateResolution CandidateResolution { get; }
     }
 }

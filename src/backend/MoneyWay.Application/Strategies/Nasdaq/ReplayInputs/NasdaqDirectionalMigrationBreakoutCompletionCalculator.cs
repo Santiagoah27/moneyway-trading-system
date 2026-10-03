@@ -6,12 +6,14 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 /// <summary>Completes the directional same-candle migration and frozen-terminal break of NQ-Q-H4-007.</summary>
 public sealed class NasdaqDirectionalMigrationBreakoutCompletionCalculator
 {
-    private readonly StructuralTurnGeometryCalculator geometryCalculator = new();
+    private readonly NasdaqDirectionalMigrationBreakoutCandidateCalculator candidateCalculator = new();
 
     public NasdaqDirectionalMigrationBreakoutCompletionResult Evaluate(
         NasdaqPostInvalidationCandidateRebuildBreakoutState breakout)
     {
         ArgumentNullException.ThrowIfNull(breakout);
+        if (!Enum.IsDefined(breakout.CandidateSide))
+            throw new ArgumentOutOfRangeException(nameof(breakout), "The candidate side is not supported.");
         if (!breakout.HasStrictMigration
             || breakout.CollisionKind != NasdaqPostInvalidationCandidateRebuildBreakoutCollisionKind.NqQH4007DirectionalBody)
         {
@@ -19,12 +21,6 @@ public sealed class NasdaqDirectionalMigrationBreakoutCompletionCalculator
         }
 
         var candle = breakout.ValidatingCandle;
-        var side = breakout.CandidateSide switch
-        {
-            StructuralCandidateExtremeSide.Lower => StructuralTurnBodyCoordinateSide.Lower,
-            StructuralCandidateExtremeSide.Upper => StructuralTurnBodyCoordinateSide.Upper,
-            _ => throw new ArgumentOutOfRangeException(nameof(breakout), "The candidate side is not supported."),
-        };
         var direction = breakout.CandidateSide == StructuralCandidateExtremeSide.Lower
             ? StructuralBreakDirection.Upper
             : StructuralBreakDirection.Lower;
@@ -43,10 +39,16 @@ public sealed class NasdaqDirectionalMigrationBreakoutCompletionCalculator
             throw new ArgumentException("The validating candle must have strict migration, directional body, and strict frozen-terminal break.", nameof(breakout));
         }
 
-        var geometry = geometryCalculator.Evaluate([candle], side);
-        if (geometry.ProtectionAnchor != breakout.EffectiveProtectionAnchor)
+        if ((direction == StructuralBreakDirection.Upper ? candle.Low : candle.High) != breakout.EffectiveProtectionAnchor)
         {
             throw new ArgumentException("The same-candle protection anchor must equal the effective migrated anchor.", nameof(breakout));
+        }
+
+        if (breakout.CandidateDecision is { } decision)
+        {
+            var definitive = decision.CandidateResolution as NasdaqCollisionCandidateResolution.Directional
+                ?? throw new ArgumentException("The canonical collision must retain definitive directional facts.", nameof(breakout));
+            return new(breakout, definitive.Validation.CandidateGeometry, definitive.Validation);
         }
 
         var breakObservation = new StructuralBodyCloseBreakResult(
@@ -58,7 +60,9 @@ public sealed class NasdaqDirectionalMigrationBreakoutCompletionCalculator
             candle.CloseTimeUtc,
             candle,
             true);
-        var validation = new StructuralCandidateValidationResult(breakout.CandidateSide, geometry, breakObservation);
-        return new NasdaqDirectionalMigrationBreakoutCompletionResult(breakout, geometry, validation);
+        var candidate = candidateCalculator.Evaluate(new StructuralCandidateExtremeResult(
+            breakout.PreviousProtectionAnchor, breakout.EffectiveProtectionAnchor, breakout.CandidateSide),
+            breakObservation, direction == StructuralBreakDirection.Upper ? CandleBodyDirection.Bullish : CandleBodyDirection.Bearish);
+        return new NasdaqDirectionalMigrationBreakoutCompletionResult(breakout, candidate.Validation.CandidateGeometry, candidate.Validation);
     }
 }
