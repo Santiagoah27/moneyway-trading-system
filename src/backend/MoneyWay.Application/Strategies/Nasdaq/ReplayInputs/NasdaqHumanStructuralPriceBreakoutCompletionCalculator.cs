@@ -6,6 +6,8 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 /// <summary>Completes one NQ-Q-H4-008 breakout from a unique human StructuralPrice answer.</summary>
 public sealed class NasdaqHumanStructuralPriceBreakoutCompletionCalculator
 {
+    private readonly NasdaqHumanStructuralPriceCandidateGeometryCalculator geometryCalculator = new();
+
     public NasdaqHumanStructuralPriceBreakoutCompletionResult Evaluate(
         NasdaqPostInvalidationCandidateRebuildBreakoutState breakout,
         NasdaqHumanCollisionStructuralPriceObservationSelection selection)
@@ -49,11 +51,7 @@ public sealed class NasdaqHumanStructuralPriceBreakoutCompletionCalculator
             throw new ArgumentException("The stored collision must have strict migration, opposite or doji body, and a strict frozen-terminal break.", nameof(breakout));
         }
 
-        var side = lower ? StructuralTurnBodyCoordinateSide.Lower : StructuralTurnBodyCoordinateSide.Upper;
-        var protectionSide = lower ? StructuralTurnProtectionSide.Lower : StructuralTurnProtectionSide.Upper;
-        var geometry = new StructuralTurnGeometryResult(
-            new StructuralTurnBodyCoordinateResult(structuralPrice, side),
-            new StructuralTurnProtectionAnchorResult(breakout.EffectiveProtectionAnchor, protectionSide));
+        var geometry = geometryCalculator.Evaluate(breakout.CandidateSide, breakout.EffectiveProtectionAnchor, structuralPrice);
         var breakObservation = new StructuralBodyCloseBreakResult(
             breakout.Episode.ProviderId,
             breakout.Episode.Symbol,
