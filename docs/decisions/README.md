@@ -44,3 +44,4 @@ Las decisiones reales se registran y enumeran a continuación.
 - [ADR 0021: Define Nasdaq active-extreme final-cluster membership](0021-define-nasdaq-active-extreme-final-cluster-membership.md) — Status: `Accepted`.
 - [ADR 0022: Define Nasdaq post-completion active-extreme evidence lifecycle](0022-define-nasdaq-post-completion-active-extreme-evidence-lifecycle.md) — Status: `Accepted`.
 - [ADR 0023: Clarify Nasdaq active-extreme membership validity and data availability](0023-clarify-nasdaq-active-extreme-membership-validity-and-data-availability.md) — Status: `Accepted`.
+- [ADR 0024: Clarify Nasdaq post-completion 009 first-turn and rebuilt-tracking causal order](0024-clarify-nasdaq-009-rebuilt-tracking-order.md) — Status: `Accepted`.
