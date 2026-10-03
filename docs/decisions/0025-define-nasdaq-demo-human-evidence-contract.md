@@ -1,0 +1,145 @@
+# ADR 0025: Define Nasdaq Demo v0 human-assisted evidence contract
+
+## Status
+
+Accepted. **DEMO V0 integration contract, not new mentor strategy semantics.** This ADR specifies future typed inputs and their consumers; it implements no types, evaluators, orchestration or trade simulation. Rule definition states and replay capabilities remain unchanged. Human assistance does not establish an autonomous algorithm or authorize an order.
+
+## Date
+
+2026-10-03.
+
+## Context
+
+The demo-first audit at `f4754f4` found a usable canonical replay pipeline, but no complete Nasdaq session evidence contract or historical trade simulation. Current Nasdaq has 32 RuleIds, 14 Required, four registered evaluators (`NQ-TIME-003`, `NQ-LIQ-001`, `NQ-TIME-001`, `NQ-TIME-002`), ten Required evaluator gaps and no full Required registration. The capability catalog declares zero HumanOnly entries; this ADR does not change that fact.
+
+The [Nasdaq specification](../strategies/nasdaq/strategy-specification.md) establishes the concepts, workflow and limits. [ADR 0003](0003-define-canonical-replay-prerequisite-gating.md) separates raw facts from progression. [ADR 0005](0005-transport-strategy-owned-evidence-to-replay-lifecycle-policies.md) supplies immutable scoped evidence conventions. [ADR 0006](0006-define-nasdaq-preparation-replay-input-contract.md) specifies timely preparation. [ADR 0007](0007-define-nasdaq-human-origin-vertex-replay-input.md), [ADR 0008](0008-define-nasdaq-human-origin-vertex-conflict-policy.md) and [ADR 0009](0009-define-nasdaq-rebuilt-candidate-vertex-replay-input.md) establish typed membership, exact event identity, compatible support, conflicts and causal visibility. Their specific H4 episode contracts are not generic session-context seeds.
+
+## Decision
+
+### Existing conventions and scope
+
+Reuse `IStrategyReplayInputObservation` for evaluator-driving observations: immutable strategy/version, provider, symbol, UTC `ObservedAtUtc` and nonempty `SourceReference`. Use `StrategyReplayContext.InputObservations`, exact reference resolution and strategy-owned selectors. Evaluators must not perform hidden file/network/database lookups. Preserve the canonical Application entrypoint, workflow, lifecycle, outcome and diagnostics; no second replay or diagnostic framework.
+
+No new generic evidence framework or common C# envelope is needed now. Each proposed semantic type adds its own event fields to the existing interface. Provenance may additionally carry reviewer/source identity, exact file/video/message location and external mentor reference. A provenance reference must resolve to retained immutable supporting material, not an unexplained free-form assertion. Compatible selection retains every supporting observation and its provenance, rather than only a representative reference.
+
+`HumanRuleOverride`, `Dictionary<RuleId, bool>`, caller-assigned rule results and arbitrary RuleId payloads are forbidden. Inputs state market/review facts; consumers calculate their own results. Future autonomous adapters may replace human selection without changing those facts. No input changes `IsRequired`, definition status or capability metadata.
+
+### Identity and causal availability
+
+- `NasdaqDemoSessionIdentity`: exact strategy ID/version, provider, symbol and trading date `D` in `America/Bogota`. This is an analysis scope; existing H4 episodes retain their cross-session identities and lifetimes.
+- Exact candle reference: the enclosing series identity, timeframe amount/unit and series-unique `OpenTimeUtc`, resolved against its actual `CloseTimeUtc` and OHLC. A multi-member structural reference retains all selected candle identities, its High/Low and HH/HL/LL/LH role, and the source validating event where applicable. Derived body coordinates and wick protection remain distinct. A non-candle level needs an exact retained external level/event reference and price; an unexplained decimal is insufficient.
+- `NasdaqDemoSetupIdentity`: session identity plus the initiating valid liquidity-take reference, taken level identity/side and observable event identity. Quote events use timestamp and authoritative source sequence when present; closed-OHLC events use the exact candle and its observable interval, not an invented intrabar instant. Ambiguous events cannot produce a unique setup identity. Farther same-side updates before Step 4 retain the initiating setup identity and append their event/reference lineage; they do not silently start another setup.
+- Session-level preparation facts do not need a setup that does not yet exist. Downstream facts bind to the setup and exact predecessor event/FVG identity. Candidate observations can be recorded before a prerequisite is established; this never grants workflow eligibility.
+- `EffectiveAtUtc` is the market event or reviewed-context time. `ObservedAtUtc` is when that semantic assertion became source-observable, not merely when its underlying candle occurred. Both are UTC. Require `EffectiveAtUtc <= ObservedAtUtc`; every necessary candle must have actually closed and every required price event must be observable before consumption.
+- At frame `T`, consumption requires `ObservedAtUtc <= StrategyReplayContext.AsOfUtc = T`, exact identity, resolved observable sources and applicable workflow/lifecycle eligibility. Availability is never source priority. A late assertion affects only current/later frames; no earlier results, deadlines or signals are rewritten.
+- Import time may be later than authentic historical availability when contemporaneous source material substantiates it. Record import/review time separately. Later analyst creation of a new assertion cannot claim the old candle time as its availability. Unknown availability is not synthesized.
+- Auxiliary observations currently do not create replay boundaries by themselves. Consume at the first existing canonical boundary at/after availability; never shift timestamps or fabricate a boundary. Missing event resolution must remain explicit.
+
+### Selection and runtime mapping for these new contracts
+
+Select visible observations for the exact semantic slot: session preparation-context/reference selection, setup first trigger, setup selected FVG and its quality review, selected pullback, selected realignment, or operation parameter/event. Compare the complete typed semantic payload, including exact identities and selections; provenance/record ordering alone does not distinguish compatible facts. Unordered member collections compare as exact sets. Different prices, directions, selected members, first-trigger claims or review decisions in the same slot conflict, even if some later calculation happens to agree. Distinct sequential management events are separate slots; contradictory values for one event conflict.
+
+`Missing`, `Unique` and `Conflict` are selection outcomes, not new rule-result values. `ObservedAtUtc` controls visibility, not semantic equality: compatible reviews of the same effective fact may have different availability times and provenance. Unique compatible support allows reference validation and rule evaluation; it is not automatically `Passed`. Preserve all supporting records and all conflicting alternatives. There is no latest/earliest-wins, vote, source priority, union/intersection, tolerance or automatic supersession. Explicit correction/revision authority remains outside Demo v0; a visible conflict blocks that dependency from then onward.
+
+The future adapters use the following mappings, defined only for the new Demo contracts:
+
+- **H**: a due human review/selection has no usable assertion -> `human_validation_required`.
+- **W/H**: while awaiting a market pattern or predecessor -> `waiting`; an observable candidate requiring a missing human review -> `human_validation_required`. Absence is not evidence that the market pattern failed.
+- **D/H**: missing numeric/source/account data -> `data_unavailable`; unresolved human selection or basis -> `human_validation_required`.
+- Every conflicting valid driving assertion -> `human_validation_required`; downstream processing cannot choose one. Malformed identity/timestamp input is rejected by validation, not converted to a positive rule result. Unresolvable referenced market data -> `data_unavailable`.
+
+These mappings do not resolve missing-evidence policies in older H4 reconstruction contracts. Existing TIME/LIQ evaluators keep their exact status behavior: notably a missed preparation deadline is not replaced with H. Missing evaluator registration still produces incomplete coverage; documentation does not fill it. Missing entry/management records are operation-result limitations, not automatic rule failures or `no_trade` verdicts.
+
+### Evidence ownership and minimum semantic payloads
+
+Names below are conceptual contracts, not claims that C# classes already exist. For every human row, retain the identity, source event references, `EffectiveAtUtc`, `ObservedAtUtc` and provenance defined above. **V** means consumption only under the causal invariant above; **C** means Conflict -> `human_validation_required`, retaining alternatives. No row can satisfy an unrelated rule.
+
+| Contract / derived fact | Owning RuleId or consumer | Mode | Effective time and availability | Missing / Conflict | Output semantic fact |
+|---|---|---|---|---|---|
+| Existing `NasdaqPreparationCompletionObservation` | NQ-TIME-003 only | Source-backed completion + existing evaluator | Existing authoritative `ObservedAtUtc` in `[08:00,08:30)`; V | Existing evaluator; duplicate input rejected under ADR 0006 | Both preparation steps completed, not correctness of H4/liquidity |
+| `NasdaqHumanH4ContextObservation` | NQ-H4-001 only | Human | Reviewed context time after referenced H4 closes; V | H / C | Established reviewed context and permitted direction, with exact structural anchors and review source |
+| `NasdaqHumanStructuralLiquiditySelectionObservation` | NQ-LIQ-002 only | Human | Session selection time after referenced 1H/4H events are observable; V | H / C | Exact relevant reference set with price, timeframe, High/Low role and supporting structure |
+| `NasdaqLiquidityTakeFact` (derived, not a human pass assertion) | NQ-LIQ-003 only | Deterministic from selected references and market data | Quote time, or interval evidenced only at candle close | Waiting without a take; data unavailable if unresolved; conflicting selection C | Strict exceedance event, taken side/level and observable ordering |
+| `NasdaqHumanFirstM5TriggerObservation` | NQ-M5-001; NQ-M5-002 for buy SC, NQ-M5-003 for sell SC, NQ-M5-004 for reviewed IFVG only | Human | Exact triggering closed 5M candle/event; V | W/H / C | First qualifying trigger type, direction and reviewed source references |
+| `NasdaqHumanM5FvgSelectionObservation` | NQ-FVG-001 only | Human selection; observable geometry checks | Close of third exact 5M candle; V | W/H / C | Separate directional three-candle FVG and wick-bounded zone |
+| `NasdaqHumanM5FvgQualityObservation` | NQ-FVG-002 only | Human | Review time for exact selected FVG; V | H / C | Acceptable or rejected quality with concrete rationale |
+| `NasdaqHumanM1PullbackObservation` | NQ-M1-001 only | Human | End of exact closed 1M event/member sequence; V | W/H / C | Countertrend pullback and reviewed interaction with the selected FVG |
+| `NasdaqHumanM1RealignmentObservation` | NQ-M1-002 only | Human swing/realignment review + closed-price checks | Exact confirming 1M candle close; V | W/H / C | Selected last corrective swing and directional body-close realignment after that pullback |
+| Confirmed-signal eligibility (derived) | NQ-M1-003, only its audited pre-entry eligibility portion | Deterministic orchestration boundary | Confirming closed 1M event, visible evidence and canonical prior progression | Waiting before completion; H/data unavailable for unresolved evidence/order | Eligible candidate signal, not an entry price, order or fill |
+| `NasdaqHumanStopLossObservation` | NQ-SL-001; historical operation consumer | Human | Structural selection/explicit stop parameter time; V | H / C | Relevant 5M HL/LH identity, wick protection anchor and documented executable SL price |
+| `NasdaqHumanTakeProfitObservation` | NQ-TP-001; NQ-TP-002 only for Asia/London target facts; historical operation consumer | Human selection + existing session calculations | Target-selection time; V | H / C | Relevant favorable high/low, exact target price/family and documented exit intent |
+| `NasdaqRiskExposureObservation` | NQ-RISK-001 only | Documented account/risk inputs + ratio check | Pre-entry risk assessment time for selected parameters; V | D/H / C | Source-reported planned maximum loss and explicit account basis, not calculated position size |
+| `HistoricalObservedEntry` | Historical operation consumer only; no RuleId automatically passes | Observed execution | Exact documented execution time; V | Result unavailable / C blocks dependent result | Direction, actual price, quantity when documented and execution identity |
+| `HistoricalObservedManagementEvent` | Historical operation consumer; NQ-BE-002 only for matching reviewed session-touch/SL-to-entry facts | Observed management, separate from derived strategy compliance | Exact documented event time; V | Result unavailable if relevant management is unknown / C | Ordered stop amendment, documented exit/partial or other actual management fact |
+
+H4 context includes the reviewed HH/HL or LL/LH references and the breakout/wickfill/fakeout context when relevant, together with permitted Buy/Sell direction or an explicit unresolved review. It does not automatically pass optional H4-002/003/004, bootstrap history, calculate new geometry or complete 007/008/009. A single session preparation-context slot has no automatic context replacement. An intervening structural change requires its actual existing lifecycle/evidence; a stale initial assertion cannot authorize continuation. First Demo guidance therefore prefers an unchanged reviewed context.
+
+Structural liquidity selection identifies each exact level and its semantic side, not just a list of prices. Session extrema remain owned by NQ-LIQ-001. No hierarchy or tolerance is added. Choose **deterministic NQ-LIQ-003**: selected High requires `price > level`; selected Low requires `price < level`. Equality does not activate Step 3. No penetration threshold, close-back or displacement filter. Existing `PriceLevelTouchCalculator` includes equality and is not a drop-in strict-take detector. H4 permitted direction, post-08:30 timing, preparation and existing setup lifecycle still govern eligibility. A closed candle spanning competing events supplies ranges, not an invented tick order.
+
+The first-5M-trigger assertion specifies `StructuralChange` or `IFVG`, direction, exact closed trigger event, active 5M reference and reviewed interval from the setup's take through that event. Its provenance must substantiate review of which qualifying alternative occurred first. SC retains the human-selected prior swing and strong/decisive body-close review; IFVG retains the exact prior FVG/event under review. Two different first-trigger claims conflict; there is no fixed SC priority or invented IFVG geometry. An unresolved review cannot satisfy the OR gate. Human confirmation of the source-backed alternative does not change NQ-M5-004's unresolved autonomous definition.
+
+FVG existence and quality are separate observations. Retain the exact ordered three closed 5M candles, intended direction, selected FVG identity and zone derived from the documented first/third wick edges. Selection must belong to the trigger's new-direction displacement. No size threshold or lifespan is supplied. A Step-4 IFVG is not Step 5 by implication. Quality review references that same FVG and records its rationale; rejection is an explicit review outcome, not inference from missing evidence.
+
+Pullback names its closed 1M event/member candles, countertrend direction (bearish for Buy, bullish for Sell), intended trade direction, selected FVG and reviewed interaction. Realignment names that pullback, exact human-selected last corrective swing/level and confirming closed 1M candle in the intended direction. No pivot, tolerance or pullback-detection algorithm is specified. The signal-close check is deterministic once usable realignment evidence and chronology exist: the actual candle must already be closed, all preceding gates eligible and the setup active/non-cancelled/non-expired before 11:00. No intrabar signal, timestamp shifting, same-frame prerequisite propagation or entry-price derivation follows. NQ-M1-003's exact order mechanics and broader runtime mapping remain unresolved; future integration must not claim full implementation from this close check alone.
+
+### Entry, SL, TP and historical-result ownership
+
+`HistoricalObservedEntry` is an observed/documented execution parameter, never a strategy-derived entry algorithm. Bind it to setup, direction, exact execution event/time, actual price and source execution/mentor record; retain quantity and unit if known. Entry is not candle Open/Close or a next-open fill unless the historical record explicitly documents that execution. It cannot establish a signal, reverse a cancellation or satisfy earlier gates. A documented mentor entry without a causally eligible MoneyWay signal is a comparison mismatch, not a MoneyWay trade. A signal without an authentic usable fill remains a candidate signal without a fabricated financial result. Unknown order type/slippage remain unknown.
+
+SL identifies the latest relevant human-selected 5M HL for Buy or LH for Sell, exact anchor members and timestamp, wick anchor (`Low`/`High`) and a separately documented executable SL price. Record whether the price is a contemporaneous pre-entry selected parameter or observed actual order parameter. An actual stop learned after entry cannot pass a prior SL gate. No offset, buffer, spread, commission, maximum-stop or swing algorithm is derived; equality/body coordinates are not substituted for the documented stop.
+
+TP identifies the selected important high for Buy or low for Sell, exact reference and family (Asia/London or reviewed structural fallback), actual decimal target, relevance review and explicit documented full/partial exit intent where known. Session-target eligibility/order and equal-price handling retain the existing source rules. No importance rank, fixed R multiple, universal final-target or partial-exit algorithm is created. Unknown final-exit intent limits outcome calculation. Selection provenance, target price and a later observed exit/fill are distinct facts; touching a target does not synthesize an undocumented fill policy.
+
+Historical trade simulation remains a separate future consumer of the canonical run, not a second market traversal engine. It must distinguish a conditional result using observed entry/parameters from an autonomously generated backtest fill and from the actual mentor execution. Same-candle SL/TP/management ordering that cannot be established remains unresolved/inconclusive; this ADR defines no SL-first/TP-first or execution-price rule. Financial amounts require documented quantity, units, valuation and costs; otherwise report only the supported price/event result, not invented PnL.
+
+### Risk and management
+
+NQ-RISK-001 confirms maximum risk per trade of 1%; it does not define sizing, account balance-versus-equity basis, tick value or costs. `NasdaqRiskExposureObservation` must provide a contemporaneous reviewed account amount/currency and named basis, source-reported maximum planned loss in the same currency, quantity/unit when used, exact planned/reference entry and selected SL identities, inclusion/exclusion of costs and the source calculation/reference. The maximum-loss amount is human/account input; quantity is documented input, not MoneyWay-calculated size. The future deterministic boundary checks complete compatible units/identity and `reported maximum loss / documented account basis <= 0.01`. It does not certify an undocumented loss formula or choose a balance/equity convention. An unsupported account basis or loss calculation requires human validation; missing amounts require data unavailable. This is explicitly a reviewed risk assessment, not independent position-sizing proof. A later actual fill can support a post-entry audit but cannot backfill the earlier risk gate.
+
+For each observed management event retain operation identity, exact source event/order identity, event kind, effective time, availability, prior/new stop or exit price, quantity/unit for partials, reason and supporting market reference. Different events append chronologically; competing descriptions of the same event conflict. Actual execution history is not automatically strategy compliance.
+
+Risk input validation requires a positive account basis and nonnegative reported loss; quantity, when supplied as traded exposure, must be positive with an explicit unit. Invalid numeric inputs cannot pass the ratio check.
+
+The source-backed BE concept is favorable first encountered distinct Asia/London target touch, independent of timeframe, followed by SL to entry. Retain the selected session target, observable touch and documented stop amendment separately. No BE-plus-costs, old post-entry swing substitute or universal BE rule. Reviewed coincident Asia/London targets are one final TP, not a fabricated earlier BE stage. Unknown applicable management or unresolved ordering must prevent a definitive historical result; it cannot be silently omitted. Do not force exit at 11:00. Other actual management can be recorded for comparison/result provenance without declaring NQ-BE-001/003 or any unresolved policy satisfied.
+
+### Retrospective annotation and conceptual session aggregate
+
+`NasdaqDemoSessionInput` is a conceptual aggregate, not a new C# type or API DTO. It contains:
+
+1. Exact session/strategy/instrument/provider identity, replay interval and real historical 4H/1H/5M/1M `CandleSeries`; optional canonical higher-resolution price observations and their authoritative order where available. Include session liquidity coverage and sufficient post-entry data; never synthesize missing candles.
+2. **EVALUATOR-DRIVING INPUT:** authentic causal preparation observation and typed H4, structural liquidity, trigger, FVG/quality, pullback, realignment, contemporaneous SL/TP selection and risk observations. Each is bounded by source-backed availability. Supply existing specific H4 observations/snapshots only if that actual case requires them; do not forge reconstruction episodes to seed initial context.
+3. **OPERATION-RESULT INPUT:** documented historical entry, actual SL/TP order parameters and ordered applicable management/execution events. These cannot force a rule or an earlier signal to pass. A parameter belongs in evaluator-driving input only if a distinct contemporaneous pre-entry assertion substantiates it.
+4. **COMPARISON-ONLY METADATA:** mentor trade/no-trade, direction, approximate timing, actual result and later analyst annotations with their true creation/review time, source and uncertainty. Keep them outside `IStrategyReplayInputObservation` supplied to evaluators and outside synthetic market events.
+
+A retrospective interpretation of an old candle is comparison/debug metadata, not contemporaneous driving evidence. A video published later does not prove that the reviewer assertion was available at the old market event. Authentic contemporaneous mentor records can substantiate historical availability when imported later; retain that distinction and the original record. If all available annotations are retrospective, the session can support diagnostic comparison but cannot truthfully manufacture historical passed gates or a causally eligible signal.
+
+The harness must retain rule definition status, runtime result, effective/availability/evaluation times, human/deterministic source, decisive references, full support/conflicts, workflow/lifecycle eligibility, signal and conditional/actual operation outcome. Reuse canonical diagnostics with an additive presentation of those facts. `Ready` alone is not an order or a signal; unresolved critical dependencies and incomplete data remain blocking.
+
+Choose the first case with SC, stable reviewed H4 context, sufficient real data and observable outcome order. Avoid unnecessary reconstruction/IFVG edge cases, but do not omit management that actually changes its result. This is Demo test guidance, not strategy law, priority or a new admissibility rule. The October 16 milestone does not relax causal availability.
+
+### First implementation boundary
+
+Implement the immutable **`NasdaqHumanH4ContextObservation` session evidence primitive and its Missing/Unique/Conflict selector**, with exact source references, semantic equality, lossless provenance and causal tests through existing `StrategyReplayContext`. Test wrong session/version/instrument, future observation/source candles, compatible duplicates, conflict and unchanged earlier frames. Do not add an evaluator, bootstrap algorithm or capability change in that first feature. Later add the owning rule adapter and canonical integration separately.
+
+## Alternatives considered
+
+- Generic per-rule Passed override: rejected; loses semantic ownership and bypasses strategy evidence.
+- Reuse specific invalidation/rebuilt H4 observations as session seeds: rejected; fabricates episode identity and structural history.
+- Automate visual rules using general trading knowledge: rejected; supplies unsupported strategy algorithms.
+- Backdate retrospective mentor annotations: rejected; produces future leakage and false historical eligibility.
+- Reuse existing typed transport/selectors with explicit stage contracts: selected; preserves architecture and permits truthful supervised replay without claiming autonomy.
+
+## Consequences
+
+One cross-rule integration contract and its ADR index are added. No runtime types, evaluator/API/UI, persistence, orchestration, simulation or dependency changes. Rule states and capability counts remain 32/14/4/10/full=false. Old H4 contracts retain their own identities, missing policies and lifecycle semantics. Remaining source gaps in autonomous entry, swing selection, sizing and management are not resolved by this document. Availability of authentic contemporaneous evidence is a real dataset dependency; a successful assisted replay is not proof of independent strategy performance.
+
+## Implementation and validation evidence
+
+Inspected existing implementation and test source, without running the Application suite:
+
+- `src/backend/MoneyWay.Application/StrategyReplay/`: `IStrategyReplayInputObservation`, `StrategyReplayContext`, raw/context outcome evaluation, workflow definitions and capability declarations.
+- `src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/`: preparation observation, human origin observation/episode/selector and their immutable supporting evidence conventions.
+- `src/backend/MoneyWay.Application/MarketData/PriceLevels/PriceLevelTouchCalculator.cs`, session liquidity/target primitives and the canonical backtest entrypoint.
+- `tests/unit/MoneyWay.Application.UnitTests/StrategyReplay/Capabilities/StrategyReplayEvaluationCapabilityCatalogTests.cs` and existing canonical replay tests inspected in the preceding audit.
+
+Documentation validation for this change consists of local Markdown file/heading reference checks, final diff review and `git diff --check`; no runtime correctness claim follows.
