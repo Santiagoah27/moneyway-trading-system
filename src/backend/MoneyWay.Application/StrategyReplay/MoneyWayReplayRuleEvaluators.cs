@@ -13,6 +13,7 @@ public static class MoneyWayReplayRuleEvaluators
             new MoneyWayNasdaqSessionPreparationCompletionEvaluator(),
             new MoneyWayNasdaqHumanH4ContextEvaluator(),
             new MoneyWayNasdaqSessionLiquidityEvaluator(new NasdaqSessionLiquidityCalculator()),
+            new MoneyWayNasdaqHumanStructuralLiquidityEvaluator(),
             new MoneyWayNasdaqTradingWindowStartEvaluator(),
             new MoneyWayNasdaqTradingWindowEndEvaluator(),
         ]);

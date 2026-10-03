@@ -133,7 +133,7 @@ public sealed class MoneyWayNasdaqHumanH4ContextEvaluatorTests
             .Execute(H4ContextFixture.Definition, context);
         var definition = H4ContextFixture.Definition.Rules.Single(item => item.RuleId == evaluator.RuleId);
         var actual = Assert.Single(observation.Evaluations, item => item.RuleId == evaluator.RuleId);
-        Assert.Equal(5, observation.Evaluations.Count);
+        Assert.Equal(6, observation.Evaluations.Count);
         Assert.Equal(definition.DefinitionStatus, actual.DefinitionStatus);
         Assert.Equal(definition.IsRequired, actual.IsRequired);
         Assert.Equal(definition.Sequence, actual.Sequence);
@@ -154,10 +154,10 @@ public sealed class MoneyWayNasdaqHumanH4ContextEvaluatorTests
             evaluators.Where(item => item.RuleId != evaluator.RuleId), declarations).Find(evaluator.StrategyId, evaluator.StrategyVersion)!;
         var after = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), evaluators, declarations)
             .Find(evaluator.StrategyId, evaluator.StrategyVersion)!;
-        Assert.Equal(4, before.RequiredImplementedCount);
-        Assert.Equal(10, before.RequiredEvaluatorGapCount);
-        Assert.Equal(5, after.RequiredImplementedCount);
-        Assert.Equal(9, after.RequiredEvaluatorGapCount);
+        Assert.Equal(5, before.RequiredImplementedCount);
+        Assert.Equal(9, before.RequiredEvaluatorGapCount);
+        Assert.Equal(6, after.RequiredImplementedCount);
+        Assert.Equal(8, after.RequiredEvaluatorGapCount);
         Assert.Equal(32, after.TotalRuleCount);
         Assert.Equal(14, after.RequiredRuleCount);
         Assert.False(after.HasFullRequiredEvaluatorRegistration);
