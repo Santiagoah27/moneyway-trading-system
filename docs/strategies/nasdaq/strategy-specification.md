@@ -803,6 +803,25 @@ FVG #1 existence and its Rejected quality remain immutable historical facts. FVG
 
 Only after the mandatory Step-5 FVG, move to 1M. Wait for a countertrend retracement toward/into that relevant 5M FVG and then for 1M structural realignment with the intended direction. For sells, the pullback is bullish and the realignment bearish; for buys, the pullback is bearish and the realignment bullish. Reaching the 5M FVG alone does not authorize entry. The last corrective swing must break with a candle-body close in the intended direction; if 1M never realigns, no entry concept becomes eligible.
 
+### Approved-FVG to corrective-retracement timing
+
+Human review of **Video 3, approximately 09:20-09:35**, confirms the NQ-M1-001 temporal boundary. The human/source-backed corrective retracement must bind to the **exact NQ-FVG-001 candidate whose NQ-FVG-002 quality is Approved**. Session identity, direction, timestamp similarity or nearest-FVG selection alone cannot establish that binding. A rejected candidate remains ineligible; approval of a later distinct candidate never approves or rebinds the earlier candidate's pullback.
+
+The contract is **`PullbackEffectiveAtUtc >= QualityEffectiveAtUtc`**. `PullbackEffectiveAtUtc` is the confirmation time of the corrective-retracement semantic fact for that approved FVG, at the end of its exact closed 1M event/member sequence. `QualityEffectiveAtUtc` is the effective review time of the exact Approved quality fact, not its later annotation/import time. Equality and strictly later confirmation are valid subject to exact identity, observable sources and canonical eligibility. A semantic pullback confirmation strictly before quality approval cannot satisfy NQ-M1-001 for that setup or be reused retrospectively. Do not require an additional later 1M candle merely to separate the timestamps.
+
+The price movement may have begun before quality approval. Its beginning is not an audited strategy gate: Demo v0 does **not** model `PullbackStartAtUtc`, the first retracement tick or first countertrend candle time, and does not require every member candle or all corrective price movement to occur after approval. Earlier supporting movement is distinct from a semantic fact already confirmed before approval.
+
+| Source-example quality confirmation | Pullback semantic confirmation | Timing admissibility under all other conditions |
+|---|---|---|
+| 09:20 | 09:20 | Valid: same timestamp |
+| 09:20 | 09:21 | Valid: strictly later |
+| 09:20 | 09:19 | Invalid for that approved FVG: semantic confirmation predates approval |
+| 09:20; movement began 09:18 | 09:20 or later | Valid: movement start is not a runtime gate |
+
+The source-example clock labels illustrate the relationship only; implementation retains exact UTC effective times. Equal market-effective timestamps do not authorize same-frame positive prerequisite propagation. Closed/observable 1M sources, authentic `EffectiveAtUtc <= ObservedAtUtc <= StrategyReplayContext.AsOfUtc`, exact active setup and canonical prior approval remain mandatory. Retrospective annotations cannot influence earlier frames. Terminal-session facts, invalidated setups and the TIME-owned cutoff still dominate; equality cannot revive them.
+
+NQ-M1-001 confirms only the countertrend retracement **toward or into** the relevant approved FVG. NQ-M1-002 owns subsequent intended-direction structural realignment; no realignment, signal candle or entry requirement is added to NQ-M1-001. No midpoint, 50% level, touch-depth/penetration threshold, wick/body threshold, retracement percentage or autonomous pullback/swing algorithm is defined by this timing clarification. Human-assisted classification remains required for the unresolved geometry.
+
 ### Entry swing
 
 The last swing of the corrective 1M structure whose break and close enables entry.
