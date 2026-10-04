@@ -35,7 +35,11 @@ public sealed class MoneyWayNasdaqHumanM5FvgEvaluatorTests
     private static MultiTimeframeStrategyBacktestRun Run(IStrategyReplayInputObservation[] inputs, bool nextStageProbe = false, CandleSeries[]? series = null)
     {
         var registry = MoneyWayReplayRuleEvaluators.GetAll().ToList();
-        if (nextStageProbe) registry.Add(new NextStageProbe());
+        if (nextStageProbe)
+        {
+            registry.RemoveAll(e => e.RuleId.Value == "NQ-M1-001");
+            registry.Add(new NextStageProbe());
+        }
         var definitions = new StrategyDefinitionCatalog().GetAll();
         return new GenerateMultiTimeframeStrategyBacktestRunUseCase(new(), new(), new(registry),
             new(definitions, MoneyWayReplayWorkflowDefinitions.GetAll()), new(), new(definitions, MoneyWayReplayLifecyclePolicies.GetAll()), new(new()))
@@ -57,8 +61,8 @@ public sealed class MoneyWayNasdaqHumanM5FvgEvaluatorTests
         Assert.Single(registry, e => e.RuleId.Value == "NQ-FVG-002");
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), registry,
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll()).Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 14, 10, 4, false), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
-        Assert.Equal("NQ-M1-001", report.Rules.Where(r => r.IsRequired && r.CapabilityStatus != ReplayRuleEvaluationCapabilityStatus.Implemented).OrderBy(r => r.Sequence).First().RuleId.Value);
+        Assert.Equal((32, 14, 11, 3, false), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal("NQ-M1-002", report.Rules.Where(r => r.IsRequired && r.CapabilityStatus != ReplayRuleEvaluationCapabilityStatus.Implemented).OrderBy(r => r.Sequence).First().RuleId.Value);
         var run = Run(Inputs(false, Fvg(), Quality(Fvg())));
         Assert.Equal(RuleEvaluationResult.Waiting, Result(At(run, 10), "NQ-FVG-001"));
         Assert.Equal(RuleEvaluationResult.Waiting, Result(At(run, 15), "NQ-FVG-002"));
