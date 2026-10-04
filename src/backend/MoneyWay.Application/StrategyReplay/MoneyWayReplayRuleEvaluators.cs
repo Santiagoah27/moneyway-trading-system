@@ -18,6 +18,8 @@ public static class MoneyWayReplayRuleEvaluators
             new MoneyWayNasdaqTradingWindowEndEvaluator(),
             new MoneyWayNasdaqHumanLiquidityTakeEvaluator(),
             new MoneyWayNasdaqHumanM5TriggerEvaluator(),
+            new MoneyWayNasdaqHumanM5FvgEvaluator(),
+            new MoneyWayNasdaqHumanM5FvgQualityEvaluator(),
         ]);
 
     public static IReadOnlyList<IReplayRuleEvaluator> GetAll() => Evaluators;

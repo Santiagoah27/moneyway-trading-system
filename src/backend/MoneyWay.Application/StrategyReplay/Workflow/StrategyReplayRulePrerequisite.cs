@@ -6,7 +6,7 @@ namespace MoneyWay.Application.StrategyReplay.Workflow;
 /// <summary>Declares the direct AND prerequisites for one downstream strategy rule.</summary>
 public sealed class StrategyReplayRulePrerequisite
 {
-    public StrategyReplayRulePrerequisite(RuleId downstreamRuleId, IEnumerable<RuleId> prerequisiteRuleIds)
+    public StrategyReplayRulePrerequisite(RuleId downstreamRuleId, IEnumerable<RuleId> prerequisiteRuleIds, bool requiresLatestPrerequisitePass = false)
     {
         ArgumentNullException.ThrowIfNull(downstreamRuleId);
         ArgumentNullException.ThrowIfNull(prerequisiteRuleIds);
@@ -14,10 +14,13 @@ public sealed class StrategyReplayRulePrerequisite
         if (prerequisites.Any(ruleId => ruleId is null))
             throw new ArgumentException("Prerequisite rule identifiers cannot contain null.", nameof(prerequisiteRuleIds));
 
+        RequiresLatestPrerequisitePass = requiresLatestPrerequisitePass;
         DownstreamRuleId = downstreamRuleId;
         PrerequisiteRuleIds = new ReadOnlyCollection<RuleId>(prerequisites);
     }
 
+    /// <summary>Recheck the immediately prior eligible pass instead of relying on historical completion alone.</summary>
+    public bool RequiresLatestPrerequisitePass { get; }
     public RuleId DownstreamRuleId { get; }
     public IReadOnlyList<RuleId> PrerequisiteRuleIds { get; }
 }

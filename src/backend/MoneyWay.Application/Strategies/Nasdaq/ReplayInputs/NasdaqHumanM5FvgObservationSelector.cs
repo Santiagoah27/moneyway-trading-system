@@ -12,12 +12,19 @@ public sealed class NasdaqHumanM5FvgObservationSelector
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(trigger);
         if (!IsEstablished(context, trigger)) return new NasdaqHumanM5FvgSelection.Missing([]);
+        var rejected = NasdaqHumanM5FvgCandidateHistory.Rejections(context, trigger);
+        var current = NasdaqHumanM5FvgCandidateHistory.Current(context, trigger, rejected);
         var valid = new List<NasdaqHumanM5FvgObservation>();
         var unavailable = new List<NasdaqHumanM5FvgObservation>();
         foreach (var observation in Ordered(context.InputObservations.OfType<NasdaqHumanM5FvgObservation>())
             .Where(o => o.Trigger.SameFact(trigger.Selection.Fact) && o.ObservedAtUtc <= context.AsOfUtc
                 && o.EffectiveAtUtc >= trigger.Selection.Fact.EffectiveAtUtc && InWindow(context, o.EffectiveAtUtc)))
         {
+            if (rejected.Any(r => r.Candidate.Selection.Fact.SameFact(observation))) continue;
+            if (current is not null && !observation.SameFact(current.Selection.Fact)
+                && observation.EffectiveAtUtc != current.Selection.Fact.EffectiveAtUtc) continue;
+            if (current is null && rejected.Count > 0 && (observation.EffectiveAtUtc <= rejected[^1].Candidate.Selection.Fact.EffectiveAtUtc
+                || observation.ObservedAtUtc < rejected[^1].Selection.Fact.ObservedAtUtc)) continue;
             var source = ResolveSources(context, observation);
             if (source == SourceAvailability.Unavailable) unavailable.Add(observation);
             else if (source == SourceAvailability.Usable) valid.Add(observation);

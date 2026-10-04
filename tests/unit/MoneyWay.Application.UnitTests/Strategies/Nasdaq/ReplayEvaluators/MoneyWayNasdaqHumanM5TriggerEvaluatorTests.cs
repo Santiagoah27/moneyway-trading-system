@@ -30,7 +30,7 @@ public sealed class MoneyWayNasdaqHumanM5TriggerEvaluatorTests
     private static MultiTimeframeStrategyBacktestRun Run(IStrategyReplayInputObservation[] inputs, IReplayRuleEvaluator? stub = null, CandleSeries[]? series = null)
     {
         var registry = MoneyWayReplayRuleEvaluators.GetAll().ToList();
-        if (stub is not null) registry.Add(stub);
+        if (stub is not null) { registry.RemoveAll(e => e.RuleId == stub.RuleId); registry.Add(stub); }
         var definitions = new StrategyDefinitionCatalog().GetAll();
         return new GenerateMultiTimeframeStrategyBacktestRunUseCase(new(), new(), new(registry),
             new(definitions, MoneyWayReplayWorkflowDefinitions.GetAll()), new(),
@@ -192,7 +192,7 @@ public sealed class MoneyWayNasdaqHumanM5TriggerEvaluatorTests
         Assert.True(at15.WorkflowProgression!.RuleEligibility.Single(e => e.RuleId.Value == "NQ-FVG-001").IsEligible);
         Assert.Equal(RuleEvaluationResult.Waiting, at15.Evaluations.Single(e => e.RuleId.Value == "NQ-FVG-001").Result);
         Assert.DoesNotContain(at15.WorkflowProgression.EstablishedRuleIds, id => id.Value is "NQ-FVG-001" or "NQ-FVG-002");
-        Assert.DoesNotContain(MoneyWayReplayRuleEvaluators.GetAll(), e => e.RuleId.Value.StartsWith("NQ-FVG-", StringComparison.Ordinal));
+        Assert.Equal(2, MoneyWayReplayRuleEvaluators.GetAll().Count(e => e.RuleId.Value.StartsWith("NQ-FVG-", StringComparison.Ordinal)));
         var outcome = new EvaluateStrategyReplayContextOutcomeUseCase().Execute(LiquidityFixture.Definition, at10);
         Assert.Equal(StrategyVerdict.DataUnavailable, outcome.Verdict); // still incomplete Required coverage
     }

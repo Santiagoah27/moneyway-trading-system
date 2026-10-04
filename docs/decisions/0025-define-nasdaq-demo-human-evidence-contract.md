@@ -432,3 +432,19 @@ Inspected existing implementation and test source, without running the Applicati
 - `tests/unit/MoneyWay.Application.UnitTests/StrategyReplay/Capabilities/StrategyReplayEvaluationCapabilityCatalogTests.cs` and existing canonical replay tests inspected in the preceding audit.
 
 Documentation validation for this change consists of local Markdown file/heading reference checks, final diff review and `git diff --check`; no runtime correctness claim follows.
+
+
+### Feature 12 implementation: human-assisted FVG gates and candidate history
+
+The canonical registry now contains `MoneyWayNasdaqHumanM5FvgEvaluator` (NQ-FVG-001) and `MoneyWayNasdaqHumanM5FvgQualityEvaluator` (NQ-FVG-002). Capability is derived as **32 RuleIds / 14 Required / 10 registered evaluators / 4 RequiredEvaluatorGapCount / HasFullRequiredEvaluatorRegistration=false**. Their human-assisted runtime implementation does not resolve autonomous FVG geometry or numeric quality; original rule definition statuses remain unchanged.
+
+`NasdaqHumanM5FvgRuleFact` preserves the exact established trigger, FVG, source candles, effective/availability times and supporting provenance. `NasdaqHumanM5FvgQualityRuleFact` preserves the exact candidate and human review, including Rejected while the rule result is Waiting. Both travel in immutable canonical observations. Selection uses only bounded inputs and earlier owning-rule observations, without caches or a separate Demo pipeline.
+
+The candidate slot remains bound to its established exact FVG until a unique canonical Rejected review retires it. Only an explicitly selected distinct later FVG, observable after that rejection, can establish the next candidate in the same surviving setup. Multiple incompatible current selections conflict; missing, conflicting or unavailable evidence cannot retire a candidate or select a favorable later approval. Contradictory late reviews reopen the earlier unresolved candidate conservatively, without rewriting any historical observation. Source unavailability for an unrelated later selection does not block the established current candidate.
+
+Canonical workflow is NQ-M5-001 -> NQ-FVG-001 -> NQ-FVG-002 -> NQ-M1-001. The last two edges opt into requiring a Passed, eligible prerequisite in the preceding snapshot, so historical established RuleIds cannot bypass a newly blocked candidate review. Other edges retain their existing historical-prerequisite behavior. Positive progression still consumes prior frames only.
+
+Missing/Conflict at an eligible stage requires human validation; required unavailable source evidence returns DataUnavailable. FVG existence alone returns Passed. Exact quality Approved returns Passed; Rejected returns Waiting, never session invalidation. Canonical terminal facts and the TIME-owned entry-acquisition cutoff dominate further candidate progression. Same-close FVG confirmation remains inclusive, and IFVG trigger evidence alone never proves the separate mandatory FVG. No detector, quality score, structural/target survival algorithm, 1M evaluator or execution behavior is introduced.
+
+
+Feature 12 validation (2026-10-04): 108 focused Application tests covering FVG inputs/evaluators, workflow, registry and capability; full Application suite 2,046 passed; full Domain suite 223 passed. Canonical replay cases cover same-close SC/IFVG independence, exact identity, missing/conflicting/unavailable current evidence, candidate-local rejection followed by distinct approval, immutable history, future evidence, terminal/cutoff dominance, reordered provenance, late contradiction after approval and unavailable retired-candidate sources. The next actual Required evaluator gap is NQ-M1-001; no 1M implementation is included here.

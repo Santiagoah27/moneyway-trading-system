@@ -34,7 +34,9 @@ public sealed class AdvanceStrategyReplayProgressionUseCase
         foreach (var evaluation in observation.Evaluations)
         {
             var prerequisites = workflow.GetPrerequisiteRuleIds(evaluation.RuleId);
-            var missing = prerequisites.Where(ruleId => !previouslyEstablished.Contains(ruleId)).ToArray();
+            var requiresLatest = workflow.RulePrerequisites.SingleOrDefault(p => p.DownstreamRuleId == evaluation.RuleId)?.RequiresLatestPrerequisitePass == true;
+            var missing = prerequisites.Where(ruleId => !previouslyEstablished.Contains(ruleId)
+                || requiresLatest && previousSnapshot?.RuleEligibility.SingleOrDefault(e => e.RuleId == ruleId)?.EstablishesProgression != true).ToArray();
             var isEligible = missing.Length == 0;
             var establishesProgression = isEligible && evaluation.Result == RuleEvaluationResult.Passed;
             eligibility.Add(new(
