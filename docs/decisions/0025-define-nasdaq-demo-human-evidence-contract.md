@@ -338,6 +338,39 @@ The FVG slot is explicit human selection, not automatic first/nearest/largest/ne
 
 No evaluator or registry changes are included. Capability remains **32 RuleIds / 14 Required / 8 registered evaluators / 6 RequiredEvaluatorGapCount / HasFullRequiredEvaluatorRegistration=false**. The next Demo P0 feature is the human-assisted NQ-FVG-001 and NQ-FVG-002 replay evaluators and canonical registration. No autonomous geometry/quality, 1M, entry, SL/TP, risk, outcome or API/UI implementation follows from this evidence layer.
 
+### Human-confirmed rejected-FVG waiting and candidate loop
+
+Human review of **Video 3, approximately 09:10-09:30 and 10:30-11:15**, resolves the Feature 12 rejection-projection blocker: **Unique Approved -> Passed; Unique Rejected -> Waiting**, while the setup remains otherwise eligible. Rejection is candidate-local and non-terminal for the session/setup. It creates no Failed, NoTrade, NotApplicable bypass or terminal-session flag. The earlier Feature 11 statement that rejection is a semantic fact without runtime mapping describes that primitive's scope; this clarification defines the future owning evaluator's projection.
+
+The exact rejected FVG cannot complete Step 5. Keep its NQ-FVG-001 existence and NQ-FVG-002 Rejected quality/provenance in immutable history; stay at Step 5 awaiting another candidate. A later distinct human-selected mandatory FVG may independently satisfy NQ-FVG-001, and its own Approved quality may satisfy NQ-FVG-002 and enable Step 6 / 1M. It retains the same surviving session/H4/take/setup/trigger lineage and must meet exact trigger binding, inclusive `FvgEffectiveAtUtc >= M5TriggerEffectiveAtUtc`, closed/observable 5M sources and source-availability requirements. A new FVG is not a new setup or implicit revision of the old FVG. No autonomous first/nearest/strongest/widest/newest or source/insertion-order ranking is authorized.
+
+Waiting requires the active opportunity/window, structure survival against the setup and unconsumed expected target liquidity. Reuse existing TIME-002/lifecycle cutoff ownership for `[08:30,11:00)` America/Bogota and existing canonical terminal gates; rejection cannot revive an invalidated/cancelled/expired setup or extend waiting after cutoff. The reviewed SELL condition is that the relevant 5M High/bearish structure has not broken against the setup; this confirms the survival concept, not autonomous reference selection/invalidation detection or new Buy-side geometry. Expected-target consumption prevents continuation and preserves the specification's existing selected-target cancellation and liquidity-invalidation distinctions. Where exact 5M structural/target selection or event detection is not defined, retain `human_validation_required` / `unresolved` automation boundaries. No structural-high, TP or target-consumption algorithm is invented.
+
+For the same exact candidate, Approved versus Rejected remains Conflict -> HumanValidationRequired, retaining all alternatives. A candidate loop must never hide contradictory quality evidence, erase a rejection or apply latest-wins. Due missing quality -> HumanValidationRequired; required unavailable source -> DataUnavailable, not rejection. Quality remains human/source-backed with no numerical strength/size/ratio/displacement algorithm. Preserve effective FVG/review times separately from authentic observation availability and evaluation AsOfUtc: future candidates, annotations or Approved reviews cannot rewrite earlier frames or the earlier candidate's rejection.
+
+#### Feature 12 evaluator implementation contract
+
+| Owning rule | Condition after canonical setup/lifecycle checks | Runtime projection |
+|---|---|---|
+| NQ-FVG-001 | NQ-M5-001 prerequisite not yet established | Canonical Waiting; no premature FVG selection |
+| NQ-FVG-001 | Due Missing without unavailable required sources | HumanValidationRequired |
+| NQ-FVG-001 | Conflict | HumanValidationRequired; retain alternatives |
+| NQ-FVG-001 | Required named source unavailable and decision cannot be established | DataUnavailable; preserve relevance-scoped diagnostics |
+| NQ-FVG-001 | Unique valid independently selected mandatory FVG | Passed for existence only; no quality/1M implication |
+| NQ-FVG-002 | Exact selected NQ-FVG-001 fact absent/not eligible | Canonical Waiting; no arbitrary quality selection |
+| NQ-FVG-002 | Due Missing without unavailable required sources | HumanValidationRequired |
+| NQ-FVG-002 | Conflict | HumanValidationRequired; no vote or winner |
+| NQ-FVG-002 | Required named source unavailable and decision cannot be established | DataUnavailable; unrelated alternatives do not automatically block |
+| NQ-FVG-002 | Unique Approved for the exact selected FVG | Passed; Step 5 may complete |
+| NQ-FVG-002 | Unique Rejected for the exact selected FVG | Waiting; retain rejected-candidate identity and await another distinct candidate while setup survives |
+| Both | Authoritative upstream terminal/cancellation/cutoff condition | Existing canonical owner behavior dominates candidate waiting; no revival |
+
+**Feature 12 evaluators are FULLY UNBLOCKED at the strategy-contract level.** Remaining candidate-loop work is a bounded implementation concern, not a mentor-strategy ambiguity. At baseline `23a109d`, the FVG selector compares all visible selected FVGs for a trigger as one slot, and the quality selector rechecks that slot; simply adding #2 while retaining #1 therefore produces Conflict. Future integration needs the minimum candidate-progression extension to scope the next human-selected candidate after a causally established candidate-local rejection, retaining both histories and conflicts for each exact candidate. No time/provenance ranking, automatic supersession or blanket exclusion of inconvenient conflicting claims is allowed. In particular, a quality Conflict cannot be treated as an established Rejected transition.
+
+The current workflow declares NQ-M5-001 -> NQ-FVG-001 -> NQ-M1-001, with no direct NQ-FVG-002 edge. Its fold retains established RuleIds monotonically and does not carry exact FVG candidate identity. Feature 12 must bind quality to the exact canonically passed candidate, enforce NQ-FVG-001 -> NQ-FVG-002 -> next stage, and prevent a rejected candidate's existence pass from bypassing quality or being reused as approval for #2. Reuse canonical typed facts/history and prior-frame causal progression; do not reset the setup or rewrite prior snapshots. These changes and both evaluators/registration are future work, not implemented here.
+
+This documentation update changes no code, registry or capability: **32 RuleIds / 14 Required / 8 registered evaluators / 6 RequiredEvaluatorGapCount / HasFullRequiredEvaluatorRegistration=false**. Next: `IMPLEMENT_DETERMINISTIC_PRIMITIVE` for the NQ-FVG-001 + NQ-FVG-002 human-assisted evaluators, canonical registration and minimum candidate-loop integration.
+
 ### Entry, SL, TP and historical-result ownership
 
 `HistoricalObservedEntry` is an observed/documented execution parameter, never a strategy-derived entry algorithm. Bind it to setup, direction, exact execution event/time, actual price and source execution/mentor record; retain quantity and unit if known. Entry is not candle Open/Close or a next-open fill unless the historical record explicitly documents that execution. It cannot establish a signal, reverse a cancellation or satisfy earlier gates. A documented mentor entry without a causally eligible MoneyWay signal is a comparison mismatch, not a MoneyWay trade. A signal without an authentic usable fill remains a candidate signal without a fabricated financial result. Unknown order type/slippage remain unknown.
