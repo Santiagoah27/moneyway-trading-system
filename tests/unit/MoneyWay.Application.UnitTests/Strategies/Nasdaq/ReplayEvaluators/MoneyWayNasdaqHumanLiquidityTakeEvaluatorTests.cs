@@ -312,7 +312,7 @@ public sealed class MoneyWayNasdaqHumanLiquidityTakeEvaluatorTests
     }
     private static MultiTimeframeStrategyBacktestRun Run(IStrategyReplayInputObservation[] inputs, bool complete = false, CountingTrigger? trigger = null)
     {
-        var registry = MoneyWayReplayRuleEvaluators.GetAll().ToList();
+        var registry = MoneyWayReplayRuleEvaluators.GetAll().Where(e => e.RuleId != trigger?.RuleId).ToList();
         if (complete) registry.AddRange(LiquidityFixture.Definition.Rules.Where(r => !registry.Any(e => e.RuleId == r.RuleId)).Select(r => new AlwaysPassed(r.RuleId)));
         if (trigger is not null) registry.Add(trigger);
         var definitions = new StrategyDefinitionCatalog().GetAll();
