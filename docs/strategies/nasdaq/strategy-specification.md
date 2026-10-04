@@ -822,6 +822,14 @@ The source-example clock labels illustrate the relationship only; implementation
 
 NQ-M1-001 confirms only the countertrend retracement **toward or into** the relevant approved FVG. NQ-M1-002 owns subsequent intended-direction structural realignment; no realignment, signal candle or entry requirement is added to NQ-M1-001. No midpoint, 50% level, touch-depth/penetration threshold, wick/body threshold, retracement percentage or autonomous pullback/swing algorithm is defined by this timing clarification. Human-assisted classification remains required for the unresolved geometry.
 
+### Corrective-retracement to realignment timing
+
+The direct human source decision for NQ-M1-002 establishes **`RealignmentEffectiveAtUtc >= PullbackEffectiveAtUtc`** for the exact NQ-M1-001 corrective-retracement fact and its surviving setup/Approved FVG. `RealignmentEffectiveAtUtc` is the confirmation time at the exact closed 1M source event. A strictly earlier realignment is invalid for that pullback; equality and a strictly later confirmation are valid when the distinct human/source-backed facts and canonical prerequisites are present. Neither fact is rebound retrospectively to another pullback or FVG.
+
+For a Sell setup, a source-backed 09:21 closed 1M event may complete the bullish corrective retracement toward/into the Approved FVG and then confirm bearish realignment with the original Sell direction. Both semantic facts may have EffectiveAtUtc 09:21. This valid same-close sequence requires human/source evidence of the causal order; OHLC alone cannot establish intrabar order, wick chronology or a synthetic lower-timeframe path. A 09:21 pullback followed by 09:22 realignment is also valid; 09:20 realignment for a 09:21 pullback is invalid. These clock labels illustrate the relationship and do not define a timezone conversion.
+
+NQ-M1-001 and NQ-M1-002 remain separate rules even if they share a close or source candles: a passed pullback does not imply realignment. Realignment evidence does not establish a downstream signal candle, signal close or entry. No `RealignmentStartAtUtc` or autonomous realignment/swing/intrabar-order algorithm is defined. Exact 1M sources must be closed and observable; authentic `ObservedAtUtc <= StrategyReplayContext.AsOfUtc`, prior-frame workflow eligibility, terminal-session protection and the TIME-owned cutoff still apply. Equality cannot backfill an earlier frame or revive an expired or invalidated setup.
+
 ### Entry swing
 
 The last swing of the corrective 1M structure whose break and close enables entry.
