@@ -348,7 +348,8 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, stop.DefinitionStatus);
         Assert.Contains("Low/lowest wick extreme of the latest relevant structural 5M HL", stop.Description, StringComparison.Ordinal);
         Assert.Contains("High/highest wick/tail of the relevant structural 5M LH", stop.Description, StringComparison.Ordinal);
-        Assert.Contains("executable price and offset remain unresolved", stop.Description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("autonomous executable-price derivation and offset remain unresolved", stop.Description, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("a separately documented human StopPrice may be evaluated", stop.Description, StringComparison.Ordinal);
         Assert.Contains("does not define a buffer, tick distance, spread/cost adjustment, or broker order semantics", stop.Description, StringComparison.Ordinal);
         Assert.Contains("separate from structural coordinates, including the single-candle origin Open", stop.Description, StringComparison.Ordinal);
 

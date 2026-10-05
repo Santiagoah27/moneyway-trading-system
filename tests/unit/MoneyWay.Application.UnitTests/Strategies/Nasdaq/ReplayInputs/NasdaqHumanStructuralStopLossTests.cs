@@ -1,10 +1,13 @@
 using MoneyWay.Application.Backtesting;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
+using MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayLifecycle;
 using MoneyWay.Application.StrategyDefinitions;
 using MoneyWay.Application.StrategyReplay;
+using MoneyWay.Application.StrategyReplay.Capabilities;
 using MoneyWay.Application.StrategyReplay.Workflow;
 using MoneyWay.Domain.MarketData;
+using MoneyWay.Domain.Strategies;
 
 namespace MoneyWay.Application.UnitTests.Strategies.Nasdaq.ReplayInputs;
 
@@ -74,6 +77,98 @@ public sealed class NasdaqHumanStructuralStopLossTests
             [source ?? M5Fixture.Five(M5Fixture.At(14, 20))]);
         return new(fact, anchor, stopPrice ?? (fact.Direction == NasdaqHumanH4PermittedDirection.Buy ? 89 : 111),
             M5Fixture.At(14, 30), observed ?? M5Fixture.At(14, 30), reference);
+    }
+
+    private static RuleEvaluationResult Evaluation(MultiTimeframeStrategyBacktestRun run, DateTimeOffset time) =>
+        run.StrategyObservations.Single(o => o.AsOfUtc == time).Evaluations
+            .Single(e => e.RuleId.Value == "NQ-SL-001").Result;
+
+    [Theory]
+    [InlineData(NasdaqHumanH4PermittedDirection.Buy, NasdaqM5ProtectionAnchorKind.HigherLow, 90, 89)]
+    [InlineData(NasdaqHumanH4PermittedDirection.Sell, NasdaqM5ProtectionAnchorKind.LowerHigh, 110, 111)]
+    public void CanonicalEvaluatorPassesOnlyExactDocumentedStructuralStop(
+        NasdaqHumanH4PermittedDirection direction, NasdaqM5ProtectionAnchorKind kind, decimal anchor, decimal stopPrice)
+    {
+        var setup = Setup(direction);
+        var evidence = Stop(setup.Fact);
+        var run = Run(Inputs(direction, setup.Realignment, evidence));
+        var at = M5Fixture.At(15);
+        var stage = run.StrategyObservations.Single(o => o.AsOfUtc == at);
+        Assert.Equal(RuleEvaluationResult.Passed, Evaluation(run, at));
+        var fact = Assert.IsType<NasdaqHumanStructuralStopLossRuleFact>(stage.RuleFacts
+            .Single(f => f.RuleId.Value == "NQ-SL-001").Fact);
+        Assert.Same(evidence, fact.Selection.Fact);
+        Assert.Same(stage.RuleFacts.Single(f => f.RuleId.Value == "NQ-SL-001").Fact, fact);
+        Assert.Equal(direction, fact.Direction);
+        Assert.Equal(kind, fact.ProtectionAnchorKind);
+        Assert.Equal(anchor, fact.StructuralAnchorPrice);
+        Assert.Equal(stopPrice, fact.StopPrice);
+        Assert.Equal(evidence.EffectiveAtUtc, fact.EffectiveAtUtc);
+        Assert.NotEqual(at, fact.EffectiveAtUtc);
+        Assert.Equal(at, stage.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").EvaluatedAtUtc);
+        Assert.Contains("review:stop", stage.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").EvidenceReference);
+        Assert.Contains(new RuleId("NQ-SL-001"), stage.WorkflowProgression!.EstablishedRuleIds);
+        Assert.Equal([new RuleId("NQ-SL-001")], MoneyWayReplayWorkflowDefinitions.GetAll().Single()
+            .GetPrerequisiteRuleIds(new RuleId("NQ-TP-001")));
+        Assert.DoesNotContain(stage.Evaluations, e => e.RuleId.Value == "NQ-TP-001");
+
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
+        Assert.Single(evaluators, e => e.RuleId.Value == "NQ-SL-001"
+            && e is MoneyWayNasdaqHumanStructuralStopLossEvaluator);
+        var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), evaluators,
+            MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
+            .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
+        Assert.Equal((32, 14, 14, 1, false), (report.TotalRuleCount, report.RequiredRuleCount,
+            report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal("NQ-RISK-001", report.Rules.Where(r => r.IsRequired
+            && r.CapabilityStatus != ReplayRuleEvaluationCapabilityStatus.Implemented).Single().RuleId.Value);
+    }
+
+    [Fact]
+    public void EvaluatorMapsMissingConflictUnavailableAndWrongUpstreamWithoutFailure()
+    {
+        var setup = Setup(NasdaqHumanH4PermittedDirection.Buy);
+        var at = M5Fixture.At(15);
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired,
+            Evaluation(Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, setup.Realignment)), at));
+        var first = Stop(setup.Fact);
+        var other = Stop(setup.Fact, source: M5Fixture.Five(M5Fixture.At(14, 15)), reference: "other:anchor");
+        var conflict = Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, setup.Realignment, first, other));
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired, Evaluation(conflict, at));
+        Assert.Contains("other:anchor", conflict.StrategyObservations.Single(o => o.AsOfUtc == at).Evaluations
+            .Single(e => e.RuleId.Value == "NQ-SL-001").EvidenceReference);
+        var absent = new Candle(LiquidityFixture.Provider, LiquidityFixture.Symbol, NasdaqHumanM5ProtectionAnchor.M5,
+            M5Fixture.At(14, 19).AddSeconds(1), M5Fixture.At(14, 24).AddSeconds(1), 100, 110, 90, 100, null);
+        var unavailable = Stop(setup.Fact, source: absent);
+        var noSource = Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, setup.Realignment, unavailable));
+        Assert.Equal(RuleEvaluationResult.DataUnavailable, Evaluation(noSource, at));
+        Assert.Contains("review:stop", noSource.StrategyObservations.Single(o => o.AsOfUtc == at).Evaluations
+            .Single(e => e.RuleId.Value == "NQ-SL-001").EvidenceReference);
+        Assert.Equal(RuleEvaluationResult.DataUnavailable,
+            Evaluation(Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, setup.Realignment, first, unavailable)), at));
+        var wrong = Stop(Setup(NasdaqHumanH4PermittedDirection.Buy, swingLevel: 98).Fact);
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired,
+            Evaluation(Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, setup.Realignment, wrong)), at));
+    }
+
+    [Fact]
+    public void EvaluatorWaitsForPreEntryAndCannotUseFutureOrTerminalEvidence()
+    {
+        var setup = Setup(NasdaqHumanH4PermittedDirection.Buy);
+        var stop = Stop(setup.Fact);
+        var withoutPreEntry = Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, stop));
+        Assert.Equal(RuleEvaluationResult.Waiting, Evaluation(withoutPreEntry, M5Fixture.At(14, 30)));
+        var future = Stop(setup.Fact, observed: M5Fixture.At(16));
+        var baseline = Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, setup.Realignment));
+        var expanded = Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, setup.Realignment, future));
+        Assert.Equal(Evaluation(baseline, M5Fixture.At(15)), Evaluation(expanded, M5Fixture.At(15)));
+        Assert.NotEqual(RuleEvaluationResult.Passed, Evaluation(expanded, M5Fixture.At(16)));
+        var invalid = M5Fixture.Take(true, effective: M5Fixture.At(14, 30), observed: M5Fixture.At(14, 30));
+        var initiating = setup.Fact.Realignment.Pullback.Selection.Fact.ApprovedQuality.Fact.Fvg.Trigger.DecisiveTake;
+        var terminal = Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, setup.Realignment, stop, invalid,
+            new NasdaqHumanRelevantLiquidityTakeObservation(invalid, invalid.ObservedAtUtc,
+                "terminal:event", initiating)));
+        Assert.NotEqual(RuleEvaluationResult.Passed, Evaluation(terminal, M5Fixture.At(15)));
     }
 
     [Theory]

@@ -198,8 +198,8 @@ public sealed class MoneyWayNasdaqHumanStructuralLiquidityEvaluatorTests
         var definition = LiquidityFixture.Definition;
         var before = beforeCatalog.Find(definition.StrategyId, definition.Version)!;
         var after = afterCatalog.Find(definition.StrategyId, definition.Version)!;
-        Assert.Equal((10, 4, false), (before.RequiredImplementedCount, before.RequiredEvaluatorGapCount, before.HasFullRequiredEvaluatorRegistration));
-        Assert.Equal((11, 3, false), (after.RequiredImplementedCount, after.RequiredEvaluatorGapCount, after.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal((11, 3, false), (before.RequiredImplementedCount, before.RequiredEvaluatorGapCount, before.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal((12, 2, false), (after.RequiredImplementedCount, after.RequiredEvaluatorGapCount, after.HasFullRequiredEvaluatorRegistration));
         Assert.All(after.Rules.Where(item => item.RuleId != evaluator.RuleId), item =>
             Assert.Equal(before.Rules.Single(old => old.RuleId == item.RuleId).CapabilityStatus, item.CapabilityStatus));
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, after.Rules.Single(item => item.RuleId.Value == "NQ-LIQ-003").CapabilityStatus);

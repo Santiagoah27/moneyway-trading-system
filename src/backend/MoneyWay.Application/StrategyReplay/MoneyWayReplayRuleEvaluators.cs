@@ -23,6 +23,7 @@ public static class MoneyWayReplayRuleEvaluators
             new MoneyWayNasdaqHumanM1CorrectiveRetracementEvaluator(),
             new MoneyWayNasdaqHumanM1RealignmentEvaluator(),
             new MoneyWayNasdaqPreEntryEligibilityEvaluator(),
+            new MoneyWayNasdaqHumanStructuralStopLossEvaluator(),
         ]);
 
     public static IReadOnlyList<IReplayRuleEvaluator> GetAll() => Evaluators;

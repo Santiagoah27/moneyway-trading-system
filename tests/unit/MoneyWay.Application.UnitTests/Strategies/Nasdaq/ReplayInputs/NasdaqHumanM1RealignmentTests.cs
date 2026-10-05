@@ -104,13 +104,13 @@ public sealed class NasdaqHumanM1RealignmentTests
             .Single(e => e.RuleId.Value == "NQ-M1-003").EvidenceReference);
         Assert.Equal([new RuleId("NQ-M1-003")], MoneyWayReplayWorkflowDefinitions.GetAll().Single()
             .GetPrerequisiteRuleIds(new RuleId("NQ-SL-001")));
-        Assert.DoesNotContain(established.Evaluations, e => e.RuleId.Value == "NQ-SL-001");
+        Assert.NotEqual(RuleEvaluationResult.Passed, established.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").Result);
         Assert.DoesNotContain(established.RuleFacts, f => f.RuleId.Value == "NQ-SL-001");
 
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), evaluators,
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 14, 13, 2, false), (report.TotalRuleCount, report.RequiredRuleCount,
+        Assert.Equal((32, 14, 14, 1, false), (report.TotalRuleCount, report.RequiredRuleCount,
             report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
     }
 
@@ -147,9 +147,9 @@ public sealed class NasdaqHumanM1RealignmentTests
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), evaluators,
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 14, 13, 2, false), (report.TotalRuleCount, report.RequiredRuleCount,
+        Assert.Equal((32, 14, 14, 1, false), (report.TotalRuleCount, report.RequiredRuleCount,
             report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
-        Assert.Equal("NQ-SL-001", report.Rules.Where(r => r.IsRequired
+        Assert.Equal("NQ-RISK-001", report.Rules.Where(r => r.IsRequired
             && r.CapabilityStatus != ReplayRuleEvaluationCapabilityStatus.Implemented)
             .OrderBy(r => r.Sequence).First().RuleId.Value);
         Assert.Equal(RuleEvaluationResult.Waiting,
