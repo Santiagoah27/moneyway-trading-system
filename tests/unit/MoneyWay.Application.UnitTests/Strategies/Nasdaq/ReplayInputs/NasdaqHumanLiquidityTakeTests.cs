@@ -359,7 +359,7 @@ public sealed class NasdaqHumanLiquidityTakeTests
     public void CanonicalHumanAdapterIsRegisteredWithoutFullStrategyCoverage()
     {
         var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
-        Assert.Equal(12, evaluators.Count);
+        Assert.Equal(13, evaluators.Count);
         Assert.Single(evaluators, e => e.RuleId.Value == "NQ-LIQ-003");
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), evaluators,
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll()).Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;

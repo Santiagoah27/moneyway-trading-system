@@ -36,7 +36,8 @@ public sealed class MoneyWayReplayWorkflowDefinitionsTests
             item => AssertDeclaration(item, "NQ-FVG-002", "NQ-FVG-001"),
             item => AssertDeclaration(item, "NQ-M1-001", "NQ-FVG-002"),
             item => AssertDeclaration(item, "NQ-M1-002", "NQ-M1-001"),
-            item => AssertDeclaration(item, "NQ-M1-003", "NQ-M1-002"));
+            item => AssertDeclaration(item, "NQ-M1-003", "NQ-M1-002"),
+            item => AssertDeclaration(item, "NQ-SL-001", "NQ-M1-003"));
     }
 
     [Fact]
