@@ -110,7 +110,7 @@ public sealed class NasdaqHumanStructuralStopLossTests
         Assert.Contains(new RuleId("NQ-SL-001"), stage.WorkflowProgression!.EstablishedRuleIds);
         Assert.Equal([new RuleId("NQ-SL-001")], MoneyWayReplayWorkflowDefinitions.GetAll().Single()
             .GetPrerequisiteRuleIds(new RuleId("NQ-TP-001")));
-        Assert.DoesNotContain(stage.Evaluations, e => e.RuleId.Value == "NQ-TP-001");
+        Assert.NotEqual(RuleEvaluationResult.Passed, stage.Evaluations.Single(e => e.RuleId.Value == "NQ-TP-001").Result);
 
         var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
         Assert.Single(evaluators, e => e.RuleId.Value == "NQ-SL-001"
@@ -118,7 +118,7 @@ public sealed class NasdaqHumanStructuralStopLossTests
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), evaluators,
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 14, 15, 0, true), (report.TotalRuleCount, report.RequiredRuleCount,
+        Assert.Equal((32, 14, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount,
             report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
         Assert.DoesNotContain(report.Rules, r => r.IsRequired && r.CapabilityStatus != ReplayRuleEvaluationCapabilityStatus.Implemented);
     }

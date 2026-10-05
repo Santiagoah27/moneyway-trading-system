@@ -413,6 +413,16 @@ The existing observation table's **target-selection time** remains the NQ-TP-001
 
 The price relationship is strategy source truth, not MoneyWay execution functionality. It implements no TP types, selector, evaluator, fact, registration, workflow, hit detection, outcome or broker orders. Capability remains **32 RuleIds / 14 Required / 15 registered evaluators / 0 RequiredEvaluatorGapCount / HasFullRequiredEvaluatorRegistration=true**; full Required registration does not mean Demo completion. Next: typed NQ-TP-001 human-assisted target evidence and Missing / Unique / Conflict selection.
 
+#### Feature 22 human-assisted TP evaluator integration
+
+`MoneyWayNasdaqHumanTakeProfitEvaluator` consumes the existing selector and the latest prior eligible Passed `NasdaqHumanStructuralStopLossRuleFact`, preserving its exact pre-entry/FVG ancestry. No current-frame positive prerequisite bypass is introduced. Missing selection and Conflict require human validation; relevant unavailable sources return DataUnavailable. Unique establishes only the selected target, with all compatible support and exact `TakeProfitPrice == TargetReferencePrice`; an unavailable incompatible alternative blocks that pass. Unrelated setup evidence cannot block it. Target-selection `EffectiveAtUtc` remains distinct from canonical evaluation `AsOfUtc`.
+
+`NasdaqHumanTakeProfitRuleFact` transports the exact canonical SL and immutable selection. The existing terminal gate also blocks NQ-TP-001 in current-frame canonical fact transport; retained terminal history and TIME-owned cutoff remain authoritative. Their existing Failed decisions are inherited safety gates, not a new TP absence/conflict/hit failure rule. The catalog's target-touch/final-exit negative condition is outside this bounded target-establishment evaluator.
+
+Registration derives **32 RuleIds / 14 Required / 16 registered evaluators / 0 RequiredEvaluatorGapCount / HasFullRequiredEvaluatorRegistration=true**. Autonomous TP limitations remain separately auditable, following the existing H4 convention; they do not contradict registered human coverage. Full Required registration is coverage only. The workflow ends its declared dependency chain at NQ-TP-001: no successor, economic RuleId or risk dependency is added.
+
+The Demo-P0 audit finds only a risk assessment's `PlannedEntryPrice`, not an implemented `HistoricalObservedEntry` or a trade combining observed entry and exact eligibility/SL/TP. Canonical backtesting still produces strategy verdicts and diagnostics, not financial outcomes. `PriceLevelTouchCalculator` supplies neutral observable contact evidence; it is not a trade-hit/exit policy. Historical same-candle SL/TP ordering remains unresolved/inconclusive without sufficient evidence. Next bounded work is source-backed observed-entry evidence bound to exact eligibility and authentic execution availability, as already specified above; trade composition, management, economic outcome and execution remain separate future consumers.
+
 ### Risk and management
 
 #### Demo risk evaluator integration

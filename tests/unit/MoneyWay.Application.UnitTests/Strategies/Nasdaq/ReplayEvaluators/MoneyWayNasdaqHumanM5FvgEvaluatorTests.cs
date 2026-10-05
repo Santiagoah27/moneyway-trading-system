@@ -61,7 +61,7 @@ public sealed class MoneyWayNasdaqHumanM5FvgEvaluatorTests
         Assert.Single(registry, e => e.RuleId.Value == "NQ-FVG-002");
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), registry,
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll()).Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 14, 15, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal((32, 14, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
         Assert.DoesNotContain(report.Rules, r => r.IsRequired && r.CapabilityStatus != ReplayRuleEvaluationCapabilityStatus.Implemented);
         var run = Run(Inputs(false, Fvg(), Quality(Fvg())));
         Assert.Equal(RuleEvaluationResult.Waiting, Result(At(run, 10), "NQ-FVG-001"));

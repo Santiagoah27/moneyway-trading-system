@@ -300,6 +300,7 @@ public sealed class NasdaqHumanTakeProfitTests
             context.InputObservations).WithPriorObservations(context.PriorObservations);
         var missing = Assert.IsType<NasdaqHumanTakeProfitSelection.Missing>(Selector.Select(WithFrames(), setup.Sl));
         Assert.Same(observation, Assert.Single(missing.UnavailableSourceObservations));
+        Assert.Equal(RuleEvaluationResult.DataUnavailable, Evaluate(WithFrames()).Result);
         Assert.Throws<NotSupportedException>(() => ((IList<NasdaqHumanTakeProfitObservation>)missing.UnavailableSourceObservations).Clear());
         context.TryGetFrame(hour, out var original);
         var changed = new CandleSeries(context.ProviderId, context.Symbol, hour, original!.AvailableCandles.Select(c =>
@@ -307,6 +308,7 @@ public sealed class NasdaqHumanTakeProfitTests
         var cursor = new MultiTimeframeCandleReplayCursor([changed]);
         while (cursor.TryAdvance(out var frame)) frames[hour] = frame!.FramesByTimeframe[hour];
         Assert.Empty(Assert.IsType<NasdaqHumanTakeProfitSelection.Missing>(Selector.Select(WithFrames(), setup.Sl)).UnavailableSourceObservations);
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired, Evaluate(WithFrames()).Result);
     }
 
     [Fact]
@@ -341,10 +343,13 @@ public sealed class NasdaqHumanTakeProfitTests
         Assert.DoesNotContain(laterOutcome, context.InputObservations);
         var baseline = Frame(setup.Entry.Direction, time, setup.Realignment, setup.Stop, first);
         var selected = Assert.IsType<NasdaqHumanTakeProfitSelection.Unique>(Selector.Select(context, setup.Sl));
+        Assert.Equal(Evaluate(baseline), Evaluate(context));
+        Assert.Equal(RuleEvaluationResult.Passed, Evaluate(context).Result);
         Assert.Equal(Assert.IsType<NasdaqHumanTakeProfitSelection.Unique>(Selector.Select(baseline, setup.Sl)).SupportingObservations,
             selected.SupportingObservations);
         var bounded = M5Fixture.Context(time, context.InputObservations.ToArray(), includeFutureCandles: false)
             .WithPriorObservations(context.PriorObservations);
+        Assert.Equal(Evaluate(context), Evaluate(bounded));
         Assert.Equal(selected.SupportingObservations,
             Assert.IsType<NasdaqHumanTakeProfitSelection.Unique>(Selector.Select(bounded, setup.Sl)).SupportingObservations);
         Assert.IsType<NasdaqHumanTakeProfitSelection.Missing>(Selector.Select(
@@ -366,6 +371,7 @@ public sealed class NasdaqHumanTakeProfitTests
         var futureTarget = new NasdaqHumanTakeProfitTarget(new NasdaqLiquidityTakeReference.Structural(selection, reference), reference.StructuralPrice);
         Assert.Throws<ArgumentException>(() => Target(setup.Sl, futureTarget, effective: M5Fixture.At(15), observed: M5Fixture.At(17)));
         var observation = Target(setup.Sl, futureTarget, effective: M5Fixture.At(17), observed: M5Fixture.At(17));
+        Assert.NotEqual(RuleEvaluationResult.Passed, Evaluate(Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop, observation)).Result);
         Assert.IsType<NasdaqHumanTakeProfitSelection.Missing>(Selector.Select(
             Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop, observation), setup.Sl));
     }
@@ -382,6 +388,7 @@ public sealed class NasdaqHumanTakeProfitTests
         var terminal = Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop, target,
             invalid, new NasdaqHumanRelevantLiquidityTakeObservation(invalid, invalid.ObservedAtUtc, "terminal:event", initiating));
         Assert.IsType<NasdaqHumanTakeProfitSelection.Missing>(Selector.Select(terminal, setup.Sl));
+        Assert.Equal(RuleEvaluationResult.Failed, Evaluate(terminal).Result);
         var gate = terminal.PriorObservations.Last().RuleFacts.Single(f => f.RuleId.Value == "NQ-LIQ-003");
         var valid = Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop, target);
         var last = valid.PriorObservations.Last();
@@ -392,7 +399,9 @@ public sealed class NasdaqHumanTakeProfitTests
         Assert.IsType<NasdaqHumanTakeProfitSelection.Missing>(Selector.Select(valid.WithPriorObservations(gatedHistory), setup.Sl));
         Assert.IsType<NasdaqHumanTakeProfitSelection.Missing>(Selector.Select(
             Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop, Stop(setup.Entry, stopPrice: 88), target), setup.Sl));
+        Assert.Equal(RuleEvaluationResult.Failed, Evaluate(valid.WithPriorObservations(gatedHistory)).Result);
         var late = Target(setup.Sl, observed: M5Fixture.At(16));
+        Assert.Equal(RuleEvaluationResult.Failed, Evaluate(Frame(setup.Entry.Direction, M5Fixture.At(16), setup.Realignment, setup.Stop, late)).Result);
         Assert.IsType<NasdaqHumanTakeProfitSelection.Missing>(Selector.Select(
             Frame(setup.Entry.Direction, M5Fixture.At(16), setup.Realignment, setup.Stop, late), setup.Sl));
     }
@@ -426,23 +435,212 @@ public sealed class NasdaqHumanTakeProfitTests
     }
 
     [Fact]
-    public void EvidenceDoesNotChangeCanonicalEvaluationsFactsOrCapability()
+    public void EvidenceChangesOnlyCanonicalTakeProfitEvaluationAndFact()
     {
         var setup = TargetSetup();
         var inputs = Inputs(setup.Entry.Direction, setup.Realignment, setup.Stop);
         var baseline = Run(inputs);
         var withEvidence = Run(inputs.Append(Target(setup.Sl)).ToArray());
-        Assert.Equal(baseline.StrategyObservations.SelectMany(o => o.Evaluations), withEvidence.StrategyObservations.SelectMany(o => o.Evaluations));
-        Assert.Equal(baseline.StrategyObservations.SelectMany(o => o.RuleFacts).Select(f =>
+        Assert.Equal(baseline.StrategyObservations.SelectMany(o => o.Evaluations).Where(e => e.RuleId.Value != "NQ-TP-001"), withEvidence.StrategyObservations.SelectMany(o => o.Evaluations).Where(e => e.RuleId.Value != "NQ-TP-001"));
+        Assert.Equal(baseline.StrategyObservations.SelectMany(o => o.RuleFacts).Where(f => f.RuleId.Value != "NQ-TP-001").Select(f =>
             (f.RuleId, Proof: JsonSerializer.Serialize(f.Fact, f.Fact.GetType()))),
-            withEvidence.StrategyObservations.SelectMany(o => o.RuleFacts).Select(f =>
+            withEvidence.StrategyObservations.SelectMany(o => o.RuleFacts).Where(f => f.RuleId.Value != "NQ-TP-001").Select(f =>
                 (f.RuleId, Proof: JsonSerializer.Serialize(f.Fact, f.Fact.GetType()))));
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(),
             MoneyWayReplayRuleEvaluators.GetAll(), MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 14, 15, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
+        Assert.Equal((32, 14, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
             report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
-        Assert.DoesNotContain(MoneyWayReplayRuleEvaluators.GetAll(), e => e.RuleId.Value == "NQ-TP-001");
+        Assert.Single(MoneyWayReplayRuleEvaluators.GetAll(), e => e.RuleId.Value == "NQ-TP-001");
         Assert.Equal(new[] { new RuleId("NQ-SL-001") }, MoneyWayReplayWorkflowDefinitions.GetAll().Single().GetPrerequisiteRuleIds(new("NQ-TP-001")));
+    }
+
+    private static StrategyReplayContextObservation EvaluateCanonical(StrategyReplayContext context) =>
+        new EvaluateStrategyReplayContextUseCase(MoneyWayReplayRuleEvaluators.GetAll()).Execute(LiquidityFixture.Definition, context);
+
+    private static RuleEvaluation Evaluate(StrategyReplayContext context) =>
+        EvaluateCanonical(context).Evaluations.Single(e => e.RuleId.Value == "NQ-TP-001");
+
+    private static StrategyReplayContext WithoutFrame(StrategyReplayContext context, Timeframe missing)
+    {
+        var frames = context.AvailableTimeframes.Where(t => t != missing)
+            .ToDictionary(t => t, t => { context.TryGetFrame(t, out var frame); return frame!; });
+        return new CreateStrategyReplayContextUseCase().Execute(LiquidityFixture.Definition,
+            new MultiTimeframeReplayFrame(context.ProviderId, context.Symbol, context.Step, context.AsOfUtc,
+                context.ConfiguredTimeframes, context.UpdatedTimeframes.Where(frames.ContainsKey), frames),
+            context.InputObservations).WithPriorObservations(context.PriorObservations);
+    }
+
+    [Theory]
+    [InlineData(NasdaqHumanH4PermittedDirection.Buy, 0)]
+    [InlineData(NasdaqHumanH4PermittedDirection.Sell, 0)]
+    [InlineData(NasdaqHumanH4PermittedDirection.Buy, 1)]
+    [InlineData(NasdaqHumanH4PermittedDirection.Sell, 1)]
+    [InlineData(NasdaqHumanH4PermittedDirection.Buy, 4)]
+    [InlineData(NasdaqHumanH4PermittedDirection.Sell, 4)]
+    public void CanonicalEvaluatorPassesOnlySelectedTargetAndTransportsImmutableFact(NasdaqHumanH4PermittedDirection direction, int hours)
+    {
+        var setup = TargetSetup(direction);
+        var low = direction == NasdaqHumanH4PermittedDirection.Sell;
+        var target = Target(setup.Sl, hours == 0 ? SessionTarget(low) : StructuralTarget(low, hours));
+        var duplicate = Target(setup.Sl, target.Target, observed: M5Fixture.At(15, 5), source: "second:selection review");
+        var context = Frame(direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop, target, duplicate);
+        var canonical = EvaluateCanonical(context);
+        var evaluation = canonical.Evaluations.Single(e => e.RuleId.Value == "NQ-TP-001");
+        Assert.Equal(RuleEvaluationResult.Passed, evaluation.Result);
+        Assert.Equal(context.AsOfUtc, evaluation.EvaluatedAtUtc);
+        var fact = Assert.IsType<NasdaqHumanTakeProfitRuleFact>(canonical.RuleFacts.Single(f => f.RuleId.Value == "NQ-TP-001").Fact);
+        var upstream = context.PriorObservations.Last(o => o.RuleFacts.Any(f => f.RuleId.Value == "NQ-SL-001"))
+            .RuleFacts.Single(f => f.RuleId.Value == "NQ-SL-001").Fact;
+        Assert.Same(upstream, fact.StopLoss);
+        Assert.Same(fact.StopLoss.PreEntryEligibility, fact.PreEntryEligibility);
+        Assert.Same(target.Target, fact.Target);
+        Assert.Equal(direction, fact.Direction);
+        Assert.Equal(setup.Sl.Session, fact.Session);
+        Assert.Equal(target.Target.TargetReferencePrice, fact.TargetReferencePrice);
+        Assert.Equal(fact.TargetReferencePrice, fact.TakeProfitPrice);
+        Assert.Equal(M5Fixture.At(15), fact.EffectiveAtUtc);
+        Assert.NotEqual(evaluation.EvaluatedAtUtc, fact.EffectiveAtUtc);
+        Assert.Equal(new[] { target, duplicate }, fact.Selection.SupportingObservations);
+        Assert.Contains("second:selection review", evaluation.EvidenceReference);
+        using var proof = JsonDocument.Parse(evaluation.EvidenceReference!);
+        var source = proof.RootElement.GetProperty("TakeProfitEvidence")[0].GetProperty("TargetSource");
+        Assert.True(source.TryGetProperty(hours == 0 ? "Endpoint" : "Member", out _));
+        // A target at 20000 passes even though the replay candles trade at 90..110: no hit is being evaluated.
+        Assert.Equal(hours == 0 ? target.Target.Reference.ReferencePrice : 20000m, fact.TakeProfitPrice);
+        Assert.DoesNotContain(canonical.RuleFacts, f => f.RuleId.Value.StartsWith("NQ-OUTCOME", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void CanonicalMissingWaitingAndWrongAncestryHaveNoTakeProfitFact()
+    {
+        var setup = TargetSetup();
+        var target = Target(setup.Sl);
+        var missingPrerequisite = Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, target);
+        Assert.Equal(RuleEvaluationResult.Waiting, Evaluate(missingPrerequisite).Result);
+        var missing = Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop);
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired, Evaluate(missing).Result);
+        var wrong = TargetSetup(stopPrice: 88);
+        var mismatched = Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop, Target(wrong.Sl));
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired, Evaluate(mismatched).Result);
+        foreach (var context in new[] { missingPrerequisite, missing, mismatched })
+            Assert.DoesNotContain(EvaluateCanonical(context).RuleFacts, f => f.RuleId.Value == "NQ-TP-001");
+    }
+
+    [Fact]
+    public void CanonicalConflictsPreserveAllAlternativesWithoutWinner()
+    {
+        var setup = TargetSetup();
+        var first = Target(setup.Sl);
+        var other = Target(setup.Sl, SessionTarget(london: true));
+        var forward = Evaluate(Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop, first, other));
+        var reversed = Evaluate(Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop, other, first));
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired, forward.Result);
+        Assert.Equal(forward, reversed);
+        using var proof = JsonDocument.Parse(forward.EvidenceReference!);
+        Assert.Equal(2, proof.RootElement.GetProperty("TakeProfitEvidence").GetArrayLength());
+        Assert.Equal(2, proof.RootElement.GetProperty("TakeProfitEvidence").EnumerateArray()
+            .Select(e => e.GetProperty("TargetSource").GetProperty("Endpoint").GetInt32()).Distinct().Count());
+    }
+
+    [Fact]
+    public void CanonicalUnavailableEvidenceIsRelevantToExactCurrentSelection()
+    {
+        var setup = TargetSetup();
+        var available = Target(setup.Sl);
+        var unavailable = Target(setup.Sl, StructuralTarget(false, 4), source: "review:missing H4 source");
+        var time = M5Fixture.At(15, 5);
+        foreach (var observations in new[] { new[] { unavailable }, new[] { available, unavailable } })
+        {
+            var context = WithoutFrame(Frame(setup.Entry.Direction, time, setup.Realignment,
+                new IStrategyReplayInputObservation[] { setup.Stop }.Concat(observations).ToArray()), new(4, TimeframeUnit.Hour));
+            var result = Evaluate(context);
+            Assert.Equal(RuleEvaluationResult.DataUnavailable, result.Result);
+            Assert.Contains("review:missing H4 source", result.EvidenceReference);
+            Assert.DoesNotContain(EvaluateCanonical(context).RuleFacts, f => f.RuleId.Value == "NQ-TP-001");
+        }
+        var wrong = TargetSetup(swing: 98);
+        var unrelated = Target(wrong.Sl, StructuralTarget(false, 4), source: "unrelated:unavailable");
+        var usable = WithoutFrame(Frame(setup.Entry.Direction, time, setup.Realignment, setup.Stop, available, unrelated), new(4, TimeframeUnit.Hour));
+        Assert.Equal(RuleEvaluationResult.Passed, Evaluate(usable).Result);
+        Assert.DoesNotContain("unrelated:unavailable", Evaluate(usable).EvidenceReference);
+    }
+
+    [Fact]
+    public void CanonicalProgressionRequiresPriorFrameSlAndHasNoSuccessorAfterTakeProfit()
+    {
+        var setup = TargetSetup();
+        var target = Target(setup.Sl, effective: M5Fixture.At(14, 30), observed: M5Fixture.At(14, 30));
+        var run = Run(Inputs(setup.Entry.Direction, setup.Realignment, setup.Stop, target));
+        var slBoundary = run.StrategyObservations.First(o => o.Evaluations.Any(e => e.RuleId.Value == "NQ-SL-001"
+            && e.Result == RuleEvaluationResult.Passed));
+        Assert.Equal(RuleEvaluationResult.Waiting, slBoundary.Evaluations.Single(e => e.RuleId.Value == "NQ-TP-001").Result);
+        var established = run.StrategyObservations.First(o => o.WorkflowProgression?.RuleEligibility
+            .SingleOrDefault(e => e.RuleId.Value == "NQ-TP-001")?.EstablishesProgression == true);
+        Assert.True(established.AsOfUtc > slBoundary.AsOfUtc);
+        Assert.IsType<NasdaqHumanTakeProfitRuleFact>(established.RuleFacts.Single(f => f.RuleId.Value == "NQ-TP-001").Fact);
+        var workflow = MoneyWayReplayWorkflowDefinitions.GetAll().Single();
+        Assert.DoesNotContain(workflow.RulePrerequisites, p => p.PrerequisiteRuleIds.Contains(new RuleId("NQ-TP-001")));
+        Assert.Empty(workflow.GetPrerequisiteRuleIds(new("NQ-RISK-001")));
+    }
+
+    [Fact]
+    public void TakeProfitRegistrationChangesOnlyNonRequiredRuntimeCoverage()
+    {
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
+        var evaluator = Assert.IsType<MoneyWayNasdaqHumanTakeProfitEvaluator>(Assert.Single(evaluators, e => e.RuleId.Value == "NQ-TP-001"));
+        Assert.Equal(LiquidityFixture.Definition.StrategyId, evaluator.StrategyId);
+        Assert.Equal(LiquidityFixture.Definition.Version, evaluator.StrategyVersion);
+        var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
+        Assert.DoesNotContain(declarations, d => d.RuleId == evaluator.RuleId);
+        var limitation = MoneyWayReplayEvaluationCapabilityDeclarations.GetNasdaqAutonomousTakeProfitLimitation();
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification, limitation.Status);
+        var definitions = new StrategyDefinitionCatalog();
+        var before = new StrategyReplayEvaluationCapabilityCatalog(definitions, evaluators.Where(e => e != evaluator), declarations.Append(limitation))
+            .Find(evaluator.StrategyId, evaluator.StrategyVersion)!;
+        var after = new StrategyReplayEvaluationCapabilityCatalog(definitions, evaluators, declarations)
+            .Find(evaluator.StrategyId, evaluator.StrategyVersion)!;
+        Assert.Equal((15, 0, true), (before.ImplementedCount, before.RequiredEvaluatorGapCount, before.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal((16, 0, true), (after.ImplementedCount, after.RequiredEvaluatorGapCount, after.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal((32, 14), (after.TotalRuleCount, after.RequiredRuleCount));
+        Assert.All(after.Rules.Where(r => r.RuleId != evaluator.RuleId), r =>
+            Assert.Equal(before.Rules.Single(b => b.RuleId == r.RuleId).CapabilityStatus, r.CapabilityStatus));
+        var target = after.Rules.Single(r => r.RuleId == evaluator.RuleId);
+        Assert.False(target.IsRequired);
+        Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, target.DefinitionStatus);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented, target.CapabilityStatus);
+    }
+
+
+    [Fact]
+    public void CurrentBoundaryTerminalFactDominatesPreviouslyEstablishedSlAndVisibleTarget()
+    {
+        var setup = TargetSetup();
+        var target = Target(setup.Sl);
+        var time = M5Fixture.At(15, 5);
+        var invalid = M5Fixture.Take(true, effective: M5Fixture.At(14, 30), observed: M5Fixture.At(14, 30));
+        var initiating = setup.Entry.Realignment.Pullback.Selection.Fact.ApprovedQuality.Fact.Fvg.Trigger.DecisiveTake;
+        var terminal = Frame(setup.Entry.Direction, time, setup.Realignment, setup.Stop, target,
+            invalid, new NasdaqHumanRelevantLiquidityTakeObservation(invalid, invalid.ObservedAtUtc, "terminal:event", initiating));
+        var gate = Assert.IsType<NasdaqLiquidityTakeRuleFact>(terminal.PriorObservations.Last().RuleFacts.Single(f => f.RuleId.Value == "NQ-LIQ-003").Fact);
+        Assert.True(gate.IsSessionInvalidated);
+        var context = Frame(setup.Entry.Direction, time, setup.Realignment, setup.Stop, target);
+        Assert.IsType<NasdaqHumanTakeProfitSelection.Unique>(Selector.Select(context, setup.Sl));
+        // Exercise current-boundary terminal fact transport through the canonical coordinator.
+        // This does not reinterpret a later post-entry take as a pre-entry invalidation.
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll().Where(e => e.RuleId.Value != "NQ-LIQ-003")
+            .Append(new TerminalFactTransportEvaluator(gate));
+        var canonical = new EvaluateStrategyReplayContextUseCase(evaluators).Execute(LiquidityFixture.Definition, context);
+        Assert.Equal(RuleEvaluationResult.Failed, canonical.Evaluations.Single(e => e.RuleId.Value == "NQ-TP-001").Result);
+        Assert.DoesNotContain(canonical.RuleFacts, f => f.RuleId.Value == "NQ-TP-001");
+    }
+
+    private sealed class TerminalFactTransportEvaluator(NasdaqLiquidityTakeRuleFact gate) : IReplayRuleEvaluator
+    {
+        public StrategyId StrategyId => gate.Session.StrategyId;
+        public StrategyVersion StrategyVersion => gate.Session.StrategyVersion;
+        public RuleId RuleId { get; } = new("NQ-LIQ-003");
+        public ReplayRuleEvaluationDecision Evaluate(StrategyReplayContext context) =>
+            new(RuleEvaluationResult.Failed, "Transport the known canonical terminal gate.", gate.EvidenceReference, gate);
     }
 }

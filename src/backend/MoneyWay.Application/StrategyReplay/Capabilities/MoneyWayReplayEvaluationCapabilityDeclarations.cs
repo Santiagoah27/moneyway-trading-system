@@ -6,13 +6,17 @@ public static class MoneyWayReplayEvaluationCapabilityDeclarations
     private const string ForexSource = "docs/strategies/forex/rule-catalog.md";
     private const string NasdaqSource = "docs/strategies/nasdaq/rule-catalog.md";
 
-    /// <summary>Runtime limitations only. Registered human H4 coverage does not remove autonomous H4 source gaps.</summary>
+    /// <summary>Runtime limitations only. Registered human H4/TP coverage does not remove autonomous source gaps.</summary>
     public static IReadOnlyList<ReplayRuleEvaluationCapabilityDeclaration> GetAll() => GetAuditedLimitations()
-        .Where(item => item.RuleId.Value != "NQ-H4-001").ToArray();
+        .Where(item => item.RuleId.Value is not ("NQ-H4-001" or "NQ-TP-001")).ToArray();
 
     /// <summary>Audited autonomous-algorithm limitation, not a blocking declaration for the registered human adapter.</summary>
     public static ReplayRuleEvaluationCapabilityDeclaration GetNasdaqAutonomousH4Limitation() =>
         GetAuditedLimitations().Single(item => item.RuleId.Value == "NQ-H4-001");
+
+    /// <summary>Autonomous target-selection limitation, separate from the registered human TP evaluator.</summary>
+    public static ReplayRuleEvaluationCapabilityDeclaration GetNasdaqAutonomousTakeProfitLimitation() =>
+        GetAuditedLimitations().Single(item => item.RuleId.Value == "NQ-TP-001");
 
     private static IReadOnlyList<ReplayRuleEvaluationCapabilityDeclaration> GetAuditedLimitations() =>
     [

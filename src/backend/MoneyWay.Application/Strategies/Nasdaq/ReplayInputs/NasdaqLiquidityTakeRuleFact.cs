@@ -17,5 +17,6 @@ public sealed record NasdaqLiquidityTakeRuleFact : IReplayRuleGateFact
     public bool Blocks(StrategyReplayContext context, RuleId ruleId) => IsSessionInvalidated && Session.Matches(context)
         && (ruleId.Value.StartsWith("NQ-M5-", StringComparison.Ordinal)
             || ruleId.Value.StartsWith("NQ-FVG-", StringComparison.Ordinal)
-            || ruleId.Value.StartsWith("NQ-M1-", StringComparison.Ordinal));
+            || ruleId.Value.StartsWith("NQ-M1-", StringComparison.Ordinal)
+            || ruleId.Value == "NQ-TP-001");
 }

@@ -133,7 +133,7 @@ public sealed class MoneyWayNasdaqHumanH4ContextEvaluatorTests
             .Execute(H4ContextFixture.Definition, context);
         var definition = H4ContextFixture.Definition.Rules.Single(item => item.RuleId == evaluator.RuleId);
         var actual = Assert.Single(observation.Evaluations, item => item.RuleId == evaluator.RuleId);
-        Assert.Equal(15, observation.Evaluations.Count);
+        Assert.Equal(16, observation.Evaluations.Count);
         Assert.Equal(definition.DefinitionStatus, actual.DefinitionStatus);
         Assert.Equal(definition.IsRequired, actual.IsRequired);
         Assert.Equal(definition.Sequence, actual.Sequence);

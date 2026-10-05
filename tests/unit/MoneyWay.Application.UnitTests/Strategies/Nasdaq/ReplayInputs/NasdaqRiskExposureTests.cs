@@ -131,10 +131,10 @@ public sealed class NasdaqRiskExposureTests
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(),
             MoneyWayReplayRuleEvaluators.GetAll(), MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 14, 15, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
+        Assert.Equal((32, 14, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
             report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
         Assert.Single(MoneyWayReplayRuleEvaluators.GetAll(), e => e.RuleId.Value == "NQ-RISK-001");
-        Assert.DoesNotContain(MoneyWayReplayRuleEvaluators.GetAll(), e => e.RuleId.Value == "NQ-TP-001");
+        Assert.Single(MoneyWayReplayRuleEvaluators.GetAll(), e => e.RuleId.Value == "NQ-TP-001");
         Assert.Empty(MoneyWayReplayWorkflowDefinitions.GetAll().Single().GetPrerequisiteRuleIds(new("NQ-RISK-001")));
     }
 
@@ -367,7 +367,7 @@ public sealed class NasdaqRiskExposureTests
         Assert.Equal(200, fact.Exposure.Quantity);
         Assert.Contains("review:risk", actual.EvidenceReference);
         Assert.Contains("account:planned-loss calculation", actual.EvidenceReference);
-        Assert.DoesNotContain(stage.Evaluations, e => e.RuleId.Value == "NQ-TP-001");
+        Assert.NotEqual(RuleEvaluationResult.Passed, stage.Evaluations.Single(e => e.RuleId.Value == "NQ-TP-001").Result);
         Assert.Equal("NQ-RISK-001", new MoneyWayNasdaqRiskExposureEvaluator().RuleId.Value);
     }
 
@@ -418,11 +418,11 @@ public sealed class NasdaqRiskExposureTests
             .Find(registered.StrategyId, registered.StrategyVersion)!;
         var after = new StrategyReplayEvaluationCapabilityCatalog(definitions, evaluators, declarations)
             .Find(registered.StrategyId, registered.StrategyVersion)!;
-        Assert.Equal((14, 1, false), (before.ImplementedCount, before.RequiredEvaluatorGapCount, before.HasFullRequiredEvaluatorRegistration));
-        Assert.Equal((15, 0, true), (after.ImplementedCount, after.RequiredEvaluatorGapCount, after.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal((15, 1, false), (before.ImplementedCount, before.RequiredEvaluatorGapCount, before.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal((16, 0, true), (after.ImplementedCount, after.RequiredEvaluatorGapCount, after.HasFullRequiredEvaluatorRegistration));
         Assert.Equal(32, after.TotalRuleCount);
         Assert.Equal(14, after.RequiredRuleCount);
-        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification,
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented,
             after.Rules.Single(r => r.RuleId.Value == "NQ-TP-001").CapabilityStatus);
         Assert.All(after.Rules.Where(r => r.RuleId != registered.RuleId), r =>
             Assert.Equal(before.Rules.Single(b => b.RuleId == r.RuleId).CapabilityStatus, r.CapabilityStatus));
