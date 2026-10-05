@@ -68,9 +68,9 @@ public sealed class MoneyWayNasdaqHumanM1CorrectiveRetracementEvaluatorTests
         Assert.Single(registry, e => e.RuleId.Value == "NQ-M1-001" && e is MoneyWayNasdaqHumanM1CorrectiveRetracementEvaluator);
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), registry,
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll()).Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 14, 11, 3, false), (report.TotalRuleCount, report.RequiredRuleCount,
+        Assert.Equal((32, 14, 12, 2, false), (report.TotalRuleCount, report.RequiredRuleCount,
             report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
-        Assert.Equal("NQ-M1-002", report.Rules.Where(r => r.IsRequired && r.CapabilityStatus != ReplayRuleEvaluationCapabilityStatus.Implemented)
+        Assert.Equal("NQ-SL-001", report.Rules.Where(r => r.IsRequired && r.CapabilityStatus != ReplayRuleEvaluationCapabilityStatus.Implemented)
             .OrderBy(r => r.Sequence).First().RuleId.Value);
         var quality = Quality(NasdaqHumanH4PermittedDirection.Buy);
         var run = Run(Inputs(quality, Pullback(quality)));
@@ -98,7 +98,8 @@ public sealed class MoneyWayNasdaqHumanM1CorrectiveRetracementEvaluatorTests
         Assert.Contains(new RuleId("NQ-M1-001"), At(run, 30).WorkflowProgression!.EstablishedRuleIds);
         Assert.Equal([new RuleId("NQ-M1-001")], MoneyWayReplayWorkflowDefinitions.GetAll().Single()
             .GetPrerequisiteRuleIds(new RuleId("NQ-M1-002")));
-        Assert.DoesNotContain(stage.Evaluations, e => e.RuleId.Value is "NQ-M1-002" or "NQ-M1-003");
+        Assert.NotEqual(RuleEvaluationResult.Passed, stage.Evaluations.Single(e => e.RuleId.Value == "NQ-M1-002").Result);
+        Assert.DoesNotContain(stage.Evaluations, e => e.RuleId.Value == "NQ-M1-003");
     }
 
     [Fact]

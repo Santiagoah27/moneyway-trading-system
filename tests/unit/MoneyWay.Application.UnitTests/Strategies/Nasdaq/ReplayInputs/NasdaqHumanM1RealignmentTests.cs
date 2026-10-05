@@ -1,10 +1,13 @@
 using MoneyWay.Application.Backtesting;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
+using MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayLifecycle;
 using MoneyWay.Application.StrategyDefinitions;
 using MoneyWay.Application.StrategyReplay;
+using MoneyWay.Application.StrategyReplay.Capabilities;
 using MoneyWay.Application.StrategyReplay.Workflow;
 using MoneyWay.Domain.MarketData;
+using MoneyWay.Domain.Strategies;
 
 namespace MoneyWay.Application.UnitTests.Strategies.Nasdaq.ReplayInputs;
 
@@ -64,6 +67,106 @@ public sealed class NasdaqHumanM1RealignmentTests
         new(pullback, new(Minute(close), [swingSource ?? Minute(20)],
             level ?? (pullback.Selection.Fact.SetupDirection == NasdaqHumanH4PermittedDirection.Buy ? 99 : 101),
             pullback.Selection.Fact.SetupDirection), M5Fixture.At(14, observed), source, sameCloseOrder);
+
+    private static RuleEvaluationResult Result(MultiTimeframeStrategyBacktestRun run, DateTimeOffset time) =>
+        run.StrategyObservations.Single(o => o.AsOfUtc == time).Evaluations
+            .Single(e => e.RuleId.Value == "NQ-M1-002").Result;
+
+    [Fact]
+    public void EvaluatorRegistryCapabilityAndCanonicalPrerequisite()
+    {
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
+        Assert.Single(evaluators, e => e.RuleId.Value == "NQ-M1-002" && e is MoneyWayNasdaqHumanM1RealignmentEvaluator);
+        var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), evaluators,
+            MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
+            .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
+        Assert.Equal((32, 14, 12, 2, false), (report.TotalRuleCount, report.RequiredRuleCount,
+            report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal("NQ-SL-001", report.Rules.Where(r => r.IsRequired
+            && r.CapabilityStatus != ReplayRuleEvaluationCapabilityStatus.Implemented)
+            .OrderBy(r => r.Sequence).First().RuleId.Value);
+        Assert.Equal(RuleEvaluationResult.Waiting,
+            Result(Run(Inputs(NasdaqHumanH4PermittedDirection.Buy)), M5Fixture.At(14, 20)));
+    }
+
+    [Theory]
+    [InlineData(NasdaqHumanH4PermittedDirection.Buy)]
+    [InlineData(NasdaqHumanH4PermittedDirection.Sell)]
+    public void UniqueEvidencePassesOnlyRealignmentStage(NasdaqHumanH4PermittedDirection direction)
+    {
+        var pullback = PullbackFact(direction);
+        var evidence = Realignment(pullback);
+        var run = Run(Inputs(direction, evidence));
+        var stage = run.StrategyObservations.Single(o => o.AsOfUtc == M5Fixture.At(14, 30));
+        Assert.Equal(RuleEvaluationResult.Passed, Result(run, stage.AsOfUtc));
+        var fact = Assert.IsType<NasdaqHumanM1RealignmentRuleFact>(
+            stage.RuleFacts.Single(f => f.RuleId.Value == "NQ-M1-002").Fact);
+        Assert.Same(evidence, fact.Selection.Fact);
+        Assert.Equal(direction, fact.Selection.Fact.SetupDirection);
+        Assert.Equal(evidence.PullbackEffectiveAtUtc, fact.Selection.Fact.RealignmentEffectiveAtUtc);
+        var evaluation = stage.Evaluations.Single(e => e.RuleId.Value == "NQ-M1-002");
+        Assert.Equal(stage.AsOfUtc, evaluation.EvaluatedAtUtc);
+        Assert.Contains("review:realignment", evaluation.EvidenceReference);
+        Assert.Contains("PullbackBeforeRealignmentAtSameClose", evaluation.EvidenceReference);
+        Assert.Contains(new MoneyWay.Domain.Strategies.RuleId("NQ-M1-002"), stage.WorkflowProgression!.EstablishedRuleIds);
+        Assert.Equal([new MoneyWay.Domain.Strategies.RuleId("NQ-M1-002")], MoneyWayReplayWorkflowDefinitions.GetAll().Single()
+            .GetPrerequisiteRuleIds(new MoneyWay.Domain.Strategies.RuleId("NQ-M1-003")));
+        Assert.DoesNotContain(stage.Evaluations, e => e.RuleId.Value == "NQ-M1-003");
+    }
+
+    [Fact]
+    public void MissingConflictUnavailableAndLaterConfirmationMapSeparately()
+    {
+        var pullback = PullbackFact(NasdaqHumanH4PermittedDirection.Buy);
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired,
+            Result(Run(Inputs(NasdaqHumanH4PermittedDirection.Buy)), M5Fixture.At(14, 30)));
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired,
+            Result(Run(Inputs(NasdaqHumanH4PermittedDirection.Buy,
+                Realignment(pullback), Realignment(pullback, level: 98))), M5Fixture.At(14, 30)));
+        var absent = new Candle(LiquidityFixture.Provider, LiquidityFixture.Symbol, M5Fixture.Minute,
+            M5Fixture.At(14, 19).AddSeconds(1), M5Fixture.At(14, 20), 100, 110, 90, 100, null);
+        var unavailable = Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, Realignment(pullback, swingSource: absent)));
+        Assert.Equal(RuleEvaluationResult.DataUnavailable, Result(unavailable, M5Fixture.At(14, 30)));
+        Assert.Equal(RuleEvaluationResult.Passed,
+            Result(Run(Inputs(NasdaqHumanH4PermittedDirection.Buy,
+                Realignment(pullback, 30, 30, sameCloseOrder: false))), M5Fixture.At(15)));
+    }
+
+    [Fact]
+    public void WrongPullbackCannotPassAndCompatibleInputOrderPreservesEvidence()
+    {
+        var buy = PullbackFact(NasdaqHumanH4PermittedDirection.Buy);
+        var sell = PullbackFact(NasdaqHumanH4PermittedDirection.Sell);
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired,
+            Result(Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, Realignment(sell))), M5Fixture.At(14, 30)));
+        var first = Realignment(buy);
+        var second = Realignment(buy, source: "second reviewer");
+        var one = Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, second, first));
+        var two = Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, first, second));
+        var time = M5Fixture.At(14, 30);
+        Assert.Equal(RuleEvaluationResult.Passed, Result(one, time));
+        Assert.Equal(one.StrategyObservations.Single(o => o.AsOfUtc == time).Evaluations
+            .Single(e => e.RuleId.Value == "NQ-M1-002").EvidenceReference,
+            two.StrategyObservations.Single(o => o.AsOfUtc == time).Evaluations
+                .Single(e => e.RuleId.Value == "NQ-M1-002").EvidenceReference);
+    }
+
+    [Fact]
+    public void FutureHumanObservationAndTerminalCutoffCannotBackfillOrRevive()
+    {
+        var pullback = PullbackFact(NasdaqHumanH4PermittedDirection.Buy);
+        var future = Realignment(pullback, observed: 60);
+        var baseline = Run(Inputs(NasdaqHumanH4PermittedDirection.Buy));
+        var expanded = Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, future));
+        Assert.Equal(Result(baseline, M5Fixture.At(14, 30)), Result(expanded, M5Fixture.At(14, 30)));
+        Assert.Equal(RuleEvaluationResult.Passed, Result(expanded, M5Fixture.At(15)));
+        Assert.NotEqual(RuleEvaluationResult.Passed, Result(expanded, M5Fixture.At(38, 5)));
+        var invalid = M5Fixture.Take(true, effective: M5Fixture.At(14, 30), observed: M5Fixture.At(14, 30));
+        var terminal = Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, Realignment(pullback), invalid,
+            new NasdaqHumanRelevantLiquidityTakeObservation(invalid, invalid.ObservedAtUtc,
+                "terminal event", pullback.Selection.Fact.ApprovedQuality.Fact.Fvg.Trigger.DecisiveTake)));
+        Assert.NotEqual(RuleEvaluationResult.Passed, Result(terminal, M5Fixture.At(15)));
+    }
 
     [Theory]
     [InlineData(NasdaqHumanH4PermittedDirection.Buy)]
