@@ -131,9 +131,10 @@ public sealed class NasdaqRiskExposureTests
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(),
             MoneyWayReplayRuleEvaluators.GetAll(), MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 14, 14, 1, false), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
+        Assert.Equal((32, 14, 15, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
             report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
-        Assert.DoesNotContain(MoneyWayReplayRuleEvaluators.GetAll(), e => e.RuleId.Value is "NQ-RISK-001" or "NQ-TP-001");
+        Assert.Single(MoneyWayReplayRuleEvaluators.GetAll(), e => e.RuleId.Value == "NQ-RISK-001");
+        Assert.DoesNotContain(MoneyWayReplayRuleEvaluators.GetAll(), e => e.RuleId.Value == "NQ-TP-001");
         Assert.Empty(MoneyWayReplayWorkflowDefinitions.GetAll().Single().GetPrerequisiteRuleIds(new("NQ-RISK-001")));
     }
 
@@ -201,6 +202,8 @@ public sealed class NasdaqRiskExposureTests
         var time = M5Fixture.At(15, 5);
         var baseline = Frame(setup.Entry.Direction, time, setup.Realignment, setup.Stop, risk);
         var expanded = Frame(setup.Entry.Direction, time, setup.Realignment, setup.Stop, risk, future);
+        Assert.Equal(Evaluate(baseline).Result, Evaluate(expanded).Result);
+        Assert.Equal(Evaluate(baseline).EvidenceReference, Evaluate(expanded).EvidenceReference);
         Assert.Equal(Assert.IsType<NasdaqRiskExposureSelection.Unique>(Selector.Select(baseline, setup.Entry, setup.Sl)).SupportingObservations,
             Assert.IsType<NasdaqRiskExposureSelection.Unique>(Selector.Select(expanded, setup.Entry, setup.Sl)).SupportingObservations);
         var bounded = M5Fixture.Context(time, baseline.InputObservations.ToArray(), includeFutureCandles: false)
@@ -229,6 +232,8 @@ public sealed class NasdaqRiskExposureTests
             context.InputObservations).WithPriorObservations(context.PriorObservations);
         var missing = Assert.IsType<NasdaqRiskExposureSelection.Missing>(Selector.Select(partial, setup.Entry, setup.Sl));
         Assert.Same(risk, Assert.Single(missing.UnavailableSourceObservations));
+        Assert.Equal(RuleEvaluationResult.DataUnavailable, Evaluate(partial).Result);
+        Assert.Contains("review:risk", Evaluate(partial).EvidenceReference);
 
         var changed = new CandleSeries(LiquidityFixture.Provider, LiquidityFixture.Symbol, NasdaqHumanM5ProtectionAnchor.M5,
             M5Fixture.M5Sources.Select(c => c.CloseTimeUtc == M5Fixture.At(14, 20)
@@ -244,6 +249,7 @@ public sealed class NasdaqRiskExposureTests
             .WithPriorObservations(context.PriorObservations);
         Assert.Empty(Assert.IsType<NasdaqRiskExposureSelection.Missing>(Selector.Select(inconsistent, setup.Entry, setup.Sl))
             .UnavailableSourceObservations);
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired, Evaluate(inconsistent).Result);
     }
 
     [Fact]
@@ -258,6 +264,9 @@ public sealed class NasdaqRiskExposureTests
         var terminal = Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop, risk,
             invalid, new NasdaqHumanRelevantLiquidityTakeObservation(invalid, invalid.ObservedAtUtc, "terminal:event", initiating));
         Assert.IsType<NasdaqRiskExposureSelection.Missing>(Selector.Select(terminal, setup.Entry, setup.Sl));
+        Assert.NotEqual(RuleEvaluationResult.Passed, Evaluate(terminal).Result);
+        Assert.NotEqual(RuleEvaluationResult.Passed, Evaluate(
+            Frame(setup.Entry.Direction, M5Fixture.At(16), setup.Realignment, setup.Stop, risk)).Result);
         var gate = terminal.PriorObservations.Last().RuleFacts.Single(f => f.RuleId.Value == "NQ-LIQ-003");
         Assert.True(Assert.IsType<NasdaqLiquidityTakeRuleFact>(gate.Fact).IsSessionInvalidated);
         var valid = Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop, risk);
@@ -267,6 +276,7 @@ public sealed class NasdaqRiskExposureTests
             last.Evaluations, last.WorkflowProgression, last.LifecycleProgression,
             ruleFacts: last.RuleFacts.Where(f => f.RuleId.Value != "NQ-LIQ-003").Append(gate)));
         Assert.IsType<NasdaqRiskExposureSelection.Missing>(Selector.Select(valid.WithPriorObservations(gatedHistory), setup.Entry, setup.Sl));
+        Assert.Equal(RuleEvaluationResult.Failed, Evaluate(valid.WithPriorObservations(gatedHistory)).Result);
         var conflictingStop = Stop(setup.Entry, stopPrice: 88);
         Assert.IsType<NasdaqRiskExposureSelection.Missing>(Selector.Select(
             Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop, conflictingStop, risk), setup.Entry, setup.Sl));
@@ -322,5 +332,99 @@ public sealed class NasdaqRiskExposureTests
                 Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop, other, first), setup.Entry, setup.Sl));
             Assert.Equal(forward.Alternatives, reversed.Alternatives);
         }
+    }
+
+    private static ReplayRuleEvaluationDecision Evaluate(StrategyReplayContext context) => new MoneyWayNasdaqRiskExposureEvaluator().Evaluate(context);
+
+    [Theory]
+    [InlineData("0", RuleEvaluationResult.Passed)]
+    [InlineData("99", RuleEvaluationResult.Passed)]
+    [InlineData("99.99", RuleEvaluationResult.Passed)]
+    [InlineData("100", RuleEvaluationResult.Passed)]
+    [InlineData("100.01", RuleEvaluationResult.Failed)]
+    [InlineData("100.00000000000000000000000001", RuleEvaluationResult.Failed)]
+    public void CanonicalRiskEvaluatorChecksExactOnePercentWithoutSizing(string lossText, RuleEvaluationResult expected)
+    {
+        var setup = RiskSetup();
+        var loss = decimal.Parse(lossText, System.Globalization.CultureInfo.InvariantCulture);
+        var risk = Risk(setup.Sl, Exposure(loss: loss, quantity: 200, unit: "documented contracts"));
+        var context = Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop, risk);
+        var stage = new EvaluateStrategyReplayContextUseCase(MoneyWayReplayRuleEvaluators.GetAll())
+            .Execute(LiquidityFixture.Definition, context);
+        var actual = Assert.Single(stage.Evaluations, e => e.RuleId.Value == "NQ-RISK-001");
+        Assert.Equal(expected, actual.Result);
+        Assert.True(actual.IsRequired);
+        Assert.Equal(RuleDefinitionStatus.Confirmed, actual.DefinitionStatus);
+        Assert.Equal(context.AsOfUtc, actual.EvaluatedAtUtc);
+        var fact = Assert.IsType<NasdaqRiskExposureRuleFact>(stage.RuleFacts.Single(f => f.RuleId.Value == "NQ-RISK-001").Fact);
+        Assert.Equal(loss / 10000m, fact.RiskRatio);
+        Assert.Equal(0.01m, fact.Limit);
+        Assert.Equal(expected == RuleEvaluationResult.Passed, fact.IsWithinLimit);
+        Assert.Same(risk, fact.Selection.Fact);
+        Assert.Same(setup.Sl, fact.StopLoss);
+        Assert.Equal(risk.EffectiveAtUtc, fact.EffectiveAtUtc);
+        Assert.NotEqual(context.AsOfUtc, fact.EffectiveAtUtc);
+        Assert.Equal(200, fact.Exposure.Quantity);
+        Assert.Contains("review:risk", actual.EvidenceReference);
+        Assert.Contains("account:planned-loss calculation", actual.EvidenceReference);
+        Assert.DoesNotContain(stage.Evaluations, e => e.RuleId.Value == "NQ-TP-001");
+        Assert.Equal("NQ-RISK-001", new MoneyWayNasdaqRiskExposureEvaluator().RuleId.Value);
+    }
+
+    [Fact]
+    public void CanonicalRiskMapsWaitingMissingConflictAndWrongUpstreamWithoutDefaults()
+    {
+        var setup = RiskSetup();
+        var time = M5Fixture.At(15, 5);
+        var risk = Risk(setup.Sl);
+        var eligible = Frame(setup.Entry.Direction, time, setup.Realignment, setup.Stop);
+        Assert.Equal(RuleEvaluationResult.Waiting, Evaluate(eligible.WithPriorObservations([])).Result);
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired, Evaluate(eligible).Result);
+        var other = Risk(setup.Sl, Exposure(loss: 110), source: "conflict:risk");
+        var conflict = Evaluate(Frame(setup.Entry.Direction, time, setup.Realignment, setup.Stop, risk, other));
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired, conflict.Result);
+        Assert.Contains("conflict:risk", conflict.EvidenceReference);
+        Assert.Null(conflict.Fact);
+        foreach (var foreign in new[] { Risk(RiskSetup(swing: 98).Sl), Risk(RiskSetup(stopPrice: 88).Sl) })
+            Assert.Equal(RuleEvaluationResult.HumanValidationRequired,
+                Evaluate(Frame(setup.Entry.Direction, time, setup.Realignment, setup.Stop, foreign)).Result);
+        Assert.Equal(RuleEvaluationResult.Passed, Evaluate(Frame(setup.Entry.Direction, time, setup.Realignment, setup.Stop, risk)).Result);
+    }
+
+    [Fact]
+    public void RiskOverflowIsAuditableFailureAndNeverRoundsTheLimit()
+    {
+        var setup = RiskSetup();
+        var exposure = Exposure(account: 0.0000000000000000000000000001m, loss: decimal.MaxValue);
+        var risk = Risk(setup.Sl, exposure);
+        var decision = Evaluate(Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop, risk));
+        Assert.Equal(RuleEvaluationResult.Failed, decision.Result);
+        var fact = Assert.IsType<NasdaqRiskExposureRuleFact>(decision.Fact);
+        Assert.Null(fact.RiskRatio);
+        Assert.True(fact.RatioExceedsDecimalRange);
+        Assert.False(fact.IsWithinLimit);
+        Assert.Same(exposure, fact.Exposure);
+    }
+
+    [Fact]
+    public void RiskRegistrationCompletesRequiredCoverageOnly()
+    {
+        var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
+        var registered = Assert.Single(evaluators, e => e.RuleId.Value == "NQ-RISK-001");
+        Assert.IsType<MoneyWayNasdaqRiskExposureEvaluator>(registered);
+        var definitions = new StrategyDefinitionCatalog();
+        var declarations = MoneyWayReplayEvaluationCapabilityDeclarations.GetAll();
+        var before = new StrategyReplayEvaluationCapabilityCatalog(definitions, evaluators.Where(e => e != registered), declarations)
+            .Find(registered.StrategyId, registered.StrategyVersion)!;
+        var after = new StrategyReplayEvaluationCapabilityCatalog(definitions, evaluators, declarations)
+            .Find(registered.StrategyId, registered.StrategyVersion)!;
+        Assert.Equal((14, 1, false), (before.ImplementedCount, before.RequiredEvaluatorGapCount, before.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal((15, 0, true), (after.ImplementedCount, after.RequiredEvaluatorGapCount, after.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal(32, after.TotalRuleCount);
+        Assert.Equal(14, after.RequiredRuleCount);
+        Assert.Equal(ReplayRuleEvaluationCapabilityStatus.BlockedByUnresolvedSpecification,
+            after.Rules.Single(r => r.RuleId.Value == "NQ-TP-001").CapabilityStatus);
+        Assert.All(after.Rules.Where(r => r.RuleId != registered.RuleId), r =>
+            Assert.Equal(before.Rules.Single(b => b.RuleId == r.RuleId).CapabilityStatus, r.CapabilityStatus));
     }
 }

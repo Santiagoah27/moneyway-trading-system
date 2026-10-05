@@ -68,10 +68,9 @@ public sealed class MoneyWayNasdaqHumanM1CorrectiveRetracementEvaluatorTests
         Assert.Single(registry, e => e.RuleId.Value == "NQ-M1-001" && e is MoneyWayNasdaqHumanM1CorrectiveRetracementEvaluator);
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), registry,
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll()).Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 14, 14, 1, false), (report.TotalRuleCount, report.RequiredRuleCount,
+        Assert.Equal((32, 14, 15, 0, true), (report.TotalRuleCount, report.RequiredRuleCount,
             report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
-        Assert.Equal("NQ-RISK-001", report.Rules.Where(r => r.IsRequired && r.CapabilityStatus != ReplayRuleEvaluationCapabilityStatus.Implemented)
-            .OrderBy(r => r.Sequence).First().RuleId.Value);
+        Assert.DoesNotContain(report.Rules, r => r.IsRequired && r.CapabilityStatus != ReplayRuleEvaluationCapabilityStatus.Implemented);
         var quality = Quality(NasdaqHumanH4PermittedDirection.Buy);
         var run = Run(Inputs(quality, Pullback(quality)));
         Assert.Equal(RuleEvaluationResult.Waiting, Result(At(run, 15)));
