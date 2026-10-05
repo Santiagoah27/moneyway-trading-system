@@ -403,6 +403,16 @@ TP identifies the selected important high for Buy or low for Sell, exact referen
 
 Historical trade simulation remains a separate future consumer of the canonical run, not a second market traversal engine. It must distinguish a conditional result using observed entry/parameters from an autonomously generated backtest fill and from the actual mentor execution. Same-candle SL/TP/management ordering that cannot be established remains unresolved/inconclusive; this ADR defines no SL-first/TP-first or execution-price rule. Financial amounts require documented quantity, units, valuation and costs; otherwise report only the supported price/event result, not invented PnL.
 
+#### Exact NQ-TP-001 target-price relationship
+
+Human forensic review of **Video 3, approximately 08:55–09:15 and 13:15–14:05**, resolves the target-to-TP price ambiguity: the mentor's TP line/order level is placed on the selected important structural/liquidity level. Buy selects a relevant/important High; Sell selects a relevant/important Low. Preserve `TargetReferencePrice` (the exact selected market reference level) and `TakeProfitPrice` (the strategy TP price) as separately auditable concepts where useful, with mandatory exact numeric equality: **`TakeProfitPrice == TargetReferencePrice`**.
+
+No additional price-adjustment algorithm, pip/tick/point offset, safety or ATR buffer, percentage, spread adjustment, front-running distance or fixed-R/reward-risk adjustment is defined. This resolves price equality only after source-backed human selection for the exact setup. Relevant Asia/London Highs/Lows and reviewed important 1H/4H structural extremes are supported target categories under existing constraints, not automatic TP targets. Autonomous importance/relevance selection and general ranking remain unresolved; existing scoped session-target rules and structural-fallback restrictions remain intact.
+
+The existing observation table's **target-selection time** remains the NQ-TP-001 `EffectiveAtUtc` meaning: when the target is selected/documented for the setup, subject to the existing source observability requirements. `ObservedAtUtc` remains authentic assertion availability, with `EffectiveAtUtc <= ObservedAtUtc <= AsOfUtc` before consumption. The structural reference's earlier market event time and the replay evaluation time do not replace target-selection time. This clarification adds no new timing rule.
+
+The price relationship is strategy source truth, not MoneyWay execution functionality. It implements no TP types, selector, evaluator, fact, registration, workflow, hit detection, outcome or broker orders. Capability remains **32 RuleIds / 14 Required / 15 registered evaluators / 0 RequiredEvaluatorGapCount / HasFullRequiredEvaluatorRegistration=true**; full Required registration does not mean Demo completion. Next: typed NQ-TP-001 human-assisted target evidence and Missing / Unique / Conflict selection.
+
 ### Risk and management
 
 #### Demo risk evaluator integration

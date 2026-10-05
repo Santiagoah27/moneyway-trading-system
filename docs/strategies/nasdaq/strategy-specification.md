@@ -884,6 +884,20 @@ human_validation_required: true
 
 Manual source-video re-verification confirms the primary session candidates for this role: Asia High and London High for buys, and Asia Low and London Low for sells. When two future-valid levels differ, the immediate target is the first relevant level price encounters in the expected direction of travel. When their prices are equal, they collapse into one unique target; the reviewed equal-target scenario treats that level as final Take Profit. If a relevant session target was already consumed before the operational period or is otherwise unavailable as a future objective, the source uses structural fallback. A sell may target relevant unmitigated support represented by a validated 1H/4H HL or LL, or Previous Day Low. A buy may target relevant unmitigated resistance represented by a validated 1H/4H LH or HH, or Previous Day High. In reviewed paths with distinct relevant levels, 1H is the first objective or management level and the farther 4H level is the final or extended objective; 4H is structurally stronger. This hierarchy is confirmed only within that observed scope and is not a universal formula. Arbitrary structural points do not become coequal primary candidates while valid session targets remain available.
 
+### Exact selected-target to Take Profit price relationship
+
+Human forensic review of **Video 3, approximately 08:55–09:15 and 13:15–14:05**, confirms that the mentor places the TP line/order level on the selected important structural/liquidity level itself. For **Buy**, the human-selected relevant/important **High** supplies the target price; for **Sell**, the human-selected relevant/important **Low** supplies it.
+
+`TargetReferencePrice` is the exact selected market structural/liquidity level. `TakeProfitPrice` is the strategy TP price. These are separately auditable semantic concepts with the **same exact quotation value**:
+
+```text
+TakeProfitPrice == TargetReferencePrice
+```
+
+There is no additional price-adjustment calculation between them: no pip, tick or point offset, safety or ATR buffer, percentage, spread adjustment, front-running distance, fixed R or reward/risk-derived adjustment is defined. The equality applies after the exact target has been selected for its setup; it does not select that target or resolve remaining structural coordinate boundaries. Supported references include relevant Asia/London Highs/Lows and reviewed important 1H/4H structural extremes under the existing source restrictions. Membership in one of those categories alone does not make a level a valid TP target.
+
+Autonomous selection of which target is important/relevant remains unresolved and human-assisted. No general nearest, furthest, highest/lowest, latest, strongest-structure or best-reward/risk ranking follows. Existing scoped session-target ordering and structural-fallback limits remain as documented above. The demonstrated mentor execution establishes this strategy price relationship; MoneyWay has no TP order placement, automatic trade closing or demo/live broker execution implemented by this clarification.
+
 ### 17.1 Structural fallback evidence boundary
 
 | Point | Evidence status | Audited boundary |
