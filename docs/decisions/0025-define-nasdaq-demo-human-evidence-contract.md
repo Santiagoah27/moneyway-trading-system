@@ -417,6 +417,31 @@ The historical-entry consumer must bind to the exact canonical `NasdaqPreEntryEl
 
 Historical knowledge still requires authentic `ObservedAtUtc <= context.AsOfUtc` and the exact prerequisite fact available to that current evaluation. An entry's effective time may precede downstream transport without implying that replay knew it at that earlier time. Later observations or later prerequisite availability cannot change an earlier historical frame, backdate knowledge or rewrite preceding gates. Existing terminal/cutoff protections remain unchanged. This source clarification implements no entry type, selector, evaluator, trade aggregate, outcome or execution; capability remains **32 RuleIds / 14 Required / 16 evaluators / 0 Required gaps / HasFullRequiredEvaluatorRegistration=true**, a coverage flag only.
 
+#### Historical documented-exit causality under limited timestamp resolution
+
+Authoritative human forensic review of Video 2 approximately 13:10-13:25 and Video 3 approximately 13:15-13:40 reports separate MetaTrader historical fields for opening time, closing time, entry price, SL, TP and exit price. The reviewed trade exposes second-resolution Open/Close timestamps: Entry/Open `2024-06-28 14:02:xx`, Exit/Close `2024-06-28 14:03:xx`, directly establishing that this exit follows its entry. The `xx` seconds and source timezone are unspecified here; no exact seconds or UTC conversion are fabricated. This reviewed example does not establish second-level resolution for every provider or future source.
+
+For a documented exit bound to the same historical trade, the authoritative temporal contract is:
+
+```text
+ExitEffectiveAtUtc >= EntryEffectiveAtUtc
+```
+
+| Documented temporal relation | Causality treatment |
+| --- | --- |
+| `ExitEffectiveAtUtc > EntryEffectiveAtUtc` | Temporal precedence is directly established. |
+| `ExitEffectiveAtUtc == EntryEffectiveAtUtc`, with independent explicit source evidence proving Entry -> Exit | Conditionally valid; the source establishes precedence despite equal represented timestamps. |
+| `ExitEffectiveAtUtc == EntryEffectiveAtUtc`, without that proof | Causality remains `unresolved` / `human_validation_required`; do not accept a fully resolved documented exit. |
+| `ExitEffectiveAtUtc < EntryEffectiveAtUtc` | Invalid evidence for that historical trade. |
+
+Entry and Exit may occur within the same 1M candle, as the mentor explains. Candle identity and execution timestamp resolution are separate: the same candle does not imply equal execution timestamps when finer timestamps are available. Equality can reflect coarse source resolution rather than true simultaneity. For example, actual Entry at `09:21:10` and Exit at `09:21:45` can both be represented as `09:21` by a minute-resolution source. Equal represented timestamps plus authoritative Entry -> Exit proof are valid; do not invent finer times or impose an artificial strict inequality that source precision cannot express. These illustrative times do not reconstruct the reviewed trade.
+
+`ExplicitEntryBeforeExitEvidence` names the general documentary semantic, not an implemented type or provider-specific mechanism. Independent source-backed proof may be execution/position identity linking a close to an already-open position, distinct authoritative Open/Close fields whose source semantics establish sequence, an authoritative execution-event sequence, or another audited source relationship explicitly proving Entry -> Exit. Identity or field labels without those causal source semantics are insufficient. Do not infer precedence from ExitPrice matching TP or SL, equal timestamps, incidental list order, or a candle containing both events. `NasdaqHistoricalTradeContactResolution` establishes contact ordering only; it cannot fabricate documented execution ordering.
+
+Keep `EntryEffectiveAtUtc`, `ExitEffectiveAtUtc`, authentic assertion availability `ObservedAtUtc` and replay evaluation `context.AsOfUtc` distinct. Exit evidence participates only when `ObservedAtUtc <= StrategyReplayContext.AsOfUtc`; existing effective-time/source availability constraints and current-context prerequisites remain unchanged. Later knowledge cannot backfill an earlier frame. Causal precedence alone does not establish evidence availability or satisfy other documented-exit requirements.
+
+This clarification defines no contact-to-fill conversion, SL/TP-to-realized-exit price rule, Win/Loss, PnL, slippage or gap policy. It implements no Feature 27 types, selector, outcome, execution or backtest changes. Capability remains **32 RuleIds / 14 Required / 16 evaluators / 0 Required gaps / HasFullRequiredEvaluatorRegistration=true**. Next bounded work is typed historical documented-exit evidence plus a Missing / Unique / Conflict selector.
+
 #### Feature 23 bounded historical observed-entry evidence
 
 `NasdaqHistoricalObservedEntry` now retains the exact canonical pre-entry fact and full ancestry, source-qualified execution identity, explicit executed price/time, retained execution/mentor material reference and optional documented quantity/unit. `NasdaqHistoricalObservedEntryObservation` supplies authentic UTC availability and assertion provenance. A single execution is represented; partial/multiple executions are not aggregated. Neither price nor quantity is derived from candles, risk, SL or TP.
