@@ -1,142 +1,171 @@
-# Primera sesi?n Nasdaq del mentor: manifiesto de adquisici?n
+# Primera sesión Nasdaq del mentor: evidencia y preparación de datos
 
-## Estado de este primer pase
+## Estado
 
-**NEEDS_HUMAN_EVIDENCE**. Adquisici?n OHLC detenida: instrumento exacto, broker/proveedor y correspondencia UTC no establecidos. No se generaron CSV reales, adapter `ValidatedInput.cs`, RuleFacts ni `report.json`. No se ejecut? el harness con datos reales.
+**NEEDS_TIME_SYNCHRONIZATION_EVIDENCE**. Los campos históricos y las observaciones indicados abajo están confirmados documentalmente por revisión humana. La adquisición OHLC final sigue detenida: falta mapping UTC de MetaTrader y validar el identificador exacto del instrumento de análisis.
 
-Baseline auditado: `4b8a08a` (`feat: run Nasdaq mentor session replay`). Este documento es metadata de adquisici?n, no un input ejecutable ni una modificaci?n de estrategia. La capacidad 32 RuleIds / 14 Required / 16 evaluators / 0 Required gaps / full=true permanece intacta.
+Baseline auditado: `1b62376520a8638dfb9f381a0cf4b7f0c00203a9`. SessionId: `nasdaq-mentor-2024-06-28-v2-v3`. Este manifiesto es metadata, no input ejecutable ni aprobación de una operación. No se crearon CSV reales, `ValidatedInput.cs`, RuleFacts ni `report.json`; no se ejecutó replay real. No cambia la capacidad 32 RuleIds / 14 Required / 16 evaluators / 0 Required gaps / full=true.
 
-Cada campo se clasifica como `confirmed`, `human_validation_required` o `unresolved`. `null` significa valor no establecido: no cero, cadena vac?a, timestamp aproximado ni valor inferido. Una confirmaci?n documental de una revisi?n humana no implica haber inspeccionado aqu? el video original.
+Estados por campo: `confirmed`, `human_validation_required`, `unresolved`. `null` significa valor no establecido, no cero ni dato aproximado. Confirmación de revisión humana no significa que esta tarea haya inspeccionado independientemente los videos originales.
 
-## Fuentes y trazabilidad
+## Fuentes
 
 | ID | Procedencia y alcance |
 | --- | --- |
-| S1 | [ADR 0025: Historical documented-exit causality](../../decisions/0025-define-nasdaq-demo-human-evidence-contract.md#historical-documented-exit-causality-under-limited-timestamp-resolution). Conserva revisi?n humana de Video 2 aprox. 13:10?13:25 y Video 3 aprox. 13:15?13:40; Open/Close separados, fecha y minutos con segundos no transcritos. No conserva broker, s?mbolo exacto, precios ni UTC. |
-| S2 | [Especificaci?n Nasdaq](../../strategies/nasdaq/strategy-specification.md), secci?n 10 (sesiones), 11 (horario), Historical documented-exit causality y secci?n 21 (targets). Normativa y rese?as; no dataset de esta operaci?n. La secci?n Source coverage no suministra t?tulo/URL/transcript original. |
-| S3 | Solicitud actual ?FIRST REAL MENTOR SESSION DATA PACK?. Reporta SELL y 0.25 como hallazgos previos a verificar; no son valores finalizados del pack. |
-| S4 | [Gu?a de ejecuci?n Feature 29](../../backtesting/nasdaq-mentor-session-local-run.md). Contrato del input, cuatro CSV, disponibilidad aut?ntica y binding a hechos can?nicos. |
-| S5 | [Auditor?a de preparaci?n](../../roadmap/nasdaq-first-real-session-readiness.md). No identifica dataset real validado y diferencia la dependencia de datos de la capacidad del c?digo. |
-| S6 | Inspecci?n de archivos del repositorio, incluidos ignorados y excluyendo Git/build/node_modules/secretos. ?nico CSV identificado: `samples/market-data/replay-demo.synthetic.csv`, provider `historical-fixture`, symbol `DEMO`, 5M, 2026-01-01. Es sint?tico, otra fecha/instrumento; excluido del pack real. No se identificaron videos, capturas, historial broker ni OHLC reales en el ?rbol inspeccionado. No se inspeccionaron carpetas personales ajenas al proyecto. |
+| S1 | [ADR 0025](../../decisions/0025-define-nasdaq-demo-human-evidence-contract.md): contrato humano, causality y provenance. Reseña previa de Video 2 aprox. 13:10–13:25 y Video 3 aprox. 13:15–13:40, con Open/Close incompletos. S7 aporta precisión documental nueva; no modifica el contrato. |
+| S2 | [Especificación Nasdaq](../../strategies/nasdaq/strategy-specification.md): sesiones, TIME y targets normativos. No es dataset de esta operación. |
+| S3 | Solicitud anterior “FIRST REAL MENTOR SESSION DATA PACK”; hallazgos previos incompletos, precisados por S7. |
+| S4 | [Guía Feature 29](../../backtesting/nasdaq-mentor-session-local-run.md): input, cuatro CSV, disponibilidad auténtica y binding canónico. |
+| S5 | [Auditoría de preparación](../../roadmap/nasdaq-first-real-session-readiness.md): capacidad de código separada de disponibilidad de datos. |
+| S6 | Inventario previo del repositorio: único CSV identificado, `samples/market-data/replay-demo.synthetic.csv`, provider `historical-fixture`, symbol `DEMO`, 5M, 2026-01-01. Sintético y excluido del pack. No se identificaron originales ni OHLC reales en el árbol inspeccionado. |
+| S7 | Actualización del usuario “FIRST REAL NASDAQ MENTOR SESSION — Human Evidence Update + Analysis Feed / Execution Feed Audit”, recibida el 2026-10-06. Revisión humana de originales: apartados 1 (TradingView), 2 (ticket), 3 (reloj desconocido), 4–5 (dominios), 6–7 (Video 3 y precisión), 8 (TIME). Fuente retenida en el mensaje/adjunto de esta tarea. |
 
-Video 2 / Video 3 son etiquetas de la revisi?n, no identidades ?nicas del archivo original. Sus t?tulos, enlaces/archivos, hashes y permiso de acceso/redistribuci?n permanecen `unresolved`. No se buscaron videos por un t?tulo inventado. No hay evidencia nueva contradictoria: hay datos faltantes.
+Video 2/3 siguen siendo etiquetas de revisión: título/URL/archivo original y hash permanecen `unresolved`. Para un adapter futuro se necesita referencia estable al material retenido y ubicación de cada evidencia; no se fabrican execution IDs ni disponibilidad histórica con la fecha de esta revisión. S7 confirma asociación humana de ambos dominios con el mismo workflow, no equivalencia de instrumentos.
 
-## Manifest: identidad, instrumento y reloj
+## Identidad y relojes
 
-| Campo | Valor | Estado | Procedencia / condici?n pendiente |
+| Campo | Valor | Estado | Procedencia / pendiente |
 | --- | --- | --- | --- |
-| SessionId | `nasdaq-mentor-2024-06-28-v2-v3` | confirmed | Identificador administrativo creado para esta solicitud S3; no es broker ticket, execution ID ni prueba de matching entre videos. |
-| Strategy / version | `moneyway-nasdaq` / `nasdaq-0.1.0-draft` | confirmed | Definition y contrato existentes S4. |
-| DisplayedTradeDate | `2024-06-28` | confirmed | Fecha conservada por revisi?n documental S1; falta captura original para verificar transcripci?n. |
-| LocalStrategyDate | null (candidata `2024-06-28`) | human_validation_required | Resolver reloj de origen y comprobar el d?a America/Bogota; no copiar autom?ticamente DisplayedTradeDate. |
-| provider_id | null | unresolved | Identificar broker, servidor y fuente hist?rica efectivamente operados. `fixture`/`historical-fixture` no son candidatos reales. |
-| symbol | null | unresolved | Obtener s?mbolo literal del ticket y de los charts; ?Nasdaq? es familia, no especificaci?n de instrumento. |
-| ExactInstrumentDescription | null | unresolved | Nombre/tipo de contrato o CFD, escala, unidad, especificaci?n y base de cotizaci?n, ligados al s?mbolo/servidor. |
-| Broker / Server | null / null | unresolved | Identidad del broker y servidor correspondiente a la cuenta/sesi?n; sin credenciales. |
-| SourceTimezone / UTCMappingEvidence | null / null | unresolved | Prueba autoritativa ligada al servidor y a 2024-06-28, o sincronizaci?n validada; no offset elegido por plausibilidad. |
-| StrategyTimezone | `America/Bogota` | confirmed | C?digo de NasdaqSessionLiquidityCalculator y S2. Independiente del reloj MetaTrader. |
-| ReplayStartUtc / ReplayEndUtc | null / null | unresolved | Primero identificar fuentes, tiempos UTC y miembros estructurales; v?ase ventana m?nima abajo. |
-| MarketDataSourceReference | null | unresolved | Ninguna fuente/dataset aceptado ni adquirido. |
+| SessionId | `nasdaq-mentor-2024-06-28-v2-v3` | confirmed | Identificador administrativo S3; no ticket ni identidad de ejecución. |
+| Strategy / version | `moneyway-nasdaq` / `nasdaq-0.1.0-draft` | confirmed | Contrato registrado S4. |
+| DisplayedTradeDate | `2024-06-28` | confirmed | S7 §2. |
+| LocalStrategyDate | null; candidata `2024-06-28` | human_validation_required | Validar ejecución UTC y día America/Bogota; no copiar fecha broker. |
+| AnalysisPlatform / AnalysisProviderDisplayed | `TradingView` / `OANDA` | confirmed | S7 §1. |
+| AnalysisInstrumentDisplay | `US 100` | confirmed | S7 §1; headers `US 100 · 15 · OANDA`, `US 100 · 1h · OANDA`. |
+| AnalysisLabelsObserved | `US100` / `US100.cash` | confirmed | Variantes visibles/referenciadas S7 §1; no alias canónico definido. |
+| AnalysisChartTimezone | `UTC-5` | confirmed | Revisión del reloj inferior derecho, S7 §1. Offset mostrado; no America/New_York. |
+| Replay provider_id / symbol | null / null; candidato provider `OANDA` | human_validation_required | Confirmar identificador exacto de la fuente de exportación y chart revisado. No elegir automáticamente entre variantes ni inventar namespace. |
+| ExactAnalysisInstrumentDescription | null | unresolved | Identificador cualificado, contrato/CFD, escala, base de cotización y fronteras nativas verificables de esa fuente. |
+| ExecutionPlatform / ExecutionSymbolDisplayed | `MetaTrader` / `NDX100` | confirmed | S7 §2. |
+| MetaTraderBroker / Server | null / null | unresolved | S7 §3, sin identidad directa del broker/servidor. |
+| MetaTraderServerTimezone / UTCMappingEvidence | null / null | unresolved | S7 §3; no UTC+2/+3, EET/EEST inferido. |
+| MetaTraderOpenUtc / MetaTraderCloseUtc | null / null | unresolved | Segundos conocidos, conversión aún no probada. |
+| ExactExecutionInstrumentDescription | null | unresolved | Especificación del símbolo ligada al broker/servidor. |
+| StrategyTimezone | `America/Bogota` | confirmed | Código y S2; independiente de reloj MetaTrader. |
+| ReplayStartUtc / ReplayEndUtc | null / null | unresolved | Mapping, miembros estructurales y cobertura suficientes pendientes. |
+| MarketDataSourceReference | null | unresolved | Fuente candidata conocida; ningún dataset aceptado/adquirido. |
 
-No se consideran equivalentes CME NQ, Nasdaq-100 cash/index, NAS100/US100/USTEC ni s?mbolos CFD de brokers distintos. La aprobaci?n requiere compatibilidad de instrumento, proveedor, escala, cotizaci?n, fronteras de velas y sesiones; no ?nicamente una etiqueta Nasdaq.
+No se declara `OANDA US100 == MetaTrader NDX100`. Tampoco se rechaza la asociación humana únicamente por nombres diferentes. CME NQ, cash/index y CFD de otros proveedores no son sustitutos aprobados.
 
-## Manifest: ejecuci?n, protecci?n, target, riesgo y salida
+## Ticket histórico: valores literales
 
-| Campo | Valor | Estado | Procedencia / qu? falta |
+Todos los valores confirmados siguientes proceden de S7 §2; scope/reason de S7 §6. Estos son campos históricos mostrados, no cálculo ni resultado económico del engine.
+
+| Campo | Valor | Estado | Alcance |
 | --- | --- | --- | --- |
-| EntryDisplayTimePartial | `2024-06-28 14:02:xx` | confirmed | S1, rese?a documental; `xx` no es timestamp ejecutable ni segundo cero. |
-| ExitDisplayTimePartial | `2024-06-28 14:03:xx` | confirmed | S1, mismo l?mite. |
-| TimestampResolution | segundos mostrados en el ejemplo | confirmed | S1; no se generaliza a otras fuentes. |
-| DocumentedEntryBeforeExit | Open anterior a Close en la rese?a | confirmed | S1; falta vincular ticket/snapshot/eventos exactos. No se crea prueba tipada con identidades imaginarias. |
-| Direction | null (reporte previo: SELL) | human_validation_required | S3. No se encontr? respaldo final de SELL para este evento en S1/S2/casos; transcribir el ticket legible. |
-| Quantity / QuantityUnit | null / null (reporte previo: 0.25) | human_validation_required | S3. No asumir lots, contracts ni cantidad de salida. |
-| EntryExecutionId / ExitExecutionId | null / null | unresolved | Identidades source-qualified y relaci?n inequ?voca entre apertura y cierre. |
-| EntryDisplayTimeExact / ExitDisplayTimeExact | null / null | unresolved | Capturar segundos originales completos; no completar `xx`. |
-| EntryEffectiveAtUtc / ExitEffectiveAtUtc | null / null | unresolved | Segundos completos y mapping UTC validado. |
-| EntryPrice / ExitPrice | null / null | unresolved | Existen campos separados seg?n S1, pero valores no conservados. |
-| StopPrice / StructuralAnchorEvidence | null / null | unresolved | Par?metro literal y miembros/precio del LH/HL 5M real seleccionado; regla conceptual no basta. |
-| TakeProfitPrice / TargetReferenceEvidence | null / null | unresolved | Nivel exacto y fuente elegida; igualdad target-to-TP normativa no determina su valor. |
-| AccountBasis / Currency / BasisReference | null / null / null | unresolved | Base documental de esta cuenta/assessment; no inferir balance de 0.25 ni de regla 1%. |
-| PlannedMaximumLoss / RiskCalculationReference | null / null | unresolved | P?rdida m?xima planeada documentada y procedencia; sin PnL inferido. |
-| PlannedEntryPrice / CostTreatment | null / null | unresolved | Operand y tratamiento documental de costos; no asumir costos cero ni copiar autom?ticamente EntryPrice. |
-| DocumentedExitScope | null | unresolved | Full/Partial para este evento, no generalizar intenci?n de complete exit de otros ejemplos en S2. |
-| DocumentedExitReason | null | unresolved | Raz?n literal solo si documentada; no inferir TP/SL por igualdad de precio. |
-| ExitQuantity / ExitQuantityUnit | null / null | unresolved | Transcripci?n espec?fica de la salida, si existe. |
-| EvidenceObservedAtUtc (cada registro) | null | unresolved | Disponibilidad hist?rica aut?ntica y procedencia; no igualar autom?ticamente al effective time ni a la fecha de esta revisi?n. |
+| Ticket | `35079234` | confirmed | Ticket mostrado; no source-qualified EntryExecutionId/ExitExecutionId construido. |
+| OpenDisplayTime | `2024-06-28 14:02:18` | confirmed | Reloj broker-display; no UTC. |
+| CloseDisplayTime | `2024-06-28 14:03:05` | confirmed | Reloj broker-display; no UTC. |
+| TimestampResolution | segundos | confirmed | Este historial; no generalización a proveedores. |
+| DocumentedEntryBeforeExit | Open anterior a Close del ticket revisado | confirmed | Secuencia documental; binding a snapshot y UTC todavía pendientes. |
+| Direction | `SELL` | confirmed | Literal. |
+| Quantity / QuantityUnit | `0.25` / `lots` | confirmed | Volumen mostrado; no inferir cantidad de cierre separada. |
+| ExecutionSymbolDisplayed | `NDX100` | confirmed | Literal. |
+| EntryPrice | `20019.14` | confirmed | Ejecución histórica; no operand de riesgo planeado inferido. |
+| StopLoss | `20034.50` | confirmed | Literal, anchor exacto pendiente. |
+| TakeProfit | `19972.10` | confirmed | Literal; no low independiente derivado. |
+| ExitPrice | `19972.10` | confirmed | Literal, igual decimal al TP mostrado. |
+| Commission / Swap | `0.00` / `0.00` | confirmed | Campos mostrados; no implica todos los costos planeados cero. |
+| DisplayedProfit / Currency | `+1181.88` / `USD` | confirmed | Preservado sin recomputar, sin clasificación Win/Loss ni economic P&L. |
+| DocumentedExitScope | `Full` | confirmed | Mentor describe salida completa en este escenario S7 §6, no regla universal. |
+| DocumentedExitReason | descripción revisada: salida completa cuando precio tocó target programado | confirmed | Explicación humana S7 §6; no cita textual ni código mecánico del broker. No se infiere de igualdad de precios. |
+| BrokerExitReasonCode | null | unresolved | No suministrado. |
+| ExitQuantity / ExitQuantityUnit | null / null | unresolved | No hay transcripción separada de cantidad de salida. |
+| EntryExecutionId / ExitExecutionId | null / null | unresolved | Requieren namespace fuente y relación evento/ticket inequívoca. |
+| EntryEffectiveAtUtc / ExitEffectiveAtUtc | null / null | unresolved | Mapping MetaTrader pendiente. |
+| ExecutionSourceReference / AssertionSourceReference | S7 documental; referencia material ejecutable null | human_validation_required | Retener source location estable antes de adapter; no resolver fuentes ocultamente. |
+| EvidenceObservedAtUtc (cada registro) | null | unresolved | Disponibilidad auténtica por fuente; no backdate desde revisión posterior. |
+| AccountBasis / Currency / BasisReference | null / null / null | unresolved | Base del assessment no conocida; USD profit no establece base de cuenta. |
+| PlannedMaximumLoss / RiskCalculationReference | null / null | unresolved | Documentación de riesgo planeado pendiente. |
+| PlannedEntryPrice / CostTreatment | null / null | unresolved | No copiar EntryPrice ni calcular riesgo/P&L a partir del ticket. |
 
-## Evidencia de estrategia para esta operaci?n
+## Observaciones de estrategia de esta sesión
 
-Las reglas generales de S2 est?n auditadas; no son evidencia de que esta operaci?n cumpliera cada gate. Cada fila mantiene sus precios/timestamps/miembros/selecciones y disponibilidad en `null` hasta disponer de respaldo del caso.
+Confirmación documental de observaciones S7 §6 no significa Passed ni creación de RuleFacts. Todos los miembros de velas, effective/observed UTC y referencias canónicas aún necesitan validación.
 
-| Etapa | Estado del caso | Evidencia necesaria |
+| Observación del caso | Estado | Exactitud / pendiente |
 | --- | --- | --- |
-| TIME / preparaci?n | unresolved | Fecha Bogot? validada, revisi?n H4 y marcaci?n de liquidez completadas realmente en [08:00,08:30); disponibilidad y material. |
-| H4 context | unresolved | HH/HL o LL/LH activos, fuentes cerradas, breakout/wickfill/fakeout y direcci?n revisada. |
-| Structural/session liquidity | unresolved | OHLC 1H completos Asia/London y referencias estructurales 1H/4H seleccionadas; miembros y valores exactos. |
-| Relevant liquidity take | unresolved | Referencia exacta, evento/precio/tiempo y relevancia revisada; no inferir instante intrabar desde OHLC. |
-| M5 trigger | unresolved | Evento StructuralChange OR IFVG, fuentes y confirmaci?n cerrada del setup. |
-| Mandatory M5 FVG | unresolved | Tres velas/miembros y confirmaci?n exacta del desequilibrio. |
-| FVG quality | unresolved | Aprobaci?n/rechazo fuente de ese FVG, effective/observed times; no umbral inventado. |
-| M1 corrective retracement | unresolved | Selecci?n de evento/velas para el FVG aprobado y disponibilidad real. |
-| M1 realignment | unresolved | ?ltimo swing/level correctivo elegido, direcci?n, vela cerrada y orden causal cuando mismo cierre. |
-| NQ-M1-003 | unresolved | Derivado exclusivamente del realignment can?nico; no crear anotaci?n humana adicional. |
-| Historical observed entry | unresolved | Ticket, precio, UTC y origen, ligados a la elegibilidad real. |
-| Structural SL | unresolved | Anchor 5M y StopPrice literal, con evidencia/fechas fuente. |
-| TP target | unresolved | Referencia seleccionada y TakeProfitPrice exactos. |
-| Risk | unresolved | Assessment, base monetaria/unidades/costos y par?metros documentados. |
-| Documented historical exit | unresolved | Cierre inequ?voco del mismo trade con precio/UTC/identidad/alcance/raz?n cuando documentados. |
+| H4 bearish context/direction, continuación hacia mínimos semanales | confirmed | Faltan miembros HH/HL o LL/LH activos, episode/context bindings y tiempos cerrados. |
+| London High marcado | confirmed | LondonHigh exacto y miembros 1H null. |
+| London Low / Asia Low descritos coincidentes cerca de `19972.xx` | confirmed | Contexto aproximado; AsiaLow y LondonLow exactos independientes null. |
+| Precio excedió London High antes del setup bajista | confirmed | Evento, referencia y timestamp/precio exactos null; no instante intrabar inventado. |
+| Gran desplazamiento bearish 5M, body close bajo low/estructura 5M previa | confirmed | Miembros, nivel y cierre exactos null; no detector nuevo. |
+| FVG bearish visible | confirmed | Tres miembros, wick data y selección exacta null; calidad Approved no inferida por visibilidad. |
+| Retroceso 1M hacia FVG y realignment bearish usado para SELL | confirmed | Swing/level correctivo, vela de confirmación, source order y UTC null. |
+| SL `20034.50`, protección sobre LH/wick 5M revisado | confirmed | Anchor exacto, miembros y precio estructural null. |
+| TP `19972.10` explicado como target compartido Asia/London low | confirmed | Referencias seleccionadas y lows exactos independientes null. |
+| Entrada y salida histórica del ticket | confirmed | Valores arriba; tiempos UTC, disponibilidad y binding exacto pendientes. |
+| TIME / preparación completada en ventana | unresolved | Sin evidencia exacta de revisión H4/marcación completadas en [08:00,08:30) Bogotá. |
+| FVG quality Approved/Rejected | unresolved | Revisión específica, rationale y tiempos no suministrados. |
+| NQ-M1-003 | unresolved | Derivar únicamente de realignment canónico; no segunda señal humana ni RuleFact manual. |
+| Risk assessment | unresolved | Base/operand/unidades/costos documentados faltantes. |
 
-**Evidencia espec?fica confirmada:** solo fecha mostrada, minutos Open/Close incompletos, resoluci?n y precedencia documental anteriores. Ninguna evaluaci?n can?nica ni aprobaci?n de gate se ha producido para esta sesi?n.
+No se han evaluado gates canónicos ni el primer blocker de replay. Faltan OHLC, selección y ancestry de H4/liquidez/take/trigger/FVG/quality/pullback/realignment/SL/TP, riesgo y disponibilidad auténtica. La evidencia cualitativa confirmada se conserva aunque no sea todavía input suficiente.
 
-## Ventana de datos: restricciones conocidas, sin rango final inventado
+## Auditoría: propiedad del mercado y procedencia de ejecución
 
-Las fronteras existentes son `confirmed` (c?digo y S2), por OpenTime local de cada vela 1H:
+Código inspeccionado, sin modificaciones:
 
-- Asia: [D-1 17:00, D 02:00), nominalmente 9 velas 1H.
-- London: [D 02:00, D 07:00), nominalmente 5 velas 1H.
-- Preparaci?n: [D 08:00, D 08:30); adquisici?n de entrada: [D 08:30, D 11:00).
+- [CandleSeries](../../../src/backend/MoneyWay.Domain/MarketData/CandleSeries.cs): provider/symbol homogéneos por serie.
+- [Importador de sesión Feature 29](../../../src/backend/MoneyWay.Infrastructure/Strategies/Nasdaq/RunLocalNasdaqMentorSessionUseCase.cs): cuatro series deben coincidir exactamente con timeframe/provider/symbol de Session.
+- [Binder](../../../src/backend/MoneyWay.Application/Strategies/Nasdaq/MentorSessions/NasdaqMentorSessionReplay.cs): observaciones deben coincidir en strategy/version/provider/symbol/disponibilidad; downstream references pertenecen exactamente a este run.
+- [Snapshot](../../../src/backend/MoneyWay.Application/Strategies/Nasdaq/HistoricalTrades/NasdaqHistoricalTradeSnapshot.cs): Session heredada de la elegibilidad canónica; preserva entrada, SL, TP y riesgo.
+- [Entrada histórica](../../../src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqHistoricalObservedEntry.cs) y [salida documentada](../../../src/backend/MoneyWay.Application/Strategies/Nasdaq/HistoricalTrades/NasdaqHistoricalDocumentedExit.cs): execution ID source-qualified y ExecutionSourceReference retenidos; no fields independientes ExecutionProviderId/ExecutionSymbol. SupportingCandles opcionales deben coincidir exactamente con Session.
 
-**Solo si D se valida como 2024-06-28**, las ventanas de estrategia son Asia [2024-06-27T22:00:00Z, 2024-06-28T07:00:00Z), London [2024-06-28T07:00:00Z, 2024-06-28T12:00:00Z), preparaci?n [13:00Z,13:30Z) y adquisici?n de entrada [13:30Z,16:00Z). Estas conversiones del reloj de estrategia NO convierten el Open/Close MetaTrader ni prueban compatibilidad horaria de la operaci?n.
+ADR 0025 define Session como **analysis scope** y exige provenance hacia material retenido, sin lookup oculto. Sus contratos de entrada/salida preservan ejecución documental, no sintetizan fills con velas.
 
-El comienzo suficiente debe cubrir todas las velas cerradas de sesi?n y los miembros/anchors H4/1H anteriores realmente seleccionados. No existe lookback fijo que permita escoger una fecha H4 arbitraria. 2024-06-27T22:00Z es una frontera condicional de cobertura Asia, no un comienzo suficiente demostrado del pack. El final debe cubrir la salida real y las fronteras can?nicas posteriores necesarias para transportar hechos/documentar artefactos; no se impone cierre de posici?n a las 11:00. Las velas 4H deben conservar las fronteras verificadas del proveedor, no desplazarse para encajar en la estrategia.
+**A. Sí, de forma condicionada:** series OANDA con identificador exacto validado pueden ser la identidad de análisis; MetaTrader/NDX100 puede permanecer explícito en material/provenance de ejecución. La identidad tipada de cada observación de entrada/salida sigue siendo la Session de análisis; no asignar NDX100 al campo Symbol de esa observación si Session usa otro símbolo.
 
-**Rango final elegido: unresolved.** Faltan mapping UTC, fuentes estructurales, precisi?n del cierre y cobertura hist?rica real. No se descarg? solo la entrada ni un rango enorme especulativo.
+**B. No existe comparación independiente entre identidad de broker y análisis:** el contrato no tiene campos tipados de provider/symbol de ejecución separados. Sí exige igualdad de series, Session, observaciones y candles de apoyo. Esto no constituye soporte general de replay multifeed, alias resolver ni validación automática de compatibilidad económica entre instrumentos. No relabelar velas broker como OANDA.
 
-## Fuente de mercado y validaci?n de CSV
+**C. OANDA/TradingView es la candidata de análisis respaldada por S7**, junto con analysis scope del ADR y contratos anteriores. No hay requisito de elegir OHLC del broker desconocido solo porque ejecutó la orden. Identificador exacto, fuente de exportación, escala/base, fronteras y compatibilidad temporal/material deben validarse; aceptación del constructor no prueba equivalencia ni fill.
 
-Fuente aceptada: ninguna. Candidatas condicionadas a identificar broker/instrumento: exportaci?n hist?rica del mismo broker/servidor de la operaci?n, o archivos originales retenidos de esa sesi?n con procedencia verificable. No se seleccion? vendor alternativo; no se adquiri? NQ/cash/CFD gen?rico como sustituto. Disponibilidad de 2024, credenciales/subscripci?n, permisos de acceso y licencia de redistribuci?n: `unresolved`. No se solicitaron ni almacenaron secretos.
+## Sincronización UTC: evidencia humana mínima
 
-| Archivo requerido | Estado | Validaci?n con importador |
+La zona del chart `UTC-5` está confirmada y permite convertir un timestamp de chart completo y pertinente. No convierte por sí sola los campos del historial MetaTrader. Se necesita al menos una prueba retenida y aplicable a ese servidor/fecha:
+
+1. Un **mismo evento simultáneo e inequívoco**, con fecha/hora TradingView UTC-5 y su contraparte MetaTrader, que determine el offset. No basta mostrar reloj de pantalla junto a un registro histórico de otro instante. Documentar precisión/incertidumbre y aplicación a Open/Close; corroborar ambos si la referencia no cubre todo el intervalo.
+2. Zona/offset explícito del servidor visible en material original, con significado de timestamp y aplicabilidad a 2024-06-28.
+3. Broker/servidor identificado más documentación autoritativa de su timezone/offset para esa fecha, incluido cualquier cambio estacional.
+4. Otro punto de sincronización autoritativo que vincule un evento MetaTrader a UTC y pruebe el offset aplicable.
+
+No seleccionar offset por costumbre UTC+2/+3, EET/EEST, encaje en ventana Bogotá, parecido de precios ni reloj actual. Hasta esa prueba, MetaTraderOpenUtc/CloseUtc, LocalStrategyDate y rango final permanecen pendientes.
+
+Para identidad de análisis falta, mínimamente, detalle de símbolo cualificado o metadata de exportación del **chart OANDA revisado** que distinga US100/US100.cash y su instrumento/base/fronteras. No se exige reinterpretar ambos dominios como un solo símbolo.
+
+## Ventana y adquisición OHLC
+
+Reglas existentes S2, sin cambios: Asia [D-1 17:00,D 02:00), London [D 02:00,D 07:00), preparación [D 08:00,D 08:30), entrada [D 08:30,D 11:00), todas America/Bogota. Nominalmente 9 y 5 velas 1H de sesión.
+
+Solo si D se valida como 2024-06-28: Asia [2024-06-27T22:00Z,2024-06-28T07:00Z), London [07:00Z,12:00Z), preparación [13:00Z,13:30Z), entrada [13:30Z,16:00Z). Estas son conversiones de estrategia, **no** del ticket. No se fuerza salida a las 11:00.
+
+Inicio suficiente: todas las velas de sesión y miembros/anchors H4/1H anteriores realmente seleccionados; ningún lookback fijo inventado. Final: salida real y fronteras canónicas necesarias. Fronteras 4H deben ser las de la fuente, no desplazadas para encajar. ReplayStartUtc/EndUtc siguen null.
+
+OANDA es técnicamente admisible como candidata; **no está liberada la adquisición OHLC final** por mapping UTC e identidad exacta pendientes. Ningún dataset fue descargado o aceptado. Acceso histórico 2024, licencia/permisos y fuente concreta de exportación permanecen unresolved; no se almacenan secretos.
+
+| Archivo requerido | Estado | Validación importador |
 | --- | --- | --- |
-| 4H.csv | unresolved: no archivo real | No ejecutada. |
-| 1H.csv | unresolved: no archivo real | No ejecutada. |
-| 5M.csv | unresolved: no archivo real | No ejecutada. |
-| 1M.csv | unresolved: no archivo real | No ejecutada. |
+| 4H.csv | unresolved: ausente | No ejecutada |
+| 1H.csv | unresolved: ausente | No ejecutada |
+| 5M.csv | unresolved: ausente | No ejecutada |
+| 1M.csv | unresolved: ausente | No ejecutada |
 
-Schema existente, sin otro parser ni s?ntesis:
+Schema existente:
 
 ```csv
 provider_id,symbol,timeframe_amount,timeframe_unit,open_time_utc,close_time_utc,open,high,low,close,volume
 ```
 
-Cuando se suministren archivos, usar `CsvMarketDataImporter.ImportFile` existente para validar sintaxis/UTC/identidad homog?nea/orden/duplicados/overlap/OHLC. Separadamente verificar escala, base de cotizaci?n, fronteras nativas de cada timeframe, gaps/completitud y cobertura suficiente: importaci?n correcta no demuestra ausencia de velas faltantes ni compatibilidad con el trade. Volume vac?o es desconocido, no cero. Revisar calendario y sesiones reales sin rellenar datos.
+Usar importador existente: sintaxis UTC, identidad homogénea, orden/duplicados/overlap/OHLC. Separadamente validar completitud, gaps, escala/base, fronteras nativas y cobertura; importación correcta no demuestra compatibilidad. Volume vacío es desconocido.
 
-**Price/time cross-check: no ejecutado.** Faltan precios, UTC y velas. Con ellos, contrastar EntryPrice/ExitPrice y niveles relevantes en sus intervalos UTC y fuente/base de cotizaci?n documentada, conservar Entry -> Exit y evaluar Bogot? independientemente. No inventar tolerancia/spread ni modificar precios del mentor para encajar. Compatibilidad con rango no demuestra un fill ni orden intrabar. Toda diferencia material inexplicada impide aprobar el dataset y exige investigar instrumento/proveedor/fecha/reloj/transcripci?n. Una contradicci?n fuente real con estrategia activa debe reportarse NEW_EVIDENCE_CONFLICT, sin cambiar reglas.
+Price/time cross-check no ejecutado: hay precios, faltan UTC y velas. Después contrastar ambas fuentes con su base documentada, sin tolerancia/spread inventado, fit de timestamps ni modificación de valores humanos. Un rango compatible no prueba fill/orden intrabar. Contradicción material exige investigación, no cambio de TIME ni equivalencia automática.
 
-## Siguiente evidencia m?nima y tratamiento Git
+## Validación y tratamiento Git
 
-Para liberar la adquisici?n se necesita primero:
+Actualización limitada a este manifiesto; también se restauró su texto UTF-8, previamente con caracteres de acentos sustituidos por signos de interrogación. Se revisaron estados/provenance, contratos, referencias locales y campos exactos. Se comprobaron ausencia de offset broker confirmado, alias automático, lows exactos inventados, cambios TIME y cálculo P&L. `git diff --check` y validación de referencias/formato documental: realizadas antes del commit.
 
-1. Videos 2/3 originales o enlaces accesibles identificables y captura legible del historial con s?mbolo literal, Open/Close completos, precios, volumen y ticket/relaci?n de ejecuci?n.
-2. Identidad del broker/servidor correspondiente a esa cuenta/sesi?n y especificaci?n del instrumento/escala/unidad.
-3. Evidencia de zona horaria/UTC aplicable en esa fecha o una referencia sincronizada humana validada. No bastan un offset plausible ni la coincidencia con horario de estrategia.
+No se ejecutaron tests de engine, build, importación real, cross-source checks ni harness: no hubo código ni dataset nuevo. No se presenta una suite anterior como validación de datos reales.
 
-Despu?s, completar las selecciones/miembros y provenance de las etapas pendientes, adquirir los cuatro timeframes nativos de la fuente compatible y efectuar validaciones/cross-checks. Crear el adapter S4 ?nicamente con datos suficientemente respaldados; podr? conservar Missing/Conflict/Unavailable sin fabricar registros para alcanzar Available.
+Material original/licenciado, OHLC y adapters privados deben permanecer fuera de Git o en `local-data/` ignorado, según derechos. Este commit contiene metadata autorizada, sin secretos, paths personales ni dataset redistribuible. Disponibilidad histórica no se backdatea desde la revisión actual.
 
-`ValidatedInput.cs`: no preparado. Harness real: no ejecutado. `report.json`: no generado. Primer blocker can?nico: no evaluado, porque no hubo replay; el bloqueo actual es de evidencia/identificaci?n previa a adquisici?n, no un fallo de regla ni de engine.
-
-Guardar material broker/video/licenciado, CSV y adapters privados fuera de Git o en `local-data/` (ya ignorado) seg?n derechos reales. Este documento solo contiene metadata segura de la revisi?n y pendientes; no contiene credenciales, paths absolutos personales, originales multimedia ni series redistribuibles. Licencias originales no establecidas: no autorizar redistribuci?n. La pol?tica del encargo permite un commit de esta metadata documental; ning?n raw dataset se publica.
-
-## Verificaci?n realizada en este pase
-
-Se revisaron c?digo/contratos existentes, ADR, especificaci?n/casos y archivos locales del proyecto. Se comprobaron los estados permitidos y la procedencia expl?cita de los campos del manifest, cuatro enlaces locales y formato UTF-8/LF. Se verificaron las fronteras UTC condicionales de estrategia usando la zona Windows que identifica Bogot? (`SA Pacific Standard Time`); esto no verifica ni propone un timezone del broker. `git diff --check` y la comprobaci?n del diff staged pasaron. No se ejecutaron importaci?n CSV real, pruebas sobre un dataset real, cross-source checks ni replay real por falta de fuentes. No se modific? c?digo y no se repiti? la suite de engine como sustituto de validaci?n de datos.
+**NEEDS_TIME_SYNCHRONIZATION_EVIDENCE**
