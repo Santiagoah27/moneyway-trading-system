@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -23,6 +23,13 @@
     <ProjectReference Include="..\..\..\src\backend\MoneyWay.Api\MoneyWay.Api.csproj" />
     <ProjectReference Include="..\..\..\src\backend\MoneyWay.Application\MoneyWay.Application.csproj" />
     <ProjectReference Include="..\..\..\src\backend\MoneyWay.Infrastructure\MoneyWay.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../../unit/MoneyWay.Application.UnitTests/Strategies/Nasdaq/ReplayInputs/M5Fixture.cs" Link="SyntheticFixtures/M5Fixture.cs" />
+    <Compile Include="../../unit/MoneyWay.Application.UnitTests/Strategies/Nasdaq/ReplayInputs/LiquidityFixture.cs" Link="SyntheticFixtures/LiquidityFixture.cs" />
+    <Compile Include="../../unit/MoneyWay.Application.UnitTests/Strategies/Nasdaq/ReplayInputs/SyntheticNasdaqMentorSessionFixture.cs" Link="SyntheticFixtures/SyntheticNasdaqMentorSessionFixture.cs" />
+    <Compile Include="$(NasdaqMentorSessionInputSource)" Link="LocalSession/ValidatedInput.cs" Condition="'$(NasdaqMentorSessionInputSource)' != ''" />
   </ItemGroup>
 
 </Project>

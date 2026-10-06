@@ -1,3 +1,4 @@
+using MoneyWay.Application.Strategies.Nasdaq.MentorSessions;
 using MoneyWay.Application.MarketData.Replay;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 using MoneyWay.Application.StrategyReplay;
@@ -194,10 +195,21 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
             evidenceProducer);
     }
 
+    public MultiTimeframeStrategyBacktestRun ExecuteMentorSession(StrategyDefinition strategyDefinition, IEnumerable<CandleSeries> series,
+        NasdaqMentorSessionReplay session)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series); ArgumentNullException.ThrowIfNull(session);
+        session.Start(strategyDefinition);
+        return ExecuteCore(strategyDefinition,
+            consume => replayUseCase.Execute(series, frame => consume(contextUseCase.Execute(strategyDefinition, frame))),
+            null, session);
+    }
+
     private MultiTimeframeStrategyBacktestRun ExecuteCore(
         StrategyDefinition strategyDefinition,
         Func<Action<StrategyReplayContext>, MultiTimeframeReplayRunResult> runReplay,
-        IStrategyReplayLifecycleEvidenceProducer? evidenceProducer)
+        IStrategyReplayLifecycleEvidenceProducer? evidenceProducer,
+        NasdaqMentorSessionReplay? session = null)
     {
         var workflow = workflowCatalog.Find(strategyDefinition.StrategyId, strategyDefinition.Version);
         var lifecyclePolicy = lifecyclePolicyCatalog.Find(strategyDefinition.StrategyId, strategyDefinition.Version);
@@ -209,13 +221,15 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
         var strategyObservations = new List<StrategyReplayContextObservation>();
         var replayResult = runReplay(context =>
         {
+            var evaluationContext = context.WithPriorObservations(strategyObservations);
+            if (session is not null) context = evaluationContext = session.Bind(evaluationContext);
             var marketObservation = new MultiTimeframeBacktestObservation(
                 context.Step,
                 context.AsOfUtc,
                 context.UpdatedTimeframes,
                 context.AvailableTimeframes,
                 context.MarketDataAvailability);
-            var strategyObservation = evaluationUseCase.Execute(strategyDefinition, context.WithPriorObservations(strategyObservations));
+            var strategyObservation = evaluationUseCase.Execute(strategyDefinition, evaluationContext);
             if (workflow is not null)
             {
                 if (lifecyclePolicy is null)
@@ -237,6 +251,7 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
                 || strategyObservation.ProviderId != context.ProviderId || strategyObservation.Symbol != context.Symbol
                 || strategyObservation.Step != context.Step || strategyObservation.AsOfUtc != context.AsOfUtc)
                 throw new InvalidOperationException("Strategy observation is inconsistent with the replay context.");
+            session?.Capture(context, strategyObservation);
             marketObservations.Add(marketObservation); strategyObservations.Add(strategyObservation);
         });
         if (replayResult.GlobalFramesProcessed != marketObservations.Count || replayResult.GlobalFramesProcessed != strategyObservations.Count)

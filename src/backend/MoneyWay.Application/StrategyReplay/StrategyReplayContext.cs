@@ -55,7 +55,8 @@ public sealed class StrategyReplayContext
         PreEvaluationState = BoundPreEvaluationState(preEvaluationState);
     }
 
-    private StrategyReplayContext(StrategyReplayContext source, IEnumerable<StrategyReplayContextObservation> priorObservations)
+    private StrategyReplayContext(StrategyReplayContext source, IEnumerable<StrategyReplayContextObservation> priorObservations,
+        IEnumerable<IStrategyReplayInputObservation>? inputObservations = null)
     {
         var prior = priorObservations.ToArray();
         if (prior.Any(o => o is null || o.StrategyId != source.StrategyId || o.StrategyVersion != source.StrategyVersion
@@ -67,7 +68,7 @@ public sealed class StrategyReplayContext
         UpdatedTimeframes = source.UpdatedTimeframes; AvailableTimeframes = source.AvailableTimeframes;
         framesByTimeframe = source.framesByTimeframe; CurrentMarketPriceObservations = source.CurrentMarketPriceObservations;
         MarketPriceObservations = source.MarketPriceObservations; MarketDataAvailability = source.MarketDataAvailability;
-        InputObservations = source.InputObservations; PreEvaluationState = source.PreEvaluationState;
+        InputObservations = inputObservations is null ? source.InputObservations : BoundInputObservations(inputObservations); PreEvaluationState = source.PreEvaluationState;
         PriorObservations = new ReadOnlyCollection<StrategyReplayContextObservation>(prior);
     }
 
@@ -76,6 +77,9 @@ public sealed class StrategyReplayContext
         ArgumentNullException.ThrowIfNull(priorObservations);
         return new(this, priorObservations);
     }
+
+    internal StrategyReplayContext WithInputObservations(IEnumerable<IStrategyReplayInputObservation> inputs) =>
+        new(this, PriorObservations, inputs);
 
     public IReadOnlyList<StrategyReplayContextObservation> PriorObservations { get; } = Array.Empty<StrategyReplayContextObservation>();
 

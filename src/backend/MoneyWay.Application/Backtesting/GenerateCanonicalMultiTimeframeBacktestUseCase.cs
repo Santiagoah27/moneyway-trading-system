@@ -1,3 +1,4 @@
+using MoneyWay.Application.Strategies.Nasdaq.MentorSessions;
 using MoneyWay.Application.Backtesting.Diagnostics;
 using MoneyWay.Application.MarketData.Replay;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
@@ -121,6 +122,18 @@ public sealed class GenerateCanonicalMultiTimeframeBacktestUseCase(
         if (!ReferenceEquals(report.OutcomeRun, outcomeRun)
             || report.StrategyId != strategyDefinition.StrategyId
             || report.StrategyVersion != strategyDefinition.Version)
+            throw new InvalidOperationException("Canonical diagnostics do not match the generated strategy outcome run.");
+        return report;
+    }
+
+    public MultiTimeframeStrategyBacktestDiagnosticsReport ExecuteMentorSession(StrategyDefinition strategyDefinition, IEnumerable<CandleSeries> series,
+        NasdaqMentorSessionReplay session)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series); ArgumentNullException.ThrowIfNull(session);
+        var run = outcomeRunUseCase.ExecuteMentorSession(strategyDefinition, series, session);
+        var report = diagnosticsUseCase.Execute(strategyDefinition, run);
+        if (!ReferenceEquals(report.OutcomeRun, run)
+            || report.StrategyId != strategyDefinition.StrategyId || report.StrategyVersion != strategyDefinition.Version)
             throw new InvalidOperationException("Canonical diagnostics do not match the generated strategy outcome run.");
         return report;
     }

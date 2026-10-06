@@ -1,3 +1,4 @@
+using MoneyWay.Application.Strategies.Nasdaq.MentorSessions;
 using MoneyWay.Application.MarketData.Replay;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 using MoneyWay.Application.StrategyReplay;
@@ -88,5 +89,12 @@ public sealed class GenerateMultiTimeframeStrategyOutcomeBacktestRunUseCase(
         }
         if (outcomes.Count != strategyRun.ObservationCount) throw new InvalidOperationException("Outcome count is inconsistent with the strategy run.");
         return new(strategyRun, outcomes);
+    }
+
+    public MultiTimeframeStrategyOutcomeBacktestRun ExecuteMentorSession(StrategyDefinition strategyDefinition, IEnumerable<CandleSeries> series,
+        NasdaqMentorSessionReplay session)
+    {
+        ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series); ArgumentNullException.ThrowIfNull(session);
+        return CreateOutcomes(strategyDefinition, strategyBacktestUseCase.ExecuteMentorSession(strategyDefinition, series, session));
     }
 }

@@ -1,6 +1,10 @@
 # Nasdaq first real mentor-session readiness after Feature 28
 
-## Status
+## Feature 29 current status
+
+**READY_FOR_FIRST_REAL_SESSION_DATA**. The session binder/report harness is now implemented; see the [local run guide](../backtesting/nasdaq-mentor-session-local-run.md) and its readiness answers 1-10. No validated real mentor data has been supplied or replayed. The historical Feature 28 audit below records why its earlier code blocker existed; Feature 29 removes that specific blocker without new trading semantics.
+
+## Historical Feature 28 status
 
 **BLOCKED_BY_CODE** for a complete single-pass mentor-session evidence/report harness. Local CSV ingestion and synchronized replay are already available. Missing real dataset values are a separate data dependency, not the reason for this code status. No economic classification, execution policy or new trading rule is required to complete the bounded factual Demo.
 
