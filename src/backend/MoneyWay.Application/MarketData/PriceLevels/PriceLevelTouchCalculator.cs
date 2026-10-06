@@ -63,12 +63,12 @@ public sealed class PriceLevelTouchCalculator
                 candle.Timeframe);
     }
 
-    private static bool ReachesCandle(Candle candle, decimal targetPrice, PriceLevelDirection direction) =>
+    internal static bool ReachesCandle(Candle candle, decimal targetPrice, PriceLevelDirection direction) =>
         direction == PriceLevelDirection.Lower
             ? candle.Low <= targetPrice
             : candle.High >= targetPrice;
 
-    private static bool Reaches(decimal observedPrice, decimal targetPrice, PriceLevelDirection direction) =>
+    internal static bool Reaches(decimal observedPrice, decimal targetPrice, PriceLevelDirection direction) =>
         direction == PriceLevelDirection.Lower
             ? observedPrice <= targetPrice
             : observedPrice >= targetPrice;
