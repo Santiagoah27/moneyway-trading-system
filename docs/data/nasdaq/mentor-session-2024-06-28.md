@@ -2,7 +2,7 @@
 
 ## Estado
 
-**NEEDS_TIME_SYNCHRONIZATION_EVIDENCE**. Los campos históricos y las observaciones indicados abajo están confirmados documentalmente por revisión humana. La adquisición OHLC final sigue detenida: falta mapping UTC de MetaTrader y validar el identificador exacto del instrumento de análisis.
+**NEEDS_MARKET_DATA_ACCESS**. El reloj de estrategia está confirmado en America/Bogota. La ruta TradingView disponible no permite cargar el histórico 1M solicitado; no hay export real ni acceso OANDA configurado identificado. La alineación UTC MetaTrader es un pendiente separado y no bloquea la adquisición de análisis. Identidad y dataset finales requieren la validación detallada abajo.
 
 Baseline auditado: `1b62376520a8638dfb9f381a0cf4b7f0c00203a9`. SessionId: `nasdaq-mentor-2024-06-28-v2-v3`. Este manifiesto es metadata, no input ejecutable ni aprobación de una operación. No se crearon CSV reales, `ValidatedInput.cs`, RuleFacts ni `report.json`; no se ejecutó replay real. No cambia la capacidad 32 RuleIds / 14 Required / 16 evaluators / 0 Required gaps / full=true.
 
@@ -19,6 +19,9 @@ Estados por campo: `confirmed`, `human_validation_required`, `unresolved`. `null
 | S5 | [Auditoría de preparación](../../roadmap/nasdaq-first-real-session-readiness.md): capacidad de código separada de disponibilidad de datos. |
 | S6 | Inventario previo del repositorio: único CSV identificado, `samples/market-data/replay-demo.synthetic.csv`, provider `historical-fixture`, symbol `DEMO`, 5M, 2026-01-01. Sintético y excluido del pack. No se identificaron originales ni OHLC reales en el árbol inspeccionado. |
 | S7 | Actualización del usuario “FIRST REAL NASDAQ MENTOR SESSION — Human Evidence Update + Analysis Feed / Execution Feed Audit”, recibida el 2026-10-06. Revisión humana de originales: apartados 1 (TradingView), 2 (ticket), 3 (reloj desconocido), 4–5 (dominios), 6–7 (Video 3 y precisión), 8 (TIME). Fuente retenida en el mensaje/adjunto de esta tarea. |
+| S8 | Encargo del usuario “FIRST REAL MENTOR SESSION — MARKET DATA ACQUISITION”, recibido el 2026-10-06: confirma reloj de análisis/estrategia, permite buffer de adquisición y separa alineación MetaTrader del acceso OHLC. |
+| S9 | Consulta oficial y UI TradingView el 2026-10-06: [catálogo OANDA:NAS100USD](https://www.tradingview.com/symbols/OANDA-NAS100USD/), chart de ese símbolo y prueba Go to 2024-06-28 13:30 en 1M con UI UTC. Detalles: US Nas 100, OANDA, Index Cfd, USD; aviso de límite 5.000 barras, sin llegar a fecha solicitada. |
+| S10 | Documentación oficial: [export CSV TradingView](https://www.tradingview.com/support/solutions/43000537255-how-to-export-chart-data/), [límites intradía](https://es.tradingview.com/support/solutions/43000480679/) y [autenticación OANDA v20](https://developer.oanda.com/rest-live-v20/authentication/). Rutas legítimas, no garantía de cobertura/licencia/compatibilidad del instrumento. |
 
 Video 2/3 siguen siendo etiquetas de revisión: título/URL/archivo original y hash permanecen `unresolved`. Para un adapter futuro se necesita referencia estable al material retenido y ubicación de cada evidencia; no se fabrican execution IDs ni disponibilidad histórica con la fecha de esta revisión. S7 confirma asociación humana de ambos dominios con el mismo workflow, no equivalencia de instrumentos.
 
@@ -29,12 +32,12 @@ Video 2/3 siguen siendo etiquetas de revisión: título/URL/archivo original y h
 | SessionId | `nasdaq-mentor-2024-06-28-v2-v3` | confirmed | Identificador administrativo S3; no ticket ni identidad de ejecución. |
 | Strategy / version | `moneyway-nasdaq` / `nasdaq-0.1.0-draft` | confirmed | Contrato registrado S4. |
 | DisplayedTradeDate | `2024-06-28` | confirmed | S7 §2. |
-| LocalStrategyDate | null; candidata `2024-06-28` | human_validation_required | Validar ejecución UTC y día America/Bogota; no copiar fecha broker. |
+| LocalStrategyDate (análisis solicitado) | `2024-06-28` | confirmed | S8 identifica la sesión de análisis; día Bogotá de la ejecución UTC sigue unresolved por separado. |
 | AnalysisPlatform / AnalysisProviderDisplayed | `TradingView` / `OANDA` | confirmed | S7 §1. |
 | AnalysisInstrumentDisplay | `US 100` | confirmed | S7 §1; headers `US 100 · 15 · OANDA`, `US 100 · 1h · OANDA`. |
 | AnalysisLabelsObserved | `US100` / `US100.cash` | confirmed | Variantes visibles/referenciadas S7 §1; no alias canónico definido. |
 | AnalysisChartTimezone | `UTC-5` | confirmed | Revisión del reloj inferior derecho, S7 §1. Offset mostrado; no America/New_York. |
-| Replay provider_id / symbol | null / null; candidato provider `OANDA` | human_validation_required | Confirmar identificador exacto de la fuente de exportación y chart revisado. No elegir automáticamente entre variantes ni inventar namespace. |
+| Replay provider_id / symbol | null / null; candidatos `OANDA` / `NAS100USD` | human_validation_required | S9 valida existencia del símbolo cualificado TradingView `OANDA:NAS100USD`; falta vincular metadata del chart original y export histórico. No define equivalencia US100/US100.cash ni símbolo API OANDA. |
 | ExactAnalysisInstrumentDescription | null | unresolved | Identificador cualificado, contrato/CFD, escala, base de cotización y fronteras nativas verificables de esa fuente. |
 | ExecutionPlatform / ExecutionSymbolDisplayed | `MetaTrader` / `NDX100` | confirmed | S7 §2. |
 | MetaTraderBroker / Server | null / null | unresolved | S7 §3, sin identidad directa del broker/servidor. |
@@ -42,7 +45,7 @@ Video 2/3 siguen siendo etiquetas de revisión: título/URL/archivo original y h
 | MetaTraderOpenUtc / MetaTraderCloseUtc | null / null | unresolved | Segundos conocidos, conversión aún no probada. |
 | ExactExecutionInstrumentDescription | null | unresolved | Especificación del símbolo ligada al broker/servidor. |
 | StrategyTimezone | `America/Bogota` | confirmed | Código y S2; independiente de reloj MetaTrader. |
-| ReplayStartUtc / ReplayEndUtc | null / null | unresolved | Mapping, miembros estructurales y cobertura suficientes pendientes. |
+| ReplayStartUtc / ReplayEndUtc | null / null | unresolved | Dependen del dataset aceptado y miembros estructurales; no del reloj MetaTrader para replay de análisis. |
 | MarketDataSourceReference | null | unresolved | Fuente candidata conocida; ningún dataset aceptado/adquirido. |
 
 No se declara `OANDA US100 == MetaTrader NDX100`. Tampoco se rechaza la asociación humana únicamente por nombres diferentes. CME NQ, cash/index y CFD de otros proveedores no son sustitutos aprobados.
@@ -129,7 +132,7 @@ La zona del chart `UTC-5` está confirmada y permite convertir un timestamp de c
 3. Broker/servidor identificado más documentación autoritativa de su timezone/offset para esa fecha, incluido cualquier cambio estacional.
 4. Otro punto de sincronización autoritativo que vincule un evento MetaTrader a UTC y pruebe el offset aplicable.
 
-No seleccionar offset por costumbre UTC+2/+3, EET/EEST, encaje en ventana Bogotá, parecido de precios ni reloj actual. Hasta esa prueba, MetaTraderOpenUtc/CloseUtc, LocalStrategyDate y rango final permanecen pendientes.
+No seleccionar offset por costumbre UTC+2/+3, EET/EEST, encaje en ventana Bogotá, parecido de precios ni reloj actual. Hasta esa prueba, MetaTraderOpenUtc/CloseUtc y día Bogotá de ejecución permanecen pendientes. Esto no impide adquirir/normalizar OHLC del análisis ni reconstruir la sesión solicitada con America/Bogota.
 
 Para identidad de análisis falta, mínimamente, detalle de símbolo cualificado o metadata de exportación del **chart OANDA revisado** que distinga US100/US100.cash y su instrumento/base/fronteras. No se exige reinterpretar ambos dominios como un solo símbolo.
 
@@ -137,11 +140,11 @@ Para identidad de análisis falta, mínimamente, detalle de símbolo cualificado
 
 Reglas existentes S2, sin cambios: Asia [D-1 17:00,D 02:00), London [D 02:00,D 07:00), preparación [D 08:00,D 08:30), entrada [D 08:30,D 11:00), todas America/Bogota. Nominalmente 9 y 5 velas 1H de sesión.
 
-Solo si D se valida como 2024-06-28: Asia [2024-06-27T22:00Z,2024-06-28T07:00Z), London [07:00Z,12:00Z), preparación [13:00Z,13:30Z), entrada [13:30Z,16:00Z). Estas son conversiones de estrategia, **no** del ticket. No se fuerza salida a las 11:00.
+Para D de análisis confirmado 2024-06-28: Asia [2024-06-27T22:00Z,2024-06-28T07:00Z), London [07:00Z,12:00Z), preparación [13:00Z,13:30Z), entrada [13:30Z,16:00Z). Estas son conversiones de estrategia, **no** del ticket. No se fuerza salida a las 11:00.
 
 Inicio suficiente: todas las velas de sesión y miembros/anchors H4/1H anteriores realmente seleccionados; ningún lookback fijo inventado. Final: salida real y fronteras canónicas necesarias. Fronteras 4H deben ser las de la fuente, no desplazadas para encajar. ReplayStartUtc/EndUtc siguen null.
 
-OANDA es técnicamente admisible como candidata; **no está liberada la adquisición OHLC final** por mapping UTC e identidad exacta pendientes. Ningún dataset fue descargado o aceptado. Acceso histórico 2024, licencia/permisos y fuente concreta de exportación permanecen unresolved; no se almacenan secretos.
+OANDA es técnicamente admisible como candidata. S8 autoriza adquisición de análisis independientemente del reloj MetaTrader; el bloqueo actual es acceso histórico disponible insuficiente y validación final de metadata del chart/export. Ningún dataset fue descargado o aceptado; no se almacenan secretos.
 
 | Archivo requerido | Estado | Validación importador |
 | --- | --- | --- |
@@ -168,4 +171,47 @@ No se ejecutaron tests de engine, build, importación real, cross-source checks 
 
 Material original/licenciado, OHLC y adapters privados deben permanecer fuera de Git o en `local-data/` ignorado, según derechos. Este commit contiene metadata autorizada, sin secretos, paths personales ni dataset redistribuible. Disponibilidad histórica no se backdatea desde la revisión actual.
 
-**NEEDS_TIME_SYNCHRONIZATION_EVIDENCE**
+## Intento de adquisición de mercado (baseline 8065955)
+
+| Estado separado | Resultado | Fundamento |
+| --- | --- | --- |
+| StrategyTimeStatus | CONFIRMED — America/Bogota | S2/S8: UTC-5 sin DST; preparación 08:00–08:30, trading 08:30–11:00. No se reabre la decisión. |
+| AnalysisFeedStatus | unresolved para aceptación final; candidato catalogado | S7 confirma OANDA/US 100; S9 confirma catálogo `OANDA:NAS100USD`. No demuestra identidad histórica exacta de US100/US100.cash del original. |
+| MarketDataAcquisitionStatus | blocked — NEEDS_MARKET_DATA_ACCESS | Prueba UI 1M no llega a 2024 por límite; ninguna otra ruta legítima configurada identificada. |
+| MetaTraderExecutionUtcAlignmentStatus | NEEDS_TIME_SYNCHRONIZATION_EVIDENCE | Solo alineación de ticket; no causa del bloqueo de adquisición. |
+
+### Metadata y acceso comprobados
+
+- Catálogo/UI: provider OANDA, símbolo TradingView `NAS100USD`, nombre `US Nas 100`, tipo mostrado `Index Cfd`, moneda USD. Precio mostrado con un decimal en UI; tick size, escala numérica de exportación, base bid/ask/mid y precisión fuente quedan unresolved. No se copia el formato UI como especificación del instrumento.
+- El diálogo Download chart data identificó `OANDA:NAS100USD, D` y Time format (UTC), con opción UNIX timestamp. Se canceló sin descargar D: no es una serie requerida ni prueba de cobertura 2024.
+- En chart 1M, Go to `2024-06-28 13:30` con reloj UI UTC produjo “You're limited to 5,000 bars. Upgrade now to see further back in time.” La vista quedó en septiembre 2026. El reloj UTC de esta prueba de acceso no altera la evidencia UTC-5 del video ni la estrategia.
+- Inventario del repositorio incluidos ignorados: ningún export OHLC real identificado, solo CSV sintético S6. No se exploraron archivos personales ajenos al proyecto ni secretos. Variables comunes `OANDA_API_TOKEN`, `OANDA_ACCESS_TOKEN`, `OANDA_ACCOUNT_ID`, `OANDA_ENVIRONMENT`: ausentes (solo presencia comprobada, sin leer/imprimir valores). No hay tab OANDA/TradingView previamente abierto en el inventario de sesiones disponibles. Estos checks no afirman ausencia de cuentas del usuario fuera del entorno accesible.
+- OANDA v20 exige autenticación; no se generaron tokens, cuentas ni suscripciones, no se invocaron endpoints live, no se usó fuente sustituta ni protocolo no documentado. Se detuvo adquisición ante acceso histórico insuficiente según S8.
+
+### Ventana de adquisición planificada
+
+AcquisitionStartUtc: `2024-06-17T00:00:00Z`.
+AcquisitionEndUtc: `2024-06-29T00:00:00Z` (exclusivo).
+
+Esta es una ventana solicitada con buffer de datos de 12 días (abarca dos semanas de calendario), **no una regla de lookback ni cobertura suficiente demostrada**. Incluye contexto anterior, semana de la sesión, Asia/London y resto del día analizado. Extender hacia atrás si miembros H4/1H revisados resultan anteriores; extender final si evidencia posterior lo requiere. No ubica el ticket con el reloj broker, no garantiza cubrir su salida aún sin UTC y no recorta a 11:00 Bogotá. Mantener fronteras nativas y obtener cada timeframe independientemente. ReplayStartUtc/EndUtc reales siguen null al faltar archivos.
+
+### Resultados por serie
+
+| Serie | Adquisición | CsvMarketDataImporter.ImportFile | Fronteras / count / gaps / duplicados / OHLC / escala / cobertura |
+| --- | --- | --- | --- |
+| 4H | No adquirida: pack detenido por acceso | No ejecutado: archivo ausente | No evaluados |
+| 1H | No adquirida: pack detenido por acceso | No ejecutado: archivo ausente | No evaluados |
+| 5M | No adquirida: pack detenido por acceso | No ejecutado: archivo ausente | No evaluados |
+| 1M | Prueba UI de histórico bloqueada; no adquirida | No ejecutado: archivo ausente | No evaluados |
+
+No hubo síntesis, normalización, parser nuevo ni validación cross-timeframe. No se extrapola el límite observado de 1M a disponibilidad individual de 4H/1H/5M: no probadas después del stop material. Volumen UI “Vol · Ticks” no prueba aún semántica de columna raw ni autoriza cero/volumen negociado.
+
+Comparación de región de precios con Entry 20019.14 / SL 20034.50 / TP-Exit 19972.10: **no realizada**, sin velas de la sesión. Cotizaciones 2026 del chart no se comparan con ticket 2024. Precios de ejecución serán solo referencias diagnósticas entre proveedores; no matching exacto ni búsqueda de timestamp.
+
+RawStorageReference / NormalizedStorageReference / hashes: null, no archivos adquiridos. Destino propuesto tras acceso: `local-data/nasdaq/mentor-session-2024-06-28/raw/` y `normalized/` (ignorados; no creados). Licencia de redistribución unresolved; no publicar OHLC, solo este metadata seguro. No se crea adapter ni replay falso. La falta de timestamps de ejecución impide binding de esos eventos, no lectura/validación del mercado de análisis.
+
+Para continuar: export legítimo OANDA/TradingView de 2024 con metadata original en los cuatro timeframes, o acceso histórico autorizado suficiente ya configurado. Debe demostrar símbolo/contrato/base/escala y timestamps/fronteras del chart revisado; un plan sugerido por la UI no garantiza export histórico requerido. Nunca enviar credenciales al chat ni introducirlas en Git.
+
+Validación de este pase: revisión de contratos/importador/convenios locales y fuentes oficiales; referencias locales y estados separados, UTF-8/LF, alcance documental y `git diff --check`. Sin tests de engine, importaciones reales ni gates Passed. La sincronización MetaTrader no se usó como stop.
+
+**NEEDS_MARKET_DATA_ACCESS**
