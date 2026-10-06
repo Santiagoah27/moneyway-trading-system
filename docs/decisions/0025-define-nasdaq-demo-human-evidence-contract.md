@@ -403,6 +403,20 @@ TP identifies the selected important high for Buy or low for Sell, exact referen
 
 Historical trade simulation remains a separate future consumer of the canonical run, not a second market traversal engine. It must distinguish a conditional result using observed entry/parameters from an autonomously generated backtest fill and from the actual mentor execution. Same-candle SL/TP/management ordering that cannot be established remains unresolved/inconclusive; this ADR defines no SL-first/TP-first or execution-price rule. Financial amounts require documented quantity, units, valuation and costs; otherwise report only the supported price/event result, not invented PnL.
 
+#### Historical observed-entry market causality and canonical availability
+
+The authoritative human clarification selects **Option A**. Historical observed-entry market causality requires:
+
+```text
+EntryEffectiveAtUtc >= EligibilityEffectiveAtUtc
+```
+
+Equality is explicitly valid; an entry before eligibility is invalid/unusable. The same closed 1M event may establish NQ-M1-002 realignment, NQ-M1-003 bounded pre-entry eligibility and an explicitly documented historical execution: `RealignmentEffectiveAtUtc = EligibilityEffectiveAtUtc = EntryEffectiveAtUtc = T`. This permits a source-backed same-close execution; it does not infer an execution, entry price or fill from the candle.
+
+The historical-entry consumer must bind to the exact canonical `NasdaqPreEntryEligibilityRuleFact`, with its setup ancestry, and that fact must be available in the **current replay evaluation context** before the entry can be selected/accepted. Canonical RuleFact transport can make the fact available downstream in a later frame than its market-effective event. That latency is a replay implementation artifact, not a mentor rule, later market confirmation, second signal or required entry delay. **Do not require `EntryEffectiveAtUtc` to be at or after the frame/time when NQ-M1-003 was first transported.** Keep market semantic time (`EligibilityEffectiveAtUtc`, `EntryEffectiveAtUtc`) separate from replay evaluation/transport time (`context.AsOfUtc`). No artificial additional candle or one-frame delay is introduced as a condition on the historical entry event; existing canonical transport remains authoritative for current-context consumption.
+
+Historical knowledge still requires authentic `ObservedAtUtc <= context.AsOfUtc` and the exact prerequisite fact available to that current evaluation. An entry's effective time may precede downstream transport without implying that replay knew it at that earlier time. Later observations or later prerequisite availability cannot change an earlier historical frame, backdate knowledge or rewrite preceding gates. Existing terminal/cutoff protections remain unchanged. This source clarification implements no entry type, selector, evaluator, trade aggregate, outcome or execution; capability remains **32 RuleIds / 14 Required / 16 evaluators / 0 Required gaps / HasFullRequiredEvaluatorRegistration=true**, a coverage flag only.
+
 #### Exact NQ-TP-001 target-price relationship
 
 Human forensic review of **Video 3, approximately 08:55–09:15 and 13:15–14:05**, resolves the target-to-TP price ambiguity: the mentor's TP line/order level is placed on the selected important structural/liquidity level. Buy selects a relevant/important High; Sell selects a relevant/important Low. Preserve `TargetReferencePrice` (the exact selected market reference level) and `TakeProfitPrice` (the strategy TP price) as separately auditable concepts where useful, with mandatory exact numeric equality: **`TakeProfitPrice == TargetReferencePrice`**.
