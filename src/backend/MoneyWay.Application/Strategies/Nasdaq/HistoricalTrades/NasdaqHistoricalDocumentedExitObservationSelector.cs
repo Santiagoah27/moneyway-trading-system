@@ -11,7 +11,7 @@ public sealed class NasdaqHistoricalDocumentedExitObservationSelector
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(snapshot);
         if (!snapshot.Session.Matches(context) || snapshot.AsOfUtc > context.AsOfUtc)
-            return new NasdaqHistoricalDocumentedExitSelection.Missing([], []);
+            return new NasdaqHistoricalDocumentedExitSelection.Missing(snapshot, context.AsOfUtc, [], []);
         var valid = new List<NasdaqHistoricalDocumentedExitObservation>();
         var unavailable = new List<NasdaqHistoricalDocumentedExitObservation>();
         var unresolved = new List<NasdaqHistoricalDocumentedExitObservation>();
@@ -38,14 +38,14 @@ public sealed class NasdaqHistoricalDocumentedExitObservationSelector
         }
         if (valid.Count == 0)
             return unresolved.Count > 1 && !unresolved.All(o => o.Exit.SameFact(unresolved[0].Exit))
-                ? new NasdaqHistoricalDocumentedExitSelection.Conflict(unresolved, unavailable, unresolved)
-                : new NasdaqHistoricalDocumentedExitSelection.Missing(unavailable, unresolved);
+                ? new NasdaqHistoricalDocumentedExitSelection.Conflict(snapshot, context.AsOfUtc, unresolved, unavailable, unresolved)
+                : new NasdaqHistoricalDocumentedExitSelection.Missing(snapshot, context.AsOfUtc, unavailable, unresolved);
         // An unresolved alternative cannot be silently displaced by a resolved execution assertion.
         if (unresolved.Count > 0)
-            return new NasdaqHistoricalDocumentedExitSelection.Conflict(
+            return new NasdaqHistoricalDocumentedExitSelection.Conflict(snapshot, context.AsOfUtc,
                 NasdaqHumanM5FvgObservationSelector.Ordered(valid.Concat(unresolved)), unavailable, unresolved);
         return valid.All(o => o.Exit.SameFact(valid[0].Exit))
-            ? new NasdaqHistoricalDocumentedExitSelection.Unique(valid, unavailable)
-            : new NasdaqHistoricalDocumentedExitSelection.Conflict(valid, unavailable, unresolved);
+            ? new NasdaqHistoricalDocumentedExitSelection.Unique(snapshot, context.AsOfUtc, valid, unavailable)
+            : new NasdaqHistoricalDocumentedExitSelection.Conflict(snapshot, context.AsOfUtc, valid, unavailable, unresolved);
     }
 }
