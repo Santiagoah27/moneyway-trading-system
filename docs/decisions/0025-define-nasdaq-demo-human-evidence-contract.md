@@ -425,6 +425,31 @@ The stateless selector requires the exact Passed, workflow-established eligibili
 
 Execution and assertion references follow retained-material provenance conventions, without hidden external lookups. Optional supporting candles follow the existing documented-event convention: exact unavailable records remain in `UnavailableSourceObservations`, mismatches are unusable, and candles never establish a fill price. No external execution-record resolver is introduced. This adds no evaluator, RuleId, aggregate, hit detection, outcome or execution; coverage remains **32 RuleIds / 14 Required / 16 evaluators / 0 Required gaps / full=true**. Next bounded work is canonical historical trade/setup composition with exact entry, SL, TP and risk, without determining outcome.
 
+#### Feature 24 canonical historical parameter snapshot
+
+Architecture audit: there is no neutral historical trade artifact or composite-fact assembler. Existing `StrategyReplayContextOutcome` and canonical backtest diagnostics describe strategy verdicts, not economic results; no trade input extension point exists. `Strategies/Nasdaq/HistoricalTrades` therefore owns the bounded Application consumer `NasdaqHistoricalTradeSnapshotAssembler`, immutable `NasdaqHistoricalTradeSnapshot` and closed Available/Unavailable result. The canonical backtest pipeline is unchanged.
+
+Composition requires Unique observed entry without unavailable required supporting sources plus current canonical structural SL, TP and risk facts. Risk is required context per the Feature 23 composition contract. A canonical over-limit Failed risk fact is retained as exposure with `IsWithinLimit=false`, not silently excluded or converted to trade authorization. SL/TP must be Passed and workflow-established. The latest owning-rule evaluation supplies each fact; absence/conflict does not fall back to stale facts or reconstruct raw evidence. Exact eligibility ancestry and exact SL selection must agree across TP and risk. Constituent selections retain all provenance and source identities by reference. Unavailable composition retains entry-selection diagnostics and a reason, not a rule status.
+
+The snapshot projects only literal prices/times/direction and records construction `AsOfUtc`. Observed execution price is independent of risk `PlannedEntryPrice`; quantity is never sized or reconciled. Same-close eligibility/entry and later canonical transport retain the documented execution time. No additional SL/TP/risk-to-entry ordering or entry-between-levels invariant is introduced. Context-bounded canonical history and authentic constituent availability prevent backdating. The assembler has no market traversal or contact calculation; the existing entry selector still owns reference resolution and terminal/TIME protection. No evaluator, rule, verdict, outcome, hit detection, position or order is added. Coverage remains 32/14/16/0/full=true.
+
+Next outcome boundary audit (no implementation):
+
+| Item | Evidence / remaining decision |
+| --- | --- |
+| A ? touch primitive | `PriceLevelTouchCalculator.EvaluateCurrentBoundary` first checks current high-resolution prices; otherwise newly updated closed candles. Lower uses price/Low <= level, Upper uses price/High >= level, inclusive. Candle evidence is an open-to-close interval; price evidence has an exact observation time and optional authoritative source sequence. Shortest matching updated candle supplies evidence, not a trade exit policy. |
+| B ? start boundary | No economic policy defines inclusion/exclusion of the entry observation or a candle straddling entry; cannot infer post-entry ordering from whole-candle extrema. |
+| C ? resolution | No minimum economic-outcome candle timeframe is specified. BE/selected-target contact is timeframe-independent; that does not authorize selecting a universal outcome timeframe. |
+| D ? canonical delivery | Existing synchronized cursor merges closed-candle and optional price-observation boundaries. Future consumer should use that single traversal and bounded frames; no second replay or resampling is required by this primitive. |
+| E ? SL | Neutral Lower/Upper comparisons exist; the exact trade-stop trigger/fill policy, gaps and costs are not defined as an economic result contract. Do not infer an exit price from contact. |
+| F ? TP | Selected target/TP equality and exact quote-level contact are documented. Universal full-exit versus management/partial intent remains unresolved beyond reviewed scenarios; contact alone does not establish a fill. |
+| G ? no contact by end | No economic terminal/censoring policy is defined; no synthetic close or forced 11:00 exit. |
+| H ? both contacts | Insufficient same-candle/observation order remains unresolved/inconclusive; no SL-first/TP-first heuristic. Higher-resolution authoritative order may supply evidence, not an assumed policy. |
+| I ? result type | No economic inconclusive result type exists. Learning failure classifications and strategy verdicts have different responsibilities. |
+| J ? integration | Future historical consumer of canonical run/diagnostics, separate from strategy verdict evaluation. Economic result aggregation/diagnostic shape has not been defined. |
+
+Next bounded primitive: auditable entry-relative contact evidence/availability for exact snapshot levels in synchronized canonical frames, without exit/fill/PnL claims. Entry-boundary/resolution policy must first be explicitly resolved or represented as insufficient evidence; this snapshot resolves none of those source gaps.
+
 #### Exact NQ-TP-001 target-price relationship
 
 Human forensic review of **Video 3, approximately 08:55–09:15 and 13:15–14:05**, resolves the target-to-TP price ambiguity: the mentor's TP line/order level is placed on the selected important structural/liquidity level. Buy selects a relevant/important High; Sell selects a relevant/important Low. Preserve `TargetReferencePrice` (the exact selected market reference level) and `TakeProfitPrice` (the strategy TP price) as separately auditable concepts where useful, with mandatory exact numeric equality: **`TakeProfitPrice == TargetReferencePrice`**.
