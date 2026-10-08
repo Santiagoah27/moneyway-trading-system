@@ -2,9 +2,11 @@
 
 ## Estado y fuente
 
-**NEEDS_INSTRUMENT_IDENTITY_EVIDENCE**. SessionId: `nasdaq-mentor-2026-06-29-videos`. SessionType: **NO_TRADE historical mentor session**. No hubo retroceso correctivo 1M requerido ni entrada, según revisión humana. No se representa una ejecución ni se fabrican hechos posteriores.
+**READY_FOR_MARKET_DATA_ACQUISITION**. SessionId: `nasdaq-mentor-2026-06-29-videos`. SessionType: **NO_TRADE historical mentor session**. La identidad OANDA / NAS100USD está confirmada por lectura humana directa del header original. No hubo retroceso correctivo 1M requerido ni entrada, según revisión humana. No se representa una ejecución ni se fabrican hechos posteriores.
 
 Baseline: `c132b84066415990ba896776a29c1a1804497bc0`. Fuente C1: solicitud del usuario “SOURCE-OF-TRUTH CORRECTION — Replace Invalid 2024 Mentor Session Evidence with Human-Reviewed 2026-06-29 NO-TRADE Session”, recibida el 2026-10-07, revisión humana de alta resolución de video original. Apartados Critical new evidence, Confirmed session facts, Instrument identity y MetaTrader. Material retenido en mensaje/adjunto; no inspección independiente del video en esta tarea.
+
+Actualización de identidad, baseline `426602572101f632399aa454668351affcaf431a`: fuente C2, solicitud del usuario “FIRST REAL NASDAQ SESSION — Confirm Human-Validated Instrument Identity”, recibida el 2026-10-07. El usuario leyó personalmente el header del video TradingView original de alta resolución: **US Nas 100 / NAS100USD / OANDA**. Es revisión humana directa, no interpretación AI ni Google AI Studio. C2 resuelve la ambigüedad de identidad registrada en C1; no modifica las demás observaciones ni confirma niveles/miembros exactos.
 
 El [ledger del candidato 2024](mentor-session-2024-06-28.md) preserva valores rechazados y commits originales. No son inputs de esta sesión. Título/URL/hash y ubicaciones exactas del original: `unresolved`; necesitan referencias estables antes de cualquier transcripción ejecutable.
 
@@ -24,12 +26,15 @@ Los estados de evidencia son `confirmed`, `human_validation_required`, `unresolv
 | PreparationWindow | `08:00–08:30` Bogotá; `13:00–13:30 UTC` | confirmed | Regla general; no confirma que preparación del caso se completara en ventana. |
 | TradingWindow | `08:30–11:00` Bogotá; `13:30–16:00 UTC` | confirmed | Regla general sin cambios. |
 | ConsideredDirection | `SELL` | confirmed | Dirección considerada en C1; no orden. |
-| ExactInstrumentIdentity / Replay symbol | null / null | human_validation_required | Nasdaq verbal, región visual cercana a 29.000 y ticker/header insuficientemente legible. No resolver por precios ni familia verbal. |
-| AnalysisProvider / Replay provider_id | null / null | human_validation_required | OANDA no queda confirmado por esta revisión; requiere texto fuente legible. |
+| Instrument | `US Nas 100` | confirmed | C2: lectura humana directa del header original. |
+| Ticker / Replay symbol | `NAS100USD` / `NAS100USD` | confirmed | C2: lectura humana directa, no inferencia por precios. |
+| AnalysisProvider / Replay provider_id | `OANDA` / `OANDA` | confirmed | C2: proveedor/feed leído en header original. |
+| ExactInstrumentIdentity | `OANDA:NAS100USD` | confirmed | Representación cualificada del proveedor OANDA y ticker NAS100USD confirmados por C2; no alias inferido. |
+| InstrumentIdentityStatus | `CONFIRMED` | confirmed | C2 cierra el bloqueo de identidad de C1. |
 | InstrumentType / PriceScale / QuoteBasis | null / null / null | unresolved | Pendientes del instrumento y metadata auténticos. |
 | ReplayStartUtc / ReplayEndUtc | null / null | unresolved | Sin series aceptadas ni cobertura estructural validada. |
 
-La existencia de OANDA:NAS100USD en un catálogo no establece este ticker para el video. No se asigna proveedor/símbolo al input del harness, no se heredan US100/US100.cash/NDX100 ni se sustituye NQ/cash/otro CFD.
+La identidad del video está establecida por C2, independientemente del catálogo consultado previamente. No se heredan US100/US100.cash/NDX100 ni se sustituye NQ/cash/otro CFD. No se construyó input del harness; la identidad futura debe preservar exactamente OANDA / NAS100USD y la procedencia de su exportación.
 
 ## Evidencia de progresión del caso
 
@@ -72,11 +77,12 @@ La ausencia de ejecución no significa pérdida, fallo de estrategia ni cero P/L
 
 ## Preparación de datos y pendientes humanos
 
-AnalysisFeedStatus: **human_validation_required**.
-MarketDataAcquisitionStatus: **blocked — NEEDS_INSTRUMENT_IDENTITY_EVIDENCE**.
+InstrumentIdentityStatus: **CONFIRMED**.
+AnalysisFeedStatus: **CONFIRMED**.
+MarketDataAcquisitionStatus: **READY**.
 MetaTraderExecutionUtcAlignmentStatus: **not_applicable**.
 
-No descargar OHLC finales hasta revisión de header/ticker y proveedor legibles del chart original. Mínimo requerido: captura o transcripción humana inequívoca del símbolo cualificado y feed, con ubicación del video. La región visual ~29.000 es contexto aproximado, no criterio de identidad. Después validar contrato/tipo/escala/base, timestamps/fronteras y acceso/licencia desde esa fuente.
+C2 completa la transcripción humana inequívoca de instrumento, ticker y proveedor del original; el bloqueo de identidad queda cerrado. El siguiente trabajo es adquirir series reales independientes 4H / 1H / 5M / 1M de OANDA / NAS100USD para 2026-06-29. READY expresa preparación para iniciar adquisición, no dataset validado, acceso histórico garantizado ni StrategyVerdict ready. Esta tarea no descarga datos. Durante adquisición validar metadata de exportación, contrato/tipo/escala/base, timestamps/fronteras y acceso/licencia de esa fuente; conservar referencia estable y ubicación del original para transcripción ejecutable. La región visual aproximada no se usa como criterio de identidad.
 
 También faltan precios exactos de las cuatro referencias de liquidez, miembros H4/1H/5M, clasificación trigger, FVG y su calidad, tiempos efectivos y disponibilidad auténtica, preparación y alcance temporal revisado de ausencia de retroceso. No deducirlos de narrativa ni crear Entry/SL/TP/riesgo/Exit para cubrir gaps.
 
@@ -86,6 +92,6 @@ También faltan precios exactos de las cuatro referencias de liquidez, miembros 
 
 [ADR 0025](../../decisions/0025-define-nasdaq-demo-human-evidence-contract.md), [especificación](../../strategies/nasdaq/strategy-specification.md), [guía Feature 29](../../backtesting/nasdaq-mentor-session-local-run.md) y [readiness](../../roadmap/nasdaq-first-real-session-readiness.md) conservan infraestructura/reglas existentes y anotan la atribución 2024 rechazada donde aparecía. No cambia zona, schedule, RuleIds, evaluadores, selectores, replay, primitives ni veredictos. Capacidad existente: 32 RuleIds / 14 Required / 16 evaluators / 0 Required gaps / full=true.
 
-Validación documental antes del commit: estados/procedencia, ledger rechazado, fecha NO_TRADE, ausencia de valores de ejecución positivos, MetaTrader no aplicable, referencias locales, UTF-8/LF y `git diff --check`. No tests de engine ni replay/importación: solo documentación, sin datos adquiridos. No secretos ni originales licenciados publicados.
+Validación documental antes del commit: identidad US Nas 100 / NAS100USD / OANDA confirmada por C2, estados de adquisición separados, fecha NO_TRADE, ausencia de valores de ejecución positivos, MetaTrader no aplicable, referencias locales, UTF-8/LF y `git diff --check`. El ledger 2024 conserva sus rechazos. No tests de engine ni replay/importación: solo documentación, sin datos adquiridos. No secretos ni originales licenciados publicados.
 
-**NEEDS_INSTRUMENT_IDENTITY_EVIDENCE**
+**READY_FOR_MARKET_DATA_ACQUISITION**
