@@ -14,10 +14,12 @@ public sealed partial class LocalNasdaqMentorSessionTests(ITestOutputHelper outp
         ProvideValidatedInput(ref input);
         Assert.NotNull(input);
         var report = new RunLocalNasdaqMentorSessionUseCase().Execute(input!);
-        var json = NasdaqMentorSessionReportJson.Serialize(report);
         var reportPath = Environment.GetEnvironmentVariable("MONEYWAY_MENTOR_REPORT_PATH");
-        if (string.IsNullOrWhiteSpace(reportPath)) output.WriteLine(json);
-        else { File.WriteAllText(reportPath, json); output.WriteLine($"Session report: {Path.GetFullPath(reportPath)}"); }
+        if (string.IsNullOrWhiteSpace(reportPath))
+            reportPath = Path.Combine(Path.GetTempPath(), $"moneyway-mentor-{Guid.NewGuid():N}.json");
+        using (var stream = File.Create(reportPath)) NasdaqMentorSessionReportJson.Write(stream, report);
+        output.WriteLine($"Session report: {Path.GetFullPath(reportPath)}");
+        output.WriteLine($"Frames: {report.Frames.Count}; final canonical verdict: {report.Canonical?.Frames.LastOrDefault()?.Verdict}");
         Assert.Empty(report.InputDiagnostics);
         Assert.NotNull(report.Canonical);
         Assert.NotEmpty(report.Frames);

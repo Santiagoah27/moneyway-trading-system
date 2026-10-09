@@ -73,7 +73,7 @@ Remove-Item Env:MONEYWAY_MENTOR_REPORT_PATH
 
 Do not use `--no-build` when supplying/changing the adapter. The existing test project compiles the specified source using its optional Compile item. Absent the environment variable, the real-data entrypoint is explicitly skipped. Supplying an empty adapter fails `Assert.NotNull`, rather than claiming a real run. Invalid input is written to the report before the assertions fail. An unresolved strategy or historical artifact is retained in the report; this entrypoint does not require or fabricate Ready/Available.
 
-The result can also be consumed directly from C#: `new RunLocalNasdaqMentorSessionUseCase().Execute(input)`. Optional `NasdaqMentorSessionReportJson.Serialize(report)` prints the separate domains and polymorphic artifact states with shared references (`$id`/`$ref`), avoiding repeated expansion of ancestry. It does not serialize callbacks. Consumers can inspect exact objects directly in the returned DTO.
+The result can also be consumed directly from C#: `new RunLocalNasdaqMentorSessionUseCase().Execute(input)`. Persist it with `NasdaqMentorSessionReportJson.Write(stream, report)` using the versioned audit projection described below. It does not serialize callbacks. Consumers can inspect exact objects directly in the returned DTO.
 
 ## Consolidated immutable report
 
@@ -118,3 +118,30 @@ No fake mentor data, new RuleId/evaluator/strategy primitive, timeframe synthesi
 - The documented local command was exercised with an external **synthetic test-only** adapter: 1 test passed, producing a 36-frame JSON report with Available snapshot, Unique documented exit and Available factual evaluation. This is not a real mentor session or dataset validation.
 - `dotnet build MoneyWay.sln --no-restore`: passed, 0 warnings/errors. `dotnet format MoneyWay.sln --verify-no-changes --no-restore`: passed. `git diff --check`: passed.
 - Existing M5Fixture and LiquidityFixture bodies were moved without changes into shared test files; no existing tests were deleted. UTF-8/LF and local documentation links were checked.
+
+## Bounded JSON persistence (schema version 2)
+
+Use `NasdaqMentorSessionReportJson.Write(stream, report)` to persist large reports. The caller owns the stream. The official local test writes directly to the configured path (or a named temporary file if none is configured); it prints the path, frame count and final canonical verdict. `Serialize(report)` remains a convenience API for small reports and returns the same schema, but necessarily allocates the complete output string.
+
+The previous projection serialized all frames plus the canonical outcome/run graph into one growing UTF-8 buffer and then a UTF-16 string. `ReferenceHandler.Preserve` cannot deduplicate string values. Both TIME evaluators emit a trading-window fact at every frame; after the cutoff, `NasdaqFvgReplayPrerequisites.Check` serializes all prior same-day TIME facts into evaluation evidence. Consequently, evidence strings contain growing arrays of repeated facts and the old persisted payload expands them again, including JSON string escaping. This is a reporting allocation problem; neither candles/source series inside contexts nor reference cycles are required to reproduce it.
+
+Schema version 2 consumes only completed observations and diagnostics:
+
+- Identity, imports/counts/source ranges, input and binding diagnostics, replay bounds and total frame count remain explicit.
+- `Frames` remains a chronological JSON array, with each frame's exact evaluations, facts, workflow/lifecycle, observability, canonical diagnostic (verdict/blocker/coverage/availability), visible inputs and all polymorphic historical artifacts. The redundant canonical outcome/run graph is replaced by its existing aggregate diagnostics and counts.
+- `RuleStateTransitions` names rules whose definition status, result, sequence, required flag or reason changed, including the initial state. Evidence and timestamps remain available for **every** evaluation, even when that rule's state did not change. No state is recalculated from later frames.
+- `FinalVerdict` is copied from the last canonical frame; `FinalRuleStatesFrameStep` points to the last frame's exact evaluations. These are null when unavailable. This is the end of the supplied replay, including warmup/post-session days; selected-day verdicts remain in that day's frame diagnostics.
+- An evaluation's `EvidenceId` references an entry emitted in `EvidenceEntries` at its first use. Decode entry `Data` from base64, decompress gzip, then decode UTF-8 to recover the **exact original** `EvidenceReference`. `Id` is its uncompressed SHA-256 and `Utf8ByteCount` validates its length. Identical text shares one entry even across different string instances. Compression is lossless, including growing evidence arrays; no evidence facts are discarded. `EvidenceStatistics` records total referenced bytes, largest reference and unique content count.
+- Each property serialization has its own `$id`/`$ref` scope; resolve ancestry references within that property, not globally across frames. Callbacks are never serialized.
+
+The writer flushes each frame, so it holds a frame-sized serialization buffer and evidence-sized compression buffers rather than the complete JSON. Reference/hash indexes grow with the number of evidence references, without retaining extra copies of their payloads. Output still grows with frames and unique evidence; the completed canonical replay itself retains its existing memory costs. This change does not bound the runtime replay or promise constant output size for arbitrary evidence.
+
+Consumers of the previous JSON shape must recognize `SchemaVersion = 2` and decode evidence entries. The typed Application report and its objects are unchanged.
+
+### Serialization fix validation (2026-10-08)
+
+- Root-cause confirmation from the real completed run: evaluations referenced 8,322,061,124 UTF-8 evidence bytes, across 49,964 references and 5,047 distinct contents. The largest reference was 330,961 bytes: a JSON array with 2,758 copies of one identical TIME fact. Preserving object references did not prevent the old serializer from expanding these string payloads into its whole-document buffer.
+- Three focused reporting tests passed: 9,660 synthetic frames with more than 2 GB referenced evidence, exact canonical verdict/result preservation, chronological ordering, meaningful transitions, gzip/SHA-256 evidence round trip, bounded writes and retained caller stream ownership; unchanged earlier serialized frames/artifacts after including later frames; and truthful input failure plus streaming/convenience API equivalence. Existing eight import/artifact tests also passed. Forty selected canonical replay/diagnostics regressions passed, including the two future-evidence protection tests.
+- The official `LocalNasdaqMentorSessionTests.RunValidatedLocalSession` passed using the external validated adapter and existing real 2026-06-29 pack: 9,660 frames, 5m47s, 187,142,873-byte schema-v2 report at the configured local path, no serialization OOM. JSON parsing verified chronology and all evidence IDs resolve at/before use. The largest evidence entry passed gzip/length/hash validation.
+- Canonical final verdict was `NoTrade`, including the last selected-day frame. June 29 retained 480 `HumanValidationRequired`, 30 `Wait`, and 870 `NoTrade` frames. NQ-TIME-003 remained NotApplicable/Waiting/Failed respectively; the final selected-day blocker remained NQ-TIME-003. All 9,660 snapshot states were Unavailable, and input diagnostics were empty. These outcomes were consumed as produced, with no serializer override or fabricated execution.
+- Full solution build passed with 0 warnings/errors; format verification and diff whitespace validation passed. Strategy, replay, evidence availability and future-data semantics were unchanged. Raw market files, the external adapter and local reports are not committed.
