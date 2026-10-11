@@ -20,6 +20,8 @@ public sealed class NasdaqHumanH4ContextObservationSelector
                 && closeTime <= fact.EffectiveAtUtc && closeTime <= context.AsOfUtc;
             return fact.EffectiveAtUtc <= context.AsOfUtc && ClosedByEffectiveTime(fact.ContextCandleOpenTimeUtc)
                 && fact.Anchors.All(anchor => anchor.MemberOpenTimesUtc.All(ClosedByEffectiveTime)
+                    && (anchor.ValidatingCandleOpenTimeUtc is not { } validation || ClosedByEffectiveTime(validation)))
+                && fact.ZoneAnchors.All(anchor => anchor.MemberOpenTimesUtc.All(ClosedByEffectiveTime)
                     && (anchor.ValidatingCandleOpenTimeUtc is not { } validation || ClosedByEffectiveTime(validation)));
         }
 

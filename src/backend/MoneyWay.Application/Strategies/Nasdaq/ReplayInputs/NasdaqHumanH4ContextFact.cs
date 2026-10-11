@@ -7,6 +7,13 @@ public sealed class NasdaqHumanH4ContextFact : IEquatable<NasdaqHumanH4ContextFa
 {
     public NasdaqHumanH4ContextFact(NasdaqHumanH4PermittedDirection permittedDirection, NasdaqHumanH4ContextKind contextKind,
         DateTimeOffset contextCandleOpenTimeUtc, DateTimeOffset effectiveAtUtc, IEnumerable<NasdaqHumanH4StructuralAnchor> anchors)
+        : this(permittedDirection, contextKind, contextCandleOpenTimeUtc, effectiveAtUtc, anchors, [])
+    {
+    }
+
+    public NasdaqHumanH4ContextFact(NasdaqHumanH4PermittedDirection permittedDirection, NasdaqHumanH4ContextKind contextKind,
+        DateTimeOffset contextCandleOpenTimeUtc, DateTimeOffset effectiveAtUtc, IEnumerable<NasdaqHumanH4StructuralAnchor> anchors,
+        IEnumerable<NasdaqHumanH4StructuralZoneAnchor> zoneAnchors)
     {
         if (!Enum.IsDefined(permittedDirection)) throw new ArgumentOutOfRangeException(nameof(permittedDirection));
         if (!Enum.IsDefined(contextKind)) throw new ArgumentOutOfRangeException(nameof(contextKind));
@@ -15,14 +22,19 @@ public sealed class NasdaqHumanH4ContextFact : IEquatable<NasdaqHumanH4ContextFa
         if (effectiveAtUtc.Offset != TimeSpan.Zero)
             throw new ArgumentException("Effective timestamp must be UTC.", nameof(effectiveAtUtc));
         ArgumentNullException.ThrowIfNull(anchors);
+        ArgumentNullException.ThrowIfNull(zoneAnchors);
         var snapshot = anchors.ToArray();
-        if (snapshot.Length == 0 || snapshot.Any(item => item is null) || snapshot.Distinct().Count() != snapshot.Length)
-            throw new ArgumentException("At least one distinct non-null structural anchor is required.", nameof(anchors));
+        var zones = zoneAnchors.ToArray();
+        if (snapshot.Length + zones.Length == 0 || snapshot.Any(item => item is null) || snapshot.Distinct().Count() != snapshot.Length)
+            throw new ArgumentException("At least one distinct non-null scalar or zone structural anchor is required.", nameof(anchors));
+        if (zones.Any(item => item is null) || zones.Distinct().Count() != zones.Length)
+            throw new ArgumentException("Zone anchors must be distinct and non-null.", nameof(zoneAnchors));
         PermittedDirection = permittedDirection;
         ContextKind = contextKind;
         ContextCandleOpenTimeUtc = contextCandleOpenTimeUtc;
         EffectiveAtUtc = effectiveAtUtc;
         Anchors = new ReadOnlyCollection<NasdaqHumanH4StructuralAnchor>(snapshot.OrderBy(item => item).ToArray());
+        ZoneAnchors = new ReadOnlyCollection<NasdaqHumanH4StructuralZoneAnchor>(zones.OrderBy(item => item).ToArray());
     }
 
     public NasdaqHumanH4PermittedDirection PermittedDirection { get; }
@@ -30,6 +42,7 @@ public sealed class NasdaqHumanH4ContextFact : IEquatable<NasdaqHumanH4ContextFa
     public DateTimeOffset ContextCandleOpenTimeUtc { get; }
     public DateTimeOffset EffectiveAtUtc { get; }
     public IReadOnlyList<NasdaqHumanH4StructuralAnchor> Anchors { get; }
+    public IReadOnlyList<NasdaqHumanH4StructuralZoneAnchor> ZoneAnchors { get; }
 
     public int CompareTo(NasdaqHumanH4ContextFact? other)
     {
@@ -47,7 +60,14 @@ public sealed class NasdaqHumanH4ContextFact : IEquatable<NasdaqHumanH4ContextFa
             comparison = Anchors[index].CompareTo(other.Anchors[index]);
             if (comparison != 0) return comparison;
         }
-        return Anchors.Count.CompareTo(other.Anchors.Count);
+        comparison = Anchors.Count.CompareTo(other.Anchors.Count);
+        if (comparison != 0) return comparison;
+        for (var index = 0; index < Math.Min(ZoneAnchors.Count, other.ZoneAnchors.Count); index++)
+        {
+            comparison = ZoneAnchors[index].CompareTo(other.ZoneAnchors[index]);
+            if (comparison != 0) return comparison;
+        }
+        return ZoneAnchors.Count.CompareTo(other.ZoneAnchors.Count);
     }
 
     public bool Equals(NasdaqHumanH4ContextFact? other) => other is not null && CompareTo(other) == 0;
@@ -57,6 +77,7 @@ public sealed class NasdaqHumanH4ContextFact : IEquatable<NasdaqHumanH4ContextFa
         var hash = new HashCode();
         hash.Add(PermittedDirection); hash.Add(ContextKind); hash.Add(ContextCandleOpenTimeUtc); hash.Add(EffectiveAtUtc);
         foreach (var anchor in Anchors) hash.Add(anchor);
+        foreach (var zone in ZoneAnchors) hash.Add(zone);
         return hash.ToHashCode();
     }
 }

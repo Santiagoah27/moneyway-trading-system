@@ -30,6 +30,34 @@ public sealed class NasdaqMentorSessionImportTests : IDisposable
     }
 
     [Fact]
+    public void ZoneContextReachesCanonicalReportV2WithExactBoundsAndSourceWithoutScalar()
+    {
+        var input = Input();
+        var observed = M5Fixture.At(13, 15);
+        var zone = new NasdaqHumanH4StructuralZoneAnchor(NasdaqHumanH4StructuralRole.LowerHigh, 29618.6m, 29633.1m,
+            NasdaqHumanH4ZoneBoundaryPrecision.Approximate, [M5Fixture.At(8)]);
+        var h4 = new NasdaqHumanH4ContextObservation(input.Session,
+            new(NasdaqHumanH4PermittedDirection.Sell, NasdaqHumanH4ContextKind.Fakeout, M5Fixture.At(8), observed, [], [zone]),
+            observed, "synthetic:video-zone:cross-feed-context-only");
+        var preparation = new NasdaqPreparationCompletionObservation(input.Session.StrategyId, input.Session.StrategyVersion,
+            input.Session.ProviderId, input.Session.Symbol, input.Session.TradingDay, observed, "synthetic:prep");
+        var report = new RunLocalNasdaqMentorSessionUseCase().Execute(new(input.SessionId, input.Session, input.CsvFiles,
+            [NasdaqMentorSessionEvidenceRecord.FromObservation("zone:h4", h4), NasdaqMentorSessionEvidenceRecord.FromObservation("prep", preparation)]));
+        var fact = Assert.IsType<NasdaqHumanH4ContextRuleFact>(report.Frames.Last().Strategy.RuleFacts.Single(f => f.RuleId.Value == "NQ-H4-001").Fact);
+        Assert.Empty(fact.Selection.Fact.Anchors);
+        Assert.Equal(29618.6m, fact.Selection.Fact.ZoneAnchors.Single().LowerBound);
+        Assert.Equal(29633.1m, fact.Selection.Fact.ZoneAnchors.Single().UpperBound);
+        var json = NasdaqMentorSessionReportJson.Serialize(report);
+        using var document = System.Text.Json.JsonDocument.Parse(json);
+        Assert.Equal(2, document.RootElement.GetProperty("SchemaVersion").GetInt32());
+        Assert.Contains("ZoneAnchors", json);
+        Assert.Contains("29618.6", json); Assert.Contains("29633.1", json);
+        Assert.Contains(h4.SourceReference, json);
+        Assert.DoesNotContain("StructuralPrice", json);
+        Assert.DoesNotContain("Midpoint", json);
+    }
+
+    [Fact]
     public void FourImportedFilesReachCanonicalAndFactualArtifactsInOneRun()
     {
         var input = Input();

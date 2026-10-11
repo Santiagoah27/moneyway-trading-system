@@ -35,6 +35,18 @@ public sealed class NasdaqMentorSessionReplayTests
     }
 
     [Fact]
+    public void MissingPreparationReplayStillBlocksWithoutInventingEligibilityOrHistoricalExecution()
+    {
+        var report = Run(records: []);
+        Assert.All(report.Frames.Where(f => f.Strategy.AsOfUtc >= M5Fixture.At(13, 30)), f =>
+            Assert.Equal(MoneyWay.Domain.Strategies.RuleEvaluationResult.Failed,
+                f.Strategy.Evaluations.Single(e => e.RuleId.Value == "NQ-TIME-003").Result));
+        Assert.Equal(MoneyWay.Domain.Strategies.StrategyVerdict.NoTrade, report.Canonical!.Frames.Last().Verdict);
+        Assert.DoesNotContain(report.Frames.SelectMany(f => f.Strategy.RuleFacts), f => f.RuleId.Value == "NQ-M1-003");
+        Assert.All(report.Frames, f => { Assert.Null(f.Snapshot); Assert.Empty(f.Inputs); });
+    }
+
+    [Fact]
     public void SingleCanonicalRunLinksAllHistoricalArtifactsToItsOwnFacts()
     {
         var report = Run();
