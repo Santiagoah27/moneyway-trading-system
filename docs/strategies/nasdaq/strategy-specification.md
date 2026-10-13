@@ -717,6 +717,8 @@ These structural and context relationships are confirmed strategy concepts, not 
 
 ## 10. Liquidity
 
+**Session/structural branch correction (2026-10-13).** Direct human review confirms that session liquidity and selected structural liquidity are alternative relevant-reference sources, not two universally cumulative gates. A relevant `SessionLevel` take consumes the available native NQ-LIQ-001 output without requiring a separate structural observation. A `Structural` take still requires the exact usable NQ-LIQ-002 selection, including its existing role/model/member/price/provenance and causal conflict contract. NQ-LIQ-002 is therefore context-specific, not universally Required. NQ-LIQ-003 retains common H4, timely preparation and trading-start prerequisites, and checks the canonical source owner for its selected branch: NQ-LIQ-001 for SessionLevel, NQ-LIQ-002 for Structural. Missing relevant take evidence never passes. Strict exceed, alignment, terminal/cutoff behavior and later gates are unchanged; this correction defines no automatic reference selection or ordering of competing London High/Low takes.
+
 Mark Asia High, Asia Low, London High and London Low. Also review structural points on 1H/4H, especially when they coincide with those session extrema. These horizontal liquidity references are a separate step and do not bootstrap 4H HH/HL/LL/LH structure. Coincidence may make a level more relevant in the mentor's reading, but no automatic hierarchy is defined. A liquidity level must be taken before searching for 5M inversion; the take alone is never an entry.
 
 For each trading/preparation day `D`, session membership is defined in local `America/Bogota` time by the 1H candle `OpenTime`:

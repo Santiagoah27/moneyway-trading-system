@@ -255,7 +255,97 @@ public sealed class MoneyWayNasdaqHumanLiquidityTakeEvaluatorTests
         Assert.Null(cutoff.LifecycleProgression!.ActiveInstance);
     }
 
-    private sealed class FixedPrerequisite(RuleEvaluationResult result) : AlwaysPassed(new("NQ-LIQ-002"))
+    [Fact]
+    public void SessionTakeProgressesWithoutStructuralObservationOrH4Promotion()
+    {
+        var inputs = Inputs(NasdaqHumanH4PermittedDirection.Sell, Take(true))
+            .Where(o => o is not NasdaqHumanStructuralLiquidityObservation).ToArray();
+        var run = Run(inputs);
+        var frame = run.StrategyObservations.Single(o => o.AsOfUtc == At(14, 2));
+        Assert.Equal(RuleEvaluationResult.Passed, frame.Evaluations.Single(e => e.RuleId == evaluator.RuleId).Result);
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired, frame.Evaluations.Single(e => e.RuleId.Value == "NQ-LIQ-002").Result);
+        Assert.False(LiquidityFixture.Definition.Rules.Single(r => r.RuleId.Value == "NQ-LIQ-002").IsRequired);
+        Assert.NotNull(frame.LifecycleProgression!.ActiveInstance);
+        Assert.True(run.StrategyObservations.Single(o => o.AsOfUtc == At(14, 37)).WorkflowProgression!
+            .RuleEligibility.Single(r => r.RuleId.Value == "NQ-M5-001").IsEligible);
+        Assert.DoesNotContain(frame.RuleFacts, f => f.RuleId.Value == "NQ-LIQ-002");
+        Assert.Contains("NQ-LIQ-001", frame.Evaluations.Single(e => e.RuleId == evaluator.RuleId).EvidenceReference);
+    }
+
+    [Theory]
+    [InlineData(true, 0)]
+    [InlineData(true, -1)]
+    [InlineData(false, 0)]
+    [InlineData(false, 1)]
+    public void SessionEqualityAndWrongSideCannotConstructPositiveTake(bool high, int delta)
+    {
+        var reference = Take(high).Reference;
+        Assert.Throws<ArgumentException>(() => new NasdaqHumanLiquidityTakeObservation(reference,
+            new NasdaqHumanLiquidityTakeEvent.Documented(LiquidityFixture.Provider, LiquidityFixture.Symbol, "invalid",
+                reference.ReferencePrice + delta, At(14, 2), "review:price"), At(13, 15), At(14, 2), "review:take"));
+    }
+
+    [Fact]
+    public void SessionTakeIgnoresUnrelatedStructuralConflictAndFutureReview()
+    {
+        var baseline = Inputs(NasdaqHumanH4PermittedDirection.Sell, Take(true))
+            .Where(o => o is not NasdaqHumanStructuralLiquidityObservation).ToArray();
+        var source = Sources().First(c => c.Timeframe == new Timeframe(1, TimeframeUnit.Hour) && c.OpenTimeUtc == At(8));
+        var first = new NasdaqHumanStructuralLiquidityObservation(LiquidityFixture.Session(13),
+            [LiquidityFixture.Human(source, price: 101)], At(12), At(13, 5), "unrelated:a");
+        var second = new NasdaqHumanStructuralLiquidityObservation(first.Session,
+            [LiquidityFixture.Human(source, price: 102)], At(12), At(13, 5), "unrelated:b");
+        Assert.Equal(RuleEvaluationResult.Passed, EvaluateWithPrior(baseline.Concat([first, second]).ToArray()).Result);
+        var future = new NasdaqHumanStructuralLiquidityObservation(first.Session, second.References, At(12), At(15), "future");
+        var before = EvaluateWithPrior(baseline);
+        var withFuture = EvaluateWithPrior(baseline.Concat([future]).ToArray());
+        Assert.Equal((before.Result, before.EvidenceReference), (withFuture.Result, withFuture.EvidenceReference));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void StructuralMissingOrConflictCannotUseSessionAuthority(bool conflict)
+    {
+        var (inputs, upstream) = StructuralInputs();
+        inputs = inputs.Where(o => o is not NasdaqHumanStructuralLiquidityObservation).ToArray();
+        if (conflict)
+        {
+            var member = upstream.References.Single().Members.Single();
+            var other = new NasdaqHumanStructuralLiquidityObservation(upstream.Session,
+                [LiquidityFixture.Human(member, low: true, price: 88)], upstream.EffectiveAtUtc, upstream.ObservedAtUtc, "conflict");
+            inputs = inputs.Concat([upstream, other]).ToArray();
+        }
+        var decision = EvaluateWithPrior(inputs);
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired, decision.Result);
+        Assert.Null(decision.Fact);
+    }
+
+    [Fact]
+    public void StructuralTakeStillRequiresPassedCanonicalStructuralOwner()
+    {
+        var (inputs, _) = StructuralInputs();
+        var decision = EvaluateWithPrior(inputs, new FixedPrerequisite(RuleEvaluationResult.HumanValidationRequired, "NQ-LIQ-002"));
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired, decision.Result);
+        Assert.Null(decision.Fact);
+        Assert.Equal(RuleEvaluationResult.Passed, EvaluateWithPrior(inputs).Result);
+    }
+
+    private static (IStrategyReplayInputObservation[] Inputs, NasdaqHumanStructuralLiquidityObservation Upstream) StructuralInputs()
+    {
+        var candle = Sources().First(c => c.Timeframe == new Timeframe(1, TimeframeUnit.Hour) && c.OpenTimeUtc == At(8));
+        var member = LiquidityFixture.Human(candle, low: true);
+        var upstream = new NasdaqHumanStructuralLiquidityObservation(LiquidityFixture.Session(13), [member], At(12), At(13, 5), "review:set");
+        var unique = Assert.IsType<NasdaqHumanStructuralLiquiditySelection.Unique>(new NasdaqHumanStructuralLiquidityObservationSelector()
+            .Select(Context(At(13, 15), [upstream]), upstream.Session));
+        var take = new NasdaqHumanLiquidityTakeObservation(new NasdaqLiquidityTakeReference.Structural(unique, member),
+            new NasdaqHumanLiquidityTakeEvent.Documented(LiquidityFixture.Provider, LiquidityFixture.Symbol, "structural", member.StructuralPrice - 1,
+                At(14, 2), "review:price"), At(13, 15), At(14, 2), "review:take");
+        return (Inputs(NasdaqHumanH4PermittedDirection.Buy, null).Where(o => o is not NasdaqHumanStructuralLiquidityObservation)
+            .Concat([upstream, take, Relevant(take)]).ToArray(), upstream);
+    }
+
+    private sealed class FixedPrerequisite(RuleEvaluationResult result, string id = "NQ-LIQ-001") : AlwaysPassed(new(id))
     {
         public override ReplayRuleEvaluationDecision Evaluate(StrategyReplayContext context) => new(result, "Controlled canonical prerequisite.", null);
     }

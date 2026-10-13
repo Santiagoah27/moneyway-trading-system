@@ -131,7 +131,7 @@ public sealed class NasdaqRiskExposureTests
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(),
             MoneyWayReplayRuleEvaluators.GetAll(), MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 14, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
+        Assert.Equal((32, 13, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
             report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
         Assert.Single(MoneyWayReplayRuleEvaluators.GetAll(), e => e.RuleId.Value == "NQ-RISK-001");
         Assert.Single(MoneyWayReplayRuleEvaluators.GetAll(), e => e.RuleId.Value == "NQ-TP-001");
@@ -421,7 +421,7 @@ public sealed class NasdaqRiskExposureTests
         Assert.Equal((15, 1, false), (before.ImplementedCount, before.RequiredEvaluatorGapCount, before.HasFullRequiredEvaluatorRegistration));
         Assert.Equal((16, 0, true), (after.ImplementedCount, after.RequiredEvaluatorGapCount, after.HasFullRequiredEvaluatorRegistration));
         Assert.Equal(32, after.TotalRuleCount);
-        Assert.Equal(14, after.RequiredRuleCount);
+        Assert.Equal(13, after.RequiredRuleCount);
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented,
             after.Rules.Single(r => r.RuleId.Value == "NQ-TP-001").CapabilityStatus);
         Assert.All(after.Rules.Where(r => r.RuleId != registered.RuleId), r =>

@@ -490,7 +490,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
             "Relevant liquidity",
             "Liquidity",
             60,
-            true,
+            false,
             RuleDefinitionStatus.HumanValidationRequired);
         AssertFrozenMetadata(
             "NQ-LIQ-003",
@@ -819,7 +819,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         };
         var expectedRequired = new[]
         {
-            "NQ-TIME-003", "NQ-H4-001", "NQ-LIQ-001", "NQ-LIQ-002", "NQ-TIME-001", "NQ-LIQ-003", "NQ-M5-001",
+            "NQ-TIME-003", "NQ-H4-001", "NQ-LIQ-001",  "NQ-TIME-001", "NQ-LIQ-003", "NQ-M5-001",
             "NQ-FVG-001", "NQ-FVG-002", "NQ-M1-001", "NQ-M1-002", "NQ-SL-001", "NQ-TIME-002", "NQ-RISK-001",
         };
 

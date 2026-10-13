@@ -181,7 +181,7 @@ public sealed class MoneyWayNasdaqHumanStructuralLiquidityEvaluatorTests
         Assert.Equal(LiquidityFixture.Definition.Version, evaluator.StrategyVersion);
         Assert.Equal(RuleDefinitionStatus.HumanValidationRequired, evaluation.DefinitionStatus);
         Assert.Equal(rule.Sequence, evaluation.Sequence);
-        Assert.True(evaluation.IsRequired);
+        Assert.False(evaluation.IsRequired);
         Assert.Equal(context.AsOfUtc, evaluation.EvaluatedAtUtc);
         Assert.Equal(RuleEvaluationResult.Passed, evaluation.Result);
     }
@@ -198,8 +198,8 @@ public sealed class MoneyWayNasdaqHumanStructuralLiquidityEvaluatorTests
         var definition = LiquidityFixture.Definition;
         var before = beforeCatalog.Find(definition.StrategyId, definition.Version)!;
         var after = afterCatalog.Find(definition.StrategyId, definition.Version)!;
-        Assert.Equal((12, 2, false), (before.RequiredImplementedCount, before.RequiredEvaluatorGapCount, before.HasFullRequiredEvaluatorRegistration));
-        Assert.Equal((13, 1, false), (after.RequiredImplementedCount, after.RequiredEvaluatorGapCount, after.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal((12, 1, false), (before.RequiredImplementedCount, before.RequiredEvaluatorGapCount, before.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal((12, 1, false), (after.RequiredImplementedCount, after.RequiredEvaluatorGapCount, after.HasFullRequiredEvaluatorRegistration));
         Assert.All(after.Rules.Where(item => item.RuleId != evaluator.RuleId), item =>
             Assert.Equal(before.Rules.Single(old => old.RuleId == item.RuleId).CapabilityStatus, item.CapabilityStatus));
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.NotImplemented, after.Rules.Single(item => item.RuleId.Value == "NQ-LIQ-003").CapabilityStatus);

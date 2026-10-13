@@ -16,7 +16,7 @@ public static class MoneyWayReplayWorkflowDefinitions
                 Nasdaq.StrategyId,
                 Nasdaq.Version,
                 [
-                    Requires("NQ-LIQ-003", "NQ-H4-001", "NQ-LIQ-002", "NQ-TIME-001", "NQ-TIME-003"),
+                    Requires("NQ-LIQ-003", "NQ-H4-001", "NQ-TIME-001", "NQ-TIME-003"),
                     Requires("NQ-M5-001", "NQ-LIQ-003"),
                     Requires("NQ-FVG-001", "NQ-M5-001"),
                     new(new RuleId("NQ-FVG-002"), [new RuleId("NQ-FVG-001")], requiresLatestPrerequisitePass: true),

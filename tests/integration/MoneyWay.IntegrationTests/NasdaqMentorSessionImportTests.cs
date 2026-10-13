@@ -30,6 +30,26 @@ public sealed class NasdaqMentorSessionImportTests : IDisposable
     }
 
     [Fact]
+    public void SessionTakeWithoutStructuralEvidenceActivatesSetupThroughFeature29()
+    {
+        var input = Input();
+        var take = M5Fixture.Take(false);
+        var records = M5Fixture.Inputs(NasdaqHumanH4PermittedDirection.Buy, take)
+            .Where(o => o is not NasdaqHumanStructuralLiquidityObservation)
+            .Select((o, i) => NasdaqMentorSessionEvidenceRecord.FromObservation($"session-only:{i}", o));
+        var report = new RunLocalNasdaqMentorSessionUseCase().Execute(new(input.SessionId, input.Session, input.CsvFiles, records));
+        Assert.Empty(report.InputDiagnostics);
+        var frame = report.Frames.Single(f => f.Strategy.AsOfUtc == take.EffectiveAtUtc);
+        Assert.Equal(MoneyWay.Domain.Strategies.RuleEvaluationResult.Passed,
+            frame.Strategy.Evaluations.Single(e => e.RuleId.Value == "NQ-LIQ-003").Result);
+        Assert.NotNull(frame.Strategy.LifecycleProgression!.ActiveInstance);
+        Assert.DoesNotContain(frame.Inputs, o => o is NasdaqHumanStructuralLiquidityObservation);
+        Assert.Contains(report.Frames, f => f.Strategy.WorkflowProgression!.RuleEligibility
+            .Any(r => r.RuleId.Value == "NQ-M5-001" && r.IsEligible));
+        Assert.All(report.Frames, f => Assert.Null(f.Snapshot));
+    }
+
+    [Fact]
     public void ZoneContextReachesCanonicalReportV2WithExactBoundsAndSourceWithoutScalar()
     {
         var input = Input();

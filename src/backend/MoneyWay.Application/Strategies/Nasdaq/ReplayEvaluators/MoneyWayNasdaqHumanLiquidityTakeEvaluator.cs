@@ -11,7 +11,7 @@ public sealed class MoneyWayNasdaqHumanLiquidityTakeEvaluator : IReplayRuleEvalu
 {
     private static readonly StrategyDefinition Definition = MoneyWayNasdaqStrategyDefinition.Instance;
     private static readonly RuleId TakeRule = new("NQ-LIQ-003");
-    private static readonly string[] Prerequisites = ["NQ-TIME-003", "NQ-H4-001", "NQ-LIQ-002", "NQ-TIME-001"];
+    private static readonly string[] CommonPrerequisites = ["NQ-TIME-003", "NQ-H4-001"];
     public StrategyId StrategyId => Definition.StrategyId;
     public StrategyVersion StrategyVersion => Definition.Version;
     public RuleId RuleId => TakeRule;
@@ -57,7 +57,10 @@ public sealed class MoneyWayNasdaqHumanLiquidityTakeEvaluator : IReplayRuleEvalu
         var history = context.PriorObservations.Where(o => o.AsOfUtc <= take.EffectiveAtUtc).ToArray();
         var window = history.SelectMany(o => o.RuleFacts).Select(f => f.Fact).OfType<NasdaqTradingWindowFact>()
             .LastOrDefault(f => f.Contains(take.EffectiveAtUtc));
-        var prior = Prerequisites.Select(id => new
+        // Reference resolution remains branch-specific; a session take never borrows structural authority.
+        var sourceRule = take.Reference is NasdaqLiquidityTakeReference.SessionLevel ? "NQ-LIQ-001" : "NQ-LIQ-002";
+        var prerequisites = CommonPrerequisites.Concat([sourceRule, "NQ-TIME-001"]);
+        var prior = prerequisites.Select(id => new
         {
             RuleId = id,
             Evaluation = history.SelectMany(o => o.Evaluations).LastOrDefault(e => e.RuleId.Value == id

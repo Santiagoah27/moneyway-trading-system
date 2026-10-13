@@ -274,7 +274,7 @@ public sealed class NasdaqHistoricalObservedEntryTests
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(),
             MoneyWayReplayRuleEvaluators.GetAll(), MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 14, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
+        Assert.Equal((32, 13, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
             report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
     }
 
