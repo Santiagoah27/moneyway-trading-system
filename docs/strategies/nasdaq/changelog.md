@@ -1,5 +1,13 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-10-14 — Wickfill Scenario 2 applicability
+
+- Added [ADR 0026](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md) with attributed explicit human review of the original session, source offsets and retained limits.
+- Distinguished the confirmed context-specific SELL pre-established H4 branch and still-required opening sweep from the standard M5/optional-FVG/M1 chain.
+- Classified Replay #2 as Scenario 2; M30 and Sell Stop remain historical facts, not universal mechanics.
+- Scoped universal standard-path claims and retained the existing closed-M5 standard rule.
+- Documentation only: no runtime, workflow, metadata/capability, fixture, binder or execution changes; draft version not activated.
+
 Entries are ordered newest first. Classification statements in older entries record the evidence state at that audit point and are superseded by later entries when explicitly reconciled.
 
 ## nasdaq-0.1.0-draft

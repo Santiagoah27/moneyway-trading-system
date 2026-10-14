@@ -13,6 +13,8 @@
 
 ## 2. Purpose and scope
 
+**Applicability correction (2026-10-14).** The standard pre-entry chain in sections 6–8 and 12–14 is not universal across every Nasdaq execution. The human-confirmed SELL Wickfill Scenario 2 branch has pre-established higher-timeframe context and a still-required opening sweep; see [section 9.7](#97-wickfill-scenario-2-pre-established-context) and [ADR 0026](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md). This is a specification correction to the audited draft, not implemented branch support, a runtime status change or a universal intrabar M5 rule.
+
 Esta especificación conserva exclusivamente la evidencia auditada para MoneyWay Nasdaq. Describe análisis, backtesting y paper trading supervisado; no contiene reglas de MoneyWay Forex ni autoriza ejecución autónoma.
 
 ## 3. Evidence policy
@@ -66,12 +68,14 @@ Direct human review of Video 2 approximately `11:10–11:25` and Video 3 approxi
 
 ## 6. High-level workflow
 
+The following is the **standard path**, including its dependency matrix and Step-4 lifecycle descriptions. Wickfill Scenario 2 applicability is separate under [section 9.7](#97-wickfill-scenario-2-pre-established-context); the current runtime still implements the standard path only.
+
 1. At 08:00 `America/Bogota`, review the newly closed 4H candle against the existing valid HH/HL or LL/LH structural state, evolve that state only on a qualifying structural event, classify Breakout `OR` Wickfill `OR` Fakeout and determine the direction permitted for the subsequent setup. A human-selected initial anchor is needed only when bootstrapping otherwise unlabeled history, not on each new day.
 2. Separately mark Asia High/Low, London High/Low and relevant 1H/4H structural liquidity references. Session extrema do not initialize 4H market structure.
 3. From 08:30, wait for price to exceed a directionally relevant marked High or go below a directionally relevant marked Low. This liquidity take is mandatory.
 4. Only after Step 3, move to 5M and require Structural Change/ChoCH/MSS `OR` IFVG, whichever occurs first.
-5. After the Step-4 trigger, separately require the displacement in the intended direction to leave the mandatory 5M FVG confirmation. A Step-4 IFVG does not automatically satisfy Step 5.
-6. Only after Step 5, move to 1M, require a counter-direction pullback toward/into the relevant 5M FVG and then require structural realignment with the intended direction before entry eligibility.
+5. Retain any selected continuation 5M FVG as optional supporting confirmation under section 13. Clean absence does not block M1; a Step-4 IFVG does not fabricate a separate continuation FVG.
+6. After the canonical Step-4 M5 trigger, require a counter-direction M1 pullback and intended-direction realignment before entry eligibility, retaining approved FVG interaction as optional support when present.
 
 ### 6.0 Preparation completion (`NQ-TIME-003`)
 
@@ -131,13 +135,13 @@ Direct human source evidence states the governing gate principle conceptually: *
 | Step 2: liquidity marking | Preparation workflow and required session/structural inputs | Produces liquidity references; does not seed 4H structure |
 | Step 3: liquidity take | Steps 1 and 2 completed for `D` before 08:30, a relevant Step-2 level and the 08:30 operational start | Enables Step 4 only after the relevant High is exceeded or Low is broken below; missing preparation forbids Step 3 for `D` |
 | Step 4: 5M trigger | Valid Step-3 liquidity take | Structural Change `OR` IFVG, whichever occurs first |
-| Step 5: 5M FVG confirmation | Valid Step-4 trigger | Separate mandatory directional FVG gate |
-| Step 6: 1M pullback and realignment | Valid Step-5 FVG | Countertrend pullback into/toward the FVG, followed by intended-direction realignment |
+| Step 5: optional 5M FVG confirmation | Valid Step-4 trigger | Additional supporting confirmation; clean absence does not block M1 |
+| Step 6: 1M pullback and realignment | Canonical Step-4 trigger; optional approved FVG support | Countertrend pullback followed by intended-direction realignment, retaining reviewed FVG interaction when present |
 | Entry concept | All mandatory preceding gates | Eligibility only; no order type or execution is defined |
 
 Rule ownership remains separated: `NQ-H4-001` owns the Step-1 4H context and permitted direction; `NQ-LIQ-002` owns human-approved relevant liquidity marking and any pre-operational structural-fallback input; `NQ-LIQ-003` owns the first valid post-08:30 take, its effective Step-3 orientation and its required alignment with Step 1; `NQ-M5-001` owns only the Step-4 Structural Change `OR` IFVG gate after an aligned Step 3. Discarding the originally imagined pre-Step-3 scenario belongs to the Step-3 interpretation. Cancelling an already-active setup after its selected target is touched remains a separate lifecycle concern.
 
-At `StrategyReplayContext.AsOfUtc`, only prerequisites and confirming events observable at or before that timestamp may participate. A future liquidity take cannot activate an earlier Step 4, a future 5M FVG cannot activate an earlier Step 6, and a future 1M realignment cannot create past entry eligibility. Backtesting must not find a later successful pattern and retroactively assume its earlier gates were valid.
+At `StrategyReplayContext.AsOfUtc`, only prerequisites and confirming events observable at or before that timestamp may participate. A future liquidity take cannot activate an earlier Step 4, future optional FVG evidence cannot be attached as confirmation to an earlier Step 6, and a future 1M realignment cannot create past entry eligibility. Backtesting must not find a later successful pattern and retroactively assume its earlier gates were valid.
 
 ### 6.2 Pre-entry lifecycle and cutoff
 
@@ -192,6 +196,8 @@ Chronology is strict. If `T1` activates the setup and `T2` supplies a farther sa
 
 ## 7. Buy workflow
 
+This table describes the **standard path**. It does not supply Scenario 2 applicability or a BUY-side mirror of that SELL branch.
+
 | Step | Rule status | Required inputs | Evaluation result | Blocking behavior | Human validation requirement | Open variables |
 |---:|---|---|---|---|---|---|
 | 1. 4H HH/LL context | `confirmed` + `human_validation_required` | Closed 4H candles | Direction inherited from the latest confirmed break, active structural pair, scenario and permitted direction reviewed | Blocks all lower stages | Yes | Initial-anchor selection, historical scan termination, other structural-point coordinates and retracement boundaries |
@@ -205,12 +211,12 @@ Chronology is strict. If `T1` activates the setup and `T2` supplies a farther sa
 | 9. Move to 5M | `confirmed` | Approved sweep, 5M data | 5M review enabled | Blocks inversion without sweep | No | Data alignment |
 | 10. 5M inversion OR | `confirmed` | Approved liquidity take and 5M structure/FVG evidence | First occurring Structural Change/ChoCH/MSS `OR` IFVG validated | Cannot precede the liquidity take and does not satisfy continuation FVG | Yes | Swing algorithm, strong/decisive threshold and IFVG geometry |
 | 11. 5M close | `confirmed` | 5M candle close | Close beyond required level validated | Wick alone is `failed`; open candle is `waiting` | Yes for marginal close | Minimum distance |
-| 12. Continuation FVG | `confirmed` + `human_validation_required` | Three closed 5M candles; candle 3 confirms at the same or a later close than the Step-4 trigger | Separate directional, clear FVG validated | Without this mandatory gate, Step 6 is not enabled | Yes | Minimum size, quality and lifecycle |
-| 13. Move to 1M | `confirmed` | Approved FVG, 1M data | 1M review enabled | Blocks entry if data absent | No | Data alignment |
-| 14. Corrective retracement | `confirmed` + `human_validation_required` | Approved Step-5 FVG and countertrend 1M candles | Pullback toward/into the relevant 5M FVG identified | Without the pullback/FVG interaction, no realignment gate | Yes | Interaction depth, correction boundaries and timeout |
+| 12. Continuation FVG | `confirmed` + `human_validation_required` | Three closed 5M candles; candle 3 confirms at the same or a later close than the Step-4 trigger | Separate directional, clear FVG validated | Optional supporting confirmation; clean absence does not block M1 | Yes | Minimum size, quality and lifecycle |
+| 13. Move to 1M | `confirmed` | Canonical M5 trigger, 1M data and optional approved FVG support | 1M review enabled | Blocks entry if data absent | No | Data alignment |
+| 14. Corrective retracement | `confirmed` + `human_validation_required` | Canonical M5 trigger and countertrend M1 candles, with optional approved FVG support | Countertrend pullback identified; reviewed FVG interaction retained when supported | Without the corrective pullback, no realignment gate | Yes | Interaction depth, correction boundaries and timeout |
 | 15. 1M realignment | `confirmed` + `human_validation_required` | Corrective microstructure | Candidate realignment identified | No realignment means no entry | Yes | Corrective swing algorithm |
 | 16. Corrective swing break | `confirmed` | Entry swing and closed 1M candle | Body closes beyond corrective swing | Wick/open candle does not pass | Yes for swing selection | Marginal close distance |
-| 17. Entry | `confirmed` + `unresolved` | All earlier stages approved | `human_validation_required` | No automatic order creation | Yes | Order type, timing, slippage, attempts |
+| 17. Entry | `confirmed` + `unresolved` | All mandatory standard stages approved; FVG confirmation optional | `human_validation_required` | No automatic order creation | Yes | Order type, timing, slippage, attempts |
 | 18. Stop Loss | `confirmed` conceptually + `human_validation_required` | Latest relevant structural 5M HL and entry | Human validates SL below/beyond the HL wick | Missing/ambiguous structural SL blocks management automation | Yes | HL algorithm, exact offset, spread and costs |
 | 19. Break Even | `confirmed` conceptually + `human_validation_required` | Entry, London High, Asia High and observable price | On exact quote-level touch of the first encountered favorable session High, SL moves to entry | Not evaluated before entry; same-candle intrabar ordering may be unobservable | Yes | Data resolution, costs, universality and later management |
 | 20. Take Profit | `confirmed` conceptually + `human_validation_required` | London High, Asia High and position state | Immediate target follows the first encountered relevant session High; one reviewed case exits completely on exact quote-level touch | No universal final-exit rule is established | Yes | First-target/final-TP relation, data resolution, edge cases, ratio and partials |
@@ -218,6 +224,8 @@ Chronology is strict. If `T1` activates the setup and `T2` supplies a farther sa
 | 22. Risk controls | `confirmed` max trade risk + open controls | Entry, Stop Loss, sizing inputs | At most 1% risk after human validation | Missing sizing/control data blocks execution | Yes | Position size, daily limit, kill switch |
 
 ## 8. Sell workflow
+
+This table describes the **standard path**. It does not supply Scenario 2 applicability or a BUY-side mirror of that SELL branch.
 
 Solo se incluyen relaciones direccionales expresamente documentadas. No se completan objetivos, Stop Loss ni gestión por simetría automática.
 
@@ -234,12 +242,12 @@ Solo se incluyen relaciones direccionales expresamente documentadas. No se compl
 | 9. Move to 5M | `confirmed` | Approved sweep, 5M data | 5M review enabled | Blocks inversion without sweep | No | Data alignment |
 | 10. 5M inversion OR | `confirmed` | Approved liquidity take and 5M structure/FVG evidence | First occurring Structural Change/ChoCH/MSS `OR` IFVG validated | Cannot precede the liquidity take and does not satisfy continuation FVG | Yes | Swing algorithm, strong/decisive threshold and IFVG geometry |
 | 11. 5M close | `confirmed` | Bullish-structure swing and 5M close | Candle body closes beyond relevant swing | Wick alone is `failed`; open candle is `waiting` | Yes for swing selection/marginal close | Pivot and minimum distance |
-| 12. Continuation FVG | `confirmed` + `human_validation_required` | Three closed 5M candles; candle 3 confirms at the same or a later close than the Step-4 trigger | Separate clear FVG favors the new sell-side move | Without this mandatory gate, Step 6 is not enabled | Yes | Minimum size, quality and lifecycle |
-| 13. Move to 1M | `confirmed` | Approved FVG, 1M data | 1M review enabled | Blocks entry if data absent | No | Data alignment |
-| 14. Corrective retracement | `confirmed` + `human_validation_required` | Approved Step-5 FVG and countertrend 1M candles | Pullback toward/into the relevant 5M FVG identified | Without the pullback/FVG interaction, no realignment gate | Yes | Interaction depth, correction boundaries and timeout |
+| 12. Continuation FVG | `confirmed` + `human_validation_required` | Three closed 5M candles; candle 3 confirms at the same or a later close than the Step-4 trigger | Separate clear FVG favors the new sell-side move | Optional supporting confirmation; clean absence does not block M1 | Yes | Minimum size, quality and lifecycle |
+| 13. Move to 1M | `confirmed` | Canonical M5 trigger, 1M data and optional approved FVG support | 1M review enabled | Blocks entry if data absent | No | Data alignment |
+| 14. Corrective retracement | `confirmed` + `human_validation_required` | Canonical M5 trigger and countertrend M1 candles, with optional approved FVG support | Countertrend pullback identified; reviewed FVG interaction retained when supported | Without the corrective pullback, no realignment gate | Yes | Interaction depth, correction boundaries and timeout |
 | 15. 1M realignment | `confirmed` + `human_validation_required` | Corrective microstructure | Candidate sell realignment identified | No realignment means no entry | Yes | Corrective swing algorithm |
 | 16. Corrective swing break | `confirmed` | Entry swing and closed 1M candle | Body closes beyond corrective swing | Wick/open candle does not pass | Yes for swing selection | Marginal close distance |
-| 17. Entry | `confirmed` + `unresolved` | All earlier stages approved | `human_validation_required` | No automatic order creation | Yes | Order type, timing, slippage, attempts |
+| 17. Entry | `confirmed` + `unresolved` | All mandatory standard stages approved; FVG confirmation optional | `human_validation_required` | No automatic order creation | Yes | Order type, timing, slippage, attempts |
 | 18. Stop Loss | `confirmed` conceptually + `human_validation_required` | Latest relevant structural 5M LH and entry | Human validates SL above/beyond the LH wick | Missing/ambiguous structural SL blocks management automation | Yes | LH algorithm, exact offset, spread and costs |
 | 19. Break Even | `confirmed` conceptually + `human_validation_required` | Entry, London Low, Asia Low and observable price | On exact quote-level touch of the first encountered favorable session Low, SL moves to entry | Not evaluated before entry; same-candle intrabar ordering may be unobservable | Yes | Data resolution, costs, universality and later management |
 | 20. Take Profit | `confirmed` conceptually + `human_validation_required` | London Low, Asia Low and position state | Immediate target follows the first encountered relevant session Low; one reviewed case exits completely on exact quote-level touch | No universal final-exit rule is established | Yes | First-target/final-TP relation, data resolution, edge cases, ratio and partials |
@@ -715,6 +723,26 @@ At the 08:00 review, `Breakout`, `Wickfill` and `Fakeout` are three alternative 
 
 These structural and context relationships are confirmed strategy concepts, not a complete swing, pivot or scenario-classification engine. No fractal, fixed pivot width, ZigZag, percentage/ATR swing, point threshold, nearest local extreme or fixed lookback is part of the audited rule.
 
+### 9.7 Wickfill Scenario 2: pre-established context
+
+[ADR 0026](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md) records the explicit human-reviewed source and its limits. Scenario 2 is a `confirmed`, `context_specific` SELL branch: price has already completed the macro upward corrective move into the relevant H4 resistance/supply zone before 08:30. This is not an automatically satisfied standard M1 pullback.
+
+The trade-relevant opening liquidity sweep is still required. In Replay #2 the relevant London High was marked before opening, but that required opening sweep was not already satisfied; it occurred approximately 08:30–08:31. Pre-established macro context does not waive the opening event. Without the sweep there is no entry for this setup. With the reviewed subsequent behavior, this branch can support earlier execution without rebuilding the complete standard post-open M5/FVG/M1 chain.
+
+| Aspect | Standard path | Wickfill Scenario 2, supported SELL scope |
+|---|---|---|
+| Context/corrective movement | Standard contextual requirements and post-take confirmation sequence remain | Higher-timeframe Wickfill context and corrective move into the relevant H4 zone established before opening |
+| Opening sweep | Required valid post-08:30 take | Required trade-relevant opening sweep; not pre-satisfied by macro context |
+| M5 | Normal StructuralChange OR IFVG formation/confirmation required | No explicit pre-entry M5 trigger used in Replay #2; later close was confluence |
+| Continuation FVG | Optional supporting confirmation | No pre-entry FVG used in Replay #2; neither universally required nor forbidden |
+| M1 | Corrective retracement and realignment required | M1 not used in Replay #2; standard M1 ancestry cannot explain this execution |
+| M30 / Sell Stop | Order mechanics remain separate/unresolved | Historical operational chart and order confirmed for Replay #2 only; no universal M30/order rule |
+| Runtime | Existing standard contracts/workflow | Not implemented; no branch-aware applicability or contextual eligibility fact exists |
+
+Replay #2 (2026-09-08, America/Bogota, SELL) is now classified as `context_specific`, Wickfill Scenario 2. Its approximately 08:32 execution is evidence for this contextual branch, not a requirement that standard NQ-M1-001/002/003 reproduce that timestamp. Earlier local standard-path records remain unchanged and cannot establish branch coverage.
+
+Human validation remains required for selecting the applicable zone/context, confirming the completed pre-open move and the sufficient post-sweep behavior. Zone geometry/tolerance, macro liquidity algorithm, rejection/break condition, automatic branch selection, Wickfill depth, Sell Stop offset, order/fill mechanics, universal M30 requirements and BUY symmetry remain unresolved. Historical prices/times are evidence coordinates, never permanent thresholds. No standard Required rule may be marked Passed to bypass it; future support requires explicit branch-aware applicability. Time-window, provenance and future-data protections are not relaxed.
+
 ## 10. Liquidity
 
 **Session/structural branch correction (2026-10-13).** Direct human review confirms that session liquidity and selected structural liquidity are alternative relevant-reference sources, not two universally cumulative gates. A relevant `SessionLevel` take consumes the available native NQ-LIQ-001 output without requiring a separate structural observation. A `Structural` take still requires the exact usable NQ-LIQ-002 selection, including its existing role/model/member/price/provenance and causal conflict contract. NQ-LIQ-002 is therefore context-specific, not universally Required. NQ-LIQ-003 retains common H4, timely preparation and trading-start prerequisites, and checks the canonical source owner for its selected branch: NQ-LIQ-001 for SessionLevel, NQ-LIQ-002 for Structural. Missing relevant take evidence never passes. Strict exceed, alignment, terminal/cutoff behavior and later gates are unchanged; this correction defines no automatic reference selection or ordering of competing London High/Low takes.
@@ -986,11 +1014,11 @@ Existing audited status semantics remain: return `waiting` before 08:30 `America
 Confirmed:
 
 - No entry without a liquidity sweep.
-- No entry without confirmed 5M inversion.
-- A wick is not a 5M structural change.
-- No entry eligibility without a continuation 5M FVG.
-- FVG strength must be approved by human review before downstream eligibility.
-- No entry without 1M retracement and realignment.
+- Standard path: no entry without confirmed 5M inversion; this does not require Scenario 2 to replay that standard gate.
+- Standard path: a wick is not a closed 5M structural change. Scenario 2 does not introduce a universal intrabar M5 alternative.
+- Continuation FVG is optional; clean absence does not invalidate the standard setup or Scenario 2.
+- When approved FVG support is relied on, retain its exact human quality/provenance and causal contracts; explicit rejection/conflict is not clean absence (section 13).
+- Standard path: no entry without M1 retracement and realignment. Scenario 2 uses distinct contextual applicability, not fabricated M1 passes.
 - No entry before 08:30 `America/Bogota`.
 - No new or unfinished pre-entry setup may continue at or after 11:00 `America/Bogota`.
 - No entry when the first encountered intended Asia/London target was touched before completed pre-entry progression; exact wick contact is sufficient and no close or tolerance applies. Do not chase price.

@@ -27,12 +27,14 @@ The 4H bootstrap has a confirmed boundary. The mentor uses no fixed candle/day/s
 
 ## Canonical gated workflow
 
+This is the **standard path implemented by the current runtime**, not a universal description of every Nasdaq execution. The confirmed SELL [Wickfill Scenario 2](strategy-specification.md#97-wickfill-scenario-2-pre-established-context) has pre-established H4 context and a still-required opening sweep; [ADR 0026](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md) documents that branch without activating runtime support.
+
 1. From 08:00 `America/Bogota`, after the relevant 4H candle closes, review its context and permitted direction.
 2. Mark Asia/London extrema and relevant 1H/4H structural liquidity references; these levels do not seed 4H structure.
 3. From 08:30, the first valid liquidity take establishes the effective Step 3 for the scenario that may proceed; require alignment with the Step-1 4H permitted direction before enabling any 5M setup.
 4. On 5M, require Structural Change `OR` IFVG, whichever occurs first.
-5. Separately require the directional 5M FVG confirmation produced after the Step-4 trigger.
-6. On 1M, require a countertrend pullback toward/into that FVG and structural realignment before entry eligibility.
+5. Preserve any selected continuation M5 FVG as optional supporting confirmation; clean absence does not block M1.
+6. After the canonical M5 trigger, require M1 countertrend pullback and structural realignment, preserving approved FVG support when present.
 
 For trading day `D`, preparation is complete only when Step 1 (review of the formally closed 4H candle, structural context, Breakout/Wickfill/Fakeout classification and bullish/bearish bias) and Step 2 (Asia/London highs and lows plus applicable relevant 1H/4H structural levels) have both actually been completed for that same session. Completion is eligible in `[08:00:00, 08:30:00)` `America/Bogota`; reaching 08:00 or merely having candles does not prove completion. The [runtime state matrix](strategy-specification.md#60-preparation-completion-nq-time-003) defines `not_applicable` before 08:00, `waiting` or `passed` during the preparation window, and `passed` or `failed` from 08:30. Missing the deadline means no trade for `D`, with no late recovery; preparation expires with the morning session and must be renewed for the next trading day. The [canonical replay input contract](../../decisions/0006-define-nasdaq-preparation-replay-input-contract.md) and its bounded runtime observation transport are implemented, but the `NQ-TIME-003` evaluator and Step-3 prerequisite are not.
 

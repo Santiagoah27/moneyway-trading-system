@@ -46,3 +46,4 @@ Las decisiones reales se registran y enumeran a continuación.
 - [ADR 0023: Clarify Nasdaq active-extreme membership validity and data availability](0023-clarify-nasdaq-active-extreme-membership-validity-and-data-availability.md) — Status: `Accepted`.
 - [ADR 0024: Clarify Nasdaq post-completion 009 first-turn and rebuilt-tracking causal order](0024-clarify-nasdaq-009-rebuilt-tracking-order.md) — Status: `Accepted`.
 - [ADR 0025: Define Nasdaq Demo v0 human-assisted evidence contract](0025-define-nasdaq-demo-human-evidence-contract.md) — Status: `Accepted`.
+- [ADR 0026: Define Nasdaq Wickfill Scenario 2 applicability](0026-define-nasdaq-wickfill-scenario-2-applicability.md) — Status: `Accepted` (specification only; runtime unimplemented).

@@ -4,6 +4,8 @@
 
 Accepted. **DEMO V0 integration contract, not new mentor strategy semantics.** This ADR specifies future typed inputs and their consumers; it implements no types, evaluators, orchestration or trade simulation. Rule definition states and replay capabilities remain unchanged. Human assistance does not establish an autonomous algorithm or authorize an order.
 
+**Applicability scope update (2026-10-14).** [ADR 0026](0026-define-nasdaq-wickfill-scenario-2-applicability.md) supersedes universal strategy-scope readings of this ADR's standard M5/FVG/M1 pre-entry chain for the confirmed SELL Wickfill Scenario 2 branch. Historical decisions and current typed standard contracts remain intact. Scenario 2 support is not implemented; no current Required rule is bypassed or marked Passed, and no intrabar M5 permission is implied.
+
 ## Date
 
 2026-10-03.

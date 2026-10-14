@@ -1,5 +1,7 @@
 # MoneyWay Nasdaq reference cases
 
+**Applicability scope (2026-10-14).** NQ-CASE-001/002 describe the standard pre-entry path; NQ-CASE-003 describes quality of an actually selected FVG, not a universal requirement that a FVG exist. [ADR 0026](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md) classifies Replay #2 separately as confirmed context-specific SELL Wickfill Scenario 2. Historical case descriptions do not generalize standard M5/FVG/M1 ancestry to that branch.
+
 These cases preserve observed or conceptual evidence. They do not establish success rates or fill missing thresholds.
 
 ## NQ-CASE-001 — Conceptual valid setup
