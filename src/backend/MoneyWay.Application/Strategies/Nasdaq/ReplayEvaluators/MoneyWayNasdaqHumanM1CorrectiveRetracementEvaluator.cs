@@ -17,18 +17,16 @@ public sealed class MoneyWayNasdaqHumanM1CorrectiveRetracementEvaluator : IRepla
         var blocked = NasdaqFvgReplayPrerequisites.Check(context, RuleId);
         if (blocked is not null) return blocked;
 
-        var latest = context.PriorObservations.LastOrDefault(o => o.Evaluations.Any(e => e.RuleId.Value == "NQ-FVG-002"));
-        var quality = latest?.RuleFacts.Where(f => f.RuleId.Value == "NQ-FVG-002").Select(f => f.Fact)
-            .OfType<NasdaqHumanM5FvgQualityRuleFact>().SingleOrDefault();
-        if (quality is null || quality.Selection.Fact.Fact.Decision != NasdaqHumanM5FvgQualityDecision.Approved
-            || !quality.Selection.Fact.Session.Matches(context)
-            || NasdaqFvgReplayPrerequisites.Latest(context, "NQ-FVG-001")?.Result != RuleEvaluationResult.Passed
-            || !NasdaqFvgReplayPrerequisites.Eligible(context, "NQ-FVG-001")
-            || NasdaqFvgReplayPrerequisites.Latest(context, "NQ-FVG-002")?.Result != RuleEvaluationResult.Passed
-            || !NasdaqFvgReplayPrerequisites.Eligible(context, "NQ-FVG-002"))
-            return NasdaqFvgReplayPrerequisites.Waiting(context, "NQ-FVG-002");
-
-        var selection = new NasdaqHumanM1CorrectiveRetracementObservationSelector().Select(context, quality);
+        var latest = context.PriorObservations.LastOrDefault(o => o.Evaluations.Any(e => e.RuleId.Value == "NQ-M5-001"));
+        var trigger = latest?.RuleFacts.Where(f => f.RuleId.Value == "NQ-M5-001").Select(f => f.Fact)
+            .OfType<NasdaqHumanM5TriggerRuleFact>().SingleOrDefault();
+        if (trigger is null || !NasdaqHumanM5FvgObservationSelector.IsEstablished(context, trigger))
+            return NasdaqFvgReplayPrerequisites.Waiting(context, "NQ-M5-001");
+        var confirmation = NasdaqM1FvgSupportResolver.Resolve(context, trigger);
+        if (confirmation.Blocker is { } result)
+            return new(result, confirmation.Reason, JsonSerializer.Serialize(new { Trigger = trigger, FvgSupport = confirmation }));
+        var quality = confirmation.ApprovedQuality;
+        var selection = new NasdaqHumanM1CorrectiveRetracementObservationSelector().Select(context, trigger);
         var support = selection switch
         {
             NasdaqHumanM1CorrectiveRetracementSelection.Unique unique => unique.SupportingObservations,
@@ -37,6 +35,7 @@ public sealed class MoneyWayNasdaqHumanM1CorrectiveRetracementEvaluator : IRepla
         };
         var proof = JsonSerializer.Serialize(new
         {
+            Trigger = trigger,
             ApprovedFvg = quality,
             PullbackEvidence = support,
             UnavailableSourceEvidence = selection.UnavailableSourceObservations,
@@ -50,11 +49,13 @@ public sealed class MoneyWayNasdaqHumanM1CorrectiveRetracementEvaluator : IRepla
                 return new(RuleEvaluationResult.DataUnavailable,
                     "A competing selected pullback has unavailable exact 1M sources.", proof);
             return new(RuleEvaluationResult.Passed,
-                "The source-backed 1M corrective retracement is established for the exact approved FVG.", proof,
-                new NasdaqHumanM1CorrectiveRetracementRuleFact(quality, selected));
+                "The source-backed 1M corrective retracement is established for the exact canonical M5 trigger, retaining optional FVG confirmation.", proof,
+                new NasdaqHumanM1CorrectiveRetracementRuleFact(trigger,
+                    quality is not null && quality.Selection.Fact.EffectiveAtUtc <= selected.Fact.PullbackEffectiveAtUtc
+                        && quality.Selection.Fact.ObservedAtUtc <= selected.Fact.ObservedAtUtc ? quality : null, selected));
         }
         return new(selection.UnavailableSourceObservations.Count > 0
                 ? RuleEvaluationResult.DataUnavailable : RuleEvaluationResult.HumanValidationRequired,
-            "No usable human corrective retracement is available for the exact approved FVG.", proof);
+            "No usable human corrective retracement is available for the exact canonical M5 trigger, retaining optional FVG confirmation.", proof);
     }
 }

@@ -56,8 +56,8 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
         var before = beforeCatalog.Find(definition.StrategyId, definition.Version)!;
         var after = afterCatalog.Find(definition.StrategyId, definition.Version)!;
 
-        Assert.Equal((32, 13, 3, 0, 28, 1, 3, 10, false), Counts(before));
-        Assert.Equal((32, 13, 4, 0, 27, 1, 4, 9, false), Counts(after));
+        Assert.Equal((32, 11, 3, 0, 28, 1, 3, 8, false), Counts(before));
+        Assert.Equal((32, 11, 4, 0, 27, 1, 4, 7, false), Counts(after));
 
         var beforeByRule = before.Rules.ToDictionary(rule => rule.RuleId);
         var afterByRule = after.Rules.ToDictionary(rule => rule.RuleId);
@@ -112,7 +112,7 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented, capability.CapabilityStatus);
         Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.ImplementedReason, capability.CapabilityReason);
         Assert.Null(capability.CapabilitySourceReference);
-        Assert.Equal((32, 13, 16, 0, 15, 1, 13, 0, true), Counts(report));
+        Assert.Equal((32, 11, 16, 0, 15, 1, 11, 0, true), Counts(report));
     }
 
     [Fact]
@@ -126,8 +126,8 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
         var afterCatalog = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), evaluators, declarations);
         var before = beforeCatalog.Find(definition.StrategyId, definition.Version)!;
         var after = afterCatalog.Find(definition.StrategyId, definition.Version)!;
-        Assert.Equal((32, 13, 15, 0, 16, 1, 12, 1, false), Counts(before));
-        Assert.Equal((32, 13, 16, 0, 15, 1, 13, 0, true), Counts(after));
+        Assert.Equal((32, 11, 15, 0, 16, 1, 10, 1, false), Counts(before));
+        Assert.Equal((32, 11, 16, 0, 15, 1, 11, 0, true), Counts(after));
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented, after.Rules.Single(r => r.RuleId == selected).CapabilityStatus);
         var beforeByRule = before.Rules.ToDictionary(r => r.RuleId);
         Assert.All(after.Rules.Where(r => r.RuleId != selected), r => Assert.Equal(beforeByRule[r.RuleId].CapabilityStatus, r.CapabilityStatus));

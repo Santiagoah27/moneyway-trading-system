@@ -35,7 +35,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         AssertRule("NQ-TP-001", RuleDefinitionStatus.HumanValidationRequired, false);
         AssertRule("NQ-TP-002", RuleDefinitionStatus.HumanValidationRequired, false);
         AssertRule("NQ-BE-001", RuleDefinitionStatus.Unresolved, false);
-        AssertRule("NQ-FVG-002", RuleDefinitionStatus.HumanValidationRequired, true);
+        AssertRule("NQ-FVG-002", RuleDefinitionStatus.HumanValidationRequired, false);
         AssertRule("NQ-BE-003", RuleDefinitionStatus.Candidate, false);
         AssertRule("NQ-REENTRY-001", RuleDefinitionStatus.Unresolved, false);
         AssertRule("NQ-NEWS-001", RuleDefinitionStatus.ContextSpecific, false);
@@ -283,7 +283,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         Assert.Contains("valid Step-3 liquidity take aligned with the Step-1 4H permitted direction", inversion.Description, StringComparison.Ordinal);
         Assert.Contains("Structural Change OR IFVG", inversion.Description, StringComparison.Ordinal);
         Assert.Contains("whichever occurs first", inversion.Description, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("separate Step-5 FVG confirmation", inversion.Description, StringComparison.Ordinal);
+        Assert.Contains("optional supporting confirmation", inversion.Description, StringComparison.Ordinal);
         Assert.Contains("This rule owns the Step-4 gate only", inversion.Description, StringComparison.Ordinal);
         Assert.Contains("separate lifecycle cancellation condition", inversion.Description, StringComparison.Ordinal);
         Assert.Contains("later 5M signal cannot revive a cancelled setup", inversion.Description, StringComparison.Ordinal);
@@ -309,26 +309,26 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
 
         var continuation = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-FVG-001");
         Assert.Contains("After the Step-4 trigger", continuation.Description, StringComparison.Ordinal);
-        Assert.Contains("separate directional 5M FVG confirmation", continuation.Description, StringComparison.Ordinal);
-        Assert.Contains("before Step 6", continuation.Description, StringComparison.Ordinal);
-        Assert.Contains("exact FVG geometry, quality, and lifecycle remain unresolved", continuation.Description, StringComparison.Ordinal);
+        Assert.Contains("optional additional confirmation", continuation.Description, StringComparison.Ordinal);
+        Assert.Contains("does not block M1", continuation.Description, StringComparison.Ordinal);
+        Assert.Contains("no probability score is defined", continuation.Description, StringComparison.Ordinal);
 
         var pullback = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-M1-001");
-        Assert.Contains("Only after the Step-5 FVG", pullback.Description, StringComparison.Ordinal);
+        Assert.Contains("After canonical Step-4 M5 confirmation", pullback.Description, StringComparison.Ordinal);
         Assert.Contains("countertrend 1M pullback", pullback.Description, StringComparison.Ordinal);
-        Assert.Contains("toward or into", pullback.Description, StringComparison.Ordinal);
+        Assert.Contains("Preserve approved FVG support", pullback.Description, StringComparison.Ordinal);
         Assert.Contains("bearish for a buy or bullish for a sell", pullback.Description, StringComparison.Ordinal);
 
         var realignment = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-M1-002");
-        Assert.Contains("relevant 5M FVG", realignment.Description, StringComparison.Ordinal);
+        Assert.Contains("trigger-bound pullback", realignment.Description, StringComparison.Ordinal);
         Assert.Contains("1M structural realignment", realignment.Description, StringComparison.Ordinal);
         Assert.Contains("intended direction", realignment.Description, StringComparison.Ordinal);
         Assert.Contains("bullish for a buy or bearish for a sell", realignment.Description, StringComparison.Ordinal);
         Assert.Contains("geometry remains unresolved", realignment.Description, StringComparison.Ordinal);
 
         var entry = definition.Rules.Single(rule => rule.RuleId.Value == "NQ-M1-003");
-        Assert.Contains("valid preceding Steps 1 through 5", entry.Description, StringComparison.Ordinal);
-        Assert.Contains("Step-6 1M countertrend pullback and directional realignment", entry.Description, StringComparison.Ordinal);
+        Assert.Contains("valid preceding H4, preparation, liquidity take and M5 stages", entry.Description, StringComparison.Ordinal);
+        Assert.Contains("1M countertrend pullback and directional realignment", entry.Description, StringComparison.Ordinal);
         Assert.Contains("chronological order", entry.Description, StringComparison.Ordinal);
         Assert.Contains("before 11:00 America/Bogota", entry.Description, StringComparison.Ordinal);
         Assert.Contains("active, non-cancelled and non-expired setup", entry.Description, StringComparison.Ordinal);
@@ -820,7 +820,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         var expectedRequired = new[]
         {
             "NQ-TIME-003", "NQ-H4-001", "NQ-LIQ-001",  "NQ-TIME-001", "NQ-LIQ-003", "NQ-M5-001",
-            "NQ-FVG-001", "NQ-FVG-002", "NQ-M1-001", "NQ-M1-002", "NQ-SL-001", "NQ-TIME-002", "NQ-RISK-001",
+            "NQ-M1-001", "NQ-M1-002", "NQ-SL-001", "NQ-TIME-002", "NQ-RISK-001",
         };
 
         Assert.Equal(expectedOrder, definition.Rules.Select(rule => rule.RuleId.Value));

@@ -68,7 +68,7 @@ public sealed class MoneyWayNasdaqHumanM1CorrectiveRetracementEvaluatorTests
         Assert.Single(registry, e => e.RuleId.Value == "NQ-M1-001" && e is MoneyWayNasdaqHumanM1CorrectiveRetracementEvaluator);
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), registry,
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll()).Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 13, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount,
+        Assert.Equal((32, 11, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount,
             report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
         Assert.DoesNotContain(report.Rules, r => r.IsRequired && r.CapabilityStatus != ReplayRuleEvaluationCapabilityStatus.Implemented);
         var quality = Quality(NasdaqHumanH4PermittedDirection.Buy);
@@ -147,7 +147,7 @@ public sealed class MoneyWayNasdaqHumanM1CorrectiveRetracementEvaluatorTests
         Assert.Equal(RuleEvaluationResult.Passed, Result(passed));
         var fact = Assert.IsType<NasdaqHumanM1CorrectiveRetracementRuleFact>(
             passed.RuleFacts.Single(f => f.RuleId.Value == "NQ-M1-001").Fact);
-        Assert.Same(approved.Fact.Fvg, fact.ApprovedQuality.Selection.Fact.Fact.Fvg);
+        Assert.Same(approved.Fact.Fvg, fact.ApprovedQuality!.Selection.Fact.Fact.Fvg);
         Assert.Contains(run.StrategyObservations.SelectMany(o => o.RuleFacts).Select(f => f.Fact)
             .OfType<NasdaqHumanM5FvgQualityRuleFact>(), f =>
                 f.Selection.Fact.Fact.Decision == NasdaqHumanM5FvgQualityDecision.Rejected);

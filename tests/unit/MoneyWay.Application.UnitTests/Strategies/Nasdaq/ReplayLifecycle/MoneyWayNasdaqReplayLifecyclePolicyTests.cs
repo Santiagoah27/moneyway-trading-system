@@ -219,7 +219,9 @@ public sealed class MoneyWayNasdaqReplayLifecyclePolicyTests
             Cutoff(RuleEvaluationResult.Passed));
         var rules = new[] { "NQ-M5-001", "NQ-FVG-001", "NQ-FVG-002", "NQ-M1-001", "NQ-M1-002", "NQ-M1-003" };
         for (var index = 0; index < rules.Length; index++)
-            state = Advance(state, AtLocal(10, 52 + index), Evaluation(rules[index], RuleEvaluationResult.Passed), Cutoff(RuleEvaluationResult.Passed));
+            state = Advance(state, AtLocal(10, 52 + index), index >= 1
+                ? [Evaluation("NQ-M5-001", RuleEvaluationResult.Passed), Evaluation(rules[index], RuleEvaluationResult.Passed), Cutoff(RuleEvaluationResult.Passed)]
+                : [Evaluation(rules[index], RuleEvaluationResult.Passed), Cutoff(RuleEvaluationResult.Passed)]);
         return state;
     }
 

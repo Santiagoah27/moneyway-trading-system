@@ -3,42 +3,41 @@ using MoneyWay.Domain.Strategies;
 
 namespace MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 
-/// <summary>Selects only source-backed human pullback evidence for the current approved candidate.</summary>
+/// <summary>Selects only source-backed human pullback evidence for the current M5 trigger with optional approved confirmation.</summary>
 public sealed class NasdaqHumanM1CorrectiveRetracementObservationSelector
 {
     public NasdaqHumanM1CorrectiveRetracementSelection Select(StrategyReplayContext context,
         NasdaqHumanM5FvgQualityRuleFact approvedQuality)
     {
-        ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(approvedQuality);
-        var quality = approvedQuality.Selection.Fact;
-        if (quality.Fact.Decision != NasdaqHumanM5FvgQualityDecision.Approved
-            || !quality.Session.Matches(context) || quality.ObservedAtUtc > context.AsOfUtc
-            || !NasdaqHumanM5FvgObservationSelector.InWindow(context, context.AsOfUtc)
-            || context.PriorObservations.SelectMany(o => o.RuleFacts).Select(f => f.Fact)
-                .OfType<IReplayRuleGateFact>().Any(g => g.Blocks(context, new RuleId("NQ-M1-001")))
-            || context.PriorObservations.LastOrDefault(o => o.LifecycleProgression is not null)?.LifecycleProgression is { ActiveInstance: null })
-            return new NasdaqHumanM1CorrectiveRetracementSelection.Missing([]);
+        return Select(context, approvedQuality.Candidate.Trigger, approvedQuality);
+    }
 
-        var latestQuality = context.PriorObservations.LastOrDefault(o => o.Evaluations.Any(e => e.RuleId.Value == "NQ-FVG-002"));
-        if (latestQuality?.Evaluations.Single(e => e.RuleId.Value == "NQ-FVG-002").Result != RuleEvaluationResult.Passed
-            || latestQuality.WorkflowProgression?.RuleEligibility.SingleOrDefault(e => e.RuleId.Value == "NQ-FVG-002")?.EstablishesProgression != true
-            || latestQuality.RuleFacts.Where(f => f.RuleId.Value == "NQ-FVG-002").Select(f => f.Fact)
-                .OfType<NasdaqHumanM5FvgQualityRuleFact>().SingleOrDefault() is not { } currentFact
-            || !currentFact.Candidate.Selection.Fact.SameFact(approvedQuality.Candidate.Selection.Fact)
-            || !currentFact.Selection.Fact.Fact.SameFact(quality.Fact)
-            || new NasdaqHumanM5FvgQualityObservationSelector().SelectForCandidate(context,
-                approvedQuality.Candidate.Trigger, approvedQuality.Candidate.Selection) is not NasdaqHumanM5FvgQualitySelection.Unique currentQuality
-            || !currentQuality.Fact.Fact.SameFact(quality.Fact))
-            return new NasdaqHumanM1CorrectiveRetracementSelection.Missing([]);
+    public NasdaqHumanM1CorrectiveRetracementSelection Select(StrategyReplayContext context,
+        NasdaqHumanM5TriggerRuleFact trigger) => Select(context, trigger, null);
 
+    private NasdaqHumanM1CorrectiveRetracementSelection Select(StrategyReplayContext context,
+        NasdaqHumanM5TriggerRuleFact trigger, NasdaqHumanM5FvgQualityRuleFact? requiredSupport)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(trigger);
+        if (!NasdaqHumanM5FvgObservationSelector.IsEstablished(context, trigger))
+            return new NasdaqHumanM1CorrectiveRetracementSelection.Missing([]);
+        var support = NasdaqM1FvgSupportResolver.Resolve(context, trigger);
+        if (support.Blocker is not null || requiredSupport is not null
+            && (support.ApprovedQuality is null || !support.ApprovedQuality.Selection.Fact.Fact.SameFact(requiredSupport.Selection.Fact.Fact)))
+            return new NasdaqHumanM1CorrectiveRetracementSelection.Missing([]);
         var valid = new List<NasdaqHumanM1CorrectiveRetracementObservation>();
         var unavailable = new List<NasdaqHumanM1CorrectiveRetracementObservation>();
         foreach (var observation in NasdaqHumanM5FvgObservationSelector.Ordered(
             context.InputObservations.OfType<NasdaqHumanM1CorrectiveRetracementObservation>())
-            .Where(o => o.Session == quality.Session && o.ApprovedQuality.Fact.SameFact(quality.Fact)
-                && o.ApprovedQuality.Fact.Fvg.SameFact(approvedQuality.Candidate.Selection.Fact)
-                && o.ObservedAtUtc <= context.AsOfUtc && o.PullbackEffectiveAtUtc >= quality.EffectiveAtUtc
+            .Where(o => o.Session == trigger.Selection.Fact.Session && o.Trigger.SameFact(trigger.Selection.Fact)
+                && (o.ApprovedQuality is null || support.ApprovedQuality is not null
+                    && o.ApprovedQuality.Fact.SameFact(support.ApprovedQuality.Selection.Fact.Fact))
+                && o.ObservedAtUtc <= context.AsOfUtc && o.PullbackEffectiveAtUtc >= trigger.Selection.Fact.EffectiveAtUtc
+                && (support.ApprovedQuality is null || NasdaqHumanM5FvgCandidateHistory.Rejections(context, trigger).Count == 0
+                    || o.PullbackEffectiveAtUtc >= support.ApprovedQuality.Selection.Fact.EffectiveAtUtc
+                        && o.ObservedAtUtc >= support.ApprovedQuality.Selection.Fact.ObservedAtUtc)
                 && NasdaqHumanM5FvgObservationSelector.InWindow(context, o.PullbackEffectiveAtUtc)))
         {
             var missing = false;

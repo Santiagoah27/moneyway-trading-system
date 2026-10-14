@@ -224,7 +224,7 @@ public sealed class NasdaqHistoricalObservedEntryTests
     {
         var setup = Setup(NasdaqHumanH4PermittedDirection.Buy);
         var entry = Entry(setup.Fact, effective: M5Fixture.At(15));
-        var initiating = setup.Fact.Realignment.Pullback.Selection.Fact.ApprovedQuality.Fact.Fvg.Trigger.DecisiveTake;
+        var initiating = setup.Fact.Realignment.Pullback.Selection.Fact.ApprovedQuality!.Fact.Fvg.Trigger.DecisiveTake;
         var invalid = M5Fixture.Take(true, effective: M5Fixture.At(14, 30), observed: M5Fixture.At(14, 30));
         var terminal = Frame(setup.Fact.Direction, M5Fixture.At(15, 5), setup.Realignment, entry, invalid,
             new NasdaqHumanRelevantLiquidityTakeObservation(invalid, invalid.ObservedAtUtc, "terminal:record", initiating));
@@ -274,7 +274,7 @@ public sealed class NasdaqHistoricalObservedEntryTests
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(),
             MoneyWayReplayRuleEvaluators.GetAll(), MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 13, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
+        Assert.Equal((32, 11, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
             report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
     }
 

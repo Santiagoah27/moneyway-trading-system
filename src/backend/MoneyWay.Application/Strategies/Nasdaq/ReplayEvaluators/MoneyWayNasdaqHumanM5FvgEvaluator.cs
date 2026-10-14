@@ -40,10 +40,10 @@ public sealed class MoneyWayNasdaqHumanM5FvgEvaluator : IReplayRuleEvaluator
         {
             if (selection.UnavailableSourceObservations.Any(o => !o.SameFact(unique.Fact)))
                 return new(RuleEvaluationResult.DataUnavailable, "A competing current selection has unavailable required sources.", proof);
-            return new(RuleEvaluationResult.Passed, "The exact human-selected mandatory FVG exists; quality remains independent.",
+            return new(RuleEvaluationResult.Passed, "The exact human-selected optional FVG exists; quality remains independent.",
                 proof, new NasdaqHumanM5FvgRuleFact(trigger, unique));
         }
         return new(selection.UnavailableSourceObservations.Count > 0 ? RuleEvaluationResult.DataUnavailable : RuleEvaluationResult.HumanValidationRequired,
-            "No usable mandatory FVG selection is available for the eligible candidate slot.", proof);
+            "No usable optional FVG selection is available for the eligible candidate slot.", proof);
     }
 }

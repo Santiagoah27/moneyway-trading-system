@@ -3,7 +3,7 @@ using MoneyWay.Domain.MarketData;
 
 namespace MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 
-/// <summary>Human-confirmed countertrend movement toward or into the selected FVG.</summary>
+/// <summary>Human-confirmed countertrend movement after M5, with optional reviewed FVG interaction.</summary>
 public sealed class NasdaqHumanM1CorrectiveRetracementEvent
 {
     public static Timeframe M1 { get; } = new(1, TimeframeUnit.Minute);

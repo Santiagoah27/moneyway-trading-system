@@ -384,7 +384,7 @@ public sealed class NasdaqHumanTakeProfitTests
         Assert.IsType<NasdaqHumanTakeProfitSelection.Missing>(Selector.Select(
             Frame(setup.Entry.Direction, M5Fixture.At(16), setup.Realignment, setup.Stop, target), setup.Sl));
         var invalid = M5Fixture.Take(true, effective: M5Fixture.At(14, 30), observed: M5Fixture.At(14, 30));
-        var initiating = setup.Entry.Realignment.Pullback.Selection.Fact.ApprovedQuality.Fact.Fvg.Trigger.DecisiveTake;
+        var initiating = setup.Entry.Realignment.Pullback.Selection.Fact.ApprovedQuality!.Fact.Fvg.Trigger.DecisiveTake;
         var terminal = Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop, target,
             invalid, new NasdaqHumanRelevantLiquidityTakeObservation(invalid, invalid.ObservedAtUtc, "terminal:event", initiating));
         Assert.IsType<NasdaqHumanTakeProfitSelection.Missing>(Selector.Select(terminal, setup.Sl));
@@ -449,7 +449,7 @@ public sealed class NasdaqHumanTakeProfitTests
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(),
             MoneyWayReplayRuleEvaluators.GetAll(), MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 13, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
+        Assert.Equal((32, 11, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
             report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
         Assert.Single(MoneyWayReplayRuleEvaluators.GetAll(), e => e.RuleId.Value == "NQ-TP-001");
         Assert.Equal(new[] { new RuleId("NQ-SL-001") }, MoneyWayReplayWorkflowDefinitions.GetAll().Single().GetPrerequisiteRuleIds(new("NQ-TP-001")));
@@ -602,7 +602,7 @@ public sealed class NasdaqHumanTakeProfitTests
             .Find(evaluator.StrategyId, evaluator.StrategyVersion)!;
         Assert.Equal((15, 0, true), (before.ImplementedCount, before.RequiredEvaluatorGapCount, before.HasFullRequiredEvaluatorRegistration));
         Assert.Equal((16, 0, true), (after.ImplementedCount, after.RequiredEvaluatorGapCount, after.HasFullRequiredEvaluatorRegistration));
-        Assert.Equal((32, 13), (after.TotalRuleCount, after.RequiredRuleCount));
+        Assert.Equal((32, 11), (after.TotalRuleCount, after.RequiredRuleCount));
         Assert.All(after.Rules.Where(r => r.RuleId != evaluator.RuleId), r =>
             Assert.Equal(before.Rules.Single(b => b.RuleId == r.RuleId).CapabilityStatus, r.CapabilityStatus));
         var target = after.Rules.Single(r => r.RuleId == evaluator.RuleId);
@@ -619,7 +619,7 @@ public sealed class NasdaqHumanTakeProfitTests
         var target = Target(setup.Sl);
         var time = M5Fixture.At(15, 5);
         var invalid = M5Fixture.Take(true, effective: M5Fixture.At(14, 30), observed: M5Fixture.At(14, 30));
-        var initiating = setup.Entry.Realignment.Pullback.Selection.Fact.ApprovedQuality.Fact.Fvg.Trigger.DecisiveTake;
+        var initiating = setup.Entry.Realignment.Pullback.Selection.Fact.ApprovedQuality!.Fact.Fvg.Trigger.DecisiveTake;
         var terminal = Frame(setup.Entry.Direction, time, setup.Realignment, setup.Stop, target,
             invalid, new NasdaqHumanRelevantLiquidityTakeObservation(invalid, invalid.ObservedAtUtc, "terminal:event", initiating));
         var gate = Assert.IsType<NasdaqLiquidityTakeRuleFact>(terminal.PriorObservations.Last().RuleFacts.Single(f => f.RuleId.Value == "NQ-LIQ-003").Fact);

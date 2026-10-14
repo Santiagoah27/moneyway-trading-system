@@ -34,7 +34,7 @@ public sealed class MoneyWayReplayWorkflowDefinitionsTests
             item => AssertDeclaration(item, "NQ-M5-001", "NQ-LIQ-003"),
             item => AssertDeclaration(item, "NQ-FVG-001", "NQ-M5-001"),
             item => AssertDeclaration(item, "NQ-FVG-002", "NQ-FVG-001"),
-            item => AssertDeclaration(item, "NQ-M1-001", "NQ-FVG-002"),
+            item => AssertDeclaration(item, "NQ-M1-001", "NQ-M5-001"),
             item => AssertDeclaration(item, "NQ-M1-002", "NQ-M1-001"),
             item => AssertDeclaration(item, "NQ-M1-003", "NQ-M1-002"),
             item => AssertDeclaration(item, "NQ-SL-001", "NQ-M1-003"),
@@ -223,20 +223,22 @@ public sealed class MoneyWayReplayWorkflowDefinitionsTests
         for (var index = 0; index < chain.Length; index++)
         {
             var step = index + 2;
-            snapshots.Add(Advance(step, snapshots[^1], Evaluation(chain[index], RuleEvaluationResult.Passed, step)));
+            snapshots.Add(Advance(step, snapshots[^1], index >= 2
+                ? [Evaluation("NQ-M5-001", RuleEvaluationResult.Passed, step), Evaluation(chain[index], RuleEvaluationResult.Passed, step)]
+                : [Evaluation(chain[index], RuleEvaluationResult.Passed, step)]));
         }
 
         Assert.Equal(
             ["NQ-TIME-003", "NQ-H4-001", "NQ-LIQ-002", "NQ-TIME-001", .. chain],
             snapshots[^1].EstablishedRuleIds.Select(item => item.Value));
-        Assert.All(snapshots.Skip(1), snapshot => Assert.True(Assert.Single(snapshot.RuleEligibility).IsEligible));
+        Assert.All(snapshots.Skip(1), snapshot => Assert.All(snapshot.RuleEligibility, e => Assert.True(e.IsEligible)));
     }
 
     [Theory]
     [InlineData(RuleEvaluationResult.Waiting)]
     [InlineData(RuleEvaluationResult.HumanValidationRequired)]
     [InlineData(RuleEvaluationResult.DataUnavailable)]
-    public void HistoricalQualityPassCannotBypassLatestCandidateBlocker(RuleEvaluationResult blocker)
+    public void OptionalQualityIsNotAStaticM1Prerequisite(RuleEvaluationResult blocker)
     {
         var prior = Advance(1, null,
             Evaluation("NQ-H4-001", RuleEvaluationResult.Passed, 1),
@@ -249,11 +251,11 @@ public sealed class MoneyWayReplayWorkflowDefinitionsTests
             prior = Advance(step, prior, Evaluation(rule, RuleEvaluationResult.Passed, step));
             step++;
         }
-        var blocked = Advance(step, prior, Evaluation("NQ-FVG-002", blocker, step));
+        var blocked = Advance(step, prior, Evaluation("NQ-M5-001", RuleEvaluationResult.Passed, step), Evaluation("NQ-FVG-002", blocker, step));
         var next = Advance(step + 1, blocked, Evaluation("NQ-M1-001", RuleEvaluationResult.Passed, step + 1));
         Assert.Contains(new RuleId("NQ-FVG-002"), next.EstablishedRuleIds);
-        Assert.False(Eligibility(next, "NQ-M1-001").IsEligible);
-        Assert.Equal([new RuleId("NQ-FVG-002")], Eligibility(next, "NQ-M1-001").MissingPrerequisiteRuleIds);
+        Assert.True(Eligibility(next, "NQ-M1-001").IsEligible);
+        Assert.Empty(Eligibility(next, "NQ-M1-001").MissingPrerequisiteRuleIds);
         // The existing historical prerequisite behavior remains unchanged outside candidate-sensitive edges.
         var historical = Advance(step + 2, next, Evaluation("NQ-M5-001", RuleEvaluationResult.Passed, step + 2));
         Assert.True(Eligibility(historical, "NQ-M5-001").IsEligible);

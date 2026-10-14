@@ -66,7 +66,7 @@ public sealed class MoneyWayNasdaqHumanM5TriggerEvaluator : IReplayRuleEvaluator
                 && !o.SameFact(unique.Fact));
             if (requiredUnavailable)
                 return new(RuleEvaluationResult.DataUnavailable, "A potentially first competing trigger has unavailable named sources.", proof);
-            return new(RuleEvaluationResult.Passed, "The first human-reviewed 5M trigger is established; mandatory FVG remains a separate next stage.",
+            return new(RuleEvaluationResult.Passed, "The first human-reviewed 5M trigger is established; optional continuation FVG remains separately audited supporting evidence.",
                 proof, new NasdaqHumanM5TriggerRuleFact(unique));
         }
         if (selection.UnavailableSourceObservations.Count > 0)

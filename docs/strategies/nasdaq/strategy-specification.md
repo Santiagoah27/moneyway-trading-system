@@ -774,14 +774,16 @@ Until Step 4 is confirmed and while local time remains before 11:00, a valid far
 
 ## 13. 5M continuation FVG
 
+**Optional continuation confirmation correction (2026-10-13).** Direct human source review establishes that continuation FVG is additional confirmation, not a universal entry prerequisite. After canonical NQ-M5-001, M1 may proceed without a selected FVG or without a quality confirmation; no negative/placeholder FVG is synthesized. Approved FVG evidence available before the M1 event remains associated as optional supporting evidence, with its exact source, quality and causal contracts unchanged. No confidence percentage, score, size or strength threshold is defined. Explicit Rejected, Conflict, invalid selected evidence and DataUnavailable are not clean absence: preserve safe Waiting/human-validation/data-unavailable behavior and the existing candidate-local replacement process. NQ-FVG-001/002 remain registered, but non-required; NQ-M1-001 depends on NQ-M5-001, with effective pullback time no earlier than trigger confirmation. This clarification supersedes universal mandatory-FVG statements and FVG-only M1 ancestry elsewhere in this specification; realignment and same-close eligibility retain their existing semantics.
+
 ```yaml
-required: true
+required: false
 candle_count: 3
 minimum_size_points: null
 quality_validation: human_validation_required
 ```
 
-This is a separate mandatory gate following the Step-4 trigger in workflow order; its market confirmation may share the trigger close. The displacement responsible for the new direction must leave a 5M FVG favoring that move; without it, Step 6 is not enabled. A Step-4 IFVG does not satisfy this requirement merely by being an IFVG.
+This is optional additional confirmation after the Step-4 trigger; its market confirmation may share the trigger close. M1 can proceed without FVG confirmation. A Step-4 IFVG does not fabricate a distinct continuation FVG.
 
 The previously audited specification describes the FVG as a three-candle space between the first and third candle wicks. One or two points were described as insufficient evidence of strength, but this qualitative observation does not establish a three-point minimum. Clear/evident size, volatility relation, fills, invalidation, lifespan and multiple-FVG selection remain open. The human source clarification below resolves trigger-to-FVG timing and permits independent facts at the same close, including source-supported overlapping candles.
 

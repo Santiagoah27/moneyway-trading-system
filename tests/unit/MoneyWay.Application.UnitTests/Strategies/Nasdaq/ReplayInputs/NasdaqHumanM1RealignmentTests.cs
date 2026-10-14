@@ -110,7 +110,7 @@ public sealed class NasdaqHumanM1RealignmentTests
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), evaluators,
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 13, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount,
+        Assert.Equal((32, 11, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount,
             report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
     }
 
@@ -131,7 +131,7 @@ public sealed class NasdaqHumanM1RealignmentTests
         var invalid = M5Fixture.Take(true, effective: atHistoricalFrame, observed: atHistoricalFrame);
         var terminal = Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, Realignment(pullback), invalid,
             new NasdaqHumanRelevantLiquidityTakeObservation(invalid, invalid.ObservedAtUtc,
-                "terminal event", pullback.Selection.Fact.ApprovedQuality.Fact.Fvg.Trigger.DecisiveTake)));
+                "terminal event", pullback.Selection.Fact.ApprovedQuality!.Fact.Fvg.Trigger.DecisiveTake)));
         Assert.DoesNotContain(terminal.StrategyObservations.Where(o => o.AsOfUtc >= atHistoricalFrame)
             .SelectMany(o => o.RuleFacts), f => f.RuleId.Value == "NQ-M1-003");
         Assert.DoesNotContain(terminal.StrategyObservations.Where(o => o.AsOfUtc >= M5Fixture.At(16))
@@ -147,7 +147,7 @@ public sealed class NasdaqHumanM1RealignmentTests
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), evaluators,
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 13, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount,
+        Assert.Equal((32, 11, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount,
             report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
         Assert.DoesNotContain(report.Rules, r => r.IsRequired && r.CapabilityStatus != ReplayRuleEvaluationCapabilityStatus.Implemented);
         Assert.Equal(RuleEvaluationResult.Waiting,
@@ -229,7 +229,7 @@ public sealed class NasdaqHumanM1RealignmentTests
         var invalid = M5Fixture.Take(true, effective: M5Fixture.At(14, 30), observed: M5Fixture.At(14, 30));
         var terminal = Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, Realignment(pullback), invalid,
             new NasdaqHumanRelevantLiquidityTakeObservation(invalid, invalid.ObservedAtUtc,
-                "terminal event", pullback.Selection.Fact.ApprovedQuality.Fact.Fvg.Trigger.DecisiveTake)));
+                "terminal event", pullback.Selection.Fact.ApprovedQuality!.Fact.Fvg.Trigger.DecisiveTake)));
         Assert.NotEqual(RuleEvaluationResult.Passed, Result(terminal, M5Fixture.At(15)));
     }
 
@@ -245,8 +245,8 @@ public sealed class NasdaqHumanM1RealignmentTests
         Assert.Same(evidence, unique.Fact);
         Assert.Equal(direction, unique.Fact.SetupDirection);
         Assert.Equal(M5Fixture.At(14, 20), unique.Fact.RealignmentEffectiveAtUtc);
-        Assert.Equal(original.ApprovedQuality.Candidate.Selection.Fact.Event.EffectiveAtUtc,
-            unique.Fact.Pullback.ApprovedQuality.Candidate.Selection.Fact.Event.EffectiveAtUtc);
+        Assert.Equal(original.ApprovedQuality!.Candidate.Selection.Fact.Event.EffectiveAtUtc,
+            unique.Fact.Pullback.ApprovedQuality!.Candidate.Selection.Fact.Event.EffectiveAtUtc);
         Assert.IsType<NasdaqHumanM1RealignmentSelection.Missing>(
             Selector.Select(Frame(direction, M5Fixture.At(14, 30)).Context, frame.Fact));
     }
@@ -341,7 +341,7 @@ public sealed class NasdaqHumanM1RealignmentTests
         var terminal = Frame(NasdaqHumanH4PermittedDirection.Buy, M5Fixture.At(15),
             Realignment(pullback), invalid,
             new NasdaqHumanRelevantLiquidityTakeObservation(invalid, invalid.ObservedAtUtc,
-                "terminal event", pullback.Selection.Fact.ApprovedQuality.Fact.Fvg.Trigger.DecisiveTake));
+                "terminal event", pullback.Selection.Fact.ApprovedQuality!.Fact.Fvg.Trigger.DecisiveTake));
         Assert.Contains(terminal.Context.PriorObservations.SelectMany(o => o.RuleFacts).Select(f => f.Fact)
             .OfType<NasdaqLiquidityTakeRuleFact>(), f => f.IsSessionInvalidated);
         Assert.IsType<NasdaqHumanM1RealignmentSelection.Missing>(Selector.Select(terminal.Context, terminal.Fact));

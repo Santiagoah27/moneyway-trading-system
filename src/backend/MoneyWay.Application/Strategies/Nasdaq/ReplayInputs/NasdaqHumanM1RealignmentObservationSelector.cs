@@ -25,7 +25,7 @@ public sealed class NasdaqHumanM1RealignmentObservationSelector
             || latest.RuleFacts.Where(f => f.RuleId.Value == "NQ-M1-001").Select(f => f.Fact)
                 .OfType<NasdaqHumanM1CorrectiveRetracementRuleFact>().SingleOrDefault() is not { } currentFact
             || !SamePullback(currentFact, pullback)
-            || new NasdaqHumanM1CorrectiveRetracementObservationSelector().Select(context, pullback.ApprovedQuality)
+            || new NasdaqHumanM1CorrectiveRetracementObservationSelector().Select(context, pullback.Trigger)
                 is not NasdaqHumanM1CorrectiveRetracementSelection.Unique currentSelection
             || !currentSelection.Fact.SameFact(selected))
             return new NasdaqHumanM1RealignmentSelection.Missing([]);
@@ -60,7 +60,8 @@ public sealed class NasdaqHumanM1RealignmentObservationSelector
 
     private static bool SamePullback(NasdaqHumanM1CorrectiveRetracementRuleFact one,
         NasdaqHumanM1CorrectiveRetracementRuleFact other) =>
-        one.ApprovedQuality.Candidate.Selection.Fact.SameFact(other.ApprovedQuality.Candidate.Selection.Fact)
-        && one.ApprovedQuality.Selection.Fact.Fact.SameFact(other.ApprovedQuality.Selection.Fact.Fact)
+        one.Trigger.Selection.Fact.SameFact(other.Trigger.Selection.Fact)
+        && (one.ApprovedQuality is null ? other.ApprovedQuality is null : other.ApprovedQuality is not null
+            && one.ApprovedQuality.Selection.Fact.Fact.SameFact(other.ApprovedQuality.Selection.Fact.Fact))
         && one.Selection.Fact.SameFact(other.Selection.Fact);
 }

@@ -61,7 +61,7 @@ public sealed class MoneyWayNasdaqHumanM5FvgEvaluatorTests
         Assert.Single(registry, e => e.RuleId.Value == "NQ-FVG-002");
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), registry,
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll()).Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 13, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal((32, 11, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
         Assert.DoesNotContain(report.Rules, r => r.IsRequired && r.CapabilityStatus != ReplayRuleEvaluationCapabilityStatus.Implemented);
         var run = Run(Inputs(false, Fvg(), Quality(Fvg())));
         Assert.Equal(RuleEvaluationResult.Waiting, Result(At(run, 10), "NQ-FVG-001"));
@@ -141,7 +141,7 @@ public sealed class MoneyWayNasdaqHumanM5FvgEvaluatorTests
         Assert.Same(first, Review(at20).Candidate.Selection.Fact);
         Assert.Equal(NasdaqHumanM5FvgQualityDecision.Rejected, Review(at20).Selection.Fact.Fact.Decision);
         Assert.NotNull(at20.LifecycleProgression!.ActiveInstance);
-        Assert.False(at25.WorkflowProgression!.RuleEligibility.Single(e => e.RuleId.Value == "NQ-M1-001").IsEligible);
+        Assert.False(at25.WorkflowProgression!.RuleEligibility.Single(e => e.RuleId.Value == "NQ-M1-001").EstablishesProgression);
         Assert.Same(later, Candidate(at25).Selection.Fact);
         Assert.Equal(RuleEvaluationResult.Passed, Result(at30, "NQ-FVG-002"));
         Assert.Same(later, Review(at30).Candidate.Selection.Fact);
@@ -163,7 +163,7 @@ public sealed class MoneyWayNasdaqHumanM5FvgEvaluatorTests
         Assert.Same(first, Candidate(At(run, 25)).Selection.Fact);
         Assert.Equal(RuleEvaluationResult.HumanValidationRequired, Result(At(run, 25), "NQ-FVG-002"));
         Assert.Equal(RuleEvaluationResult.HumanValidationRequired, Result(At(run, 30), "NQ-FVG-002"));
-        Assert.False(At(run, 30).WorkflowProgression!.RuleEligibility.Single(e => e.RuleId.Value == "NQ-M1-001").IsEligible);
+        Assert.False(At(run, 30).WorkflowProgression!.RuleEligibility.Single(e => e.RuleId.Value == "NQ-M1-001").EstablishesProgression);
     }
 
     [Fact]
@@ -175,7 +175,7 @@ public sealed class MoneyWayNasdaqHumanM5FvgEvaluatorTests
         Assert.Equal(RuleEvaluationResult.Waiting, Result(At(run, 20), "NQ-FVG-002"));
         Assert.Equal(RuleEvaluationResult.Passed, Result(At(run, 30), "NQ-FVG-002"));
         Assert.Equal(RuleEvaluationResult.HumanValidationRequired, Result(At(run, 35), "NQ-FVG-002"));
-        Assert.False(At(run, 40).WorkflowProgression!.RuleEligibility.Single(e => e.RuleId.Value == "NQ-M1-001").IsEligible);
+        Assert.False(At(run, 40).WorkflowProgression!.RuleEligibility.Single(e => e.RuleId.Value == "NQ-M1-001").EstablishesProgression);
         Assert.Same(later, Review(At(run, 30)).Candidate.Selection.Fact);
     }
 

@@ -118,7 +118,7 @@ public sealed class NasdaqHumanStructuralStopLossTests
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), evaluators,
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 13, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount,
+        Assert.Equal((32, 11, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount,
             report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
         Assert.DoesNotContain(report.Rules, r => r.IsRequired && r.CapabilityStatus != ReplayRuleEvaluationCapabilityStatus.Implemented);
     }
@@ -163,7 +163,7 @@ public sealed class NasdaqHumanStructuralStopLossTests
         Assert.Equal(Evaluation(baseline, M5Fixture.At(15)), Evaluation(expanded, M5Fixture.At(15)));
         Assert.NotEqual(RuleEvaluationResult.Passed, Evaluation(expanded, M5Fixture.At(16)));
         var invalid = M5Fixture.Take(true, effective: M5Fixture.At(14, 30), observed: M5Fixture.At(14, 30));
-        var initiating = setup.Fact.Realignment.Pullback.Selection.Fact.ApprovedQuality.Fact.Fvg.Trigger.DecisiveTake;
+        var initiating = setup.Fact.Realignment.Pullback.Selection.Fact.ApprovedQuality!.Fact.Fvg.Trigger.DecisiveTake;
         var terminal = Run(Inputs(NasdaqHumanH4PermittedDirection.Buy, setup.Realignment, stop, invalid,
             new NasdaqHumanRelevantLiquidityTakeObservation(invalid, invalid.ObservedAtUtc,
                 "terminal:event", initiating)));
@@ -273,7 +273,7 @@ public sealed class NasdaqHumanStructuralStopLossTests
         Assert.IsType<NasdaqHumanStructuralStopLossSelection.Missing>(Selector.Select(
             Frame(NasdaqHumanH4PermittedDirection.Buy, M5Fixture.At(16), setup.Realignment, stop), setup.Fact));
         var invalid = M5Fixture.Take(true, effective: M5Fixture.At(14, 30), observed: M5Fixture.At(14, 30));
-        var initiating = setup.Fact.Realignment.Pullback.Selection.Fact.ApprovedQuality.Fact.Fvg.Trigger.DecisiveTake;
+        var initiating = setup.Fact.Realignment.Pullback.Selection.Fact.ApprovedQuality!.Fact.Fvg.Trigger.DecisiveTake;
         var terminal = Frame(NasdaqHumanH4PermittedDirection.Buy, M5Fixture.At(15), setup.Realignment, stop,
             invalid, new NasdaqHumanRelevantLiquidityTakeObservation(invalid, invalid.ObservedAtUtc,
                 "terminal:event", initiating));

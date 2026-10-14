@@ -74,7 +74,7 @@ public sealed class NasdaqHumanM1CorrectiveRetracementTests
         Assert.Equal(direction, unique.Fact.SetupDirection);
         Assert.Equal(M5Fixture.At(14, 20), unique.Fact.PullbackEffectiveAtUtc);
         Assert.Equal(M5Fixture.At(14, 20), unique.Fact.ObservedAtUtc);
-        Assert.Same(quality.Fact.Fvg, unique.Fact.ApprovedQuality.Fact.Fvg);
+        Assert.Same(quality.Fact.Fvg, unique.Fact.ApprovedQuality!.Fact.Fvg);
         Assert.IsType<NasdaqHumanM1CorrectiveRetracementSelection.Missing>(Selector.Select(baseFrame.Context, baseFrame.Fact));
     }
 
@@ -88,7 +88,7 @@ public sealed class NasdaqHumanM1CorrectiveRetracementTests
             M5Fixture.At(14, 20), "quality:same-close");
         var same = Pullback(approvedAtClose, 20, 20, "same", 15, 20);
         Assert.Equal(M5Fixture.At(14, 20), same.PullbackEffectiveAtUtc);
-        Assert.Equal(same.ApprovedQuality.EffectiveAtUtc, same.PullbackEffectiveAtUtc);
+        Assert.Equal(same.ApprovedQuality!.EffectiveAtUtc, same.PullbackEffectiveAtUtc);
         Assert.True(same.Event.SourceCandles[0].CloseTimeUtc < same.PullbackEffectiveAtUtc);
         Assert.Throws<ArgumentException>(() => Pullback(quality, 5, 20));
     }

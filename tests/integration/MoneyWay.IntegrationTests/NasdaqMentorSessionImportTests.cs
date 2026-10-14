@@ -30,6 +30,36 @@ public sealed class NasdaqMentorSessionImportTests : IDisposable
     }
 
     [Fact]
+    public void TriggerBoundM1WithoutFvgReachesCanonicalFactsAndRetainsExplicitAbsence()
+    {
+        var input = Input(); var take = M5Fixture.Take(false);
+        var source = M5Fixture.Five(M5Fixture.At(14));
+        var trigger = new NasdaqHumanM5TriggerObservation(take, new NasdaqHumanM5TriggerEvent.StructuralChange(
+            M5Fixture.Five(M5Fixture.At(14, 10)), NasdaqHumanH4PermittedDirection.Buy, [source], [source], 100),
+            M5Fixture.At(14, 10), "synthetic:trigger");
+        var minute = M5Fixture.Series().Single(s => s.Timeframe == M5Fixture.Minute).Candles.Single(c => c.CloseTimeUtc == M5Fixture.At(14, 20));
+        var pullback = new NasdaqHumanM1CorrectiveRetracementObservation(trigger, new([minute]), M5Fixture.At(14, 20), "synthetic:pullback-without-FVG");
+        var records = M5Fixture.Inputs(NasdaqHumanH4PermittedDirection.Buy, take).Concat([trigger, pullback])
+            .Select((o, i) => NasdaqMentorSessionEvidenceRecord.FromObservation($"without-FVG:{i}", o)).ToList();
+        records.Add(new("without-FVG:realignment", M5Fixture.At(14, 20), (context, _) =>
+        {
+            var fact = context.PriorObservations.LastOrDefault()?.RuleFacts.Select(f => f.Fact)
+                .OfType<NasdaqHumanM1CorrectiveRetracementRuleFact>().SingleOrDefault();
+            return fact is null ? null : new NasdaqHumanM1RealignmentObservation(fact,
+                new(minute, [minute], 99, NasdaqHumanH4PermittedDirection.Buy), M5Fixture.At(14, 20), "synthetic:realignment", true);
+        }));
+        var report = new RunLocalNasdaqMentorSessionUseCase().Execute(new(input.SessionId, input.Session, input.CsvFiles, records));
+        Assert.Empty(report.InputDiagnostics);
+        Assert.Contains(report.Frames, f => f.Strategy.RuleFacts.Any(r => r.RuleId.Value == "NQ-M1-003"));
+        var fact = Assert.IsType<NasdaqHumanM1CorrectiveRetracementRuleFact>(report.Frames.SelectMany(f => f.Strategy.RuleFacts).First(f => f.RuleId.Value == "NQ-M1-001").Fact);
+        Assert.False(fact.HasFvgConfirmation); Assert.Null(fact.ApprovedQuality);
+        Assert.DoesNotContain(report.Frames.SelectMany(f => f.Inputs), o => o is NasdaqHumanM5FvgObservation or NasdaqHumanM5FvgQualityObservation);
+        var json = NasdaqMentorSessionReportJson.Serialize(report);
+        Assert.Contains("\"HasFvgConfirmation\":false", json);
+        Assert.Contains("synthetic:pullback-without-FVG", json);
+    }
+
+    [Fact]
     public void SessionTakeWithoutStructuralEvidenceActivatesSetupThroughFeature29()
     {
         var input = Input();

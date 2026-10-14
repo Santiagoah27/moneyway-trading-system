@@ -46,7 +46,9 @@ public sealed class NasdaqHumanM1RealignmentObservation : IStrategyReplayInputOb
     public MarketSymbol Symbol => Session.Symbol;
 
     internal bool SameFact(NasdaqHumanM1RealignmentObservation other) =>
-        Pullback.ApprovedQuality.Selection.Fact.Fact.SameFact(other.Pullback.ApprovedQuality.Selection.Fact.Fact)
+        Pullback.Trigger.Selection.Fact.SameFact(other.Pullback.Trigger.Selection.Fact)
+        && (Pullback.ApprovedQuality is null ? other.Pullback.ApprovedQuality is null : other.Pullback.ApprovedQuality is not null
+            && Pullback.ApprovedQuality.Selection.Fact.Fact.SameFact(other.Pullback.ApprovedQuality.Selection.Fact.Fact))
         && Pullback.Selection.Fact.SameFact(other.Pullback.Selection.Fact)
         && SetupDirection == other.SetupDirection && Event.SameFact(other.Event)
         && PullbackBeforeRealignmentAtSameClose == other.PullbackBeforeRealignmentAtSameClose;

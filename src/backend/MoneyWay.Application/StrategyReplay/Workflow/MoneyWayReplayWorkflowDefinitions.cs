@@ -20,7 +20,7 @@ public static class MoneyWayReplayWorkflowDefinitions
                     Requires("NQ-M5-001", "NQ-LIQ-003"),
                     Requires("NQ-FVG-001", "NQ-M5-001"),
                     new(new RuleId("NQ-FVG-002"), [new RuleId("NQ-FVG-001")], requiresLatestPrerequisitePass: true),
-                    new(new RuleId("NQ-M1-001"), [new RuleId("NQ-FVG-002")], requiresLatestPrerequisitePass: true),
+                    new(new RuleId("NQ-M1-001"), [new RuleId("NQ-M5-001")], requiresLatestPrerequisitePass: true),
                     Requires("NQ-M1-002", "NQ-M1-001"),
                     Requires("NQ-M1-003", "NQ-M1-002"),
                     Requires("NQ-SL-001", "NQ-M1-003"),

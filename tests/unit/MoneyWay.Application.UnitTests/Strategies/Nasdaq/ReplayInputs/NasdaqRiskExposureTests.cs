@@ -131,7 +131,7 @@ public sealed class NasdaqRiskExposureTests
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(),
             MoneyWayReplayRuleEvaluators.GetAll(), MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 13, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
+        Assert.Equal((32, 11, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
             report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
         Assert.Single(MoneyWayReplayRuleEvaluators.GetAll(), e => e.RuleId.Value == "NQ-RISK-001");
         Assert.Single(MoneyWayReplayRuleEvaluators.GetAll(), e => e.RuleId.Value == "NQ-TP-001");
@@ -260,7 +260,7 @@ public sealed class NasdaqRiskExposureTests
         Assert.IsType<NasdaqRiskExposureSelection.Missing>(Selector.Select(
             Frame(setup.Entry.Direction, M5Fixture.At(16), setup.Realignment, setup.Stop, risk), setup.Entry, setup.Sl));
         var invalid = M5Fixture.Take(true, effective: M5Fixture.At(14, 30), observed: M5Fixture.At(14, 30));
-        var initiating = setup.Entry.Realignment.Pullback.Selection.Fact.ApprovedQuality.Fact.Fvg.Trigger.DecisiveTake;
+        var initiating = setup.Entry.Realignment.Pullback.Selection.Fact.ApprovedQuality!.Fact.Fvg.Trigger.DecisiveTake;
         var terminal = Frame(setup.Entry.Direction, M5Fixture.At(15, 5), setup.Realignment, setup.Stop, risk,
             invalid, new NasdaqHumanRelevantLiquidityTakeObservation(invalid, invalid.ObservedAtUtc, "terminal:event", initiating));
         Assert.IsType<NasdaqRiskExposureSelection.Missing>(Selector.Select(terminal, setup.Entry, setup.Sl));
@@ -421,7 +421,7 @@ public sealed class NasdaqRiskExposureTests
         Assert.Equal((15, 1, false), (before.ImplementedCount, before.RequiredEvaluatorGapCount, before.HasFullRequiredEvaluatorRegistration));
         Assert.Equal((16, 0, true), (after.ImplementedCount, after.RequiredEvaluatorGapCount, after.HasFullRequiredEvaluatorRegistration));
         Assert.Equal(32, after.TotalRuleCount);
-        Assert.Equal(13, after.RequiredRuleCount);
+        Assert.Equal(11, after.RequiredRuleCount);
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented,
             after.Rules.Single(r => r.RuleId.Value == "NQ-TP-001").CapabilityStatus);
         Assert.All(after.Rules.Where(r => r.RuleId != registered.RuleId), r =>
