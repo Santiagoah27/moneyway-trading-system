@@ -23,12 +23,14 @@ The cited original is [JacoggFX's mentor video](https://www.youtube.com/watch?v=
 | Original-video reference supplied by S1 | Tight paraphrase of the human-reviewed evidence | Scope |
 |---|---|---|
 | [06:40–06:55](https://www.youtube.com/watch?v=QcN8dE8ry6I&t=400s) | Taking a trade near the opening requires an already well-organized structure/context and clear prior corrective movement. | Context supporting early-session execution; no numerical detector |
-| [38:02–39:40](https://www.youtube.com/watch?v=QcN8dE8ry6I&t=2282s) | Scenario 1 cannot immediately sell while price remains at the lower part of the range; it must first retrace to the relevant zone during the session. In Scenario 2 price is already at the relevant H4 zone before opening; the opening liquidity sweep and subsequent rejection/break remain necessary. | Two distinct Wickfill contexts; Scenario 2 is the confirmed contextual branch |
+| [38:02–39:40](https://www.youtube.com/watch?v=QcN8dE8ry6I&t=2282s) | Scenario 1 cannot immediately sell while price remains at the lower part of the range; it must first retrace to the relevant zone during the session. In Scenario 2 price is already at the relevant H4 zone before opening; the opening liquidity sweep and subsequent rejection/break remain necessary. | Historical S1 general-context attribution; not causal Replay #2 entry evidence. S3 below explicitly excludes 38:43–39:03 as entry-trigger or geometry evidence |
 | Replay #2 opening/execution observations in S1; separate video offsets not supplied | The mentor wanted the opening move above London High and said he would not enter without that sweep. After the sweep/rejection he used a Sell Stop on M30, executing approximately 08:32. M1 and a pre-entry FVG or M5 SC/IFVG were not used; M5 was reviewed later around 08:35 as confluence. | Historical session observations, not universal order or M30 mechanics |
 
 These are attributed human-reviewed paraphrases, not a newly extracted transcript. The earlier assistant access check retrieved video metadata but no usable captions/audiovisual content; it did **not** independently verify the full video. S1 is the current explicit human confirmation. This record makes no invented quotation, missing video offset or claim of independent audiovisual inspection.
 
 Source S2 is the user's explicit clarification **"MoneyWay Trading System - Clarify Wickfill Scenario 2 Opening Sweep References"**, received 2026-10-14. Retained attachment identity: `e4171731-28e6-4016-916a-2c78df79ac13`; source text SHA256: `d82751292ffa97ec982787a140f37e742b6c968c82851800a416763a5f987ae1`. S2 confirms the current admissible endpoint set `{LondonHigh, LondonLow}`, with setup/session-specific human relevance selection. It supplies no new video quotation or autonomous selection algorithm. Section 2.1 records its explicit clarification of S1's reference scope; S1's historical Replay #2 observations remain intact.
+
+Source S3 is the user's authoritative human-source reconciliation **"MoneyWay Trading System - Close Wickfill Scenario 2 Post-Sweep Human Evidence Audit"**, received 2026-10-15. The reviewer personally checked the original mentor video. Retained attachment identity: `4482ca53-78dc-4ad0-a995-20816f5d9878`; source text SHA256: `4dc3157d74f88ae29e88edff2bd24271ab935c8a46608c2d43747bd1e9b2717f`. S3 supplies reviewed paraphrases and source-scope corrections, not a new verbatim transcript or an independent audiovisual audit by the assistant. It supersedes the post-sweep conclusions of the prior AI-assisted report (attachment `8db55eb2-3912-4214-9aca-f2576797f45b`); that report is not the final source of truth. Section 2.2 defines the accepted evidence and limits. No prices, exact placement coordinates or universal no-close rule from that report are adopted.
 
 ### Version lifecycle
 
@@ -82,6 +84,34 @@ The endpoint restriction composes with the existing reusable SessionLevel/NQ-LIQ
 
 The opening-sweep composition audit's reference-set specification blocker is resolved by S2. This note implements no composition, selection algorithm, evaluator, workflow, eligibility, order, Replay #2 binding or trading-window change. Post-sweep behavior and the other unresolved boundaries below remain separate.
 
+### 2.2 Post-sweep bearish turn: human-source reconciliation (2026-10-15, S3)
+
+S3 closes the human-source audit for the currently evidenced SELL Scenario 2 concept. It does not close the deterministic algorithm or final contextual eligibility contract. The source-supported sequence is:
+
+```text
+Reviewed pre-open Scenario 2 context
+-> human-selected London endpoint under section 2.1
+-> required canonical strict liquidity sweep
+-> human-recognized bearish turn / reversal
+-> consideration of a future SELL early-entry path
+```
+
+| Video reference reviewed by S3 | Authoritative evidence treatment | Classification / boundary |
+|---|---|---|
+| [08:18–08:27](https://www.youtube.com/watch?v=QcN8dE8ry6I&t=498s) | The mentor wants price to take/exceed the London highs, then turn bearish, and from there consider a SELL. The reviewer confirms that the historical trade subsequently follows this sequence. | `confirmed` strategy concept; recognition remains `human_validation_required`, deterministic geometry `unresolved` |
+| [06:11–06:28](https://www.youtube.com/watch?v=QcN8dE8ry6I&t=371s) | A response to a student's hypothetical trade without first taking liquidity; described as risky. It is not the causal evidence for Replay #2 Scenario 2 progression. | Inferring a required green first session candle from this passage is `rejected_ai_inference`; do not encode it |
+| [38:43–39:03](https://www.youtube.com/watch?v=QcN8dE8ry6I&t=2323s) | Later conversation after the historical trade had resolved around video 18:08; not authorized by S3 as causal entry evidence for Replay #2. | Inferring a required structural break, entry trigger or deterministic geometry from this passage is `rejected_ai_inference`; general strategy interpretation requires a separate future audit |
+
+Video offsets, including the approximate trade-resolution reference at 18:08, are source locations, not exact UTC market-event or historical assertion-availability timestamps. They cannot backfill replay. S3's treatment takes precedence over conflicting interpretations in the AI-assisted report and over using the later S1 context-discussion citation to define Replay #2's entry condition; the earlier attributions are retained as historical reasoning only within those limits.
+
+**Confirmed concept:** after the required London sweep, the currently evidenced SELL branch requires a bearish turn/reversal before considering entry. This is not an authorized mapping to CHoCH, a structural break, NQ-M5-001, M1 realignment, an exact pivot break or exact candle geometry. Earlier wording such as "rejection/break" must not be read as supplying any of those deterministic conditions. The sweep or the reviewed turn alone does not establish executable eligibility, an order or a fill.
+
+**Human validation:** recognition that the bearish turn/reversal has occurred remains `human_validation_required`. Autonomous recognition is `unresolved`: no swing algorithm, wick ratio, candle-body rule, close rule, momentum threshold, return-through-level or return-distance threshold, candle count, timer or penetration buffer is defined. Universal candle-close requirements and non-requirements remain `unresolved` unless independently specified; historical execution before a close does not establish a universal no-close rule.
+
+**Historical execution only:** M30 use and the pending SELL STOP in Replay #2 remain `confirmed`, `context_specific` facts. Neither is a universal Scenario 2 requirement. Universal M30 use, universal Sell Stop use and exact Sell Stop geometry/mechanics remain `unresolved`. No BUY-side equivalent is confirmed.
+
+Canonical NQ-LIQ-003 strict-take semantics and section 2.1's reference set remain unchanged, with no additional penetration threshold. Standard-path NQ-M5-001 retains closed-M5 confirmation and does not exactly represent this human-reviewed bearish turn; do not reuse or modify it for this purpose. This clarification changes documentation only: no new observation, rule, evaluator, metadata, workflow, lifecycle, order logic, TIME rule, Forex behavior or Replay #2 binding is introduced.
+
 ### 3. Replay #2 interpretation
 
 | Session fact from S1 | Classification | Boundary |
@@ -114,7 +144,9 @@ Existing time-window, future-data, terminal-state and risk/execution protections
 | Reviewed pre-open zone/context membership and completed macro corrective movement | `human_validation_required` |
 | Deterministic “already at H4 zone” geometry, tolerance and minimum Wickfill depth | `unresolved` |
 | Exact macro liquidity algorithm and automatic branch selection | `unresolved` |
-| Exact post-sweep rejection/break condition and final contextual eligibility predicate | `unresolved`; human-reviewed behavior may be retained without inventing an algorithm |
+| Required post-sweep bearish turn/reversal before considering SELL | `confirmed` concept under S3; recognition `human_validation_required` |
+| Autonomous post-sweep reversal geometry, exact structural reference and final contextual eligibility predicate | `unresolved`; no CHoCH/M5/M1 or pivot-break mapping is authorized |
+| Universal post-sweep candle-close requirements/non-requirements | `unresolved` unless independently specified; execution timing alone does not define them |
 | Sell Stop offset, distance from a candle/open/consolidation and executable order mechanics | `unresolved` |
 | Autonomous M30 pattern detector and universal M30 candle requirements | `unresolved`; historical M30 use does not establish such requirements |
 | Universal order type and BUY-side symmetry | `unresolved`; neither is generalized from this SELL example |

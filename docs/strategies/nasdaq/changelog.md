@@ -1,5 +1,13 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-10-15 — Wickfill Scenario 2 post-sweep human-source reconciliation
+
+- Recorded source S3, the reviewer's personal check of the original video, in [ADR 0026 section 2.2](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#22-post-sweep-bearish-turn-human-source-reconciliation-2026-10-15-s3).
+- Confirmed the SELL concept from video 08:18–08:27: required London sweep -> bearish turn/reversal -> consideration of entry. Recognition is human-validation-required; autonomous geometry and final eligibility remain unresolved.
+- Superseded the non-authoritative AI report: 06:11–06:28 does not establish a green-first-candle rule; 38:43–39:03 is not causal Replay #2 entry/structural-break evidence after trade resolution around video 18:08.
+- Kept universal close semantics, M30/Sell Stop requirements, Sell Stop mechanics and BUY equivalence unresolved. Preserved NQ-LIQ-003 strict arithmetic and NQ-M5-001's separate closed-M5 meaning.
+- Documentation only: no runtime, tests, rules, metadata, workflow, TIME, Forex or Replay #2 binding changes.
+
 ## 2026-10-14 — Wickfill Scenario 2 London opening-sweep references
 
 - Recorded explicit human source S2 and a scoped supersession note in [ADR 0026 section 2.1](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#21-opening-sweep-reference-clarification-2026-10-14-s2).
