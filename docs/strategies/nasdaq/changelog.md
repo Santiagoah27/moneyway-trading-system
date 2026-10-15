@@ -1,5 +1,12 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-10-14 — Wickfill Scenario 2 London opening-sweep references
+
+- Recorded explicit human source S2 and a scoped supersession note in [ADR 0026 section 2.1](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#21-opening-sweep-reference-clarification-2026-10-14-s2).
+- Confirmed the current opening-sweep endpoint set `{LondonHigh, LondonLow}`, with setup/session-specific human relevance selection; Replay #2 remains the historical LondonHigh case.
+- Kept autonomous selection, expansion to Asia/session/structural alternatives and unconfirmed BUY semantics unresolved. No new directional mapping, threshold or fallback is defined.
+- Resolved the composition audit's reference-set specification blocker. Documentation only: reusable NQ-LIQ-001/002/003 runtime contracts, metadata, workflow, trading-window rules and Replay #2 inputs remain unchanged.
+
 ## 2026-10-14 — Wickfill Scenario 2 applicability
 
 - Added [ADR 0026](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md) with attributed explicit human review of the original session, source offsets and retained limits.

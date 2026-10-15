@@ -28,6 +28,8 @@ The cited original is [JacoggFX's mentor video](https://www.youtube.com/watch?v=
 
 These are attributed human-reviewed paraphrases, not a newly extracted transcript. The earlier assistant access check retrieved video metadata but no usable captions/audiovisual content; it did **not** independently verify the full video. S1 is the current explicit human confirmation. This record makes no invented quotation, missing video offset or claim of independent audiovisual inspection.
 
+Source S2 is the user's explicit clarification **"MoneyWay Trading System - Clarify Wickfill Scenario 2 Opening Sweep References"**, received 2026-10-14. Retained attachment identity: `e4171731-28e6-4016-916a-2c78df79ac13`; source text SHA256: `d82751292ffa97ec982787a140f37e742b6c968c82851800a416763a5f987ae1`. S2 confirms the current admissible endpoint set `{LondonHigh, LondonLow}`, with setup/session-specific human relevance selection. It supplies no new video quotation or autonomous selection algorithm. Section 2.1 records its explicit clarification of S1's reference scope; S1's historical Replay #2 observations remain intact.
+
 ### Version lifecycle
 
 The verified baseline is `main` at `9f42fbc8431d6deb6acf528767c603c5106e471c`. The registered version is `nasdaq-0.1.0-draft`; documentation labels it draft, and the definition has no ACTIVE lifecycle marker or promotion mechanism. No ACTIVE version is changed. This is a traceable specification correction to that audited draft, not candidate activation. Any future executable branch must follow the project's versioning/approval rules; this decision does not select its executable version or promote it.
@@ -53,6 +55,32 @@ For the supported SELL branch:
 Macro context and the required opening sweep are distinct. “The market already spoke” must not be interpreted as pre-satisfying the opening sweep. A prior numerical crossing in a different feed or episode is not automatically this source-selected opening event. No penetration threshold is introduced.
 
 The branch concept is `confirmed`; its applicability is `context_specific`. Human selection of the H4 zone, completion of the corrective move and sufficient post-sweep behavior remain `human_validation_required`. The sweep alone is not an automatic order, fill or fully specified eligibility algorithm.
+
+### 2.1 Opening-sweep reference clarification (2026-10-14, S2)
+
+**Current normative scope.** The required Scenario 2 opening sweep uses a human-reviewed relevant London-session endpoint:
+
+```text
+Scenario 2 pre-open context
+-> human selection of LondonHigh OR LondonLow for this setup/session
+-> required opening sweep of that exact selected endpoint
+-> future reviewed post-sweep behavior
+```
+
+| Assertion | State | Boundary |
+|---|---|---|
+| Required opening-sweep reference belongs to `{LondonHigh, LondonLow}` | `confirmed` | Current closed admissible set; this is not an arbitrary SessionLevel or Structural reference |
+| The exact selected endpoint must be swept | `confirmed` | Existing strict take arithmetic: High requires `ObservedPrice > ReferencePrice`; Low requires `ObservedPrice < ReferencePrice`; equality is insufficient and no penetration threshold/tolerance is added |
+| Which London endpoint is relevant for the setup/session | `human_validation_required` | Retain the human's exact selection and provenance; no automatic winner |
+| Autonomous endpoint-selection algorithm | `unresolved` | No selection or side-selection detector is defined |
+| Expansion to AsiaHigh, AsiaLow or structural/session alternatives | `unresolved` | Not admitted by the current definition; future expansion is candidate research/evidence only |
+| BUY-specific branch semantics or universal branch-direction/endpoint mapping | `unresolved` where not independently confirmed | The existing supported branch remains SELL-only; the endpoint set does not establish BUY symmetry |
+
+This clarification supersedes any generic reading of section 2 item 3 as "Scenario 2 always uses LondonHigh", and any reading of "trade-relevant opening sweep" as admitting any canonical High/Low reference. Replay #2 retains its source-selected `LondonHigh`; that historical endpoint does not define the generic set. London commonly breaking Asia liquidity is a human research observation, not authorization for Asia or structural fallback.
+
+The endpoint restriction composes with the existing reusable SessionLevel/NQ-LIQ-003 contracts. A future Scenario 2 composition may accept a canonical take only when its reference is `NasdaqLiquidityTakeReference.SessionLevel` with `Endpoint` equal to `LondonHigh` or `LondonLow`, and all other applicable canonical requirements hold. Membership in that set is necessary, not sufficient for a usable take or an entry. This clarification adds no Scenario 2 directional mapping; existing canonical H4 alignment and strict arithmetic remain unchanged. It does not require NQ-LIQ-002 for this SessionLevel path or modify NQ-LIQ-001/002/003.
+
+The opening-sweep composition audit's reference-set specification blocker is resolved by S2. This note implements no composition, selection algorithm, evaluator, workflow, eligibility, order, Replay #2 binding or trading-window change. Post-sweep behavior and the other unresolved boundaries below remain separate.
 
 ### 3. Replay #2 interpretation
 

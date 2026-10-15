@@ -729,10 +729,16 @@ These structural and context relationships are confirmed strategy concepts, not 
 
 The trade-relevant opening liquidity sweep is still required. In Replay #2 the relevant London High was marked before opening, but that required opening sweep was not already satisfied; it occurred approximately 08:30–08:31. Pre-established macro context does not waive the opening event. Without the sweep there is no entry for this setup. With the reviewed subsequent behavior, this branch can support earlier execution without rebuilding the complete standard post-open M5/FVG/M1 chain.
 
+**Opening-sweep reference clarification (2026-10-14).** The explicit human source S2 in [ADR 0026 section 2.1](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#21-opening-sweep-reference-clarification-2026-10-14-s2) resolves the generic reference-set ambiguity. The current confirmed admissible set is exactly `{LondonHigh, LondonLow}`. The sequence is: Scenario 2 pre-open context -> human selection of the relevant London endpoint for this setup/session -> required opening sweep of that selected endpoint -> future reviewed post-sweep behavior. Replay #2's `LondonHigh` remains historical evidence; it does not mean Scenario 2 always uses LondonHigh.
+
+The endpoint set and required sweep are `confirmed`; selection of which endpoint is relevant is `human_validation_required`. Autonomous endpoint selection, expansion to Asia/session/structural alternatives and BUY-specific branch semantics where not independently confirmed remain `unresolved`. AsiaHigh, AsiaLow and arbitrary Structural or other SessionLevel references are not currently admissible for this branch. Future expansion is candidate research/evidence, with no Asia or structural fallback authorized here.
+
+Existing SessionLevel/NQ-LIQ-003 contracts remain reusable: High requires strict `ObservedPrice > ReferencePrice`, Low strict `ObservedPrice < ReferencePrice`; equality is invalid and no threshold/tolerance is introduced. A future composition must retain a canonical take whose SessionLevel endpoint belongs to the confirmed set, together with all other applicable canonical requirements. Endpoint membership alone does not establish direction, Passed or entry eligibility. No new universal SELL/BUY-to-endpoint mapping is defined; existing canonical H4 alignment remains unchanged and BUY symmetry is not established. This is a documentation clarification only, with no runtime, TIME-rule, workflow or Replay #2 binding change.
+
 | Aspect | Standard path | Wickfill Scenario 2, supported SELL scope |
 |---|---|---|
 | Context/corrective movement | Standard contextual requirements and post-take confirmation sequence remain | Higher-timeframe Wickfill context and corrective move into the relevant H4 zone established before opening |
-| Opening sweep | Required valid post-08:30 take | Required trade-relevant opening sweep; not pre-satisfied by macro context |
+| Opening sweep | Required valid post-08:30 take | Required opening sweep of the human-selected LondonHigh OR LondonLow; not pre-satisfied by macro context |
 | M5 | Normal StructuralChange OR IFVG formation/confirmation required | No explicit pre-entry M5 trigger used in Replay #2; later close was confluence |
 | Continuation FVG | Optional supporting confirmation | No pre-entry FVG used in Replay #2; neither universally required nor forbidden |
 | M1 | Corrective retracement and realignment required | M1 not used in Replay #2; standard M1 ancestry cannot explain this execution |
