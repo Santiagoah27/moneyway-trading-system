@@ -39,7 +39,7 @@ public sealed class MoneyWayNasdaqSessionLiquidityEvaluatorScenarioTests
         Assert.Equal(0, report.ReadyCount);
         Assert.Equal(report.FrameCount, report.DataUnavailableCount);
         Assert.Equal(report.FrameCount, report.IncompleteRequiredCoverageCount);
-        Assert.Equal(10, report.MissingRequiredRules.Count);
+        Assert.Equal(11, report.MissingRequiredRules.Count);
         Assert.DoesNotContain(report.MissingRequiredRules, item => item.RuleId == liquidityRuleId);
         Assert.Contains(report.MissingRequiredRules, item => item.RuleId == otherMissingRuleId);
 
@@ -54,12 +54,12 @@ public sealed class MoneyWayNasdaqSessionLiquidityEvaluatorScenarioTests
             Assert.Equal(StrategyVerdict.DataUnavailable, outcome.Verdict);
             Assert.DoesNotContain(liquidityRuleId, outcome.MissingRequiredRuleIds);
             Assert.Contains(otherMissingRuleId, outcome.MissingRequiredRuleIds);
-            Assert.Equal(10, outcome.MissingRequiredRuleIds.Count);
+            Assert.Equal(11, outcome.MissingRequiredRuleIds.Count);
         }
     }
 
     private static GenerateCanonicalMultiTimeframeBacktestUseCase Facade() =>
-        new(new(new(new RunMultiTimeframeReplayUseCase(), new(), new(MoneyWayReplayRuleEvaluators.GetAll())), new()),
+        new(new(new(new RunMultiTimeframeReplayUseCase(), new(), new(MoneyWayReplayRuleEvaluators.GetAll().Where(e => e.RuleId.Value == "NQ-LIQ-001"))), new()),
             new GenerateMultiTimeframeStrategyBacktestDiagnosticsReportUseCase());
 
     private static Candle[] CompleteSessionCandles()

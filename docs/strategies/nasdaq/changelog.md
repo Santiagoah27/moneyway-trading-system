@@ -1,5 +1,12 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-10-15 - Human-assisted Scenario 2 reversal evaluation
+
+- Added NQ-WF2-001 to nasdaq-0.1.0-draft: Required, HumanValidationRequired, sequence 90; exact canonical registration derives Implemented human-assisted capability without increasing required evaluator gaps.
+- Resolve the canonical initial-take owner and lifecycle Start, then positive setup-specific applicability. Standard returns NotApplicable; Scenario 2 requires compatible context, London sweep and reviewed bearish reversal.
+- Preserve original reversal effective time, authentic availability, alternatives and provenance. Extend the existing terminal take gate to this RuleId and reuse canonical TIME/lifecycle guards.
+- No Standard prerequisite changes, M5/M1 bypass, entry eligibility, BUY behavior, autonomous reversal geometry, order logic, TIME changes or Replay #2 binding. Full Scenario 2 workflow remains unimplemented.
+
 ## 2026-10-15 — Wickfill Scenario 2 post-sweep human-source reconciliation
 
 - Recorded source S3, the reviewer's personal check of the original video, in [ADR 0026 section 2.2](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#22-post-sweep-bearish-turn-human-source-reconciliation-2026-10-15-s3).

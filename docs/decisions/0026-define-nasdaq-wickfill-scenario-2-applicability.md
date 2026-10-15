@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted for specification of a `confirmed`, `context_specific` SELL branch. Runtime support is not implemented or activated. This decision does not modify rule metadata, capabilities, workflow, evidence binders, execution or the registered strategy version.
+Accepted for specification of a `confirmed`, `context_specific` SELL branch. Full branch workflow and entry support remain unimplemented. The limited human-assisted rule implementation update below supersedes earlier statements that no Scenario 2 evaluator exists; the original specification-only decisions remain historical.
 
 ## Date
 
@@ -167,3 +167,16 @@ The [specification](../strategies/nasdaq/strategy-specification.md#97-wickfill-s
 This ADR supersedes universal strategy-scope readings of standard pre-entry descriptions in ADR 0025 and the Nasdaq workflow documents; it does not rewrite their historical decisions or generic replay infrastructure.
 
 The next recommended primitive is a small immutable **human-reviewed Wickfill Scenario 2 pre-open context observation and Missing/Unique/Conflict selector**. `NasdaqHumanWickfillScenario2ContextObservation` is a proposed identifier, not an implemented API. It should retain session/version/provider identity, SELL applicability, reviewed H4/zone and completed pre-open movement evidence, authentic effective/observed times and provenance. It must not detect geometry, synthesize opening-sweep evidence, select a branch automatically, emit entry eligibility or create an order. Its detailed contract requires its own audit before implementation; no implementation is authorized by this document alone.
+
+
+## Limited human-assisted reversal rule implementation (2026-10-15)
+
+The human-authorized implementation task adds `NQ-WF2-001` to the registered `nasdaq-0.1.0-draft`, sequence 90, stage `Wickfill Scenario 2`, `IsRequired = true`, definition status `HumanValidationRequired`. `WF2` identifies the separate Scenario 2 family; `001` is its first rule, placed after liquidity and before any future branch entry stage. This is a bounded human evidence evaluator in the audited draft, not an ACTIVE strategy promotion or activation of a full alternate execution workflow.
+
+Applicability belongs to the exact established initial-take setup and canonical lifecycle Start, not the preparation session or replay-local ordinal alone. Both paths require explicit human selection. Unique Standard returns `not_applicable` before requesting Scenario 2 context/sweep/reversal. Missing/conflicting applicability requires human validation after a setup exists; without an established predecessor the evaluator waits. Scenario 2 SELL requires the existing pre-open context, exact canonical London opening-sweep composition and compatible Unique human reversal. Named missing data yields `data_unavailable`; reviewed conflicts or absent human evidence yield `human_validation_required`. Only existing terminal protections produce `failed`; no negative reversal predicate is introduced.
+
+Required aggregation already accepts Passed and NotApplicable as non-blocking results. NotApplicable establishes no workflow progression. Existing M5/M1 prerequisites remain unchanged, and no later rule consumes this new fact. Registration alone supplies neither entry eligibility nor full Scenario 2 progression. Existing Standard evaluators retain their contracts; setups lacking positive applicability now have an additional required human-review dependency.
+
+Preserve `ContextEffective < SweepEffective < ReversalEffective <= ReversalObserved <= AsOfUtc`. Applicability binding/availability are the maxima of authentic review times and canonical Start availability; there is no global ordering of applicability before pre-open context. The fact retains Unique applicability and reversal selections, deriving its effective time from the original reversal event even when canonical emission is later. No new replay boundaries are created. NQ-LIQ-003 arithmetic and ownership are reused; its terminal gate additionally covers this exact RuleId. Existing canonical TIME/lifecycle guards are reused without new cutoffs.
+
+Capability is derived as Implemented from exact evaluator registration and means human-assisted coverage only. Autonomous geometry, BUY symmetry, later eligibility, M30/order mechanics and Replay #2 binding remain outside this implementation.

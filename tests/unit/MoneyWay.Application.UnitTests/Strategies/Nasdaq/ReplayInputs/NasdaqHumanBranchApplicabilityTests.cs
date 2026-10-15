@@ -200,7 +200,7 @@ public sealed class NasdaqHumanBranchApplicabilityTests
     }
 
     [Fact]
-    public void AddingAndSelectingEvidenceCannotChangeCanonicalEvaluationsMetadataWorkflowOrLifecycle()
+    public void AddingAndSelectingEvidenceCannotChangeOtherCanonicalEvaluationsMetadataWorkflowOrLifecycle()
     {
         var f = Build(); var observation = Observation(f, NasdaqStrategyPath.WickfillScenario2);
         var metadata = JsonSerializer.Serialize(LiquidityFixture.Definition);
@@ -210,7 +210,13 @@ public sealed class NasdaqHumanBranchApplicabilityTests
         var context = Frame(f, At(14), observation); var history = JsonSerializer.Serialize(context.PriorObservations);
         selector.Select(context, f.Owner);
         var withEvidence = Run([.. f.Inputs, observation]);
-        Assert.Equal(JsonSerializer.Serialize(f.Run.StrategyObservations), JsonSerializer.Serialize(withEvidence.StrategyObservations));
+        foreach (var pair in f.Run.StrategyObservations.Zip(withEvidence.StrategyObservations))
+        {
+            Assert.Equal(pair.First.Evaluations.Where(e => e.RuleId.Value != "NQ-WF2-001"), pair.Second.Evaluations.Where(e => e.RuleId.Value != "NQ-WF2-001"));
+            Assert.Equal(JsonSerializer.Serialize(pair.First.RuleFacts), JsonSerializer.Serialize(pair.Second.RuleFacts));
+            Assert.Equal(JsonSerializer.Serialize(pair.First.WorkflowProgression), JsonSerializer.Serialize(pair.Second.WorkflowProgression));
+            Assert.Equal(JsonSerializer.Serialize(pair.First.LifecycleProgression), JsonSerializer.Serialize(pair.Second.LifecycleProgression));
+        }
         Assert.Equal(history, JsonSerializer.Serialize(context.PriorObservations));
         Assert.Equal(metadata, JsonSerializer.Serialize(LiquidityFixture.Definition));
         Assert.Equal(workflow, JsonSerializer.Serialize(MoneyWayReplayWorkflowDefinitions.GetAll()));

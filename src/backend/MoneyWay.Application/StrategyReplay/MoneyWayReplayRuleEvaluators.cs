@@ -17,6 +17,7 @@ public static class MoneyWayReplayRuleEvaluators
             new MoneyWayNasdaqTradingWindowStartEvaluator(),
             new MoneyWayNasdaqTradingWindowEndEvaluator(),
             new MoneyWayNasdaqHumanLiquidityTakeEvaluator(),
+            new MoneyWayNasdaqHumanWickfillScenario2ReversalEvaluator(),
             new MoneyWayNasdaqHumanM5TriggerEvaluator(),
             new MoneyWayNasdaqHumanM5FvgEvaluator(),
             new MoneyWayNasdaqHumanM5FvgQualityEvaluator(),

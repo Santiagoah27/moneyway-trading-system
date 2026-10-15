@@ -18,5 +18,5 @@ public sealed record NasdaqLiquidityTakeRuleFact : IReplayRuleGateFact
         && (ruleId.Value.StartsWith("NQ-M5-", StringComparison.Ordinal)
             || ruleId.Value.StartsWith("NQ-FVG-", StringComparison.Ordinal)
             || ruleId.Value.StartsWith("NQ-M1-", StringComparison.Ordinal)
-            || ruleId.Value == "NQ-TP-001");
+            || ruleId.Value == "NQ-TP-001" || ruleId.Value == "NQ-WF2-001");
 }

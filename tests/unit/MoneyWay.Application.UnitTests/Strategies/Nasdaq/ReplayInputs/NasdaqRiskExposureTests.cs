@@ -131,7 +131,7 @@ public sealed class NasdaqRiskExposureTests
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(),
             MoneyWayReplayRuleEvaluators.GetAll(), MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 11, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
+        Assert.Equal((33, 12, 17, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
             report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
         Assert.Single(MoneyWayReplayRuleEvaluators.GetAll(), e => e.RuleId.Value == "NQ-RISK-001");
         Assert.Single(MoneyWayReplayRuleEvaluators.GetAll(), e => e.RuleId.Value == "NQ-TP-001");
@@ -418,10 +418,10 @@ public sealed class NasdaqRiskExposureTests
             .Find(registered.StrategyId, registered.StrategyVersion)!;
         var after = new StrategyReplayEvaluationCapabilityCatalog(definitions, evaluators, declarations)
             .Find(registered.StrategyId, registered.StrategyVersion)!;
-        Assert.Equal((15, 1, false), (before.ImplementedCount, before.RequiredEvaluatorGapCount, before.HasFullRequiredEvaluatorRegistration));
-        Assert.Equal((16, 0, true), (after.ImplementedCount, after.RequiredEvaluatorGapCount, after.HasFullRequiredEvaluatorRegistration));
-        Assert.Equal(32, after.TotalRuleCount);
-        Assert.Equal(11, after.RequiredRuleCount);
+        Assert.Equal((16, 1, false), (before.ImplementedCount, before.RequiredEvaluatorGapCount, before.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal((17, 0, true), (after.ImplementedCount, after.RequiredEvaluatorGapCount, after.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal(33, after.TotalRuleCount);
+        Assert.Equal(12, after.RequiredRuleCount);
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented,
             after.Rules.Single(r => r.RuleId.Value == "NQ-TP-001").CapabilityStatus);
         Assert.All(after.Rules.Where(r => r.RuleId != registered.RuleId), r =>

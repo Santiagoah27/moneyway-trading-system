@@ -194,7 +194,8 @@ public sealed class MoneyWayNasdaqHumanM5TriggerEvaluatorTests
         Assert.DoesNotContain(at15.WorkflowProgression.EstablishedRuleIds, id => id.Value is "NQ-FVG-001" or "NQ-FVG-002");
         Assert.Equal(2, MoneyWayReplayRuleEvaluators.GetAll().Count(e => e.RuleId.Value.StartsWith("NQ-FVG-", StringComparison.Ordinal)));
         var outcome = new EvaluateStrategyReplayContextOutcomeUseCase().Execute(LiquidityFixture.Definition, at10);
-        Assert.Equal(StrategyVerdict.Wait, outcome.Verdict); // Required coverage is complete; later prerequisites are still pending.
+        Assert.Equal(StrategyVerdict.HumanValidationRequired, outcome.Verdict); // This setup has no positive path applicability review.
+        Assert.Equal("NQ-WF2-001", outcome.EvaluationOutcome!.BlockingRuleId!.Value);
     }
 
     [Fact]

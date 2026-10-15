@@ -11,7 +11,7 @@ namespace MoneyWay.Application.UnitTests.StrategyReplay;
 public sealed class MoneyWayReplayRuleEvaluatorsTests
 {
     [Fact]
-    public void RegistryContainsExactlySixteenStableCanonicalEvaluators()
+    public void RegistryContainsExactlySeventeenStableCanonicalEvaluators()
     {
         var first = MoneyWayReplayRuleEvaluators.GetAll();
         var second = MoneyWayReplayRuleEvaluators.GetAll();
@@ -25,6 +25,7 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
             evaluator => Assert.IsType<MoneyWayNasdaqTradingWindowStartEvaluator>(evaluator),
             evaluator => Assert.IsType<MoneyWayNasdaqTradingWindowEndEvaluator>(evaluator),
             evaluator => Assert.IsType<MoneyWayNasdaqHumanLiquidityTakeEvaluator>(evaluator),
+            evaluator => Assert.IsType<MoneyWayNasdaqHumanWickfillScenario2ReversalEvaluator>(evaluator),
             evaluator => Assert.IsType<MoneyWayNasdaqHumanM5TriggerEvaluator>(evaluator),
             evaluator => Assert.IsType<MoneyWayNasdaqHumanM5FvgEvaluator>(evaluator),
             evaluator => Assert.IsType<MoneyWayNasdaqHumanM5FvgQualityEvaluator>(evaluator),
@@ -51,13 +52,13 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
                 new MoneyWayNasdaqTradingWindowStartEvaluator(), new MoneyWayNasdaqTradingWindowEndEvaluator()],
             declarations);
         var afterCatalog = new StrategyReplayEvaluationCapabilityCatalog(
-            new StrategyDefinitionCatalog(), MoneyWayReplayRuleEvaluators.GetAll().Where(item => item.RuleId.Value is not ("NQ-H4-001" or "NQ-LIQ-002" or "NQ-LIQ-003" or "NQ-M5-001" or "NQ-FVG-001" or "NQ-FVG-002" or "NQ-M1-001" or "NQ-M1-002" or "NQ-M1-003" or "NQ-SL-001" or "NQ-RISK-001" or "NQ-TP-001")), declarations);
+            new StrategyDefinitionCatalog(), MoneyWayReplayRuleEvaluators.GetAll().Where(item => item.RuleId.Value is not ("NQ-WF2-001" or "NQ-H4-001" or "NQ-LIQ-002" or "NQ-LIQ-003" or "NQ-M5-001" or "NQ-FVG-001" or "NQ-FVG-002" or "NQ-M1-001" or "NQ-M1-002" or "NQ-M1-003" or "NQ-SL-001" or "NQ-RISK-001" or "NQ-TP-001")), declarations);
         var definition = MoneyWayNasdaqStrategyDefinition.Instance;
         var before = beforeCatalog.Find(definition.StrategyId, definition.Version)!;
         var after = afterCatalog.Find(definition.StrategyId, definition.Version)!;
 
-        Assert.Equal((32, 11, 3, 0, 28, 1, 3, 8, false), Counts(before));
-        Assert.Equal((32, 11, 4, 0, 27, 1, 4, 7, false), Counts(after));
+        Assert.Equal((33, 12, 3, 0, 29, 1, 3, 9, false), Counts(before));
+        Assert.Equal((33, 12, 4, 0, 28, 1, 4, 8, false), Counts(after));
 
         var beforeByRule = before.Rules.ToDictionary(rule => rule.RuleId);
         var afterByRule = after.Rules.ToDictionary(rule => rule.RuleId);
@@ -112,7 +113,7 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented, capability.CapabilityStatus);
         Assert.Equal(StrategyReplayEvaluationCapabilityCatalog.ImplementedReason, capability.CapabilityReason);
         Assert.Null(capability.CapabilitySourceReference);
-        Assert.Equal((32, 11, 16, 0, 15, 1, 11, 0, true), Counts(report));
+        Assert.Equal((33, 12, 17, 0, 15, 1, 12, 0, true), Counts(report));
     }
 
     [Fact]
@@ -126,8 +127,8 @@ public sealed class MoneyWayReplayRuleEvaluatorsTests
         var afterCatalog = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), evaluators, declarations);
         var before = beforeCatalog.Find(definition.StrategyId, definition.Version)!;
         var after = afterCatalog.Find(definition.StrategyId, definition.Version)!;
-        Assert.Equal((32, 11, 15, 0, 16, 1, 10, 1, false), Counts(before));
-        Assert.Equal((32, 11, 16, 0, 15, 1, 11, 0, true), Counts(after));
+        Assert.Equal((33, 12, 16, 0, 16, 1, 11, 1, false), Counts(before));
+        Assert.Equal((33, 12, 17, 0, 15, 1, 12, 0, true), Counts(after));
         Assert.Equal(ReplayRuleEvaluationCapabilityStatus.Implemented, after.Rules.Single(r => r.RuleId == selected).CapabilityStatus);
         var beforeByRule = before.Rules.ToDictionary(r => r.RuleId);
         Assert.All(after.Rules.Where(r => r.RuleId != selected), r => Assert.Equal(beforeByRule[r.RuleId].CapabilityStatus, r.CapabilityStatus));

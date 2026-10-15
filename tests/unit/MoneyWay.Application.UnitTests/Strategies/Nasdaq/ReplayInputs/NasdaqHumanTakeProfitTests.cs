@@ -449,7 +449,7 @@ public sealed class NasdaqHumanTakeProfitTests
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(),
             MoneyWayReplayRuleEvaluators.GetAll(), MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((32, 11, 16, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
+        Assert.Equal((33, 12, 17, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.ImplementedCount,
             report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
         Assert.Single(MoneyWayReplayRuleEvaluators.GetAll(), e => e.RuleId.Value == "NQ-TP-001");
         Assert.Equal(new[] { new RuleId("NQ-SL-001") }, MoneyWayReplayWorkflowDefinitions.GetAll().Single().GetPrerequisiteRuleIds(new("NQ-TP-001")));
@@ -600,9 +600,9 @@ public sealed class NasdaqHumanTakeProfitTests
             .Find(evaluator.StrategyId, evaluator.StrategyVersion)!;
         var after = new StrategyReplayEvaluationCapabilityCatalog(definitions, evaluators, declarations)
             .Find(evaluator.StrategyId, evaluator.StrategyVersion)!;
-        Assert.Equal((15, 0, true), (before.ImplementedCount, before.RequiredEvaluatorGapCount, before.HasFullRequiredEvaluatorRegistration));
-        Assert.Equal((16, 0, true), (after.ImplementedCount, after.RequiredEvaluatorGapCount, after.HasFullRequiredEvaluatorRegistration));
-        Assert.Equal((32, 11), (after.TotalRuleCount, after.RequiredRuleCount));
+        Assert.Equal((16, 0, true), (before.ImplementedCount, before.RequiredEvaluatorGapCount, before.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal((17, 0, true), (after.ImplementedCount, after.RequiredEvaluatorGapCount, after.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal((33, 12), (after.TotalRuleCount, after.RequiredRuleCount));
         Assert.All(after.Rules.Where(r => r.RuleId != evaluator.RuleId), r =>
             Assert.Equal(before.Rules.Single(b => b.RuleId == r.RuleId).CapabilityStatus, r.CapabilityStatus));
         var target = after.Rules.Single(r => r.RuleId == evaluator.RuleId);

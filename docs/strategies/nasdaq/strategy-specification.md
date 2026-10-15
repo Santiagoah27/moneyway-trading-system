@@ -725,6 +725,8 @@ These structural and context relationships are confirmed strategy concepts, not 
 
 ### 9.7 Wickfill Scenario 2: pre-established context
 
+**Limited runtime update (2026-10-15).** `NQ-WF2-001` now evaluates human-reviewed post-sweep bearish reversal for an explicitly classified canonical Scenario 2 SELL setup. It is Required, returns NotApplicable for an explicitly Standard setup, and emits only a typed reversal fact. Applicability is anchored to the initial canonical take and lifecycle Start, not session-wide. Existing Standard evaluators and prerequisites remain unchanged; no M5/M1 bypass, entry eligibility or full Scenario 2 workflow is activated. Missing explicit applicability is a new human-review dependency after setup establishment. See the implementation update in ADR 0026 for status, timing and terminal-coverage details.
+
 [ADR 0026](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md) records the explicit human-reviewed source and its limits. Scenario 2 is a `confirmed`, `context_specific` SELL branch: price has already completed the macro upward corrective move into the relevant H4 resistance/supply zone before 08:30. This is not an automatically satisfied standard M1 pullback.
 
 The trade-relevant opening liquidity sweep is still required. In Replay #2 the relevant London High was marked before opening, but that required opening sweep was not already satisfied; it occurred approximately 08:30–08:31. Pre-established macro context does not waive the opening event. Without the sweep there is no entry for this setup. With the reviewed subsequent behavior, this branch can support earlier execution without rebuilding the complete standard post-open M5/FVG/M1 chain.
@@ -750,7 +752,7 @@ Do not map the reviewed bearish turn to CHoCH, structural break, NQ-M5-001, M1 r
 | Continuation FVG | Optional supporting confirmation | No pre-entry FVG used in Replay #2; neither universally required nor forbidden |
 | M1 | Corrective retracement and realignment required | M1 not used in Replay #2; standard M1 ancestry cannot explain this execution |
 | M30 / Sell Stop | Order mechanics remain separate/unresolved | Historical operational chart and order confirmed for Replay #2 only; no universal M30/order rule |
-| Runtime | Existing standard contracts/workflow | Not implemented; no branch-aware applicability or contextual eligibility fact exists |
+| Runtime | Existing standard contracts/workflow | Setup-specific human applicability and NQ-WF2-001 evidence evaluation exist; full branch workflow and contextual entry eligibility remain unimplemented |
 
 Replay #2 (2026-09-08, America/Bogota, SELL) is now classified as `context_specific`, Wickfill Scenario 2. Its approximately 08:32 execution is evidence for this contextual branch, not a requirement that standard NQ-M1-001/002/003 reproduce that timestamp. Earlier local standard-path records remain unchanged and cannot establish branch coverage.
 
