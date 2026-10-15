@@ -1,6 +1,6 @@
 # MoneyWay Nasdaq open questions
 
-**Wickfill Scenario 2 scope (2026-10-14).** [ADR 0026](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md) confirms the context-specific SELL concept and preserves human-validation/unresolved boundaries for zone selection, completed macro movement, opening-event relevance, rejection/break, contextual eligibility, M30 mechanics and automatic branch selection. Standard M5/FVG/M1 questions below are not universal branch requirements; no branch implementation or BUY symmetry is established.
+**Wickfill Scenario 2 scope (updated 2026-10-15).** [ADR 0026](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md) confirms the context-specific SELL concept and, in section 2.3, scoped SELL eligibility after valid pre-open context, valid selected London sweep and confirmed human-reviewed bearish reversal. Human-validation/unresolved boundaries remain for zone selection, completed macro movement, opening-event relevance, autonomous reversal recognition, M30 mechanics and automatic branch selection. Standard M5/FVG/M1 questions below are not universal branch requirements; eligibility runtime and full canonical branch integration remain unimplemented, and BUY eligibility remains unresolved.
 
 No answer is proposed from external trading theory. `Blocking level` is the earliest affected capability.
 

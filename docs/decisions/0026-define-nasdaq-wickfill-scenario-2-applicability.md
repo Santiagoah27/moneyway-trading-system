@@ -32,6 +32,8 @@ Source S2 is the user's explicit clarification **"MoneyWay Trading System - Clar
 
 Source S3 is the user's authoritative human-source reconciliation **"MoneyWay Trading System - Close Wickfill Scenario 2 Post-Sweep Human Evidence Audit"**, received 2026-10-15. The reviewer personally checked the original mentor video. Retained attachment identity: `4482ca53-78dc-4ad0-a995-20816f5d9878`; source text SHA256: `4dc3157d74f88ae29e88edff2bd24271ab935c8a46608c2d43747bd1e9b2717f`. S3 supplies reviewed paraphrases and source-scope corrections, not a new verbatim transcript or an independent audiovisual audit by the assistant. It supersedes the post-sweep conclusions of the prior AI-assisted report (attachment `8db55eb2-3912-4214-9aca-f2576797f45b`); that report is not the final source of truth. Section 2.2 defines the accepted evidence and limits. No prices, exact placement coordinates or universal no-close rule from that report are adopted.
 
+Source S4 is the user's direct human-source decision **"MoneyWay Trading System - Confirm Wickfill Scenario 2 SELL Entry Eligibility Boundary"**, received 2026-10-15. Retained attachment identity: `a4f61769-b2df-4488-a978-1ff87e1c3bf3`; source text SHA256: `4f2ca689aa2382f5acb9430a70be5555332ac511902fccb202501febcd2a2f45`. The reviewer directly rechecked original-video 08:18–08:27 and confirms that the reviewed historical SELL followed London-high take/exceed -> bearish turn -> consideration and execution of entry. S4 explicitly closes the strategic sufficiency boundary for scoped SELL eligibility under section 2.3. This is an attributed human-reviewed paraphrase and decision, not a verbatim transcript or a new independent audiovisual inspection by the assistant. The video offset is a source location, not a UTC event/availability timestamp.
+
 ### Version lifecycle
 
 The verified baseline is `main` at `9f42fbc8431d6deb6acf528767c603c5106e471c`. The registered version is `nasdaq-0.1.0-draft`; documentation labels it draft, and the definition has no ACTIVE lifecycle marker or promotion mechanism. No ACTIVE version is changed. This is a traceable specification correction to that audited draft, not candidate activation. Any future executable branch must follow the project's versioning/approval rules; this decision does not select its executable version or promote it.
@@ -86,7 +88,7 @@ The opening-sweep composition audit's reference-set specification blocker is res
 
 ### 2.2 Post-sweep bearish turn: human-source reconciliation (2026-10-15, S3)
 
-S3 closes the human-source audit for the currently evidenced SELL Scenario 2 concept. It does not close the deterministic algorithm or final contextual eligibility contract. The source-supported sequence is:
+S3 closes the human-source audit for the currently evidenced SELL Scenario 2 concept. At that decision it did not close the deterministic algorithm or final contextual eligibility contract. S4 in section 2.3 now closes the scoped SELL eligibility boundary only; autonomous reversal geometry remains unresolved. The source-supported S3 sequence is:
 
 ```text
 Reviewed pre-open Scenario 2 context
@@ -111,6 +113,25 @@ Video offsets, including the approximate trade-resolution reference at 18:08, ar
 **Historical execution only:** M30 use and the pending SELL STOP in Replay #2 remain `confirmed`, `context_specific` facts. Neither is a universal Scenario 2 requirement. Universal M30 use, universal Sell Stop use and exact Sell Stop geometry/mechanics remain `unresolved`. No BUY-side equivalent is confirmed.
 
 Canonical NQ-LIQ-003 strict-take semantics and section 2.1's reference set remain unchanged, with no additional penetration threshold. Standard-path NQ-M5-001 retains closed-M5 confirmation and does not exactly represent this human-reviewed bearish turn; do not reuse or modify it for this purpose. This clarification changes documentation only: no new observation, rule, evaluator, metadata, workflow, lifecycle, order logic, TIME rule, Forex behavior or Replay #2 binding is introduced.
+
+### 2.3 Scoped SELL entry-eligibility boundary (2026-10-15, S4)
+
+**Current normative scope: `confirmed`, currently evidenced Wickfill Scenario 2 SELL only.** For the same canonical setup explicitly classified `WickfillScenario2`, valid pre-open Scenario 2 context, the valid sweep of the selected relevant London endpoint, and a confirmed human-reviewed bearish reversal complete all currently confirmed pre-entry strategic conditions for scoped eligibility. S4 confirms that no additional strategic confirmation is currently evidenced between that reversal and eligibility:
+
+```text
+Valid reviewed pre-open Scenario 2 SELL context
+-> valid selected London opening sweep
+-> confirmed human-reviewed bearish reversal
+-> scoped strategy entry eligibility
+```
+
+Thus a future dedicated Scenario 2 eligibility rule/fact may derive from the exact canonical `NQ-WF2-001 Passed` reversal fact, retaining its setup-specific applicability and initial-take ancestry and only while the setup survives existing terminal protections. It must not re-detect reversal or reuse NQ-M1-003 semantically. This closes the eligibility-sufficiency question left open by S3 and supersedes earlier `unresolved` statements about that specific SELL boundary; it neither closes autonomous reversal geometry nor generalizes BUY or endpoint-direction mappings.
+
+**Meaning and time.** Eligibility states only that the currently confirmed Scenario 2 SELL pre-entry strategy conditions are satisfied. It does not establish order type, a required Sell Stop, submission, fill, an opened trade, entry price, SL, TP, sizing, risk approval or a necessarily Ready StrategyVerdict. Because no additional market event is required, `EligibilityEffectiveAtUtc = ReversalEffectiveAtUtc`. A later canonical transport/emission frame retains that original effective time; all relied-upon evidence and the owning canonical fact must actually be observable before consumption. No synthetic later event, new boundary, same-frame hidden transport or historical backfill is authorized.
+
+**Execution/source limits remain.** Replay #2's pending Sell Stop and M30 chart are historical/context-specific facts. No universal Sell Stop, exact order level, tick/pip offset or "zone lows" geometry is added. Mandatory M30, M30/M5/M1 close and a universal no-close rule are not introduced; universal close mechanics, executable price and BUY Scenario 2 eligibility remain unresolved. The future derivation consumes the already canonical human reversal fact, without automating recognition.
+
+**Confirmed semantics; integration not implemented.** This clarification creates no new RuleId, evaluator, fact, metadata/capability, workflow or runtime behavior. The existing Required Standard rules NQ-M5-001 and NQ-M1-001/002 do not yet consume Scenario 2 applicability. NQ-M1-003 also remains Standard-specific: its metadata is not globally Required, but it is the existing workflow/lifecycle completion dependency. NQ-SL-001 consumes the Standard `NasdaqPreEntryEligibilityRuleFact`; downstream canonical progression and lifecycle still recognize that Standard ancestry. Closing the SELL semantic boundary does not make Scenario 2 globally runnable or waive these dependencies. Branch integration remains unresolved/unimplemented and needs its own contract; no Standard rule may be fake-Passed, supplied fabricated M5/M1 facts or silently skipped. Existing Standard M1 eligibility, NQ-LIQ-003, NQ-WF2-001, TIME, Forex and Replay #2 binding remain unchanged. Independently unresolved SL/TP/order mechanics remain separate.
 
 ### 3. Replay #2 interpretation
 
@@ -145,7 +166,9 @@ Existing time-window, future-data, terminal-state and risk/execution protections
 | Deterministic “already at H4 zone” geometry, tolerance and minimum Wickfill depth | `unresolved` |
 | Exact macro liquidity algorithm and automatic branch selection | `unresolved` |
 | Required post-sweep bearish turn/reversal before considering SELL | `confirmed` concept under S3; recognition `human_validation_required` |
-| Autonomous post-sweep reversal geometry, exact structural reference and final contextual eligibility predicate | `unresolved`; no CHoCH/M5/M1 or pivot-break mapping is authorized |
+| Scoped SELL eligibility after valid context, London sweep and confirmed bearish reversal | `confirmed` by S4 section 2.3; no additional strategic confirmation currently evidenced, no execution implied |
+| Autonomous post-sweep reversal geometry and exact structural reference | `unresolved`; no CHoCH/M5/M1 or pivot-break mapping is authorized |
+| Scenario 2 eligibility runtime and downstream Standard/workflow/lifecycle integration | `unresolved` / not implemented; semantic confirmation is not runtime activation |
 | Universal post-sweep candle-close requirements/non-requirements | `unresolved` unless independently specified; execution timing alone does not define them |
 | Sell Stop offset, distance from a candle/open/consolidation and executable order mechanics | `unresolved` |
 | Autonomous M30 pattern detector and universal M30 candle requirements | `unresolved`; historical M30 use does not establish such requirements |

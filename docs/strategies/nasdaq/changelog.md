@@ -1,5 +1,13 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-10-15 - Scoped Scenario 2 SELL eligibility source clarification
+
+- Recorded human source S4 and its attachment SHA256 in [ADR 0026 section 2.3](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#23-scoped-sell-entry-eligibility-boundary-2026-10-15-s4), based on direct human review of original-video 08:18–08:27.
+- Confirmed valid pre-open SELL context -> selected valid London sweep -> reviewed bearish reversal -> scoped strategy eligibility, with no additional strategic confirmation currently evidenced. This supersedes earlier unresolved eligibility-sufficiency statements for this SELL scope only.
+- A future dedicated derivation may consume canonical NQ-WF2-001 Passed with the same surviving setup ancestry, preserving EligibilityEffectiveAtUtc = ReversalEffectiveAtUtc despite later canonical emission.
+- Eligibility supplies no execution, Sell Stop/M30 requirement, universal close/no-close rule, SL/TP, sizing, risk approval or necessarily Ready verdict. BUY eligibility and independently unresolved execution geometry remain unresolved.
+- Documentation only. Standard M1 eligibility, metadata/Required flags, capabilities, workflow/lifecycle, TIME, Forex and Replay #2 remain unchanged. Standard branch applicability, the NQ-M1-003 completion dependency and NQ-SL-001's Standard eligibility ancestry still prevent full branch integration.
+
 ## 2026-10-15 - Human-assisted Scenario 2 reversal evaluation
 
 - Added NQ-WF2-001 to nasdaq-0.1.0-draft: Required, HumanValidationRequired, sequence 90; exact canonical registration derives Implemented human-assisted capability without increasing required evaluator gaps.
