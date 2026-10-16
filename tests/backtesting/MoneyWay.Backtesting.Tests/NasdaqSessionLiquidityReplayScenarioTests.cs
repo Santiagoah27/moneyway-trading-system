@@ -48,7 +48,9 @@ public sealed class NasdaqSessionLiquidityReplayScenarioTests
         var resultA = calculator.Calculate(contextA);
         var resultB = calculator.Calculate(contextB);
 
-        Assert.Equal(resultA, resultB);
+        Assert.Equal(resultA.IsAvailable, resultB.IsAvailable);
+        Assert.Equal(resultA.Levels, resultB.Levels);
+        Assert.Equal(resultA.Reason, resultB.Reason);
     }
 
     private static StrategyReplayContext ContextAt(DateTimeOffset asOfUtc, params CandleSeries[] series)
