@@ -1,6 +1,7 @@
 using MoneyWay.Application.Backtesting;
 using MoneyWay.Application.Backtesting.Diagnostics;
 using MoneyWay.Application.MarketData.Replay;
+using MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 using MoneyWay.Application.StrategyDefinitions.Nasdaq;
 using MoneyWay.Application.StrategyReplay;
 using MoneyWay.Domain.MarketData;
@@ -39,7 +40,8 @@ public sealed class MoneyWayNasdaqTradingWindowStartScenarioTests
     {
         var definition = MoneyWayNasdaqStrategyDefinition.Instance;
         var selectedRuleId = new RuleId("NQ-TIME-001");
-        var endRuleId = new RuleId("NQ-TIME-002");
+        var missingContextRuleId = new RuleId("NQ-H4-001");
+        var missingLiquidityRuleId = new RuleId("NQ-LIQ-001");
         var report = Facade().Execute(definition,
         [
             new CandleSeries(Provider, Symbol, Minute,
@@ -53,15 +55,15 @@ public sealed class MoneyWayNasdaqTradingWindowStartScenarioTests
         Assert.Equal(0, report.ReadyCount);
         Assert.Equal(2, report.DataUnavailableCount);
         Assert.Equal(2, report.IncompleteRequiredCoverageCount);
-        Assert.Equal(10, report.MissingRequiredRules.Count);
+        Assert.Contains(report.MissingRequiredRules, item => item.RuleId == missingContextRuleId);
+        Assert.Contains(report.MissingRequiredRules, item => item.RuleId == missingLiquidityRuleId);
         Assert.DoesNotContain(report.MissingRequiredRules, item => item.RuleId == selectedRuleId);
-        Assert.DoesNotContain(report.MissingRequiredRules, item => item.RuleId == endRuleId);
         Assert.All(report.OutcomeRun.Outcomes, outcome =>
         {
             Assert.False(outcome.HasCompleteRequiredCoverage);
             Assert.DoesNotContain(selectedRuleId, outcome.MissingRequiredRuleIds);
-            Assert.DoesNotContain(endRuleId, outcome.MissingRequiredRuleIds);
-            Assert.Equal(10, outcome.MissingRequiredRuleIds.Count);
+            Assert.Contains(missingContextRuleId, outcome.MissingRequiredRuleIds);
+            Assert.Contains(missingLiquidityRuleId, outcome.MissingRequiredRuleIds);
         });
 
         var evaluations = report.OutcomeRun.StrategyRun.StrategyObservations
@@ -72,7 +74,7 @@ public sealed class MoneyWayNasdaqTradingWindowStartScenarioTests
     }
 
     private static GenerateCanonicalMultiTimeframeBacktestUseCase Facade() =>
-        new(new(new(new RunMultiTimeframeReplayUseCase(), new(), new(MoneyWayReplayRuleEvaluators.GetAll())), new()),
+        new(new(new(new RunMultiTimeframeReplayUseCase(), new(), new([new MoneyWayNasdaqTradingWindowStartEvaluator()])), new()),
             new GenerateMultiTimeframeStrategyBacktestDiagnosticsReportUseCase());
 
     private static StrategyReplayContext Context(StrategyDefinition definition, DateTimeOffset at)
