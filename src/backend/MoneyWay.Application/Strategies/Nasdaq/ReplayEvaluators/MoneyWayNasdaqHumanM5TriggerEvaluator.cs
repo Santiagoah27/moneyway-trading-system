@@ -25,6 +25,9 @@ public sealed class MoneyWayNasdaqHumanM5TriggerEvaluator : IReplayRuleEvaluator
             .OfType<IReplayRuleGateFact>().FirstOrDefault(f => f.Blocks(context, RuleId));
         if (gate is not null)
             return new(RuleEvaluationResult.Failed, "A canonical terminal session fact blocks this downstream rule.", gate.EvidenceReference);
+        var applicability = NasdaqStandardBranchApplicability.Check(context, "NQ-LIQ-003", preserveM5WindowSelection: true);
+        if (applicability is not null) return applicability;
+
         var session = NasdaqDemoSessionIdentity.FromContext(context);
         var take = context.PriorObservations.SelectMany(o => o.RuleFacts)
             .Where(f => f.RuleId.Value == "NQ-LIQ-003").Select(f => f.Fact).OfType<NasdaqLiquidityTakeRuleFact>()

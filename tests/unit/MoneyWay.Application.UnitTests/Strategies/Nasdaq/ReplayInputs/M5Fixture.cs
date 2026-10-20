@@ -1,3 +1,7 @@
+using MoneyWay.Application.Backtesting;
+using MoneyWay.Application.Strategies.Nasdaq.ReplayLifecycle;
+using MoneyWay.Application.Strategies.Nasdaq.MentorSessions;
+using MoneyWay.Application.StrategyReplay.Workflow;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 using MoneyWay.Application.Strategies.Nasdaq.Liquidity;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
@@ -10,6 +14,31 @@ namespace MoneyWay.Application.UnitTests.Strategies.Nasdaq.ReplayInputs;
 
 internal static class M5Fixture
 {
+    // Opt-in only for fixtures whose contract is explicitly the Standard M5/M1 path.
+    internal static IStrategyReplayInputObservation[] WithStandardApplicability(IStrategyReplayInputObservation[] inputs,
+        CandleSeries[]? series = null)
+    {
+        if (inputs.OfType<NasdaqHumanBranchApplicabilityObservation>().Any()) return inputs;
+        var definitions = new StrategyDefinitionCatalog().GetAll();
+        var run = new GenerateMultiTimeframeStrategyBacktestRunUseCase(new(), new(), new(MoneyWayReplayRuleEvaluators.GetAll()),
+            new(definitions, MoneyWayReplayWorkflowDefinitions.GetAll()), new(),
+            new(definitions, MoneyWayReplayLifecyclePolicies.GetAll()), new(new()))
+            .Execute(LiquidityFixture.Definition, series ?? Series(), inputs);
+        var reviews = run.StrategyObservations.Where(o => o.LifecycleProgression?.ActiveInstance?.StartedAtUtc == o.AsOfUtc)
+            .Select(o => new NasdaqHumanBranchApplicabilityObservation(o, NasdaqStrategyPath.Standard,
+                o.AsOfUtc, o.AsOfUtc, "fixture:explicit-Standard"));
+        return inputs.Concat(reviews).ToArray();
+    }
+
+    internal static NasdaqMentorSessionEvidenceRecord StandardBranchRecord() => new("synthetic:Standard-path", At(14, 5), (context, _) =>
+    {
+        var active = context.PriorObservations.LastOrDefault(o => o.LifecycleProgression is not null)?.LifecycleProgression?.ActiveInstance;
+        var owner = active is null ? null : context.PriorObservations.SingleOrDefault(o => o.AsOfUtc == active.StartedAtUtc
+            && o.LifecycleProgression?.ActiveInstance?.InstanceId == active.InstanceId);
+        return owner is null ? null : new NasdaqHumanBranchApplicabilityObservation(owner, NasdaqStrategyPath.Standard,
+            owner.AsOfUtc, owner.AsOfUtc, "fixture:explicit-Standard");
+    });
+
     internal static readonly DateTimeOffset Day = LiquidityFixture.At(0);
     internal static readonly Timeframe Minute = new(1, TimeframeUnit.Minute);
     internal static readonly DateTimeOffset[] Boundaries = [At(13, 15), At(13, 30), At(14, 5), At(14, 10), At(14, 15), At(14, 20), At(14, 30), At(15), At(16), At(37, 15), At(37, 30), At(38, 5)];

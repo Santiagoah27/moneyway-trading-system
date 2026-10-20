@@ -44,8 +44,8 @@ public sealed class MoneyWayNasdaqHumanM1CorrectiveRetracementEvaluatorTests
 
     private static IStrategyReplayInputObservation[] Inputs(NasdaqHumanM5FvgQualityObservation quality,
         params IStrategyReplayInputObservation[] extra) =>
-        M5Fixture.Inputs(quality.Fact.Fvg.Direction, quality.Fact.Fvg.Trigger.DecisiveTake)
-            .Concat([quality.Fact.Fvg.Trigger, quality.Fact.Fvg, quality]).Concat(extra).ToArray();
+        M5Fixture.WithStandardApplicability(M5Fixture.Inputs(quality.Fact.Fvg.Direction, quality.Fact.Fvg.Trigger.DecisiveTake)
+            .Concat([quality.Fact.Fvg.Trigger, quality.Fact.Fvg, quality]).Concat(extra).ToArray());
 
     private static MultiTimeframeStrategyBacktestRun Run(IStrategyReplayInputObservation[] inputs)
     {

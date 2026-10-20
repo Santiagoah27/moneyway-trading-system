@@ -31,7 +31,7 @@ public sealed class MoneyWayNasdaqHumanM5FvgEvaluatorTests
         NasdaqHumanM5FvgQualityDecision decision = NasdaqHumanM5FvgQualityDecision.Approved, int? observed = null, string source = "quality source") =>
         new(new(fvg, decision, fvg.EffectiveAtUtc, "Mentor review of exact candidate strength."), M5Fixture.At(14, observed ?? fvg.ObservedAtUtc.Minute), source);
     private IStrategyReplayInputObservation[] Inputs(bool ifvg, params IStrategyReplayInputObservation[] extra) =>
-        M5Fixture.Inputs(NasdaqHumanH4PermittedDirection.Buy, take).Concat([Trigger(ifvg)]).Concat(extra).ToArray();
+        M5Fixture.WithStandardApplicability(M5Fixture.Inputs(NasdaqHumanH4PermittedDirection.Buy, take).Concat([Trigger(ifvg)]).Concat(extra).ToArray());
     private static MultiTimeframeStrategyBacktestRun Run(IStrategyReplayInputObservation[] inputs, bool nextStageProbe = false, CandleSeries[]? series = null)
     {
         var registry = MoneyWayReplayRuleEvaluators.GetAll().ToList();

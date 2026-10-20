@@ -26,7 +26,7 @@ public sealed class MoneyWayNasdaqHumanM5TriggerEvaluatorTests
         return new(otherTake ?? take, marketEvent, M5Fixture.At(14, observed ?? minute), source, order);
     }
     private IStrategyReplayInputObservation[] Inputs(params IStrategyReplayInputObservation[] additional) =>
-        M5Fixture.Inputs(NasdaqHumanH4PermittedDirection.Buy, take).Concat(additional).ToArray();
+        M5Fixture.WithStandardApplicability(M5Fixture.Inputs(NasdaqHumanH4PermittedDirection.Buy, take).Concat(additional).ToArray());
     private static MultiTimeframeStrategyBacktestRun Run(IStrategyReplayInputObservation[] inputs, IReplayRuleEvaluator? stub = null, CandleSeries[]? series = null)
     {
         var registry = MoneyWayReplayRuleEvaluators.GetAll().ToList();
@@ -194,8 +194,8 @@ public sealed class MoneyWayNasdaqHumanM5TriggerEvaluatorTests
         Assert.DoesNotContain(at15.WorkflowProgression.EstablishedRuleIds, id => id.Value is "NQ-FVG-001" or "NQ-FVG-002");
         Assert.Equal(2, MoneyWayReplayRuleEvaluators.GetAll().Count(e => e.RuleId.Value.StartsWith("NQ-FVG-", StringComparison.Ordinal)));
         var outcome = new EvaluateStrategyReplayContextOutcomeUseCase().Execute(LiquidityFixture.Definition, at10);
-        Assert.Equal(StrategyVerdict.HumanValidationRequired, outcome.Verdict); // This setup has no positive path applicability review.
-        Assert.Equal("NQ-WF2-001", outcome.EvaluationOutcome!.BlockingRuleId!.Value);
+        Assert.Equal(StrategyVerdict.Wait, outcome.Verdict); // Explicit Standard; WF2-001 NotApplicable is not transported to WF2-002 in this frame.
+        Assert.Equal("NQ-WF2-002", outcome.EvaluationOutcome!.BlockingRuleId!.Value);
     }
 
     [Fact]

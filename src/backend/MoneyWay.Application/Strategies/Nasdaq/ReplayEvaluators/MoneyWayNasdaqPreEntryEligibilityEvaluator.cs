@@ -17,6 +17,8 @@ public sealed class MoneyWayNasdaqPreEntryEligibilityEvaluator : IReplayRuleEval
     {
         var blocked = NasdaqFvgReplayPrerequisites.Check(context, RuleId);
         if (blocked is not null) return blocked;
+        var applicability = NasdaqStandardBranchApplicability.Check(context, "NQ-M1-002");
+        if (applicability is not null) return applicability;
 
         var latest = context.PriorObservations.LastOrDefault(o => o.Evaluations.Any(e => e.RuleId.Value == "NQ-M1-002"));
         var realignment = latest?.RuleFacts.Where(f => f.RuleId.Value == "NQ-M1-002").Select(f => f.Fact)

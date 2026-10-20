@@ -41,6 +41,7 @@ public sealed class NasdaqMentorSessionImportTests : IDisposable
         var pullback = new NasdaqHumanM1CorrectiveRetracementObservation(trigger, new([minute]), M5Fixture.At(14, 20), "synthetic:pullback-without-FVG");
         var records = M5Fixture.Inputs(NasdaqHumanH4PermittedDirection.Buy, take).Concat([trigger, pullback])
             .Select((o, i) => NasdaqMentorSessionEvidenceRecord.FromObservation($"without-FVG:{i}", o)).ToList();
+        records.Add(M5Fixture.StandardBranchRecord());
         records.Add(new("without-FVG:realignment", M5Fixture.At(14, 20), (context, _) =>
         {
             var fact = context.PriorObservations.LastOrDefault()?.RuleFacts.Select(f => f.Fact)

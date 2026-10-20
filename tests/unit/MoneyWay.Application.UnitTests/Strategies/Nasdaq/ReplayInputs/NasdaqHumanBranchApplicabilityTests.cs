@@ -200,7 +200,7 @@ public sealed class NasdaqHumanBranchApplicabilityTests
     }
 
     [Fact]
-    public void AddingAndSelectingEvidenceCannotChangeOtherCanonicalEvaluationsMetadataWorkflowOrLifecycle()
+    public void SelectingApplicabilityChangesOnlyOwningBranchEvaluatorsWithoutFabricatingProgression()
     {
         var f = Build(); var observation = Observation(f, NasdaqStrategyPath.WickfillScenario2);
         var metadata = JsonSerializer.Serialize(LiquidityFixture.Definition);
@@ -212,7 +212,16 @@ public sealed class NasdaqHumanBranchApplicabilityTests
         var withEvidence = Run([.. f.Inputs, observation]);
         foreach (var pair in f.Run.StrategyObservations.Zip(withEvidence.StrategyObservations))
         {
-            Assert.Equal(pair.First.Evaluations.Where(e => e.RuleId.Value is not ("NQ-WF2-001" or "NQ-WF2-002")), pair.Second.Evaluations.Where(e => e.RuleId.Value is not ("NQ-WF2-001" or "NQ-WF2-002")));
+            // Waiting downstream rules may retain the changed upstream applicability proof.
+            // Their semantic decisions and metadata must remain unchanged.
+            var excluded = new[] { "NQ-WF2-001", "NQ-WF2-002", "NQ-M5-001", "NQ-M1-001", "NQ-M1-002", "NQ-M1-003" };
+            Assert.Equal(pair.First.Evaluations.Where(e => !excluded.Contains(e.RuleId.Value))
+                    .Select(e => (e.RuleId, e.Result, e.Sequence, e.IsRequired, e.DefinitionStatus, e.EvaluatedAtUtc)),
+                pair.Second.Evaluations.Where(e => !excluded.Contains(e.RuleId.Value))
+                    .Select(e => (e.RuleId, e.Result, e.Sequence, e.IsRequired, e.DefinitionStatus, e.EvaluatedAtUtc)));
+            if (pair.Second.AsOfUtc > f.Owner.AsOfUtc && pair.Second.AsOfUtc < At(16))
+                Assert.All(pair.Second.Evaluations.Where(e => e.RuleId.Value is "NQ-M5-001" or "NQ-M1-001" or "NQ-M1-002" or "NQ-M1-003"),
+                    e => Assert.Equal(RuleEvaluationResult.NotApplicable, e.Result));
             Assert.Equal(JsonSerializer.Serialize(pair.First.RuleFacts), JsonSerializer.Serialize(pair.Second.RuleFacts));
             Assert.Equal(JsonSerializer.Serialize(pair.First.WorkflowProgression), JsonSerializer.Serialize(pair.Second.WorkflowProgression));
             Assert.Equal(JsonSerializer.Serialize(pair.First.LifecycleProgression), JsonSerializer.Serialize(pair.Second.LifecycleProgression));

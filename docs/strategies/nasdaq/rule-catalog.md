@@ -1,6 +1,6 @@
 # MoneyWay Nasdaq rule catalog
 
-**Applicability scope (2026-10-14).** The M5/FVG/M1 pre-entry RuleIds below describe the registered standard path. [ADR 0026](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md) establishes a distinct confirmed SELL Wickfill Scenario 2 branch, not yet represented in runtime metadata/capabilities. These standard rows must not be read as universal requirements for that branch or turned into fabricated Passed results. Continuation FVG remains optional.
+**Applicability scope (2026-10-20).** The M5/FVG/M1 pre-entry RuleIds describe the Standard path. [ADR 0026](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md) defines Scenario 2 SELL, with canonical reversal/scoped eligibility implemented. NQ-M5-001 and NQ-M1-001/002/003 now enforce setup-specific human applicability: explicit Scenario 2 SELL is NotApplicable, never a fabricated Standard Passed fact. Missing/conflicting classification is not Standard. Optional FVG evaluators remain unchanged; full downstream integration is still absent.
 
 Version: `nasdaq-0.1.0-draft`. `Automatable now: no` applies whenever evaluation is subjective, contradictory or depends on null configuration.
 

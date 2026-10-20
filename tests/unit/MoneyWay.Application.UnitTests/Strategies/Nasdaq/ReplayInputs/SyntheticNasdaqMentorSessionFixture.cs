@@ -37,6 +37,7 @@ internal static class SyntheticNasdaqMentorSessionFixture
         var pullback = new NasdaqHumanM1CorrectiveRetracementObservation(quality, new([Minute(20)]), M5Fixture.At(14, 20), "review:pullback");
         var records = M5Fixture.Inputs(direction, take).Concat([trigger, fvg, quality, pullback])
             .Select((o, i) => NasdaqMentorSessionEvidenceRecord.FromObservation($"synthetic:{i}", o)).ToList();
+        records.Add(M5Fixture.StandardBranchRecord());
         records.Add(new("realignment", M5Fixture.At(14, 20), (c, _) =>
             Latest<NasdaqHumanM1CorrectiveRetracementRuleFact>(c, "NQ-M1-001") is { } fact
                 ? new NasdaqHumanM1RealignmentObservation(fact, new(Minute(20), [Minute(20)], 99, direction),

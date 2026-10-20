@@ -16,6 +16,8 @@ public sealed class MoneyWayNasdaqHumanM1CorrectiveRetracementEvaluator : IRepla
     {
         var blocked = NasdaqFvgReplayPrerequisites.Check(context, RuleId);
         if (blocked is not null) return blocked;
+        var applicability = NasdaqStandardBranchApplicability.Check(context, "NQ-M5-001");
+        if (applicability is not null) return applicability;
 
         var latest = context.PriorObservations.LastOrDefault(o => o.Evaluations.Any(e => e.RuleId.Value == "NQ-M5-001"));
         var trigger = latest?.RuleFacts.Where(f => f.RuleId.Value == "NQ-M5-001").Select(f => f.Fact)

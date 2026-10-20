@@ -1,5 +1,11 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-10-20 - Explicit Standard setup applicability
+
+- NQ-M5-001 and NQ-M1-001/002/003 enforce setup-specific classification: explicit Standard retains existing evaluation; explicit Scenario 2 SELL is NotApplicable without Standard facts.
+- Missing/conflicting reviews require human validation. Future/foreign reviews cannot classify the active initial-take setup; existing terminal and evaluator-specific TIME protections remain authoritative.
+- Required flags, capabilities, workflow and lifecycle are unchanged. Optional FVG and downstream SL/TP/risk/historical integration remain outside this change. See ADR 0026 implementation update.
+
 ## 2026-10-15 - Scenario 2 scoped SELL eligibility derivation
 
 - Added NQ-WF2-002, sequence 100, Required + Confirmed, its dedicated immutable fact and canonical evaluator registration; Standard M1 eligibility remains unchanged.

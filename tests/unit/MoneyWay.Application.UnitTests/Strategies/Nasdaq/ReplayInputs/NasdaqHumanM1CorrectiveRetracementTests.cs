@@ -46,8 +46,8 @@ public sealed class NasdaqHumanM1CorrectiveRetracementTests
         var trigger = Trigger(take, direction);
         var fvg = Fvg(trigger);
         var quality = Quality(fvg);
-        var inputs = M5Fixture.Inputs(direction, take).Concat([trigger, fvg, quality])
-            .Concat(additional ?? []).ToArray();
+        var inputs = M5Fixture.WithStandardApplicability(M5Fixture.Inputs(direction, take).Concat([trigger, fvg, quality])
+            .Concat(additional ?? []).ToArray());
         var definitions = new StrategyDefinitionCatalog().GetAll();
         var run = new GenerateMultiTimeframeStrategyBacktestRunUseCase(new(), new(), new(MoneyWayReplayRuleEvaluators.GetAll()),
             new(definitions, MoneyWayReplayWorkflowDefinitions.GetAll()), new(),

@@ -44,7 +44,7 @@ public sealed class NasdaqHumanM5FvgTests
         NasdaqHumanM5TriggerObservation? trigger = null, params IStrategyReplayInputObservation[] extra)
     {
         trigger ??= Trigger();
-        var inputs = M5Fixture.Inputs(NasdaqHumanH4PermittedDirection.Buy, take).Concat([trigger]).Concat(extra).ToArray();
+        var inputs = M5Fixture.WithStandardApplicability(M5Fixture.Inputs(NasdaqHumanH4PermittedDirection.Buy, take).Concat([trigger]).Concat(extra).ToArray());
         var history = Run(inputs).StrategyObservations.Where(o => o.AsOfUtc < M5Fixture.At(14, minute)).ToArray();
         var fact = history.SelectMany(o => o.RuleFacts).Where(f => f.RuleId.Value == "NQ-M5-001")
             .Select(f => f.Fact).OfType<NasdaqHumanM5TriggerRuleFact>().Last();

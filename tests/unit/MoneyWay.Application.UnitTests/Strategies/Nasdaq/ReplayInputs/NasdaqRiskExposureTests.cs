@@ -35,7 +35,7 @@ public sealed class NasdaqRiskExposureTests
             M5Fixture.At(14, 15), "quality:source");
         var pullback = new NasdaqHumanM1CorrectiveRetracementObservation(quality,
             new([Minute(20)]), M5Fixture.At(14, 20), "review:pullback");
-        return M5Fixture.Inputs(direction, take).Concat([trigger, fvg, quality, pullback]).Concat(extra).ToArray();
+        return M5Fixture.WithStandardApplicability(M5Fixture.Inputs(direction, take).Concat([trigger, fvg, quality, pullback]).Concat(extra).ToArray());
     }
 
     private static MultiTimeframeStrategyBacktestRun Run(IStrategyReplayInputObservation[] inputs)

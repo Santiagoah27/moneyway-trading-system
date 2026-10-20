@@ -28,7 +28,7 @@ public sealed class NasdaqOptionalFvgM1Tests
     private static MultiTimeframeStrategyBacktestRun Run(NasdaqHumanM5TriggerObservation trigger, params IStrategyReplayInputObservation[] extra)
     {
         var definitions = new StrategyDefinitionCatalog().GetAll();
-        var inputs = M5Fixture.Inputs(trigger.Event.Direction, trigger.DecisiveTake).Concat([trigger]).Concat(extra).ToArray();
+        var inputs = M5Fixture.WithStandardApplicability(M5Fixture.Inputs(trigger.Event.Direction, trigger.DecisiveTake).Concat([trigger]).Concat(extra).ToArray());
         return new GenerateMultiTimeframeStrategyBacktestRunUseCase(new(), new(), new(MoneyWayReplayRuleEvaluators.GetAll()),
             new(definitions, MoneyWayReplayWorkflowDefinitions.GetAll()), new(), new(definitions, MoneyWayReplayLifecyclePolicies.GetAll()),
             new(new())).Execute(LiquidityFixture.Definition, M5Fixture.Series(), inputs);

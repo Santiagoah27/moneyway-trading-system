@@ -34,7 +34,7 @@ public sealed class NasdaqHumanM1RealignmentTests
             M5Fixture.At(14, 15), "quality:source");
         var pullback = new NasdaqHumanM1CorrectiveRetracementObservation(quality,
             new([Minute(20)]), M5Fixture.At(14, 20), "review:pullback");
-        return M5Fixture.Inputs(direction, take).Concat([trigger, fvg, quality, pullback]).Concat(extra).ToArray();
+        return M5Fixture.WithStandardApplicability(M5Fixture.Inputs(direction, take).Concat([trigger, fvg, quality, pullback]).Concat(extra).ToArray());
     }
 
     private static MultiTimeframeStrategyBacktestRun Run(IStrategyReplayInputObservation[] inputs)
@@ -346,4 +346,26 @@ public sealed class NasdaqHumanM1RealignmentTests
             .OfType<NasdaqLiquidityTakeRuleFact>(), f => f.IsSessionInvalidated);
         Assert.IsType<NasdaqHumanM1RealignmentSelection.Missing>(Selector.Select(terminal.Context, terminal.Fact));
     }
+    [Fact]
+    public void ExplicitScenario2ExcludesAllFourStandardRulesEvenWithTheirPositivePredecessorFacts()
+    {
+        var direction = NasdaqHumanH4PermittedDirection.Sell;
+        var pullback = PullbackFact(direction);
+        var standard = Frame(direction, M5Fixture.At(15), Realignment(pullback));
+        var active = standard.Context.PriorObservations.Last(o => o.LifecycleProgression is not null).LifecycleProgression!.ActiveInstance!;
+        var owner = standard.Context.PriorObservations.Single(o => o.AsOfUtc == active.StartedAtUtc);
+        var review = new NasdaqHumanBranchApplicabilityObservation(owner, NasdaqStrategyPath.WickfillScenario2,
+            owner.AsOfUtc, owner.AsOfUtc, "review:explicit-Scenario2");
+        var inputs = standard.Context.InputObservations.Where(o => o is not NasdaqHumanBranchApplicabilityObservation).Append(review).ToArray();
+        var scenario2 = M5Fixture.Context(M5Fixture.At(15), inputs).WithPriorObservations(standard.Context.PriorObservations);
+        foreach (var id in new[] { "NQ-M5-001", "NQ-M1-001", "NQ-M1-002", "NQ-M1-003" })
+        {
+            var evaluator = MoneyWayReplayRuleEvaluators.GetAll().Single(e => e.RuleId.Value == id);
+            Assert.Contains(standard.Context.PriorObservations.SelectMany(o => o.RuleFacts), fact => fact.RuleId.Value == id);
+            var result = evaluator.Evaluate(scenario2);
+            Assert.Equal(RuleEvaluationResult.NotApplicable, result.Result);
+            Assert.Null(result.Fact);
+        }
+    }
+
 }
