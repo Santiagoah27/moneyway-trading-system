@@ -10,10 +10,11 @@ using MoneyWay.Application.UnitTests.Strategies.Nasdaq.ReplayInputs;
 using MoneyWay.Domain.MarketData;
 using MoneyWay.Domain.Strategies;
 using MoneyWay.Infrastructure.Strategies.Nasdaq;
+using Xunit.Abstractions;
 
 namespace MoneyWay.IntegrationTests;
 
-public sealed class NasdaqMentorSessionReportJsonTests
+public sealed class NasdaqMentorSessionReportJsonTests(ITestOutputHelper output)
 {
     private const int FrameCount = 9660;
     // Reproduces large repeated TIME-owned JSON evidence, without expensive strategy evaluation.
@@ -23,7 +24,7 @@ public sealed class NasdaqMentorSessionReportJsonTests
     [Fact]
     public void ThousandsOfFramesPreserveCanonicalStatesEvidenceAndChronologyWithBoundedWrites()
     {
-        var definition = MoneyWayNasdaqStrategyDefinition.Instance;
+        var definition = ReportShapeDefinition(MoneyWayNasdaqStrategyDefinition.Instance);
         var input = new NasdaqMentorSessionReplayInput("synthetic-large-report-only", LiquidityFixture.Session(M5Fixture.At(13)), new Dictionary<Timeframe, string>(), []);
         var series = new CandleSeries(input.Session.ProviderId, input.Session.Symbol, M5Fixture.Minute,
             Enumerable.Range(0, FrameCount).Select(i => new Candle(input.Session.ProviderId, input.Session.Symbol,
@@ -37,13 +38,17 @@ public sealed class NasdaqMentorSessionReportJsonTests
         var path = Path.Combine(Path.GetTempPath(), $"moneyway-report-shape-{Guid.NewGuid():N}.json");
         try
         {
+            var maximumWrite = 0;
             using (var stream = new BoundedWriteStream(File.Create(path)))
             {
                 NasdaqMentorSessionReportJson.Write(stream, report);
                 Assert.True(stream.CanWrite); // Caller owns the destination.
                 Assert.True(stream.MaximumWrite < 512 * 1024);
+                maximumWrite = stream.MaximumWrite;
             }
-            Assert.True(new FileInfo(path).Length < 100 * 1024 * 1024);
+            var reportBytes = new FileInfo(path).Length;
+            Assert.True(reportBytes < 100 * 1024 * 1024);
+            output.WriteLine($"ReportBytes={reportBytes}; ReportMiB={reportBytes / (1024d * 1024):F6}; Frames={FrameCount}; MaximumWrite={maximumWrite}");
             using var source = File.OpenRead(path);
             using var document = JsonDocument.Parse(source);
             var root = document.RootElement;
@@ -53,9 +58,13 @@ public sealed class NasdaqMentorSessionReportJsonTests
             var frames = root.GetProperty("Frames").EnumerateArray().ToArray();
             Assert.Equal(FrameCount, frames.Length);
             Assert.Equal(1, root.GetProperty("EvidenceStatistics").GetProperty("UniqueCount").GetInt32());
-            Assert.True(root.GetProperty("EvidenceStatistics").GetProperty("TotalReferencedUtf8Bytes").GetInt64() > int.MaxValue);
+            var referencedBytes = root.GetProperty("EvidenceStatistics").GetProperty("TotalReferencedUtf8Bytes").GetInt64();
+            Assert.Equal((long)FrameCount * definition.Rules.Count * Encoding.UTF8.GetByteCount(Evidence), referencedBytes);
+            Assert.True(referencedBytes > int.MaxValue);
+            output.WriteLine($"ReferencedUtf8Bytes={referencedBytes}; UniqueEvidenceCount=1");
             var entry = Assert.Single(frames[0].GetProperty("EvidenceEntries").EnumerateArray());
             var id = entry.GetProperty("Id").GetString();
+            Assert.Equal(Encoding.UTF8.GetByteCount(Evidence), entry.GetProperty("Utf8ByteCount").GetInt32());
             using var gzip = new GZipStream(new MemoryStream(Convert.FromBase64String(entry.GetProperty("Data").GetString()!)), CompressionMode.Decompress);
             using var reader = new StreamReader(gzip, Encoding.UTF8);
             Assert.Equal(Evidence, reader.ReadToEnd());
@@ -65,12 +74,20 @@ public sealed class NasdaqMentorSessionReportJsonTests
                 var frame = frames[i];
                 Assert.Equal(i + 1, frame.GetProperty("Step").GetInt32());
                 Assert.Equal(report.Frames[i].Strategy.AsOfUtc, frame.GetProperty("AsOfUtc").GetDateTimeOffset());
+                Assert.Equal(i < 5000 ? StrategyVerdict.Wait : StrategyVerdict.NoTrade, canonical.Frames[i].Verdict);
                 Assert.Equal((int)canonical.Frames[i].Verdict, frame.GetProperty("Diagnostic").GetProperty("Verdict").GetInt32());
                 var evaluations = frame.GetProperty("Evaluations").GetProperty("$values").EnumerateArray().ToArray();
                 Assert.Equal(originalEvaluations[i].Length, evaluations.Length);
                 for (var j = 0; j < evaluations.Length; j++)
                 {
                     Assert.Same(originalEvaluations[i][j], report.Frames[i].Strategy.Evaluations[j]);
+                    Assert.Equal(i < 5000 ? RuleEvaluationResult.Waiting : RuleEvaluationResult.Failed, originalEvaluations[i][j].Result);
+                    Assert.Equal(originalEvaluations[i][j].RuleId.Value, evaluations[j].GetProperty("RuleId").GetProperty("Value").GetString());
+                    Assert.Equal((int)originalEvaluations[i][j].DefinitionStatus, evaluations[j].GetProperty("DefinitionStatus").GetInt32());
+                    Assert.Equal(originalEvaluations[i][j].Sequence, evaluations[j].GetProperty("Sequence").GetInt32());
+                    Assert.Equal(originalEvaluations[i][j].IsRequired, evaluations[j].GetProperty("IsRequired").GetBoolean());
+                    Assert.Equal(originalEvaluations[i][j].Reason, evaluations[j].GetProperty("Reason").GetString());
+                    Assert.Equal(originalEvaluations[i][j].EvaluatedAtUtc, evaluations[j].GetProperty("EvaluatedAtUtc").GetDateTimeOffset());
                     Assert.Equal((int)originalEvaluations[i][j].Result, evaluations[j].GetProperty("Result").GetInt32());
                     Assert.Equal(id, evaluations[j].GetProperty("EvidenceId").GetString());
                     Assert.Equal(Evidence, originalEvaluations[i][j].EvidenceReference);
@@ -81,6 +98,24 @@ public sealed class NasdaqMentorSessionReportJsonTests
             }
         }
         finally { File.Delete(path); }
+    }
+
+    [Fact]
+    public void ReportShapeCatalogIgnoresUnrelatedProductionRuleAdditions()
+    {
+        var catalog = MoneyWayNasdaqStrategyDefinition.Instance;
+        var expanded = new StrategyDefinition(catalog.StrategyId, catalog.Version, catalog.DisplayName,
+            catalog.SpecificationReference, catalog.Rules.Append(new StrategyRuleDefinition(
+                new RuleId("NQ-REPORT-UNRELATED"), "Unrelated serialization fixture rule", "Test only",
+                catalog.Rules.Max(rule => rule.Sequence) + 1, true, RuleDefinitionStatus.Confirmed,
+                "Synthetic catalog-growth input only; no trading semantics.", "test:report-catalog-growth")));
+        var original = ReportShapeDefinition(catalog);
+        var afterAddition = ReportShapeDefinition(expanded);
+
+        Assert.Equal([new RuleId("NQ-TIME-001"), new RuleId("NQ-M1-003")], original.Rules.Select(rule => rule.RuleId));
+        Assert.Equal(original.Rules, afterAddition.Rules);
+        Assert.Equal([true, false], original.Rules.Select(rule => rule.IsRequired));
+        Assert.Equal([RuleDefinitionStatus.Confirmed, RuleDefinitionStatus.Unresolved], original.Rules.Select(rule => rule.DefinitionStatus));
     }
 
     [Fact]
@@ -121,6 +156,15 @@ public sealed class NasdaqMentorSessionReportJsonTests
         Assert.Equal(0, document.RootElement.GetProperty("FrameCount").GetInt32());
         Assert.Equal(4, document.RootElement.GetProperty("InputDiagnostics").GetProperty("$values").GetArrayLength());
     }
+
+    // Two existing contracts cover required/optional metadata and Waiting -> Failed transitions.
+    // Repeated evidence across both rules still represents >2 GiB without catalog-size coupling.
+    private static StrategyDefinition ReportShapeDefinition(StrategyDefinition catalog) =>
+        new(catalog.StrategyId, catalog.Version, "Synthetic report serialization fixture", "test:report-shape",
+        [
+            catalog.Rules.Single(rule => rule.RuleId.Value == "NQ-TIME-001"),
+            catalog.Rules.Single(rule => rule.RuleId.Value == "NQ-M1-003"),
+        ]);
 
     private sealed class ReportShapeEvaluator(RuleId ruleId) : IReplayRuleEvaluator
     {
