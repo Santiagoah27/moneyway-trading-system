@@ -64,8 +64,25 @@ public sealed class AdvanceStrategyReplayLifecycleUseCase
         {
             if (evidenceProducer.StrategyId != observation.StrategyId || evidenceProducer.StrategyVersion != observation.StrategyVersion)
                 throw new InvalidOperationException("Lifecycle evidence producer identity must exactly match the strategy observation.");
-            evidence = evidenceProducer.Capture(new(replayContext!, observation, candidateProgression, previousSnapshot))
+            var production = new StrategyReplayLifecycleEvidenceProductionContext(replayContext!, observation, candidateProgression, previousSnapshot);
+            evidence = evidenceProducer.Capture(production)
                 ?? throw new InvalidOperationException("Lifecycle evidence producer returned null.");
+            _ = new StrategyReplayLifecyclePolicyContext(observation, candidateProgression, previousSnapshot, evidence);
+            // A caller-supplied producer must not suppress a policy's own required typed evidence.
+            if (policy is IStrategyReplayLifecycleEvidenceProducer policyProducer && !ReferenceEquals(policyProducer, evidenceProducer))
+            {
+                var policyEvidence = policyProducer.Capture(production);
+                _ = new StrategyReplayLifecyclePolicyContext(observation, candidateProgression, previousSnapshot, policyEvidence);
+                if (evidence.Scope == StrategyReplayLifecycleEvidenceScope.Empty) evidence = policyEvidence;
+                else if (policyEvidence.Scope != StrategyReplayLifecycleEvidenceScope.Empty)
+                {
+                    if (policyEvidence.Scope != evidence.Scope || policyEvidence.InstanceId != evidence.InstanceId)
+                        throw new InvalidOperationException("Policy and caller lifecycle evidence scopes must agree.");
+                    evidence = new(observation.StrategyId, observation.StrategyVersion, observation.ProviderId, observation.Symbol,
+                        observation.Step, observation.AsOfUtc, evidence.Scope, evidence.InstanceId,
+                        evidence.Evidence.Concat(policyEvidence.Evidence));
+                }
+            }
         }
         var policyContext = new StrategyReplayLifecyclePolicyContext(observation, candidateProgression, previousSnapshot, evidence);
         var transition = policy.Decide(policyContext) ?? throw new InvalidOperationException("Lifecycle policy returned null.");

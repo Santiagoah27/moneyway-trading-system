@@ -178,10 +178,10 @@ public sealed partial class NasdaqHumanWickfillScenario2ReversalEvaluatorTests
     }
 
     [Fact]
-    public void EligibilityCannotReviveAnExpiredSetupOrMoveTheTimeCutoff()
+    public void EligibilityCannotPassAtCutoffAndAnIncompleteSetupStillExpires()
     {
         var f = Build();
-        var (context, run) = EligibilityHistory(f);
+        var (context, run) = EligibilityHistory(f, includeReversal: false);
         var atCutoff = Context(At(16), context.InputObservations.ToArray()).WithPriorObservations(run.StrategyObservations.Where(o => o.AsOfUtc < At(16)));
         Assert.Equal(RuleEvaluationResult.Failed, eligibilityEvaluator.Evaluate(atCutoff).Result);
         Assert.Null(run.StrategyObservations.Single(o => o.AsOfUtc == At(16)).LifecycleProgression!.ActiveInstance);

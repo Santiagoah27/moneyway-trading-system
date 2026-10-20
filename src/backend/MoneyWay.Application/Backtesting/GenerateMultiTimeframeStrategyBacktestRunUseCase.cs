@@ -239,9 +239,10 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
                 }
                 else
                 {
-                    var advanced = evidenceProducer is null
+                    var producer = evidenceProducer ?? lifecyclePolicy as IStrategyReplayLifecycleEvidenceProducer;
+                    var advanced = producer is null
                         ? lifecycleUseCase.Execute(workflow, lifecyclePolicy, strategyObservation, lifecycle, progression)
-                        : lifecycleUseCase.Execute(workflow, lifecyclePolicy, context, strategyObservation, lifecycle, progression, evidenceProducer);
+                        : lifecycleUseCase.Execute(workflow, lifecyclePolicy, evaluationContext, strategyObservation, lifecycle, progression, producer);
                     progression = advanced.WorkflowProgression;
                     lifecycle = advanced.LifecycleProgression;
                     strategyObservation = strategyObservation.WithProgressions(progression, lifecycle);

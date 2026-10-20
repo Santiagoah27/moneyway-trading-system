@@ -9,7 +9,7 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayLifecycle;
 /// Starts one Nasdaq pre-entry setup when the audited Step-3 gate is newly established and expires an incomplete
 /// active setup when the canonical trading-window-end evaluation reaches the operational cutoff.
 /// </summary>
-public sealed class MoneyWayNasdaqReplayLifecyclePolicy : IStrategyReplayLifecyclePolicy
+public sealed class MoneyWayNasdaqReplayLifecyclePolicy : IStrategyReplayLifecyclePolicy, IStrategyReplayLifecycleEvidenceProducer
 {
     private static readonly StrategyDefinition Definition = MoneyWayNasdaqStrategyDefinition.Instance;
     private static readonly RuleId ActivationRuleId = Rule("NQ-LIQ-003");
@@ -35,7 +35,14 @@ public sealed class MoneyWayNasdaqReplayLifecyclePolicy : IStrategyReplayLifecyc
             return active is null ? StrategyReplayLifecycleTransition.None : StrategyReplayLifecycleTransition.Cancel();
         if (active is not null)
         {
-            var completedBeforeCurrentFrame = active.WorkflowProgression.EstablishedRuleIds.Contains(CompletionRuleId);
+            var completedBeforeCurrentFrame = active.WorkflowProgression.EstablishedRuleIds.Contains(CompletionRuleId)
+                || context.Evidence.TryGet<NasdaqScenario2LifecycleCompletionEvidence>(out var completion)
+                    && completion!.Eligibility is not null
+                    && active.Evidence.TryGet<NasdaqScenario2LifecycleCompletionEvidence>(out var priorBinding)
+                    && ReferenceEquals(completion.StartOwner, priorBinding!.StartOwner)
+                    && completion.StartOwner!.AsOfUtc == active.StartedAtUtc
+                    && completion.EligibilityOwner!.AsOfUtc < context.AsOfUtc
+                    && context.Evidence.InstanceId == active.InstanceId;
             return cutoffReached && !completedBeforeCurrentFrame
                 ? StrategyReplayLifecycleTransition.Expire()
                 : StrategyReplayLifecycleTransition.None;
@@ -50,6 +57,9 @@ public sealed class MoneyWayNasdaqReplayLifecyclePolicy : IStrategyReplayLifecyc
             ? StrategyReplayLifecycleTransition.Start(ActivationReference)
             : StrategyReplayLifecycleTransition.None;
     }
+
+    public StrategyReplayLifecycleEvidenceSnapshot Capture(StrategyReplayLifecycleEvidenceProductionContext context) =>
+        NasdaqScenario2LifecycleCompletionEvidence.Capture(context);
 
     private static RuleId Rule(string value) =>
         Definition.Rules.Single(item => item.RuleId.Value == value).RuleId;

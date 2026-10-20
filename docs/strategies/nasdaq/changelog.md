@@ -1,5 +1,12 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-10-20 - Scenario 2 scoped pre-entry lifecycle completion
+
+- Recognize prior canonical NQ-WF2-002 Passed/established eligibility for its exact active Start/initial-take/reversal ancestry; Standard NQ-M1-003 completion is unchanged.
+- Reuse typed lifecycle evidence transport, preserving caller evidence and strict prior-frame availability. Current-frame positives, foreign/stale proof and late reviews cannot complete a setup.
+- Preserve liquidity cancellation precedence and existing TIME cutoff: completed setups retain Standard treatment, incomplete setups expire, terminal setups cannot revive.
+- No workflow, SL/TP/risk, execution, metadata, Forex or Replay #2 changes. Scoped completion does not imply global Ready. See ADR 0026's lifecycle implementation update.
+
 ## 2026-10-20 - Explicit Standard setup applicability
 
 - NQ-M5-001 and NQ-M1-001/002/003 enforce setup-specific classification: explicit Standard retains existing evaluation; explicit Scenario 2 SELL is NotApplicable without Standard facts.

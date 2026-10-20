@@ -263,7 +263,7 @@ public sealed partial class NasdaqHumanWickfillScenario2ReversalEvaluatorTests
     private ReplayRuleEvaluationDecision Evaluate(Fixture f, params IStrategyReplayInputObservation[] inputs) => evaluator.Evaluate(Frame(f, At(14), inputs));
     private static StrategyVerdict Aggregate(RuleEvaluationResult result) => new SequentialStrategyEvaluator().Evaluate(
         [new RuleEvaluation(Rule, RuleDefinitionStatus.HumanValidationRequired, result, 90, true, "Audited test result", At(14), null)]).Verdict;
-    private static NasdaqHumanWickfillScenario2PostSweepReversalObservation Reversal(Fixture f, string eventId = "source:turn", DateTimeOffset? observed = null, Candle[]? sources = null)
+    internal static NasdaqHumanWickfillScenario2PostSweepReversalObservation Reversal(Fixture f, string eventId = "source:turn", DateTimeOffset? observed = null, Candle[]? sources = null)
     {
         var context = Frame(f, At(14));
         var selected = Assert.IsType<NasdaqHumanWickfillScenario2ContextSelection.Unique>(new NasdaqHumanWickfillScenario2ContextObservationSelector().Select(context, Take(f.Owner).Session));
@@ -271,7 +271,7 @@ public sealed partial class NasdaqHumanWickfillScenario2ReversalEvaluatorTests
         return new(sweep, eventId, At(13 + f.Shift, 32), observed ?? At(13 + f.Shift, 32), "review:turn", sources);
     }
 
-    private static NasdaqHumanBranchApplicabilityObservation Observation(Fixture f, NasdaqStrategyPath path = NasdaqStrategyPath.Standard,
+    internal static NasdaqHumanBranchApplicabilityObservation Observation(Fixture f, NasdaqStrategyPath path = NasdaqStrategyPath.Standard,
         DateTimeOffset? effective = null, DateTimeOffset? observed = null, string source = "review:path") =>
         new(f.Owner, path, effective ?? At(13 + f.Shift, 10), observed ?? At(13 + f.Shift, 15), source);
     private static NasdaqLiquidityTakeRuleFact Take(StrategyReplayContextObservation owner) =>
@@ -285,21 +285,21 @@ public sealed partial class NasdaqHumanWickfillScenario2ReversalEvaluatorTests
         .Append(new(LiquidityFixture.Provider, LiquidityFixture.Symbol, new(1, TimeframeUnit.Minute),
             new[] { At(13 + shift, 5), At(13 + shift, 15), At(13 + shift, 30), At(13 + shift, 31), At(13 + shift, 32), At(13 + shift, 33), At(14 + shift), At(16 + shift), At(17 + shift) }
                 .Select(t => new Candle(LiquidityFixture.Provider, LiquidityFixture.Symbol, new(1, TimeframeUnit.Minute), t.AddMinutes(-1), t, 100, 110, 90, 100, null)))).ToArray();
-    private static StrategyReplayContext Context(DateTimeOffset time, IStrategyReplayInputObservation[] inputs, int shift = 0)
+    internal static StrategyReplayContext Context(DateTimeOffset time, IStrategyReplayInputObservation[] inputs, int shift = 0)
     {
         var cursor = new MultiTimeframeCandleReplayCursor(Series(shift));
         while (cursor.TryAdvance(out var frame))
             if (frame!.AsOfUtc == time) return new CreateStrategyReplayContextUseCase().Execute(LiquidityFixture.Definition, frame, inputs);
         throw new InvalidOperationException("Fixture frame missing.");
     }
-    private static MultiTimeframeStrategyBacktestRun Run(IStrategyReplayInputObservation[] inputs, int shift = 0)
+    internal static MultiTimeframeStrategyBacktestRun Run(IStrategyReplayInputObservation[] inputs, int shift = 0)
     {
         var definitions = new StrategyDefinitionCatalog().GetAll();
         return new GenerateMultiTimeframeStrategyBacktestRunUseCase(new(), new(), new(MoneyWayReplayRuleEvaluators.GetAll()),
             new(definitions, MoneyWayReplayWorkflowDefinitions.GetAll()), new(),
             new(definitions, MoneyWayReplayLifecyclePolicies.GetAll()), new(new())).Execute(LiquidityFixture.Definition, Series(shift), inputs);
     }
-    private static Fixture Build(NasdaqHumanH4PermittedDirection direction = NasdaqHumanH4PermittedDirection.Sell,
+    internal static Fixture Build(NasdaqHumanH4PermittedDirection direction = NasdaqHumanH4PermittedDirection.Sell,
         string eventId = "source:initial", NasdaqLiquidityTakeReference.SessionEndpoint? endpoint = null, int shift = 0,
         DateTimeOffset? takeEffective = null, bool includeContext = true, bool extension = false)
     {
@@ -329,6 +329,6 @@ public sealed partial class NasdaqHumanWickfillScenario2ReversalEvaluatorTests
         return new(run, run.StrategyObservations.Single(o => o.AsOfUtc == At(13 + shift, 31)),
             Context(At(14 + shift), inputs.ToArray(), shift), inputs.ToArray(), shift);
     }
-    private sealed record Fixture(MultiTimeframeStrategyBacktestRun Run, StrategyReplayContextObservation Owner,
+    internal sealed record Fixture(MultiTimeframeStrategyBacktestRun Run, StrategyReplayContextObservation Owner,
         StrategyReplayContext Context, IStrategyReplayInputObservation[] Inputs, int Shift);
 }
