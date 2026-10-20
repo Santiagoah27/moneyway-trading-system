@@ -212,7 +212,7 @@ public sealed class NasdaqHumanBranchApplicabilityTests
         var withEvidence = Run([.. f.Inputs, observation]);
         foreach (var pair in f.Run.StrategyObservations.Zip(withEvidence.StrategyObservations))
         {
-            Assert.Equal(pair.First.Evaluations.Where(e => e.RuleId.Value != "NQ-WF2-001"), pair.Second.Evaluations.Where(e => e.RuleId.Value != "NQ-WF2-001"));
+            Assert.Equal(pair.First.Evaluations.Where(e => e.RuleId.Value is not ("NQ-WF2-001" or "NQ-WF2-002")), pair.Second.Evaluations.Where(e => e.RuleId.Value is not ("NQ-WF2-001" or "NQ-WF2-002")));
             Assert.Equal(JsonSerializer.Serialize(pair.First.RuleFacts), JsonSerializer.Serialize(pair.Second.RuleFacts));
             Assert.Equal(JsonSerializer.Serialize(pair.First.WorkflowProgression), JsonSerializer.Serialize(pair.Second.WorkflowProgression));
             Assert.Equal(JsonSerializer.Serialize(pair.First.LifecycleProgression), JsonSerializer.Serialize(pair.Second.LifecycleProgression));

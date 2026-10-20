@@ -1,5 +1,13 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-10-15 - Scenario 2 scoped SELL eligibility derivation
+
+- Added NQ-WF2-002, sequence 100, Required + Confirmed, its dedicated immutable fact and canonical evaluator registration; Standard M1 eligibility remains unchanged.
+- Consumes only the latest prior Passed/established canonical reversal for the same surviving SELL setup, preserving original reversal effective time and all predecessor ancestry. Explicit Standard is NotApplicable; incomplete/human prerequisites wait, unavailable data propagates, and existing terminal protections dominate.
+- Extended the liquidity terminal gate to the new exact RuleId. No new workflow edge is required by this isolated producer; no downstream convergence or lifecycle completion is added.
+- Capability is Implemented: 34 rules, 13 Required, 18 evaluators, zero Required gaps. Added focused canonical transport, identity, time, terminal, aggregation and diagnostic tests; existing metadata-count assertions reflect the additional rule/evaluator.
+- Full Scenario 2 downstream integration remains absent. SL, TP/risk, Standard applicability, shared eligibility abstraction, orders/trades, BUY, TIME and Replay #2 binding are unchanged. See [ADR 0026](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#limited-scoped-sell-eligibility-implementation-update-2026-10-15).
+
 ## 2026-10-15 - Scoped Scenario 2 SELL eligibility source clarification
 
 - Recorded human source S4 and its attachment SHA256 in [ADR 0026 section 2.3](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#23-scoped-sell-entry-eligibility-boundary-2026-10-15-s4), based on direct human review of original-video 08:18–08:27.

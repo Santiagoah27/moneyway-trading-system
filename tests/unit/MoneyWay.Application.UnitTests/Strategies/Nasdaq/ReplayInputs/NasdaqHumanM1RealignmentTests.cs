@@ -110,7 +110,7 @@ public sealed class NasdaqHumanM1RealignmentTests
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), evaluators,
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((33, 12, 17, 0, true), (report.TotalRuleCount, report.RequiredRuleCount,
+        Assert.Equal((34, 13, 18, 0, true), (report.TotalRuleCount, report.RequiredRuleCount,
             report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
     }
 
@@ -147,7 +147,7 @@ public sealed class NasdaqHumanM1RealignmentTests
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), evaluators,
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll())
             .Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((33, 12, 17, 0, true), (report.TotalRuleCount, report.RequiredRuleCount,
+        Assert.Equal((34, 13, 18, 0, true), (report.TotalRuleCount, report.RequiredRuleCount,
             report.ImplementedCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
         Assert.DoesNotContain(report.Rules, r => r.IsRequired && r.CapabilityStatus != ReplayRuleEvaluationCapabilityStatus.Implemented);
         Assert.Equal(RuleEvaluationResult.Waiting,

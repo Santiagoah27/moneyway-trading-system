@@ -20,7 +20,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
     [Fact]
     public void RulesAreUniqueOrderedAndExcludeRejectedInferences()
     {
-        Assert.Equal(33, definition.Rules.Count);
+        Assert.Equal(34, definition.Rules.Count);
         Assert.Equal(definition.Rules.Count, definition.Rules.Select(rule => rule.RuleId).Distinct().Count());
         Assert.Equal(definition.Rules.Count, definition.Rules.Select(rule => rule.Sequence).Distinct().Count());
         Assert.Equal(definition.Rules.OrderBy(rule => rule.Sequence), definition.Rules);
@@ -811,7 +811,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         var expectedOrder = new[]
         {
             "NQ-TIME-003", "NQ-H4-001", "NQ-H4-002", "NQ-H4-003", "NQ-H4-004",
-            "NQ-LIQ-001", "NQ-LIQ-002", "NQ-TIME-001", "NQ-LIQ-003", "NQ-LIQ-004", "NQ-WF2-001",
+            "NQ-LIQ-001", "NQ-LIQ-002", "NQ-TIME-001", "NQ-LIQ-003", "NQ-LIQ-004", "NQ-WF2-001", "NQ-WF2-002",
             "NQ-M5-001", "NQ-M5-002", "NQ-M5-003", "NQ-M5-004", "NQ-FVG-001", "NQ-FVG-002",
             "NQ-M1-001", "NQ-M1-002", "NQ-M1-003", "NQ-SL-001", "NQ-TP-001", "NQ-TP-002",
             "NQ-BE-001", "NQ-BE-002", "NQ-BE-003", "NQ-TIME-002", "NQ-RISK-001", "NQ-RISK-002",
@@ -819,7 +819,7 @@ public sealed class MoneyWayNasdaqStrategyDefinitionTests
         };
         var expectedRequired = new[]
         {
-            "NQ-TIME-003", "NQ-H4-001", "NQ-LIQ-001",  "NQ-TIME-001", "NQ-LIQ-003", "NQ-WF2-001", "NQ-M5-001",
+            "NQ-TIME-003", "NQ-H4-001", "NQ-LIQ-001",  "NQ-TIME-001", "NQ-LIQ-003", "NQ-WF2-001", "NQ-WF2-002", "NQ-M5-001",
             "NQ-M1-001", "NQ-M1-002", "NQ-SL-001", "NQ-TIME-002", "NQ-RISK-001",
         };
 

@@ -359,11 +359,11 @@ public sealed class NasdaqHumanLiquidityTakeTests
     public void CanonicalHumanAdapterIsRegisteredWithFullRequiredEvaluatorCoverage()
     {
         var evaluators = MoneyWayReplayRuleEvaluators.GetAll();
-        Assert.Equal(17, evaluators.Count);
+        Assert.Equal(18, evaluators.Count);
         Assert.Single(evaluators, e => e.RuleId.Value == "NQ-LIQ-003");
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), evaluators,
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll()).Find(LiquidityFixture.Definition.StrategyId, LiquidityFixture.Definition.Version)!;
-        Assert.Equal((33, 12, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
+        Assert.Equal((34, 13, 0, true), (report.TotalRuleCount, report.RequiredRuleCount, report.RequiredEvaluatorGapCount, report.HasFullRequiredEvaluatorRegistration));
     }
 
     private static NasdaqLiquidityTakeReference.SessionLevel SessionReference(NasdaqLiquidityTakeReference.SessionEndpoint endpoint = NasdaqLiquidityTakeReference.SessionEndpoint.AsiaHigh)

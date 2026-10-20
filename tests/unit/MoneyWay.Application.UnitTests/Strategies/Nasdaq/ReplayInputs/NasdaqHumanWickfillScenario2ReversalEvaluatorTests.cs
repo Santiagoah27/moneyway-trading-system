@@ -15,7 +15,7 @@ using MoneyWay.Domain.Strategies.Evaluation;
 
 namespace MoneyWay.Application.UnitTests.Strategies.Nasdaq.ReplayInputs;
 
-public sealed class NasdaqHumanWickfillScenario2ReversalEvaluatorTests
+public sealed partial class NasdaqHumanWickfillScenario2ReversalEvaluatorTests
 {
     private readonly MoneyWayNasdaqHumanWickfillScenario2ReversalEvaluator evaluator = new();
     private static readonly RuleId Rule = new("NQ-WF2-001");
@@ -226,7 +226,7 @@ public sealed class NasdaqHumanWickfillScenario2ReversalEvaluatorTests
         Assert.Equal(90, rule.Sequence);
         var report = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), registry,
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll()).Find(evaluator.StrategyId, evaluator.StrategyVersion)!;
-        Assert.Equal((33, 12, 0), (report.TotalRuleCount, report.RequiredRuleCount, report.RequiredEvaluatorGapCount));
+        Assert.Equal((34, 13, 0), (report.TotalRuleCount, report.RequiredRuleCount, report.RequiredEvaluatorGapCount));
         var missing = new StrategyReplayEvaluationCapabilityCatalog(new StrategyDefinitionCatalog(), registry.Where(e => e.RuleId != Rule),
             MoneyWayReplayEvaluationCapabilityDeclarations.GetAll()).Find(evaluator.StrategyId, evaluator.StrategyVersion)!;
         Assert.Equal(1, missing.RequiredEvaluatorGapCount);
