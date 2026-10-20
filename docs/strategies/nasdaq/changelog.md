@@ -1,5 +1,13 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-10-20 - Replay #2 human-reviewed initial SL evidence
+
+- Record S5's explicit human decision and verified decision-text identity/hash; the underlying annotated screenshot remains external / not repository-resolved, with no invented image identity, price or timestamp.
+- Historical/context-specific: initial SL visually placed above the human-indicated wick/high on MT5 USTEC M30; later SL adjustment to secure 1:1 is separate management. "Second candle" is descriptive, not a selector.
+- Preserve the general 5M HL/LH concept and Standard SL contract. Explicit M5 LH usage for this historical SL is not confirmed; absence of an M5 LH is not established. No universal M30/ordinal/sweep/offset/close or +1R-management rule follows.
+- Keep Scenario 2 SL selection/contract/integration, execution and BUY unresolved; future human-assisted evidence is only an architecture candidate. Retain the separate same-frame SL terminal-gate inspection concern without claiming a reproduced failure.
+- Documentation only: NQ-SL-001, WF2-001/002, workflow/lifecycle, metadata, runtime, Forex and Replay #2 binders/fixtures are unchanged. See [ADR 0026 section 2.4](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#24-replay-2-initial-stop-loss-and-later-management-2026-10-20-s5).
+
 ## 2026-10-20 - Scenario 2 scoped pre-entry lifecycle completion
 
 - Recognize prior canonical NQ-WF2-002 Passed/established eligibility for its exact active Start/initial-take/reversal ancestry; Standard NQ-M1-003 completion is unchanged.
