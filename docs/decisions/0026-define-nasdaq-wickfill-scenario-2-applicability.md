@@ -36,6 +36,8 @@ Source S4 is the user's direct human-source decision **"MoneyWay Trading System 
 
 Source S5 is the user's explicit human review **"MoneyWay Trading System - Document Human-Reviewed Scenario 2 SELL Initial Stop Loss Evidence from Replay #2"**, provided 2026-10-20. Retained decision-text attachment identity: `2b2a3820-aa95-46ce-acf7-d434112d7fbe`; verified decision-text SHA256: `0aa95a610a6f13872bc93d6d69b2ea19721a486e340d9059f33fd31cf76a8682`. The reviewer personally examined the original session and reports annotated MT5 screenshots supplied in the ChatGPT conversation. The underlying screenshot is **external / not repository-resolved**: image bytes, attachment identity, filename and image hash have not been verified here. The text hash identifies the human decision only, not a screenshot or video. This records the explicit human decision and attributed visual observations, not independent audiovisual inspection by the assistant or canonical runtime evidence. S5 supplies no exact video offset, candle timestamp or native replay-source mapping. Section 2.4 records its historical scope; S1-S4 source history remains intact. Earlier Google AI analysis is corroborative at most; its unverified quotations, timestamps and candle identifications are not adopted.
 
+Source S6 is the strategy owner's explicit decision **"MoneyWay Trading System - Confirm Scenario 2 SELL Sweep-Peak Initial Stop Loss Strategy Contract"**, dated 2026-10-20. Retained decision-text attachment identity: `b40859c9-8800-44a0-a93a-0b18d91f8293`; verified decision-text SHA256: `cff13968c5df63ded6010229456f48fb69ef2bc17027a53f226443ce5c9ff5bd`. This is direct human strategy authority, not AI-derived geometry or a new assistant audiovisual inspection. The owner additionally identifies S5's historically indicated wick as the peak of the initiating liquidity sweep. S5's original text, hash and provenance remain unchanged; its underlying screenshot remains external / not repository-resolved. This text hash verifies only the new decision text, not image/video bytes. Section 2.5 records the newly confirmed general SELL protective-reference concept and its unresolved deterministic limits.
+
 ### Version lifecycle
 
 The verified baseline is `main` at `9f42fbc8431d6deb6acf528767c603c5106e471c`. The registered version is `nasdaq-0.1.0-draft`; documentation labels it draft, and the definition has no ACTIVE lifecycle marker or promotion mechanism. No ACTIVE version is changed. This is a traceable specification correction to that audited draft, not candidate activation. Any future executable branch must follow the project's versioning/approval rules; this decision does not select its executable version or promote it.
@@ -151,6 +153,30 @@ Universal Scenario 2 SELL SL selection remains `unresolved`. No always-M30, seco
 **Candidate for future audit only:** a human-assisted Scenario 2 input might retain exact WF2 eligibility ancestry, the human-selected protective reference and timeframe, exact sources, separate effective/observed times, independently documented StopPrice and terminal protections. This is not an approved architecture or implemented observation. Branch-specific SL contract, safe extension of NQ-SL-001, downstream SL/risk/TP integration, execution and Scenario 2 BUY remain unresolved. Eligibility and pre-entry lifecycle completion still imply neither SL/risk approval, execution nor global Ready.
 
 **Separate technical concern:** the preceding read-only audit found by inspection that `NasdaqLiquidityTakeRuleFact.Blocks` does not explicitly include NQ-SL-001 in same-frame liquidity invalidation checks. This is not a reproduced test failure and is not resolved by S5. Runtime investigation remains separate; no protection, evaluator, workflow, lifecycle, metadata, TIME or replay binder changes are made here.
+
+### 2.5 Scenario 2 SELL sweep-peak initial SL concept (2026-10-20, S6)
+
+**Current normative scope: `confirmed` strategy concept, Wickfill Scenario 2 SELL only.** The initial SL protects the maximum price reached during the liquidity sweep that initiated this exact setup. Its placement relationship is **`StopPrice > protected sweep peak`**. Subsequent price exceeding the protected reference invalidates the bearish post-sweep reversal thesis as a strategic concept. This confirms the protective reference; it does not define a complete deterministic selection, breach-detection or execution algorithm.
+
+S6 identifies S5's visually selected historical wick as that initiating sweep peak. S5 remains `context_specific`: MT5 USTEC M30 display, reviewer-relative "second candle", initial SL above the indicated wick and later movement to secure 1:1. Those historical details do not become universal rules. S6 does not require M30, a second candle, a completed M30 candle High, an arbitrary latest/highest session candle, a fixed candle count, swing rule, threshold or buffer. Standard Nasdaq's existing 5M HL/LH SL contract, Scenario 2 BUY, Forex, unrelated takes and other setups are outside this decision.
+
+The following remain `unresolved` and require a separate scoped audit before runtime implementation:
+
+- Exact beginning/end and membership of the initiating sweep movement.
+- When its peak becomes final and causally usable for initial SL selection.
+- Whether the referenced candle is closed or in progress at the decision time.
+- Whether available historical data can reconstruct the required maximum.
+- Exact StopPrice offset above that peak.
+- Whether NQ-LIQ-003's existing fact contains sufficient price/time information, and the correct causal transport into an SL consumer.
+- Whether a new typed input or an extension of an existing Nasdaq primitive is needed; branch-specific ancestry, consumer/progression integration and execution mechanics remain unimplemented/unresolved.
+
+A future SL consumer must retain exact strategy/version/provider/instrument/session, canonical Start and active instance, initiating liquidity take, explicit WickfillScenario2 SELL applicability, NQ-WF2-001 reversal and NQ-WF2-002 eligibility ancestry. Neither the entire session's maximum nor another setup's latest sweep substitutes for this owner. Session, direction, ordinal or timestamp alone is insufficient.
+
+At StrategyReplayContext.AsOfUtc, no future High, final OHLC from a still-open candle, later peak or future human assertion may be used to backfill earlier frames. This decision supplies no new event/availability timestamp, wall-clock rule or replay boundary. Market-effective time, evidence availability and canonical emission remain distinct; it does not assert when S5's historical peak was observable.
+
+Strategic invalidation does not authorize an order, immediate exit, intrabar stop processing, fill price, broker behavior, new NQ-LIQ-003 terminal condition or additional cancellation rule. Later 1:1 protection is separate post-entry management; BE, protected +1R, trailing and order-modification algorithms remain outside scope. Scoped WF2 eligibility and lifecycle completion still imply neither SL/risk approval, execution nor Ready.
+
+This supersedes earlier unresolved statements **only for the general Scenario 2 SELL protective-reference concept and placement relationship**. Original S5 evidence/history is preserved; sweep segmentation/finality, causal data, offset and deterministic implementation remain unresolved. NQ-SL-001 and its Standard observation/evaluator/M5 anchor, WF2-001/002, liquidity invalidation, workflow/lifecycle, replay, risk/TP, metadata and version activation are unchanged. Counts remain 34 RuleDefinitions / 13 Required / 18 evaluators / zero Required evaluator gaps. The possible same-frame SL liquidity-invalidation guard gap remains a separate inspection finding requiring focused regression validation before Scenario 2 SL runtime integration, not a reproduced failure or a new strategy rule.
 
 ### 3. Replay #2 interpretation
 

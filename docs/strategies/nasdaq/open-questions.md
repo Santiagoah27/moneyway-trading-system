@@ -241,6 +241,10 @@ Resolved: IFVG is only an alternative inside Step 4. It does not enable direct e
 
 A possible human-assisted input preserving WF2 ancestry, selected reference/timeframe, source, separate effective/observed times, StopPrice and terminal protections remains a candidate for future audit, not approved architecture. Separately, the prior inspection found no explicit NQ-SL-001 entry in the liquidity same-frame invalidation Block checks; this is a technical validation concern, not a reproduced failure or an SL source decision.
 
+**Current Scenario 2 SELL decision (S6, 2026-10-20).** [ADR 0026 section 2.5](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#25-scenario-2-sell-sweep-peak-initial-sl-concept-2026-10-20-s6) now confirms the general protective reference as the exact initiating liquidity sweep's maximum, with StopPrice strictly above it and conceptual bearish-thesis invalidation on exceedance. This closes only the earlier protective-reference concept question; S5's historical wording/provenance and Standard NQ-Q-SL-001/002 remain intact. M30 and the reviewer-relative second candle remain historical, not universal requirements.
+
+Still unresolved: exact sweep movement beginning/end, peak finality and usability time, closed/in-progress source status, historical-data reconstructibility, exact offset, sufficiency of NQ-LIQ-003 price/time information, causal transport and whether a new input or primitive extension is needed. Future evidence must preserve exact setup/Start/take/WF2 ancestry without using a session maximum, another setup's sweep, future candle High or retrospective peak/review. Strategic invalidation does not establish stop execution or new terminal/cancellation behavior. The next scoped audit must define the peak's deterministic, causally observable basis before SL evaluation; downstream SL/risk/TP, execution, BUY and the separate technical terminal-safety validation remain open.
+
 ## Break Even
 
 | Question ID | Question | Why it matters | Current status | Blocking level | Proposed evidence needed |

@@ -1,5 +1,13 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-10-20 - Scenario 2 SELL sweep-peak initial SL concept
+
+- Record direct strategy-owner decision S6 with verified decision-text identity/hash; preserve S1-S5 history and S5's original provenance/hash. S6 identifies its historical wick as the initiating sweep peak.
+- Confirm only for Wickfill Scenario 2 SELL: initial SL protects that setup's initiating sweep maximum, StopPrice is strictly above it, and exceeding the protected reference conceptually invalidates the bearish reversal thesis.
+- Keep sweep boundaries, peak finality/availability, closed/forming sources, historical reconstruction, offset, NQ-LIQ-003 sufficiency and causal typed transport unresolved. No mandatory M30/second-candle/completed-candle, session-maximum, buffer or swing algorithm follows.
+- Preserve exact Start/instance/take/WF2 ancestry and future-data protection. Strategic invalidation is not execution or a new liquidity terminal/cancellation rule; later 1:1 management remains separate.
+- Documentation only: Standard/Forex/BUY, runtime, metadata and counts (34/13/18/zero gaps) remain unchanged. The separate same-frame SL terminal-safety inspection concern still requires focused validation before runtime integration. See [ADR 0026 section 2.5](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#25-scenario-2-sell-sweep-peak-initial-sl-concept-2026-10-20-s6).
+
 ## 2026-10-20 - Replay #2 human-reviewed initial SL evidence
 
 - Record S5's explicit human decision and verified decision-text identity/hash; the underlying annotated screenshot remains external / not repository-resolved, with no invented image identity, price or timestamp.
