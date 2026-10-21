@@ -1,5 +1,13 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-10-21 - Approved Scenario 2 SELL sweep-peak measurement interval
+
+- Record S7's direct owner approval and verified decision-text identity/hash, preserving S5/S6 text, hashes and provenance. This is operational formalization of the visual concept, not a verbatim mentor algorithm.
+- Confirm the maximum-observable-price interval from the exact setup's first valid London High exceedance (NQ-LIQ-003 initiating identity) to its confirmed NQ-WF2-001 reversal effective time. Preserve exact Start/instance/take/applicability/WF2 ancestry; London High is not necessarily the protective peak.
+- Keep endpoint inclusion/order, exact-boundary observations, complete M1/M5 coverage, partial-candle price evidence, source overlap, LIQ-003 sufficiency and typed source/availability/conflict transport unresolved. Earlier effective reversal time does not establish earlier confirmation availability.
+- Preserve future-data limits and unresolved StopPrice offset; no mandatory M30, second-candle, threshold, buffer or rounding is inferred. Standard/BUY/Forex, runtime, metadata, workflow/lifecycle, execution and counts (34/13/18/zero gaps) are unchanged.
+- Automatic SL remains unimplemented; same-frame terminal protection still requires separate validation. Next: focused peak-primitive readiness audit. See [ADR 0026 section 2.6](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#26-approved-initiating-sweep-measurement-interval-2026-10-21-s7).
+
 ## 2026-10-20 - Scenario 2 SELL sweep-peak initial SL concept
 
 - Record direct strategy-owner decision S6 with verified decision-text identity/hash; preserve S1-S5 history and S5's original provenance/hash. S6 identifies its historical wick as the initiating sweep peak.
