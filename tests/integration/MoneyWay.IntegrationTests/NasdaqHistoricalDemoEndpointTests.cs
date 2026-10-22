@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text.Json.Nodes;
+using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using MoneyWay.Application.Strategies.Nasdaq.MentorSessions;
@@ -30,6 +31,100 @@ public sealed class NasdaqHistoricalDemoEndpointTests : IDisposable
         new WebApplicationFactory<Program>().WithWebHostBuilder(builder => builder.UseEnvironment(environment)
             .UseSetting("NasdaqHistoricalDemo:ReportPath", reportPath ?? path)
             .UseSetting("NasdaqHistoricalDemo:ExpectedSha256", expectedHash ?? ""));
+
+    [Theory]
+    [InlineData("first")]
+    [InlineData("middle")]
+    [InlineData("last")]
+    [InlineData("default")]
+    public async Task SelectionAndActualNeighborsMatchPersistedSessionFrames(string position)
+    {
+        using var source = JsonDocument.Parse(File.ReadAllText(path));
+        var zone = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+        var frames = source.RootElement.GetProperty("Frames").EnumerateArray().Where(f =>
+            DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(f.GetProperty("AsOfUtc").GetDateTimeOffset(), zone).DateTime) == report.Session.TradingDay).ToArray();
+        var index = position == "first" ? 0 : position == "middle" ? frames.Length / 2 : frames.Length - 1;
+        var expected = frames[index];
+        var step = expected.GetProperty("Step").GetInt64();
+        var before = SHA256.HashData(File.ReadAllBytes(path));
+        using var factory = Factory();
+        using var response = await factory.CreateClient().GetAsync(Endpoint + (position == "default" ? "" : $"?frameStep={step}"));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var summary = (await response.Content.ReadFromJsonAsync<NasdaqHistoricalReportSummary>())!;
+        var selected = Assert.IsType<NasdaqHistoricalFrameSummary>(summary.SelectedFrame);
+        var nav = Assert.IsType<NasdaqHistoricalFrameNavigation>(summary.Navigation);
+        Assert.Equal(step, selected.Step);
+        Assert.Equal(expected.GetProperty("AsOfUtc").GetDateTimeOffset(), selected.AsOfUtc);
+        Assert.Equal(frames[0].GetProperty("Step").GetInt64(), nav.FirstStep);
+        Assert.Equal(frames[^1].GetProperty("Step").GetInt64(), nav.LastStep);
+        Assert.Equal(step, nav.SelectedStep);
+        Assert.Equal(frames.Length, nav.SessionFrameCount);
+        Assert.Equal(index == 0 ? (long?)null : frames[index - 1].GetProperty("Step").GetInt64(), nav.PreviousStep);
+        Assert.Equal(index == frames.Length - 1 ? (long?)null : frames[index + 1].GetProperty("Step").GetInt64(), nav.NextStep);
+        var rules = expected.GetProperty("Evaluations").GetProperty("$values").EnumerateArray().ToArray();
+        Assert.Equal(rules.Length, selected.Rules.Count);
+        for (var i = 0; i < rules.Length; i++)
+        {
+            Assert.Equal(rules[i].GetProperty("RuleId").GetProperty("Value").GetString(), selected.Rules[i].RuleId);
+            Assert.Equal(((MoneyWay.Domain.Strategies.RuleEvaluationResult)rules[i].GetProperty("Result").GetInt32()).ToString(), selected.Rules[i].Result);
+            Assert.Equal(rules[i].GetProperty("Reason").GetString(), selected.Rules[i].Reason);
+            Assert.Equal(rules[i].GetProperty("EvaluatedAtUtc").GetDateTimeOffset(), selected.Rules[i].EvaluatedAtUtc);
+            Assert.Equal(rules[i].GetProperty("EvidenceId").GetString(), selected.Rules[i].EvidenceId);
+        }
+        Assert.Equal(report.SessionId, summary.SessionId);
+        Assert.Equal(report.Session.TradingDay, summary.TradingDay);
+        Assert.Equal(report.Canonical!.Frames.Last().Verdict.ToString(), summary.FinalVerdict);
+        if (position == "default") Assert.Equal(JsonSerializer.Serialize(selected), JsonSerializer.Serialize(summary.SelectedSessionLastFrame));
+        else Assert.Null(summary.SelectedSessionLastFrame); // Never transport later rule evidence into an explicit earlier selection.
+        Assert.Equal(before, SHA256.HashData(File.ReadAllBytes(path)));
+        Assert.True((await response.Content.ReadAsByteArrayAsync()).Length < 64 * 1024);
+    }
+
+    [Theory]
+    [InlineData("?frameStep=0", HttpStatusCode.BadRequest)]
+    [InlineData("?frameStep=-1", HttpStatusCode.BadRequest)]
+    [InlineData("?frameStep=1.5", HttpStatusCode.BadRequest)]
+    [InlineData("?frameStep=", HttpStatusCode.BadRequest)]
+    [InlineData("?frameStep=abc", HttpStatusCode.BadRequest)]
+    [InlineData("?frameStep=1&frameStep=2", HttpStatusCode.BadRequest)]
+    [InlineData("?frameStep=9223372036854775808", HttpStatusCode.BadRequest)]
+    [InlineData("?frameStep=999999", HttpStatusCode.NotFound)]
+    [InlineData("?reportSha256=invalid", HttpStatusCode.BadRequest)]
+    public async Task InvalidOrUnavailableSelectionsAreSafe(string query, HttpStatusCode expected)
+    {
+        using var factory = Factory();
+        using var response = await factory.CreateClient().GetAsync(Endpoint + query);
+        Assert.Equal(expected, response.StatusCode);
+        Assert.DoesNotContain(path, await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task ForeignSessionStepIsNotSelectableAndChangedReportTakesPrecedence()
+    {
+        var zone = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+        var foreign = report.Frames.First(f => DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(f.Strategy.AsOfUtc, zone).DateTime) != report.Session.TradingDay);
+        using var factory = Factory();
+        using var client = factory.CreateClient();
+        using var response = await client.GetAsync(Endpoint + $"?frameStep={foreign.Strategy.Step}");
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        using var changed = await client.GetAsync(Endpoint + $"?frameStep={foreign.Strategy.Step}&reportSha256={new string('0', 64)}");
+        Assert.Equal(HttpStatusCode.Conflict, changed.StatusCode);
+        Assert.Contains("ReportChanged", await changed.Content.ReadAsStringAsync());
+        var hash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path)));
+        using var current = await client.GetAsync(Endpoint + "?reportSha256=" + hash);
+        Assert.Equal(HttpStatusCode.OK, current.StatusCode);
+    }
+
+    [Fact]
+    public async Task EqualTimestampsAreRejectedWithoutAmbiguousFrameSelection()
+    {
+        var document = JsonNode.Parse(File.ReadAllText(path))!;
+        document["Frames"]![1]!["AsOfUtc"] = document["Frames"]![0]!["AsOfUtc"]!.DeepClone();
+        File.WriteAllText(path, document.ToJsonString());
+        using var factory = Factory();
+        using var response = await factory.CreateClient().GetAsync(Endpoint + "?frameStep=1");
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+    }
 
     [Fact]
     public async Task ExistingCanonicalReportRetainsIdentityOutcomesRuleStatesAndSourceBytes()

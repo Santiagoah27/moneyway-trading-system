@@ -44,4 +44,13 @@ export interface NasdaqHistoricalReport {
     inputDiagnosticCodes: string[];
     bindingDiagnosticCodes: string[];
     selectedSessionLastFrame: HistoricalFrame | null;
+    selectedFrame?: HistoricalFrame | null;
+    navigation?: {
+        firstStep: number | null;
+        lastStep: number | null;
+        selectedStep: number | null;
+        previousStep: number | null;
+        nextStep: number | null;
+        sessionFrameCount: number;
+    } | null;
 }

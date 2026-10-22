@@ -7,7 +7,13 @@ public sealed record NasdaqHistoricalReportSummary(
     DateTimeOffset? ReplayStartUtc, DateTimeOffset? ReplayEndUtc,
     string ReportSha256, long ReportBytes, string Validation, string EvidenceValidation,
     IReadOnlyList<string> InputDiagnosticCodes, IReadOnlyList<string> BindingDiagnosticCodes,
-    NasdaqHistoricalFrameSummary? SelectedSessionLastFrame);
+    NasdaqHistoricalFrameSummary? SelectedSessionLastFrame,
+    NasdaqHistoricalFrameSummary? SelectedFrame = null,
+    NasdaqHistoricalFrameNavigation? Navigation = null);
+
+/// <summary>Actual report-global, one-based Steps encountered on the declared session day.</summary>
+public sealed record NasdaqHistoricalFrameNavigation(long? FirstStep, long? LastStep, long? SelectedStep,
+    long? PreviousStep, long? NextStep, long SessionFrameCount);
 
 public sealed record NasdaqHistoricalFrameSummary(
     long Step, DateTimeOffset AsOfUtc, string? Verdict, string? Reason,

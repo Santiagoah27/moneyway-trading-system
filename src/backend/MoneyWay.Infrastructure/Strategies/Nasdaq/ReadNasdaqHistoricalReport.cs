@@ -10,14 +10,14 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
 {
     private readonly SemaphoreSlim gate = new(1, 1);
     public async Task<NasdaqHistoricalReportSummary> ExecuteAsync(string path, string? expectedSha256,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, long? frameStep = null)
     {
         await gate.WaitAsync(cancellationToken);
-        try { return await Task.Run(() => Read(path, expectedSha256, cancellationToken), cancellationToken); }
+        try { return await Task.Run(() => Read(path, expectedSha256, cancellationToken, frameStep), cancellationToken); }
         finally { gate.Release(); }
     }
 
-    private static NasdaqHistoricalReportSummary Read(string path, string? expectedSha256, CancellationToken cancellationToken)
+    private static NasdaqHistoricalReportSummary Read(string path, string? expectedSha256, CancellationToken cancellationToken, long? frameStep)
     {
         // FileShare.Read prevents cooperating writers from changing the source during this read.
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024, FileOptions.SequentialScan);
@@ -28,6 +28,8 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
         long frames = 0;
         DateTimeOffset? previous = null, first = null;
         NasdaqHistoricalFrameSummary? selected = null;
+        long? firstSessionStep = null, lastSessionStep = null, previousSelectedStep = null, nextSelectedStep = null;
+        long sessionFrameCount = 0;
         string? lastVerdict = null;
         bool framesSeen = false;
         bool? hasCanonical = null;
@@ -56,7 +58,17 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
                     Require((projection.Verdict is not null) == hasCanonical);
                     lastVerdict = projection.Verdict;
                     if (DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(at, TimeZoneInfo.FindSystemTimeZoneById("America/Bogota")).DateTime) == day)
-                        selected = projection;
+                    {
+                        firstSessionStep ??= step;
+                        sessionFrameCount++;
+                        if (frameStep is null || step == frameStep)
+                        {
+                            selected = projection;
+                            previousSelectedStep = lastSessionStep;
+                        }
+                        else if (selected is not null && nextSelectedStep is null) nextSelectedStep = step;
+                        lastSessionStep = step;
+                    }
                 }
                 json.Token(JsonTokenType.EndArray);
                 framesSeen = true;
@@ -91,7 +103,9 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
             DateOnly.ParseExact(Text(identity.GetProperty("TradingDay")), "yyyy-MM-dd", CultureInfo.InvariantCulture), 2, frames, finalVerdict,
             start, end, digest, json.BytesRead,
             string.IsNullOrWhiteSpace(expectedSha256) ? "SchemaChronologyAndCountChecked" : "SchemaChronologyCountAndExpectedHashChecked",
-            "NotRevalidated", Codes(headers["InputDiagnostics"]), Codes(headers["BindingDiagnostics"]), selected);
+            "NotRevalidated", Codes(headers["InputDiagnostics"]), Codes(headers["BindingDiagnostics"]),
+            frameStep is null ? selected : null, selected,
+            new(firstSessionStep, lastSessionStep, selected?.Step, previousSelectedStep, nextSelectedStep, sessionFrameCount));
     }
 
     private static NasdaqHistoricalFrameSummary Frame(JsonElement frame, long step, DateTimeOffset at)
