@@ -2,6 +2,7 @@ using MoneyWay.Api;
 using MoneyWay.Api.Endpoints;
 using MoneyWay.Application.StrategyDefinitions;
 using MoneyWay.Application.StrategyEvaluation;
+using MoneyWay.Infrastructure.Strategies.Nasdaq;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
@@ -9,6 +10,7 @@ builder.Services.AddHealthChecks();
 builder.Services.AddSingleton<EvaluateStrategyUseCase>();
 builder.Services.AddSingleton<StrategyDefinitionCatalog>();
 builder.Services.AddSingleton<EvaluateRegisteredStrategyUseCase>();
+builder.Services.AddSingleton<ReadNasdaqHistoricalReport>();
 
 if (builder.Environment.IsDevelopment())
 {
@@ -22,6 +24,7 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.UseCors("DevelopmentFrontend");
+    app.MapNasdaqHistoricalDemoEndpoints();
 }
 
 app.MapHealthChecks("/health");

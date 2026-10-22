@@ -219,16 +219,17 @@ describe("App", () => {
         vi.stubGlobal("fetch", fetchMock);
         render(<App />);
 
-        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
         expect(fetchMock.mock.calls.map((call) => call[0].toString())).toEqual(
             expect.arrayContaining([
                 "http://localhost:5080/api/system/status",
                 "http://localhost:5080/api/strategy-definitions",
+                "http://localhost:5080/api/nasdaq/historical-demo",
             ]),
         );
     });
 
-    it("aborts both independent requests when unmounted", () => {
+    it("aborts all independent requests when unmounted", () => {
         const abortSpy = vi.spyOn(AbortController.prototype, "abort");
         vi.stubGlobal(
             "fetch",
@@ -238,7 +239,7 @@ describe("App", () => {
 
         view.unmount();
 
-        expect(abortSpy).toHaveBeenCalledTimes(2);
+        expect(abortSpy).toHaveBeenCalledTimes(3);
         abortSpy.mockRestore();
     });
 });

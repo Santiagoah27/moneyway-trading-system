@@ -4,6 +4,7 @@ import { getSystemStatus } from "./api/systemApi";
 import type { StrategyDefinition } from "./types/strategyDefinitions";
 import type { SystemStatus } from "./types/system";
 import "./App.css";
+import { NasdaqHistoricalDemo } from "./NasdaqHistoricalDemo";
 
 type ApiState = "loading" | "connected" | "disconnected";
 type DefinitionsState = "loading" | "success" | "error";
@@ -153,6 +154,9 @@ export default function App() {
                     Supervised · Auditable · Execution disabled
                 </p>
                 <h1>MoneyWay Trading System</h1>
+                <a href="#nasdaq-historical-demo">
+                    Abrir demo histórica Nasdaq
+                </a>
                 <p className="purpose">
                     A safe foundation for deterministic strategy evaluation and
                     evidence-backed analysis.
@@ -184,10 +188,11 @@ export default function App() {
                     </div>
                     <div>
                         <dt>Strategy engine evaluation</dt>
-                        <dd>Not implemented</dd>
+                        <dd>Manual evaluation / historical report review</dd>
                     </div>
                 </dl>
             </section>
+            <NasdaqHistoricalDemo apiBaseUrl={apiBaseUrl} />
             <section aria-labelledby="definitions-heading">
                 <h2 id="definitions-heading">Strategy Definitions</h2>
                 {definitionsState === "loading" && (
@@ -215,7 +220,7 @@ export default function App() {
                 )}
             </section>
             <aside aria-label="Safety notice">
-                No market analysis or order execution is available. Real-money
+                Historical review only. Order execution is disabled. Real-money
                 trading is prohibited.
             </aside>
         </main>

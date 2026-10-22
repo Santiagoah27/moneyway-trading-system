@@ -33,7 +33,7 @@ Plataforma supervisada, auditable y versionada para analizar y evaluar las estra
 
 ## Repository status
 
-El repositorio contiene el bootstrap técnico aprobado. Todavía no implementa reglas de estrategia, persistencia, replay, backtesting ni ejecución.
+El repositorio incluye evaluadores deterministas, replay histórico y una vista local de reportes canónicos Nasdaq. La ejecución de órdenes permanece deshabilitada.
 
 ## Prerequisites
 
@@ -62,6 +62,8 @@ Available bootstrap endpoints:
 - `GET http://localhost:5080/health`
 - `GET http://localhost:5080/api/system/status`
 - Development OpenAPI document at `http://localhost:5080/openapi/v1.json`
+
+Nasdaq historical demo: [configure an existing canonical report and open the read-only view](docs/backtesting/nasdaq-historical-demo-view.md). The Development-only endpoint is `GET /api/nasdaq/historical-demo`; the view is `http://localhost:5173/#nasdaq-historical-demo`.
 
 Run the idle worker (execution remains disabled):
 

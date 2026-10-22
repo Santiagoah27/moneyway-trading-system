@@ -22,7 +22,7 @@ public sealed class NasdaqMentorSessionReportJsonTests(ITestOutputHelper output)
         "{\"DayStartUtc\":\"2026-06-29T05:00:00Z\",\"EndUtc\":\"2026-06-29T16:00:00Z\",\"Source\":\"mentor:auditoria\"}", 1500)) + "]";
 
     [Fact]
-    public void ThousandsOfFramesPreserveCanonicalStatesEvidenceAndChronologyWithBoundedWrites()
+    public async Task ThousandsOfFramesPreserveCanonicalStatesEvidenceAndChronologyWithBoundedWrites()
     {
         var definition = ReportShapeDefinition(MoneyWayNasdaqStrategyDefinition.Instance);
         var input = new NasdaqMentorSessionReplayInput("synthetic-large-report-only", LiquidityFixture.Session(M5Fixture.At(13)), new Dictionary<Timeframe, string>(), []);
@@ -47,6 +47,14 @@ public sealed class NasdaqMentorSessionReportJsonTests(ITestOutputHelper output)
                 maximumWrite = stream.MaximumWrite;
             }
             var reportBytes = new FileInfo(path).Length;
+            using var projectionReader = new ReadNasdaqHistoricalReport();
+            var summary = await projectionReader.ExecuteAsync(path, null);
+            Assert.Equal(FrameCount, summary.FrameCount);
+            Assert.Equal("NoTrade", summary.FinalVerdict);
+            Assert.Equal("Wait", summary.SelectedSessionLastFrame!.Verdict);
+            Assert.Equal(2, summary.SelectedSessionLastFrame.Rules.Count);
+            Assert.True(Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(summary)) < 16 * 1024);
+            Assert.Equal(reportBytes, summary.ReportBytes);
             Assert.True(reportBytes < 100 * 1024 * 1024);
             output.WriteLine($"ReportBytes={reportBytes}; ReportMiB={reportBytes / (1024d * 1024):F6}; Frames={FrameCount}; MaximumWrite={maximumWrite}");
             using var source = File.OpenRead(path);
