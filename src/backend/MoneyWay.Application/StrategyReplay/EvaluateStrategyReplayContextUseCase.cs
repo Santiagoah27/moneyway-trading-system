@@ -1,3 +1,4 @@
+using MoneyWay.Application.Backtesting.Diagnostics;
 using MoneyWay.Domain.Strategies;
 
 namespace MoneyWay.Application.StrategyReplay;
@@ -24,7 +25,7 @@ public sealed class EvaluateStrategyReplayContextUseCase
         this.evaluators = registry;
     }
 
-    public StrategyReplayContextObservation Execute(StrategyDefinition strategyDefinition, StrategyReplayContext context)
+    public StrategyReplayContextObservation Execute(StrategyDefinition strategyDefinition, StrategyReplayContext context, ReplayPerformanceProfile? performance = null)
     {
         ArgumentNullException.ThrowIfNull(strategyDefinition);
         ArgumentNullException.ThrowIfNull(context);
@@ -39,9 +40,13 @@ public sealed class EvaluateStrategyReplayContextUseCase
         foreach (var rule in strategyDefinition.Rules)
         {
             if (!evaluators.TryGetValue(new(strategyDefinition.StrategyId, strategyDefinition.Version, rule.RuleId), out var evaluator)) continue;
-            var gate = context.PriorObservations.SelectMany(o => o.RuleFacts).Concat(facts).Select(f => f.Fact)
+            IReplayRuleGateFact? gate;
+            using (performance?.Measure("evaluation.gate/" + rule.RuleId.Value))
+                gate = context.PriorObservations.SelectMany(o => o.RuleFacts).Concat(facts).Select(f => f.Fact)
                 .OfType<IReplayRuleGateFact>().FirstOrDefault(f => f.Blocks(context, rule.RuleId));
-            var decision = gate is null
+            ReplayRuleEvaluationDecision decision;
+            using (performance?.Measure("evaluation.dispatch/" + rule.RuleId.Value))
+                decision = gate is null
                 ? evaluator.Evaluate(context) ?? throw new InvalidOperationException("Evaluator returned null.")
                 : new ReplayRuleEvaluationDecision(RuleEvaluationResult.Failed, "A terminal session fact blocks this downstream rule.", gate.EvidenceReference);
             if (decision.Fact is not null) facts.Add(new(rule.RuleId, decision.Fact));

@@ -1,3 +1,4 @@
+using MoneyWay.Application.Backtesting.Diagnostics;
 using MoneyWay.Application.Strategies.Nasdaq.MentorSessions;
 using MoneyWay.Application.MarketData.Replay;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
@@ -75,8 +76,9 @@ public sealed class GenerateMultiTimeframeStrategyOutcomeBacktestRunUseCase(
 
     private MultiTimeframeStrategyOutcomeBacktestRun CreateOutcomes(
         StrategyDefinition strategyDefinition,
-        MultiTimeframeStrategyBacktestRun strategyRun)
+        MultiTimeframeStrategyBacktestRun strategyRun, ReplayPerformanceProfile? performance = null)
     {
+        using var timing = performance?.Measure("outcomes.aggregate");
         var outcomes = new List<StrategyReplayContextOutcome>(strategyRun.ObservationCount);
         foreach (var observation in strategyRun.StrategyObservations)
         {
@@ -92,9 +94,9 @@ public sealed class GenerateMultiTimeframeStrategyOutcomeBacktestRunUseCase(
     }
 
     public MultiTimeframeStrategyOutcomeBacktestRun ExecuteMentorSession(StrategyDefinition strategyDefinition, IEnumerable<CandleSeries> series,
-        NasdaqMentorSessionReplay session)
+        NasdaqMentorSessionReplay session, ReplayPerformanceProfile? performance = null)
     {
         ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series); ArgumentNullException.ThrowIfNull(session);
-        return CreateOutcomes(strategyDefinition, strategyBacktestUseCase.ExecuteMentorSession(strategyDefinition, series, session));
+        return CreateOutcomes(strategyDefinition, strategyBacktestUseCase.ExecuteMentorSession(strategyDefinition, series, session, performance), performance);
     }
 }

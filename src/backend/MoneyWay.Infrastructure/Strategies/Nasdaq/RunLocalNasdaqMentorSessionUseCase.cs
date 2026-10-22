@@ -1,3 +1,4 @@
+using MoneyWay.Application.Backtesting.Diagnostics;
 using MoneyWay.Application.StrategyReplay;
 using MoneyWay.Application.Backtesting;
 using MoneyWay.Application.Strategies.Nasdaq.MentorSessions;
@@ -14,9 +15,11 @@ namespace MoneyWay.Infrastructure.Strategies.Nasdaq;
 /// <summary>Local file boundary for one reviewed session. Reuses the canonical Application owner and existing importer.</summary>
 public sealed class RunLocalNasdaqMentorSessionUseCase
 {
-    public NasdaqMentorSessionReplayReport Execute(NasdaqMentorSessionReplayInput input)
+    public NasdaqMentorSessionReplayReport Execute(NasdaqMentorSessionReplayInput input, ReplayPerformanceProfile? performance = null)
     {
         ArgumentNullException.ThrowIfNull(input);
+        using var totalTiming = performance?.Measure("session.execute-inclusive");
+        using var importTiming = performance?.Measure("input.csv-load-validate");
         var imports = new List<NasdaqMentorSessionImport>();
         var diagnostics = new List<NasdaqMentorSessionInputDiagnostic>();
         var series = new List<CandleSeries>();
@@ -53,6 +56,8 @@ public sealed class RunLocalNasdaqMentorSessionUseCase
                 diagnostics.Add(new("SelectedSessionDataUnavailable", "No 1M close belongs to the selected Bogota trading day."));
         }
         if (diagnostics.Count > 0) return new(input, imports, diagnostics);
+        importTiming?.Dispose();
+        using var preparationTiming = performance?.Measure("input.orchestration-prepare");
         var definitions = new StrategyDefinitionCatalog().GetAll();
         var progression = new AdvanceStrategyReplayProgressionUseCase();
         var strategyRun = new GenerateMultiTimeframeStrategyBacktestRunUseCase(new(), new(), new(MoneyWayReplayRuleEvaluators.GetAll()),
@@ -60,7 +65,9 @@ public sealed class RunLocalNasdaqMentorSessionUseCase
             new(definitions, MoneyWayReplayLifecyclePolicies.GetAll()), new(progression));
         var canonical = new GenerateCanonicalMultiTimeframeBacktestUseCase(new(strategyRun, new()), new());
         var session = new NasdaqMentorSessionReplay(input);
-        var report = canonical.ExecuteMentorSession(definition, series, session);
+        preparationTiming?.Dispose();
+        var report = canonical.ExecuteMentorSession(definition, series, session, performance);
+        using var materializeTiming = performance?.Measure("session.report-materialize");
         return new(input, imports, diagnostics, report, session.Frames, session.Diagnostics);
     }
 }

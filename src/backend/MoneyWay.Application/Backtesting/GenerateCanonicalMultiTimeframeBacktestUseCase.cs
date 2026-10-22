@@ -127,11 +127,12 @@ public sealed class GenerateCanonicalMultiTimeframeBacktestUseCase(
     }
 
     public MultiTimeframeStrategyBacktestDiagnosticsReport ExecuteMentorSession(StrategyDefinition strategyDefinition, IEnumerable<CandleSeries> series,
-        NasdaqMentorSessionReplay session)
+        NasdaqMentorSessionReplay session, ReplayPerformanceProfile? performance = null)
     {
         ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series); ArgumentNullException.ThrowIfNull(session);
-        var run = outcomeRunUseCase.ExecuteMentorSession(strategyDefinition, series, session);
-        var report = diagnosticsUseCase.Execute(strategyDefinition, run);
+        var run = outcomeRunUseCase.ExecuteMentorSession(strategyDefinition, series, session, performance);
+        MultiTimeframeStrategyBacktestDiagnosticsReport report;
+        using (performance?.Measure("diagnostics.materialize")) report = diagnosticsUseCase.Execute(strategyDefinition, run);
         if (!ReferenceEquals(report.OutcomeRun, run)
             || report.StrategyId != strategyDefinition.StrategyId || report.StrategyVersion != strategyDefinition.Version)
             throw new InvalidOperationException("Canonical diagnostics do not match the generated strategy outcome run.");

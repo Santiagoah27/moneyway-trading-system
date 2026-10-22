@@ -73,6 +73,36 @@ Remove-Item Env:MONEYWAY_MENTOR_REPORT_PATH
 
 Do not use `--no-build` when supplying/changing the adapter. The existing test project compiles the specified source using its optional Compile item. Absent the environment variable, the real-data entrypoint is explicitly skipped. Supplying an empty adapter fails `Assert.NotNull`, rather than claiming a real run. Invalid input is written to the report before the assertions fail. An unresolved strategy or historical artifact is retained in the report; this entrypoint does not require or fabricate Ready/Available.
 
+## Opt-in performance diagnostics
+
+Set `MONEYWAY_MENTOR_PROFILE_PATH` to a separate writable JSON path to enable orchestration timings in the local harness. Leave it unset for the existing behavior. The profile is not part of trading evidence or canonical JSON; evaluators receive no clock or profiling state. Programmatic callers may explicitly pass a `ReplayPerformanceProfile` to the local use case. No global profiling state is used.
+
+Build the harness with the adapter first, then invoke the same test with `--no-build --no-restore` and the input/report/profile environment variables set. This separates compilation from execution. Keep resource limits in an external process monitor. Remove the environment variables after the trial.
+
+| Operation | Existing work measured |
+| --- | --- |
+| `input.evidence-prepare` | Local typed adapter invocation |
+| `input.csv-load-validate` | Four CSV imports and input/session validation |
+| `input.orchestration-prepare` | Catalogs, use cases and session linkage construction |
+| `session.execute-inclusive` | Local use case, including import and canonical pipeline |
+| `replay.synchronized-inclusive` | Existing synchronized traversal including all frame consumers |
+| `replay.context-create`, `replay.history-context` | Context construction and prior-observation attachment |
+| `session.bind-inclusive` | Existing binding, including snapshot assembly where applicable |
+| `evaluation.observation-inclusive` | Canonical evaluation coordinator and observation creation |
+| `evaluation.gate/<RuleId>` | Coordinator's historical/current terminal-gate search |
+| `evaluation.dispatch/<RuleId>` | Evaluator dispatch or blocked-decision construction, excluding the coordinator gate search |
+| `replay.progression-lifecycle` | Existing combined progression/lifecycle orchestration |
+| `session.capture-historical-inclusive` | Frame capture, including contacts, documented exit and factual composition where applicable |
+| `outcomes.aggregate` | Post-traversal safe outcome composition |
+| `diagnostics.materialize`, `session.report-materialize` | Canonical diagnostics and outer session report construction |
+| `report.json-write` | File creation, canonical JSON serialization and writing |
+
+All durations are **inclusive**. Parent and child timings overlap and must not be added as independent costs. In particular `session.execute-inclusive` contains replay, outcomes and diagnostics; replay contains frame work; observation evaluation contains the gate and dispatch metrics. Unassigned cursor/orchestration time remains inside the parent. Binding/snapshot work and capture/historical processing remain combined because those are existing boundaries.
+
+Counters retain started/closed call counts, total/max closed duration and one active start per metric, plus the processed-frame count. A closed scope can represent exception unwinding; only profile `Status` indicates completion. The profile has at most 128 metric entries; overflow is counted in `DroppedMeasurements`. There are no per-frame duration samples or histories. Names are ordinally ordered in snapshots.
+
+The harness replaces one bounded checkpoint file every 10 seconds using a temporary file and rename, and flushes again on disposal. An active call has `Active=true` and an `InFlightMilliseconds` value separate from closed durations. A killed process leaves the last completed checkpoint with `Status=running`; it does not prove completion. The timer is scoped to this harness invocation and is disposed when the test exits. Checkpoint I/O failures are counted on the writer and do not change canonical processing. A checkpoint can lag the last processed frame by one interval. Timing locks and periodic serialization add unquantified profiling overhead; elapsed values are diagnostic observations, not strategy evidence or proof of an optimization.
+
 The result can also be consumed directly from C#: `new RunLocalNasdaqMentorSessionUseCase().Execute(input)`. Persist it with `NasdaqMentorSessionReportJson.Write(stream, report)` using the versioned audit projection described below. It does not serialize callbacks. Consumers can inspect exact objects directly in the returned DTO.
 
 ## Consolidated immutable report

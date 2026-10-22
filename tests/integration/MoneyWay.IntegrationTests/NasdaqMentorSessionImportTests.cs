@@ -11,6 +11,65 @@ namespace MoneyWay.IntegrationTests;
 
 public sealed class NasdaqMentorSessionImportTests : IDisposable
 {
+    [Fact]
+    public void OptInProfilingPreservesExactCanonicalJsonAndStableCounts()
+    {
+        var input = Input();
+        var useCase = new RunLocalNasdaqMentorSessionUseCase();
+        var baseline = NasdaqMentorSessionReportJson.Serialize(useCase.Execute(input));
+        var first = new MoneyWay.Application.Backtesting.Diagnostics.ReplayPerformanceProfile();
+        var second = new MoneyWay.Application.Backtesting.Diagnostics.ReplayPerformanceProfile();
+        var profiled = useCase.Execute(input, first);
+        var repeated = useCase.Execute(input, second);
+        Assert.Equal(baseline, NasdaqMentorSessionReportJson.Serialize(profiled));
+        Assert.Equal(baseline, NasdaqMentorSessionReportJson.Serialize(repeated));
+        var metrics = first.Snapshot();
+        Assert.Equal(profiled.Frames.Count, metrics.FramesProcessed);
+        Assert.Equal(metrics.Metrics.Select(m => (m.Operation, m.StartedCalls, m.ClosedCalls)),
+            second.Snapshot().Metrics.Select(m => (m.Operation, m.StartedCalls, m.ClosedCalls)));
+        Assert.Equal(profiled.Frames.Count, metrics.Metrics.Single(m => m.Operation == "evaluation.observation-inclusive").ClosedCalls);
+        Assert.All(metrics.Metrics, m => Assert.False(m.Active));
+        Assert.Contains(metrics.Metrics, m => m.Operation == "evaluation.gate/NQ-TIME-001");
+        Assert.Contains(metrics.Metrics, m => m.Operation == "session.capture-historical-inclusive");
+        Assert.DoesNotContain("TotalClosedMilliseconds", baseline);
+        Assert.DoesNotContain("evaluation.gate/", baseline);
+    }
+
+    [Fact]
+    public void CheckpointsReplaceOneBoundedArtifactAndRetainPartialState()
+    {
+        Directory.CreateDirectory(directory);
+        var path = Path.Combine(directory, "performance.json");
+        using (var diagnostics = new NasdaqReplayPerformanceDiagnostics(path))
+        {
+            using (diagnostics.Profile.Measure("active-operation"))
+            {
+                for (var i = 0; i < 100; i++) { diagnostics.Profile.FrameProcessed(); diagnostics.Checkpoint(); }
+                using var document = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+                Assert.Equal("running", document.RootElement.GetProperty("Status").GetString());
+                Assert.Equal(100, document.RootElement.GetProperty("FramesProcessed").GetInt64());
+                var metric = Assert.Single(document.RootElement.GetProperty("Metrics").EnumerateArray());
+                Assert.True(metric.GetProperty("Active").GetBoolean());
+                Assert.Equal(0, metric.GetProperty("ClosedCalls").GetInt64());
+                Assert.Single(Directory.GetFiles(directory));
+                Assert.True(new FileInfo(path).Length < 4096);
+            }
+            Assert.Equal(0, diagnostics.CheckpointFailures);
+        }
+        Assert.Single(Directory.GetFiles(directory));
+    }
+
+    [Fact]
+    public void DiagnosticIoFailureDoesNotChangeCanonicalProcessing()
+    {
+        var input = Input();
+        using var diagnostics = new NasdaqReplayPerformanceDiagnostics(Path.Combine(directory, "missing", "performance.json"));
+        var report = new RunLocalNasdaqMentorSessionUseCase().Execute(input, diagnostics.Profile);
+        diagnostics.Checkpoint();
+        Assert.True(diagnostics.CheckpointFailures > 0);
+        Assert.NotEmpty(report.Frames);
+    }
+
     private readonly string directory = Path.Combine(Path.GetTempPath(), "moneyway-synthetic-session-" + Guid.NewGuid());
     private const string Header = "provider_id,symbol,timeframe_amount,timeframe_unit,open_time_utc,close_time_utc,open,high,low,close,volume";
     internal NasdaqMentorSessionReplayInput Input()

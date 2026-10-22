@@ -1,3 +1,4 @@
+using MoneyWay.Application.Backtesting.Diagnostics;
 using MoneyWay.Application.Strategies.Nasdaq.MentorSessions;
 using MoneyWay.Application.MarketData.Replay;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
@@ -196,20 +197,26 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
     }
 
     public MultiTimeframeStrategyBacktestRun ExecuteMentorSession(StrategyDefinition strategyDefinition, IEnumerable<CandleSeries> series,
-        NasdaqMentorSessionReplay session)
+        NasdaqMentorSessionReplay session, ReplayPerformanceProfile? performance = null)
     {
         ArgumentNullException.ThrowIfNull(strategyDefinition); ArgumentNullException.ThrowIfNull(series); ArgumentNullException.ThrowIfNull(session);
+        using var timing = performance?.Measure("replay.synchronized-inclusive");
         session.Start(strategyDefinition);
         return ExecuteCore(strategyDefinition,
-            consume => replayUseCase.Execute(series, frame => consume(contextUseCase.Execute(strategyDefinition, frame))),
-            null, session);
+            consume => replayUseCase.Execute(series, frame =>
+            {
+                StrategyReplayContext context;
+                using (performance?.Measure("replay.context-create")) context = contextUseCase.Execute(strategyDefinition, frame);
+                consume(context);
+            }),
+            null, session, performance);
     }
 
     private MultiTimeframeStrategyBacktestRun ExecuteCore(
         StrategyDefinition strategyDefinition,
         Func<Action<StrategyReplayContext>, MultiTimeframeReplayRunResult> runReplay,
         IStrategyReplayLifecycleEvidenceProducer? evidenceProducer,
-        NasdaqMentorSessionReplay? session = null)
+        NasdaqMentorSessionReplay? session = null, ReplayPerformanceProfile? performance = null)
     {
         var workflow = workflowCatalog.Find(strategyDefinition.StrategyId, strategyDefinition.Version);
         var lifecyclePolicy = lifecyclePolicyCatalog.Find(strategyDefinition.StrategyId, strategyDefinition.Version);
@@ -221,39 +228,47 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
         var strategyObservations = new List<StrategyReplayContextObservation>();
         var replayResult = runReplay(context =>
         {
-            var evaluationContext = context.WithPriorObservations(strategyObservations);
-            if (session is not null) context = evaluationContext = session.Bind(evaluationContext);
+            StrategyReplayContext evaluationContext;
+            using (performance?.Measure("replay.history-context")) evaluationContext = context.WithPriorObservations(strategyObservations);
+            using (performance?.Measure("session.bind-inclusive"))
+                if (session is not null) context = evaluationContext = session.Bind(evaluationContext);
             var marketObservation = new MultiTimeframeBacktestObservation(
                 context.Step,
                 context.AsOfUtc,
                 context.UpdatedTimeframes,
                 context.AvailableTimeframes,
                 context.MarketDataAvailability);
-            var strategyObservation = evaluationUseCase.Execute(strategyDefinition, evaluationContext);
-            if (workflow is not null)
+            StrategyReplayContextObservation strategyObservation;
+            using (performance?.Measure("evaluation.observation-inclusive"))
+                strategyObservation = evaluationUseCase.Execute(strategyDefinition, evaluationContext, performance);
+            using (performance?.Measure("replay.progression-lifecycle"))
             {
-                if (lifecyclePolicy is null)
+                if (workflow is not null)
                 {
-                    progression = progressionUseCase.Execute(workflow, strategyObservation, progression);
-                    strategyObservation = strategyObservation.WithWorkflowProgression(progression);
-                }
-                else
-                {
-                    var producer = evidenceProducer ?? lifecyclePolicy as IStrategyReplayLifecycleEvidenceProducer;
-                    var advanced = producer is null
-                        ? lifecycleUseCase.Execute(workflow, lifecyclePolicy, strategyObservation, lifecycle, progression)
-                        : lifecycleUseCase.Execute(workflow, lifecyclePolicy, evaluationContext, strategyObservation, lifecycle, progression, producer);
-                    progression = advanced.WorkflowProgression;
-                    lifecycle = advanced.LifecycleProgression;
-                    strategyObservation = strategyObservation.WithProgressions(progression, lifecycle);
+                    if (lifecyclePolicy is null)
+                    {
+                        progression = progressionUseCase.Execute(workflow, strategyObservation, progression);
+                        strategyObservation = strategyObservation.WithWorkflowProgression(progression);
+                    }
+                    else
+                    {
+                        var producer = evidenceProducer ?? lifecyclePolicy as IStrategyReplayLifecycleEvidenceProducer;
+                        var advanced = producer is null
+                            ? lifecycleUseCase.Execute(workflow, lifecyclePolicy, strategyObservation, lifecycle, progression)
+                            : lifecycleUseCase.Execute(workflow, lifecyclePolicy, evaluationContext, strategyObservation, lifecycle, progression, producer);
+                        progression = advanced.WorkflowProgression;
+                        lifecycle = advanced.LifecycleProgression;
+                        strategyObservation = strategyObservation.WithProgressions(progression, lifecycle);
+                    }
                 }
             }
             if (strategyObservation.StrategyId != strategyDefinition.StrategyId || strategyObservation.StrategyVersion != strategyDefinition.Version
                 || strategyObservation.ProviderId != context.ProviderId || strategyObservation.Symbol != context.Symbol
                 || strategyObservation.Step != context.Step || strategyObservation.AsOfUtc != context.AsOfUtc)
                 throw new InvalidOperationException("Strategy observation is inconsistent with the replay context.");
-            session?.Capture(context, strategyObservation);
+            using (performance?.Measure("session.capture-historical-inclusive")) session?.Capture(context, strategyObservation);
             marketObservations.Add(marketObservation); strategyObservations.Add(strategyObservation);
+            performance?.FrameProcessed();
         });
         if (replayResult.GlobalFramesProcessed != marketObservations.Count || replayResult.GlobalFramesProcessed != strategyObservations.Count)
             throw new InvalidOperationException("Replay output is inconsistent with recorded observations.");
