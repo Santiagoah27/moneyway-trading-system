@@ -105,6 +105,12 @@ The harness replaces one bounded checkpoint file every 10 seconds using a tempor
 
 The result can also be consumed directly from C#: `new RunLocalNasdaqMentorSessionUseCase().Execute(input)`. Persist it with `NasdaqMentorSessionReportJson.Write(stream, report)` using the versioned audit projection described below. It does not serialize callbacks. Consumers can inspect exact objects directly in the returned DTO.
 
+## Run-local Nasdaq coordinator gate candidates
+
+The Nasdaq strategy-run coordinator appends references to every `IReplayRuleGateFact` from each completed canonical observation. The projection is local to one `ExecuteCore` invocation and is never attached to a context, evaluator or report. It retains emission order, repeated references and non-terminal candidates without filtering by session, setup, rule or review. Storage grows only with actual gate emissions; no context/history copies or per-frame projection snapshots are retained.
+
+At each registered rule, the evaluation coordinator searches these prior candidates, then gate facts already emitted in the current frame, in the original order. Each original `Blocks(context, ruleId)` remains authoritative and can still inspect the complete original context/history. Nothing caches a blocking decision or changes dispatch. New candidates are appended only after evaluation, lifecycle and frame capture complete. The existing public evaluation entrypoint and non-Nasdaq strategy runs retain the full-history lookup. This optimization excludes evaluator-internal prerequisite scans and selectors.
+
 ## Consolidated immutable report
 
 - Session identity, supplied paths, successful imported timeframe identities/counts/source ranges, truthful import/input diagnostics and replay start/end.

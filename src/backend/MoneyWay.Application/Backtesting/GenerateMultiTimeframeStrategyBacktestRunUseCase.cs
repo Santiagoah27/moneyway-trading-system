@@ -226,6 +226,11 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
         StrategyReplayLifecycleSnapshot? lifecycle = null;
         var marketObservations = new List<MultiTimeframeBacktestObservation>();
         var strategyObservations = new List<StrategyReplayContextObservation>();
+        var nasdaq = StrategyDefinitions.Nasdaq.MoneyWayNasdaqStrategyDefinition.Instance;
+        // Run-local references only: retain every gate, in emission order, including repetitions
+        // and non-terminal candidates. Other strategies keep the original history lookup.
+        var priorGateCandidates = strategyDefinition.StrategyId == nasdaq.StrategyId && strategyDefinition.Version == nasdaq.Version
+            ? new List<IReplayRuleGateFact>() : null;
         var replayResult = runReplay(context =>
         {
             StrategyReplayContext evaluationContext;
@@ -240,7 +245,9 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
                 context.MarketDataAvailability);
             StrategyReplayContextObservation strategyObservation;
             using (performance?.Measure("evaluation.observation-inclusive"))
-                strategyObservation = evaluationUseCase.Execute(strategyDefinition, evaluationContext, performance);
+                strategyObservation = priorGateCandidates is null
+                    ? evaluationUseCase.Execute(strategyDefinition, evaluationContext, performance)
+                    : evaluationUseCase.ExecuteWithPriorGateCandidates(strategyDefinition, evaluationContext, priorGateCandidates, performance);
             using (performance?.Measure("replay.progression-lifecycle"))
             {
                 if (workflow is not null)
@@ -268,6 +275,9 @@ public sealed class GenerateMultiTimeframeStrategyBacktestRunUseCase
                 throw new InvalidOperationException("Strategy observation is inconsistent with the replay context.");
             using (performance?.Measure("session.capture-historical-inclusive")) session?.Capture(context, strategyObservation);
             marketObservations.Add(marketObservation); strategyObservations.Add(strategyObservation);
+            if (priorGateCandidates is not null)
+                foreach (var fact in strategyObservation.RuleFacts)
+                    if (fact.Fact is IReplayRuleGateFact gateFact) priorGateCandidates.Add(gateFact);
             performance?.FrameProcessed();
         });
         if (replayResult.GlobalFramesProcessed != marketObservations.Count || replayResult.GlobalFramesProcessed != strategyObservations.Count)

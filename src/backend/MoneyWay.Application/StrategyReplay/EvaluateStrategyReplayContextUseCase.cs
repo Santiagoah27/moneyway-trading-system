@@ -26,6 +26,19 @@ public sealed class EvaluateStrategyReplayContextUseCase
     }
 
     public StrategyReplayContextObservation Execute(StrategyDefinition strategyDefinition, StrategyReplayContext context, ReplayPerformanceProfile? performance = null)
+        => ExecuteCore(strategyDefinition, context, null, performance);
+
+    // Only the run coordinator supplies this append-only projection. It never escapes into
+    // contexts/evaluators; the full original history remains available to every Blocks call.
+    internal StrategyReplayContextObservation ExecuteWithPriorGateCandidates(StrategyDefinition strategyDefinition,
+        StrategyReplayContext context, IReadOnlyList<IReplayRuleGateFact> priorGateCandidates, ReplayPerformanceProfile? performance = null)
+    {
+        ArgumentNullException.ThrowIfNull(priorGateCandidates);
+        return ExecuteCore(strategyDefinition, context, priorGateCandidates, performance);
+    }
+
+    private StrategyReplayContextObservation ExecuteCore(StrategyDefinition strategyDefinition, StrategyReplayContext context,
+        IReadOnlyList<IReplayRuleGateFact>? priorGateCandidates, ReplayPerformanceProfile? performance)
     {
         ArgumentNullException.ThrowIfNull(strategyDefinition);
         ArgumentNullException.ThrowIfNull(context);
@@ -42,8 +55,13 @@ public sealed class EvaluateStrategyReplayContextUseCase
             if (!evaluators.TryGetValue(new(strategyDefinition.StrategyId, strategyDefinition.Version, rule.RuleId), out var evaluator)) continue;
             IReplayRuleGateFact? gate;
             using (performance?.Measure("evaluation.gate/" + rule.RuleId.Value))
-                gate = context.PriorObservations.SelectMany(o => o.RuleFacts).Concat(facts).Select(f => f.Fact)
-                .OfType<IReplayRuleGateFact>().FirstOrDefault(f => f.Blocks(context, rule.RuleId));
+            {
+                IEnumerable<IReplayRuleGateFact> priorGates = priorGateCandidates is not null
+                    ? priorGateCandidates
+                    : context.PriorObservations.SelectMany(o => o.RuleFacts).Select(f => f.Fact).OfType<IReplayRuleGateFact>();
+                gate = priorGates.Concat(facts.Select(f => f.Fact).OfType<IReplayRuleGateFact>())
+                    .FirstOrDefault(f => f.Blocks(context, rule.RuleId));
+            }
             ReplayRuleEvaluationDecision decision;
             using (performance?.Measure("evaluation.dispatch/" + rule.RuleId.Value))
                 decision = gate is null
