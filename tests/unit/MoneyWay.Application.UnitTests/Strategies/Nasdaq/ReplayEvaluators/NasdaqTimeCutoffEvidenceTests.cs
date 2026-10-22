@@ -12,6 +12,74 @@ namespace MoneyWay.Application.UnitTests.Strategies.Nasdaq.ReplayEvaluators;
 
 public sealed class NasdaqTimeCutoffEvidenceTests
 {
+    [Theory]
+    [InlineData(0, -1)]
+    [InlineData(10, -1)]
+    [InlineData(1000, 0)]
+    [InlineData(1800, 1)]
+    public void IndexedPrerequisitesMatchOriginalTraversal(int count, int minutes)
+    {
+        var at = Cutoff.AddMinutes(minutes);
+        var context = Context(count, at, i => Window(at.AddDays(i % 3 == 0 ? -1 : 0),
+            i % 2 == 0 ? TimeZoneInfo.Utc : TimeZoneInfo.FindSystemTimeZoneById("America/Bogota")));
+        AssertOriginalPrerequisites(context);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CanonicalFramesRetainGateOrderingAvailabilityAndTerminalPrecedence(bool terminal)
+    {
+        var take = M5Fixture.Take(terminal);
+        var inputs = M5Fixture.Inputs(NasdaqHumanH4PermittedDirection.Buy, take);
+        var history = new List<StrategyReplayContextObservation>();
+        var owners = new EvaluateStrategyReplayContextUseCase(MoneyWayReplayRuleEvaluators.GetAll());
+        foreach (var at in new[] { M5Fixture.At(13, 15), M5Fixture.At(13, 30), M5Fixture.At(14, 5), M5Fixture.At(14, 10), Cutoff })
+        {
+            var context = M5Fixture.Context(at, inputs).WithPriorObservations(history);
+            AssertOriginalPrerequisites(context);
+            AssertOriginalPrerequisites(M5Fixture.Context(at, inputs, includeFutureCandles: false).WithPriorObservations(history));
+            history.Add(owners.Execute(LiquidityFixture.Definition, context));
+        }
+        var final = M5Fixture.Context(Cutoff, inputs).WithPriorObservations(history.SkipLast(1));
+        if (terminal)
+            Assert.Equal("Canonical terminal session gate blocks FVG progression.", Check(final, new("NQ-FVG-001"))!.Reason);
+        AssertOriginalPrerequisites(final);
+        AssertOriginalPrerequisites(Context(0, Cutoff));
+    }
+
+    private static ReplayRuleEvaluationDecision? Check(StrategyReplayContext context, RuleId rule) =>
+        (ReplayRuleEvaluationDecision?)typeof(MoneyWayNasdaqHumanM5FvgEvaluator).Assembly
+            .GetType("MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators.NasdaqFvgReplayPrerequisites")!
+            .GetMethod("Check", BindingFlags.Static | BindingFlags.NonPublic)!.Invoke(null, [context, rule]);
+
+    private static void AssertOriginalPrerequisites(StrategyReplayContext context)
+    {
+        foreach (var id in new[] { "NQ-FVG-001", "NQ-FVG-002", "NQ-M1-001", "NQ-SL-001", "NQ-TP-001", "NQ-RISK-001" })
+        {
+            var rule = new RuleId(id);
+            // Original two-pass implementation is the behavioral oracle, including evidence order.
+            var gate = context.PriorObservations.SelectMany(o => o.RuleFacts).Select(f => f.Fact)
+                .OfType<IReplayRuleGateFact>().FirstOrDefault(f => f.Blocks(context, rule));
+            ReplayRuleEvaluationDecision? expected;
+            if (gate is not null)
+                expected = new(RuleEvaluationResult.Failed, "Canonical terminal session gate blocks FVG progression.", gate.EvidenceReference);
+            else
+            {
+                var seen = new HashSet<NasdaqTradingWindowFact>();
+                var windows = context.PriorObservations.SelectMany(o => o.RuleFacts)
+                    .Where(f => f.RuleId.Value is "NQ-TIME-001" or "NQ-TIME-002")
+                    .Select(f => f.Fact).OfType<NasdaqTradingWindowFact>()
+                    .Where(w => context.AsOfUtc >= w.DayStartUtc && context.AsOfUtc < w.DayStartUtc.AddDays(1) && seen.Add(w)).ToArray();
+                expected = windows.Any(w => context.AsOfUtc >= w.EndUtc)
+                    ? new(RuleEvaluationResult.Failed, CutoffReason, JsonSerializer.Serialize(windows))
+                    : context.PriorObservations.LastOrDefault(o => o.LifecycleProgression is not null)?.LifecycleProgression is { ActiveInstance: null }
+                        ? new(RuleEvaluationResult.Waiting, "No surviving canonical setup is active.", null) : null;
+            }
+            Assert.Equal(JsonSerializer.Serialize(expected), JsonSerializer.Serialize(Check(context, rule)));
+        }
+    }
+
     private static readonly DateTimeOffset Cutoff = M5Fixture.At(16);
     private const string CutoffReason = "The canonical TIME-owned entry-acquisition cutoff has been reached.";
 

@@ -109,7 +109,27 @@ The result can also be consumed directly from C#: `new RunLocalNasdaqMentorSessi
 
 The Nasdaq strategy-run coordinator appends references to every `IReplayRuleGateFact` from each completed canonical observation. The projection is local to one `ExecuteCore` invocation and is never attached to a context, evaluator or report. It retains emission order, repeated references and non-terminal candidates without filtering by session, setup, rule or review. Storage grows only with actual gate emissions; no context/history copies or per-frame projection snapshots are retained.
 
-At each registered rule, the evaluation coordinator searches these prior candidates, then gate facts already emitted in the current frame, in the original order. Each original `Blocks(context, ruleId)` remains authoritative and can still inspect the complete original context/history. Nothing caches a blocking decision or changes dispatch. New candidates are appended only after evaluation, lifecycle and frame capture complete. The existing public evaluation entrypoint and non-Nasdaq strategy runs retain the full-history lookup. This optimization excludes evaluator-internal prerequisite scans and selectors.
+At each registered rule, the evaluation coordinator searches these prior candidates, then gate facts already emitted in the current frame, in the original order. Each original `Blocks(context, ruleId)` remains authoritative and can still inspect the complete original context/history. Nothing caches a blocking decision or changes dispatch. New candidates are appended only after evaluation, lifecycle and frame capture complete. The existing public evaluation entrypoint and non-Nasdaq strategy runs retain the full-history lookup. This projection excludes evaluator-internal prerequisite scans and selectors.
+
+The shared `NasdaqFvgReplayPrerequisites.Check` separately traverses the original prior facts once with indexed loops, checking every gate in emission order and collecting distinct TIME values in first-occurrence order. Session filtering and cutoff evaluation happen after all gates, preserving terminal precedence. Exact TIME record equality preserves the serialized boundary values; original facts and owners remain in history. There is no cross-call cache, clock, I/O or change to selector contracts.
+
+### Dispatch measurement (2026-10-22)
+
+A bounded unchanged-input diagnosis sampled the actual testhost with EventPipe's SampleProfiler through already installed Microsoft diagnostics libraries, using a temporary external collector. In the 60-second capture, `Check` appeared in 21,676 of 27,557 samples containing a MoneyWay stack; iterator traversal, type checks and prerequisite lambdas dominated its stacks. These are inclusive sample counts, not exact CPU seconds; allocation costs were not measured. The 120-second diagnosis was deliberately interrupted (last checkpoint: 7,748 frames).
+
+The official unchanged 2026-06-29 input then completed with profiling enabled and no CPU sampler. A detached worktree at `99e7741f4f050d5cba248bec5120f39eb448e11b` supplied the complete control, using the same harness, input, machine and external monitor (300 seconds, 4 GiB testhost / 5 GiB process tree). Builds were separate; executions used `--no-build --no-restore` and did not overlap.
+
+| Measurement | Control | Indexed prerequisites |
+| --- | ---: | ---: |
+| Completed frames | 9,660 | 9,660 |
+| Replay seconds | 219.1851 | 180.1456 |
+| Dispatch seconds | 202.9202 | 163.9799 |
+| Coordinator gate seconds | 0.2561 | 0.2669 |
+| Frames / replay second | 44.07 | 53.62 |
+| Peak observed testhost MiB | 175.71 | 166.07 |
+| Process exit code | 0 | 0 |
+
+Dispatch decreased 19.19% and replay 17.81% in these single executions; this is not a statistical estimate or an exact CPU comparison. No matched old-commit CPU capture was collected, and partial earlier runs are not equivalent aggregate baselines. Both complete reports retained `NoTrade`, 178,140,291 bytes and SHA-256 `B0D5C3243206276C135960F090DADBA069450D6AB1C1590A1AF7116DE49A56F7`, also matching the earlier complete report. Streaming validation checked every frame's chronology, evidence hash/length and reference availability. Input hashes remained unchanged. Full history traversal still grows with history; this change does not add a prerequisite cache.
 
 ## Consolidated immutable report
 

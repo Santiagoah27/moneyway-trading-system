@@ -12,18 +12,25 @@ internal static class NasdaqFvgReplayPrerequisites
         var definition = StrategyDefinitions.Nasdaq.MoneyWayNasdaqStrategyDefinition.Instance;
         if (context.StrategyId != definition.StrategyId || context.StrategyVersion != definition.Version)
             throw new InvalidOperationException("Strategy context identity must exactly match the evaluator identity.");
-        var gate = context.PriorObservations.SelectMany(o => o.RuleFacts).Select(f => f.Fact)
-            .OfType<IReplayRuleGateFact>().FirstOrDefault(f => f.Blocks(context, rule));
-        if (gate is not null) return new(RuleEvaluationResult.Failed, "Canonical terminal session gate blocks FVG progression.", gate.EvidenceReference);
-        var windows = context.PriorObservations.SelectMany(o => o.RuleFacts).Where(f => f.RuleId.Value is "NQ-TIME-001" or "NQ-TIME-002")
-            .Select(f => f.Fact).OfType<NasdaqTradingWindowFact>();
         var seen = new HashSet<NasdaqTradingWindowFact>();
-        var sameSession = new List<NasdaqTradingWindowFact>();
-        // Record equality covers the three serialized UTC boundaries. Retain the first original
-        // representative in history order, without materializing repeated observations.
-        foreach (var window in windows)
-            if (context.AsOfUtc >= window.DayStartUtc && context.AsOfUtc < window.DayStartUtc.AddDays(1) && seen.Add(window))
-                sameSession.Add(window);
+        var windows = new List<NasdaqTradingWindowFact>();
+        // One ordered traversal avoids repeated SelectMany/OfType iterator dispatch. Retain
+        // every gate check and the first original representative of each exact TIME value.
+        for (var i = 0; i < context.PriorObservations.Count; i++)
+        {
+            var facts = context.PriorObservations[i].RuleFacts;
+            for (var j = 0; j < facts.Count; j++)
+            {
+                var fact = facts[j];
+                if (fact.Fact is IReplayRuleGateFact gate && gate.Blocks(context, rule))
+                    return new(RuleEvaluationResult.Failed, "Canonical terminal session gate blocks FVG progression.", gate.EvidenceReference);
+                if (fact.RuleId.Value is "NQ-TIME-001" or "NQ-TIME-002"
+                    && fact.Fact is NasdaqTradingWindowFact window && seen.Add(window))
+                    windows.Add(window);
+            }
+        }
+        // Keep session arithmetic/cutoff evaluation after all terminal gates, as before.
+        var sameSession = windows.Where(w => context.AsOfUtc >= w.DayStartUtc && context.AsOfUtc < w.DayStartUtc.AddDays(1)).ToArray();
         if (sameSession.Any(w => context.AsOfUtc >= w.EndUtc))
             return new(RuleEvaluationResult.Failed, "The canonical TIME-owned entry-acquisition cutoff has been reached.", System.Text.Json.JsonSerializer.Serialize(sameSession));
         if (context.PriorObservations.LastOrDefault(o => o.LifecycleProgression is not null)?.LifecycleProgression is { ActiveInstance: null })
