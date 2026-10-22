@@ -16,8 +16,14 @@ internal static class NasdaqFvgReplayPrerequisites
             .OfType<IReplayRuleGateFact>().FirstOrDefault(f => f.Blocks(context, rule));
         if (gate is not null) return new(RuleEvaluationResult.Failed, "Canonical terminal session gate blocks FVG progression.", gate.EvidenceReference);
         var windows = context.PriorObservations.SelectMany(o => o.RuleFacts).Where(f => f.RuleId.Value is "NQ-TIME-001" or "NQ-TIME-002")
-            .Select(f => f.Fact).OfType<NasdaqTradingWindowFact>().ToArray();
-        var sameSession = windows.Where(w => context.AsOfUtc >= w.DayStartUtc && context.AsOfUtc < w.DayStartUtc.AddDays(1)).ToArray();
+            .Select(f => f.Fact).OfType<NasdaqTradingWindowFact>();
+        var seen = new HashSet<NasdaqTradingWindowFact>();
+        var sameSession = new List<NasdaqTradingWindowFact>();
+        // Record equality covers the three serialized UTC boundaries. Retain the first original
+        // representative in history order, without materializing repeated observations.
+        foreach (var window in windows)
+            if (context.AsOfUtc >= window.DayStartUtc && context.AsOfUtc < window.DayStartUtc.AddDays(1) && seen.Add(window))
+                sameSession.Add(window);
         if (sameSession.Any(w => context.AsOfUtc >= w.EndUtc))
             return new(RuleEvaluationResult.Failed, "The canonical TIME-owned entry-acquisition cutoff has been reached.", System.Text.Json.JsonSerializer.Serialize(sameSession));
         if (context.PriorObservations.LastOrDefault(o => o.LifecycleProgression is not null)?.LifecycleProgression is { ActiveInstance: null })
