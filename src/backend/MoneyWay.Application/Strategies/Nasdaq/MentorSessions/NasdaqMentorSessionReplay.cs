@@ -78,6 +78,9 @@ public sealed class NasdaqMentorSessionReplay(NasdaqMentorSessionReplayInput inp
                 NasdaqHumanM5FvgQualityObservation o => o.Session,
                 NasdaqHumanM1CorrectiveRetracementObservation o => o.Session,
                 NasdaqHumanM1RealignmentObservation o => o.Session,
+                NasdaqHumanBranchApplicabilityObservation o => o.Session,
+                NasdaqHumanWickfillScenario2ContextObservation o => o.Session,
+                NasdaqHumanWickfillScenario2PostSweepReversalObservation o => o.Session,
                 NasdaqHistoricalObservedEntryObservation o => o.Session,
                 NasdaqHumanStructuralStopLossObservation o => o.Session,
                 NasdaqHumanTakeProfitObservation o => o.Session,
@@ -88,8 +91,20 @@ public sealed class NasdaqMentorSessionReplay(NasdaqMentorSessionReplayInput inp
             if (session is not null && session != input.Session
                 || observation is NasdaqPreparationCompletionObservation prep && prep.TradingDay != input.Session.TradingDay)
             { Reject(record, "EvidenceSessionMismatch", context); continue; }
+            // Setup-bound human records must reference this run's exact prior canonical Start.
+            // Context is pre-open/session evidence; it has no lifecycle owner to manufacture here.
+            var setupOwner = observation switch
+            {
+                NasdaqHumanBranchApplicabilityObservation o => o.InitialTakeObservation,
+                NasdaqHumanWickfillScenario2PostSweepReversalObservation o => o.OpeningSweep.TakeObservation,
+                _ => null,
+            };
+            if (setupOwner is not null && !OwnsActiveSetup(context, setupOwner))
+            { Reject(record, "ForeignCanonicalAncestry", context); continue; }
             var required = observation switch
             {
+                NasdaqHumanBranchApplicabilityObservation o => new IReplayRuleFact[] { o.InitialTake },
+                NasdaqHumanWickfillScenario2PostSweepReversalObservation o => [o.OpeningSweep.Take, o.OpeningSweep.CanonicalH4Context],
                 NasdaqHumanM1RealignmentObservation o => new IReplayRuleFact[] { o.Pullback },
                 NasdaqHistoricalObservedEntryObservation o => [o.PreEntryEligibility],
                 NasdaqHumanStructuralStopLossObservation o => [o.PreEntryEligibility],
@@ -107,6 +122,14 @@ public sealed class NasdaqMentorSessionReplay(NasdaqMentorSessionReplayInput inp
 
     private void Reject(NasdaqMentorSessionEvidenceRecord record, string code, StrategyReplayContext context)
     { rejected.Add(record.RecordId); diagnostics.Add(new(record.RecordId, code, context.AsOfUtc)); }
+
+    private static bool OwnsActiveSetup(StrategyReplayContext context, StrategyReplayContextObservation owner)
+    {
+        var active = context.PriorObservations.LastOrDefault(o => o.LifecycleProgression is not null)?.LifecycleProgression?.ActiveInstance;
+        return active is not null && context.PriorObservations.Any(o => ReferenceEquals(o, owner)
+            && o.AsOfUtc == active.StartedAtUtc
+            && o.LifecycleProgression?.ActiveInstance?.InstanceId == active.InstanceId);
+    }
 
     internal void Capture(StrategyReplayContext context, StrategyReplayContextObservation observation)
     {
