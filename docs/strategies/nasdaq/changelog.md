@@ -1,5 +1,12 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-10-30 - S9 human-confirmed Replay #2 pre-open context timestamps
+
+- Register S9's direct human decision, retained text attachment and verified text SHA256 in [ADR 0026 section 2.8](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#28-human-confirmed-pre-open-context-temporal-pair-2026-10-30-s9). Preserve S1–S8 meanings, provenance, screenshot records and S8's original uncertainty.
+- Confirm only for the September 8 historical complete SELL/Wickfill context: EffectiveAtUtc 13:00:00Z (08:00 Bogota) and ObservedAtUtc 13:27:42Z (recognized no later than 08:27:42). This is new human authority, not a candle-close or AI inference; the audit date is separate.
+- Require AsOfUtc >= ObservedAtUtc before consumption, preserve causal transport and the approved upper zone 29618.6–29633.1, and assert no cross-feed price equivalence or new screenshot hashes.
+- Context timing now permits subsequent typed adapter preparation with compatible H4 ancestry. Applicability review times, reversal event/availability and exact canonical setup binding remain independent. No runtime, metadata, external adapter, active version, SL/TP/risk or execution changes.
+
 ## 2026-10-30 - Replay #2 human-selected pre-open screenshot evidence
 
 - Register S8's direct user message and external screenshot provenance in [ADR 0026 section 2.7](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#27-human-selected-pre-open-screenshot-evidence-2026-10-30-s8); no image paths, attachment identities or hashes are invented. Preserve S1–S7 provenance.
