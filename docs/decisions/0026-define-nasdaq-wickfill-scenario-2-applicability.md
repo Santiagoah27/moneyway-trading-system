@@ -40,6 +40,8 @@ Source S6 is the strategy owner's explicit decision **"MoneyWay Trading System -
 
 Source S7 is the strategy owner's explicit approval **"MoneyWay Trading System - Confirm Deterministic Sweep Interval Boundaries for Scenario 2 SELL Stop Loss"**, dated 2026-10-21. Retained decision-text attachment identity: `8be61a97-18eb-4c3d-956c-4853a3afc940`; verified decision-text SHA256: `8c26d96ba85d4983ed796f96961a02f95104e081fb47ef2851f4e1bcfc5d4abf`. This is a human-approved operational formalization of the mentor's visual concept, **not a verbatim mentor algorithm**, AI inference or new assistant audiovisual review. Section 2.6 defines the measurement interval using the existing initiating-take and confirmed-reversal ancestry. The hash identifies this decision text only, not screenshot/video bytes. S5 and S6 identities, hashes, provenance and historical sections remain unchanged; S5's screenshot remains external / not repository-resolved.
 
+Source S8 is the user's direct message **"MoneyWay — Register Human-Reviewed Replay #2 Pre-Open Evidence"**, received 2026-10-30. The user selected three screenshots from the original September 8 mentor recording and supplied their chart-clock, timeframe and content descriptions. This records attributed human-selected screenshot evidence, not an independent assistant inspection of image/video bytes or a verbatim transcript. The screenshots remain external / not repository-resolved: no image bytes, repository path, attachment identity or image hash are supplied for this record. No screenshot or decision-text hash is invented. S1–S7 provenance and existing hashes remain intact. Section 2.7 records only the new screenshot-supported observations, the user's explicit supersession of the older historical Fakeout label, and temporal/provenance limits; it does not create typed replay observations.
+
 ### Version lifecycle
 
 The verified baseline is `main` at `9f42fbc8431d6deb6acf528767c603c5106e471c`. The registered version is `nasdaq-0.1.0-draft`; documentation labels it draft, and the definition has no ACTIVE lifecycle marker or promotion mechanism. No ACTIVE version is changed. This is a traceable specification correction to that audited draft, not candidate activation. Any future executable branch must follow the project's versioning/approval rules; this decision does not select its executable version or promote it.
@@ -197,6 +199,37 @@ The market-event endpoint and canonical availability remain distinct. An earlier
 S7 closes the previously unresolved **operational start/end definition** only; earlier S6 wording about those boundaries remains historical. S5 retains its context-specific visual M30/"second candle" and later 1:1-management meaning, while S6 retains the general sweep-peak protection, `StopPrice > InitiatingSweepPeak` and conceptual bearish-thesis invalidation. Exact StopPrice offset remains unresolved: no tick/point/spread/ATR/percentage/epsilon/rounding policy follows. Calculating the reference and calculating an executable stop remain separate; no order, execution or management algorithm is authorized.
 
 Standard Nasdaq, Scenario 2 BUY, Forex, the general 5M HL/LH concept and unrelated setups are unchanged. M30 is not mandatory. NQ-SL-001's definition/evaluator/observations/selectors/facts, LIQ-003, WF2-001/002, workflow/lifecycle, replay, risk/TP and activation remain unchanged. Counts remain 34 RuleDefinitions / 13 Required / 18 evaluators / zero Required gaps; automatic Scenario 2 SL is not Implemented or fully defined. The possible same-frame SL liquidity-invalidation gap remains a separate technical inspection concern, not a reproduced production failure, requiring validation before downstream SL integration.
+
+### 2.7 Human-selected pre-open screenshot evidence (2026-10-30, S8)
+
+**Scope:** Replay #2, 2026-09-08, SELL. S8 supports the already approved S1 Wickfill Scenario 2 interpretation; it supplies new pre-open source-chart observations, not a new strategy rule. The following visible contents and times are `confirmed` as the user's attributed screenshot report; their visual support is `visual_only`, not an autonomous classifier. Video offsets locate the selected images and are not UTC market timestamps.
+
+| User-selected screenshot | Reported source chart and visible clock | UTC equivalent of that chart-clock reading | Supported observation and limit |
+|---|---|---|---|
+| 1 — video `02:21` | TradingView US Nas 100 / OANDA, **H4** selected; `08:21:54 UTC-5` | `2026-09-08T13:21:54Z` | Crosshair identifies the September 8 `04:00` candle, previously closed at `08:00`. Displayed OHLC: O `29471.4`, H `29618.6`, L `29448.8`, C `29618.6`. Supports identifying the reviewed H4 candle, not dating every component of the complete Wickfill interpretation. |
+| 2 — video `06:58` | TradingView **H4** selected; `08:26:31 UTC-5` | `2026-09-08T13:26:31Z` | Upper resistance region and illustrated retest context remain visible. This image is not an M30 chart or proof of a completed future retest. |
+| 3 — video `08:08` | TradingView **H4** selected; `08:27:42 UTC-5` | `2026-09-08T13:27:42Z` | Yellow scenario illustration and upper H4 reference support S1's SELL/Wickfill interpretation. The drawing is illustrative, not an observed future price path or a future market confirmation. |
+
+**Source reconciliation:**
+
+- The AI-reported approximate `29482–29500` region concerns the lower chart area. Promoting it to the approved upper-resistance context is `rejected_ai_inference`. Preserve the existing approximate upper H4 zone `29618.6–29633.1`; no new bounds, midpoint, scalar or tolerance are adopted.
+- All three selected pre-open screenshots display H4. Labeling these particular screenshots M30 is `rejected_ai_inference`. S1/S5's separate historical M30 execution/SL observations retain their context-specific scope.
+- The third screenshot's visible clock is `08:27:42 UTC-5`. An AI report separately claims complete verbalization by `08:27:46`; that stronger claim remains `human_validation_required`. The four-second difference is not rounded away or used to date complete verbalization at either instant. No transcript or independently verified verbal-completion timestamp is supplied by S8.
+- TradingView screenshot values retain their OANDA chart provenance. They are not substituted into independently validated native MT5 US100 candles: the existing native H4 QA records High `29618.7` and Low `29448.9`, distinct from screenshot 1. The context zone remains an attributed cross-feed annotation, not exact feed equivalence.
+- S8 explicitly confirms that, for this historical context, S1's later human-approved Wickfill interpretation supersedes the older adapter's Fakeout label. This is a session-specific source reconciliation, not permission to combine the two labels in a typed WF2 context or infer a general classification-conversion rule. The external adapter is not edited by this documentation update.
+
+**Temporal fields remain separate:**
+
+| Field / meaning | Evidence state after S8 |
+|---|---|
+| Reviewed H4 candle interval | `confirmed`: September 8 `04:00–08:00 America/Bogota`, or `09:00–13:00Z`, under the already retained September source mapping. The candle close is `13:00Z`. |
+| Source chart observation | The three chart-clock readings and their UTC equivalents above are retained exactly as reported. They locate the displayed context; they are not automatically runtime `ObservedAtUtc` values for the full strategy assertion. |
+| Complete mentor strategy interpretation | S1 already confirms SELL/Wickfill pre-open context and the completed macro move. S8 adds supporting illustrations; exact completion of the full interpretation/verbalization at `13:27:42Z` or `13:27:46Z` remains `human_validation_required`. |
+| Full WF2 context `EffectiveAtUtc` | `human_validation_required`: do not assign the H4 close `13:00Z` to every semantic component merely because the candle was closed. No complete-context effective timestamp is selected here. |
+| Full WF2 context `ObservedAtUtc` | `human_validation_required`: neither a screenshot's clock, the older preparation available-by boundary `13:27Z`, nor the current audit date automatically establishes when the complete assertion became historically source-observable. |
+| Subsequent human audit | S8 was supplied on `2026-10-30`; that audit date is not a historical market event or availability timestamp. Screenshot bytes/hashes remain external and unverified here. |
+
+ADR 0025's effective/observed-time distinction still applies. No new typed Scenario 2 pre-open context is fully authorized solely by these screenshots. The next human-validation step is to confirm the effective time and historically source-observable availability of the complete pre-open assertion against contemporaneous source material, retaining distinct times where applicable. Reversal event/availability, canonical Start binding and all other existing typed-input requirements remain separate. No runtime, evaluator, metadata, adapter, strategy version, SL/TP/risk or execution behavior changes.
 
 ### 3. Replay #2 interpretation
 

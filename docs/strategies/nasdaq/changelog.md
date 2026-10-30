@@ -1,5 +1,12 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-10-30 - Replay #2 human-selected pre-open screenshot evidence
+
+- Register S8's direct user message and external screenshot provenance in [ADR 0026 section 2.7](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#27-human-selected-pre-open-screenshot-evidence-2026-10-30-s8); no image paths, attachment identities or hashes are invented. Preserve S1–S7 provenance.
+- Record H4 at video 02:21 / 06:58 / 08:08 with visible UTC-5 clocks 08:21:54 / 08:26:31 / 08:27:42, the identified closed H4 candle and attributed TradingView OHLC. Preserve distinct native MT5 OHLC and the approved upper zone 29618.6–29633.1.
+- Correct the supplied AI claims that confuse the lower 29482–29500 region with upper resistance or label these screenshots M30. Keep the separate 08:27:46 verbal-completion claim unconfirmed and the yellow scenario drawing illustrative.
+- Record explicit session-specific supersession of the older Fakeout interpretation by S1's Wickfill context. Keep candle close, source chart time, full interpretation, effective time, historical availability and subsequent audit separate. Full-context temporal fields still require confirmation; no typed input, runtime, metadata, external adapter or strategy behavior changes.
+
 ## 2026-10-21 - Approved Scenario 2 SELL sweep-peak measurement interval
 
 - Record S7's direct owner approval and verified decision-text identity/hash, preserving S5/S6 text, hashes and provenance. This is operational formalization of the visual concept, not a verbatim mentor algorithm.
