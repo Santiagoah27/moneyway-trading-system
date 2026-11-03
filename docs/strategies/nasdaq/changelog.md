@@ -1,5 +1,12 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-11-03 - S10 Replay #2 operational Scenario 2 selection evidence
+
+- Register S10's human decision, decision-text attachment/hash and external screenshot provenance in [ADR 0026 section 2.9](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#29-human-confirmed-operational-selection-and-pending-order-evidence-2026-11-03-s10). Preserve S1–S9 records and S9's context temporal pair.
+- Clarify tentative video 08:18–08:27 discussion versus later confirmed Scenario 2 SELL selection after recognition of London High liquidity taken. Record attributed USTEC/M30 pending SELL STOP 29605.75, status placed; no fill or universal order mechanics are inferred.
+- Record server placement 16:30:37 / 13:30:37Z and visible clock 16:30:42 / 13:30:42Z using only the approved September-pack mapping. Selection was already established by placement, but exact first decision/observation times remain unknown; no automatic review-field assignments.
+- Preserve native US100 closed-M1 take at 13:31:00Z and actual canonical owner binding. The existing constructor supports earlier review bounded by Start availability but still requires an explicitly authorized review pair. No runtime, metadata, external adapter, CSV, strategy algorithm, SL/TP/risk or execution changes; no complete replay claim.
+
 ## 2026-10-30 - S9 human-confirmed Replay #2 pre-open context timestamps
 
 - Register S9's direct human decision, retained text attachment and verified text SHA256 in [ADR 0026 section 2.8](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#28-human-confirmed-pre-open-context-temporal-pair-2026-10-30-s9). Preserve S1–S8 meanings, provenance, screenshot records and S8's original uncertainty.

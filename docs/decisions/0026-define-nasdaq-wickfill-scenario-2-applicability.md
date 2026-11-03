@@ -44,6 +44,8 @@ Source S8 is the user's direct message **"MoneyWay — Register Human-Reviewed R
 
 Source S9 is the user's new authoritative human confirmation **"MoneyWay — Register S9 Human-Confirmed Replay #2 WF2 Temporal Context"**, dated 2026-10-30. Retained decision-text attachment identity: `49ff660c-601f-49ce-bf92-643afba282e3`; verified decision-text SHA256: `2ce84337df7ce97c3d6125e7d6622d013b855a8299c71d4c93ee0557f38639af`. The user personally confirms that the complete September 8 H4 SELL/Wickfill context, including the completed corrective movement toward the relevant zone, was established at 08:00 America/Bogota and explicitly recognized by the mentor no later than 08:27:42. This is direct human confirmation independent of prior AI analysis. The hash verifies this decision text only, not screenshot/video bytes; S8's screenshots remain external / not repository-resolved. S1–S8 meanings and provenance remain unchanged. Section 2.8 resolves only the historical pre-open context temporal pair previously left open by S8.
 
+Source S10 is the user's direct human-reviewed decision **"MoneyWay — Document S10 Replay #2 Human-Confirmed Scenario 2 Applicability Decision"**, registered 2026-11-03. Retained decision-text attachment identity: `d24d3263-6c55-4cd9-a1b5-7a42b62fbb7c`; verified decision-text SHA256: `b7532f711efee9d4a0080529705823aec4296fad8ad25d51e3a76e22bef2cd13`. The reviewer personally checked the original mentor video and supplies operational-selection confirmation and attributed MT5 screenshot observations. The screenshot remains external / not repository-resolved: its actual bytes are unavailable for local verification here; no image path, hash or immutable image attachment identity is asserted. The text hash identifies this decision only. This is not an independent assistant audiovisual inspection. S1–S9 source records remain intact; section 2.9 adds the later operational decision and clarifies the tentative scope of video 08:18–08:27.
+
 ### Version lifecycle
 
 The verified baseline is `main` at `9f42fbc8431d6deb6acf528767c603c5106e471c`. The registered version is `nasdaq-0.1.0-draft`; documentation labels it draft, and the definition has no ACTIVE lifecycle marker or promotion mechanism. No ACTIVE version is changed. This is a traceable specification correction to that audited draft, not candidate activation. Any future executable branch must follow the project's versioning/approval rules; this decision does not select its executable version or promote it.
@@ -250,6 +252,38 @@ America/Bogota is UTC-5 for these source times; no DST or America/New_York conve
 **Adapter readiness and limits:** the historical pre-open context temporal semantics are now sufficiently specified to prepare the existing typed observation in a subsequent adapter-only feature, retaining the approved zone, exact closed H4 sources and S1/S8/S9 references. The relied-upon H4 observation must represent the same approved SELL/Wickfill context with compatible effective/observed times; copying the older adapter's Fakeout label or later H4 effective time would not satisfy the current constructor ancestry checks. This decision does not itself construct an observation, change that adapter or claim a successful replay.
 
 S9 does not establish branch-applicability review timestamps, a reversal `EventId` or its effective/observed times, the first intraminute liquidity crossing, or canonical Start/active-setup references. Those independent inputs still require authentic historical evidence and binding to the actual run. No universal Wickfill timing or H4 selection/inference rule, initial SL/offset, execution/fill, TP, risk or PnL follows. Runtime, evaluators, metadata, strategy versions and unrelated unresolved questions are unchanged.
+
+### 2.9 Human-confirmed operational selection and pending-order evidence (2026-11-03, S10)
+
+**Scope: `confirmed`, `context_specific`, Replay #2 on 2026-09-08 only.** S10 clarifies that video 08:18–08:27 discussed a possible Scenario 2 entry, not definitive operational selection at that point. Later the mentor recognized the relevant London High liquidity as taken, selected Wickfill Scenario 2 SELL for this opportunity, and placed a pending SELL STOP as part of that decision. This newer clarification does not erase S3/S4's historical records or alter the approved strategic eligibility boundary. It does not supply an exact video offset for the later decision, a deterministic selection algorithm or a universal SELL STOP requirement.
+
+The following are **human-provided visual observations**, not locally verified image bytes:
+
+| Screenshot item | Attributed observation | Boundary |
+|---|---|---|
+| Platform / instrument / chart | MetaTrader 5 / `USTEC` / M30 | Operational source identity; distinct from native CSV `US100`. No source-feed or price equivalence is inferred. |
+| Pending order | SELL STOP at `29605.75`, status `placed` | Pending placement only, not proof of fill, executed entry price or historical trade outcome. |
+| Order creation | `2026.09.08 16:30:37` server | Exact displayed placement timestamp; approved September-pack mapping gives `2026-09-08T13:30:37Z`. |
+| Market Watch | `16:30:42` server | Visible observation clock maps to `2026-09-08T13:30:42Z`; not proof of earliest source observation. |
+| Windows clock | 08:30 a.m., 2026-09-08 | Minute precision only; does not establish seconds or replace either MT5 timestamp. |
+
+For this audited September source only, UTC = server time minus three hours; the mapped times correspond to 08:30:37 and 08:30:42 America/Bogota (UTC-5). This does not establish a general MT5/provider timezone rule. The registration date `2026-11-03` is a subsequent human evidence record, not historical event time.
+
+| Temporal meaning | S10 evidence and remaining limit |
+|---|---|
+| Operational selection already established | **No later than `2026-09-08T13:30:37Z`**, an upper bound supported by placement. |
+| First effective selection instant | `human_validation_required`: exact earliest decision time is not independently established. Do not automatically assign `ReviewEffectiveAtUtc = 2026-09-08T13:30:37Z`. |
+| Visible source clock | Exact displayed `2026-09-08T13:30:42Z`; earliest historical observation is unknown. Do not automatically assign `ReviewObservedAtUtc = 2026-09-08T13:30:42Z`. |
+| First intraminute London High crossing | Unknown. The human recognition/order record does not create an earlier native price event. |
+| Existing native closed-M1 take | Retain `2026-09-08T13:31:00Z`; this availability is distinct from the unknown first intraminute crossing. |
+| Canonical lifecycle Start | Must be the actual replay run's initiating-take owner, with its real identity and availability. Neither screenshot nor pending order substitutes for it. |
+| S9 complete pre-open context | Preserve `EffectiveAtUtc = 2026-09-08T13:00:00Z` and `ObservedAtUtc = 2026-09-08T13:27:42Z`; context availability and operational selection remain separate. |
+
+**Existing contract compatibility and blocker.** [NasdaqHumanBranchApplicabilityObservation](../../src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqHumanBranchApplicabilityObservation.cs) accepts a review preceding the initial take. It requires concrete UTC `ReviewEffectiveAtUtc` and `ReviewObservedAtUtc`, with observed >= effective, and binds `EffectiveAtUtc = max(ReviewEffectiveAtUtc, InitialTakeObservation.AsOfUtc)` and `ObservedAtUtc = max(ReviewObservedAtUtc, InitialTakeObservation.AsOfUtc)`. An earlier decision can therefore bind to a later canonical initiating setup once its actual owner is available, subject to existing identity, causality and active-setup validation. No contract change is needed for that ordering.
+
+S10's bounds alone do **not** authorize a concrete review timestamp pair for this constructor. Clamping to Start does not justify inventing input scalars or claiming first decision/observation times. Real adapter applicability remains unimplemented by this documentation feature. The smallest remaining action is explicit human confirmation of a source-backed review pair or approval of these conservative boundaries as the replay review fields, with their available-by meanings preserved; then a separate adapter feature can bind to the actual canonical owner. No Start/owner ID, canonical observation or artificial price event is fabricated here.
+
+Reversal event identity and effective/observed evidence, initial SL realization, TP, risk and execution/fill remain independent requirements. S10 resolves none of them and establishes no full Replay #2 completion. No runtime, evaluator, metadata, external adapter, CSV, order logic or strategy algorithm changes follow.
 
 ### 3. Replay #2 interpretation
 
