@@ -1,5 +1,13 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-11-03 - S12 conditional SELL STOP and reversal semantics reconciliation
+
+- Register the direct human clarification, retained text attachment and verified SHA256 in [ADR 0026 section 2.11](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#211-conditional-order-preparation-versus-strategic-reversal-eligibility-2026-11-03-s12); preserve S1-S11 and original S3/S4 source meanings.
+- Separate setup selection, conditional pending preparation, genuine post-sweep bearish reversal, strategic eligibility and historical activation/fill. No evidence establishes an independent mandatory reversal confirmation before preparing the conditional order; NQ-WF2-001 remains required for strategic eligibility under S3/S4.
+- Record historical preparation conditioned on subsequent downward movement without waiting for the entire move to finish. Do not infer a universal SELL STOP, zone-low geometry, close rule, activation-to-reversal equivalence or exact reversal time.
+- Preserve S9-S11 chronology and native closed-M1 take/Start. Treat the reported 13:33:10Z screenshot as external human evidence, not a locally verified image or typed reversal/fill. Exact reversal/conditional-entry relationship remains unresolved.
+- Documentation only: no contract/evaluator/metadata/lifecycle/pipeline/adapter/CSV, ACTIVE version, Standard/Forex, SL/TP/risk or execution change. Next assess existing source material for authentic reversal evidence; no unnecessary repeated full-video review.
+
 ## 2026-11-03 - S11 approval and real Replay #2 applicability binding
 
 - Record the explicit human-approved conservative S10 review pair in [ADR 0026 section 2.10](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#210-human-approved-conservative-applicability-review-pair-2026-11-03-s11), with verified approval-text provenance. Preserve S1-S10 and S9 context times.
