@@ -46,6 +46,8 @@ Source S9 is the user's new authoritative human confirmation **"MoneyWay — Reg
 
 Source S10 is the user's direct human-reviewed decision **"MoneyWay — Document S10 Replay #2 Human-Confirmed Scenario 2 Applicability Decision"**, registered 2026-11-03. Retained decision-text attachment identity: `d24d3263-6c55-4cd9-a1b5-7a42b62fbb7c`; verified decision-text SHA256: `b7532f711efee9d4a0080529705823aec4296fad8ad25d51e3a76e22bef2cd13`. The reviewer personally checked the original mentor video and supplies operational-selection confirmation and attributed MT5 screenshot observations. The screenshot remains external / not repository-resolved: its actual bytes are unavailable for local verification here; no image path, hash or immutable image attachment identity is asserted. The text hash identifies this decision only. This is not an independent assistant audiovisual inspection. S1–S9 source records remain intact; section 2.9 adds the later operational decision and clarifies the tentative scope of video 08:18–08:27.
 
+Source S11 is the user's explicit approval **"MoneyWay - Replay #2 Human-Approved S10 Applicability Binding"**, registered 2026-11-03. Retained decision-text attachment identity: `1e2a10a8-642f-4457-86f7-0f16365753e2`; verified decision-text SHA256: `45531472f99082928d831cdf24183a6c6bcd31c44549bb4b26522c744324081d`. This source approves the conservative meaning of the S10 review fields for September 8, 2026 only. The hash identifies the supplied approval text, not screenshot/video bytes. No exact message-receipt time or new image identity is asserted. S1-S10 records and their original meanings remain intact; section 2.10 supplies the new representation authority.
+
 ### Version lifecycle
 
 The verified baseline is `main` at `9f42fbc8431d6deb6acf528767c603c5106e471c`. The registered version is `nasdaq-0.1.0-draft`; documentation labels it draft, and the definition has no ACTIVE lifecycle marker or promotion mechanism. No ACTIVE version is changed. This is a traceable specification correction to that audited draft, not candidate activation. Any future executable branch must follow the project's versioning/approval rules; this decision does not select its executable version or promote it.
@@ -284,6 +286,23 @@ For this audited September source only, UTC = server time minus three hours; the
 S10's bounds alone do **not** authorize a concrete review timestamp pair for this constructor. Clamping to Start does not justify inventing input scalars or claiming first decision/observation times. Real adapter applicability remains unimplemented by this documentation feature. The smallest remaining action is explicit human confirmation of a source-backed review pair or approval of these conservative boundaries as the replay review fields, with their available-by meanings preserved; then a separate adapter feature can bind to the actual canonical owner. No Start/owner ID, canonical observation or artificial price event is fabricated here.
 
 Reversal event identity and effective/observed evidence, initial SL realization, TP, risk and execution/fill remain independent requirements. S10 resolves none of them and establishes no full Replay #2 completion. No runtime, evaluator, metadata, external adapter, CSV, order logic or strategy algorithm changes follow.
+
+### 2.10 Human-approved conservative applicability review pair (2026-11-03, S11)
+
+**Scope: `confirmed`, `context_specific`, Replay #2 on 2026-09-08 only.** S11 explicitly approves the following fields for the existing `NasdaqHumanBranchApplicabilityObservation`, supplementing S10 rather than rewriting its earlier uncertainty:
+
+| Raw review field | Approved UTC value | Approved meaning |
+|---|---|---|
+| `ReviewEffectiveAtUtc` | `2026-09-08T13:30:37Z` | Operational Wickfill Scenario 2 SELL selection already existed no later than this time; not its exact first decision instant. |
+| `ReviewObservedAtUtc` | `2026-09-08T13:30:42Z` | Evidence of that selection was visible no later than this time; not its first possible observation instant. |
+
+These are exact approved input values representing conservative latest-known bounds. S11 supplies the explicit authority missing from section 2.9; it does not establish the mentor's unknowable mental decision second. Preserve S9 context effective/observed values `13:00:00Z` / `13:27:42Z`, S10's pending-order placement versus fill distinction, external screenshot provenance and USTEC versus native US100 identity. The first intraminute London High crossing remains unknown.
+
+The existing constructor retains both raw review fields and derives `EffectiveAtUtc = max(ReviewEffectiveAtUtc, InitialTakeObservation.AsOfUtc)` and `ObservedAtUtc = max(ReviewObservedAtUtc, InitialTakeObservation.AsOfUtc)`. Use the current run's exact canonical initiating-take/active Start owner. Historical record availability must equal the derived observation availability, not the raw review availability. If Start occurs at `13:31Z`, both derived fields are `13:31Z`; the binder requires prior owner history and can first bind at the next existing frame, expected `13:32Z` for this dataset. Verify those values in the real run; no generic minute delay or hardcoded owner/ordinal is authorized.
+
+The external adapter feature may now bind this approved classification using the existing contracts, with source references to S10/S11 and the original decision attachments/hashes. A different canonical emission time must not be silently substituted or backdated to make registration succeed. Preserve identity, active ownership, prior progression, future-data and conflict guards. The screenshot/order never replaces a native market event or canonical Start. No positive same-frame propagation or rewriting of earlier frames is authorized.
+
+This approval changes no strategy algorithm, contract, evaluator, metadata, version, cutoff or Standard/Forex behavior. It supplies no reversal event identity/times, WF2 eligibility, SL/TP/risk, fill, snapshot, PnL or Ready. See the [local adapter and validation record](../backtesting/nasdaq-replay2-s11-applicability-adapter.md) for the external artifact checkpoint and focused real-data test scope.
 
 ### 3. Replay #2 interpretation
 

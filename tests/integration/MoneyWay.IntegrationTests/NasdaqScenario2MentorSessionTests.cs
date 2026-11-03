@@ -217,6 +217,21 @@ public sealed class NasdaqScenario2MentorSessionTests : IDisposable
         Assert.Null(cancelled.Frames.Last().Strategy.LifecycleProgression!.ActiveInstance);
     }
 
+    [Fact]
+    public void RawPreStartReviewAvailabilityCannotRegisterAStartBoundObservation()
+    {
+        // The constructor derives canonical availability; raw review time is not record availability.
+        var input = Input("missing-branch");
+        var rawRegistration = new NasdaqMentorSessionEvidenceRecord("raw-availability", At(13, 15), (c, _) =>
+            Owner(c) is { } owner ? new NasdaqHumanBranchApplicabilityObservation(owner,
+                NasdaqStrategyPath.WickfillScenario2, At(13, 10), At(13, 15), "synthetic:raw-registration") : null);
+        var report = Run(new(input.SessionId, input.Session, input.CsvFiles, input.Evidence.Append(rawRegistration)));
+        NoTrade(report);
+        Assert.Contains(report.BindingDiagnostics, d => d.RecordId == "raw-availability"
+            && d.Code == "EvidenceIdentityOrAvailabilityMismatch" && d.AsOfUtc == At(13, 32));
+        Assert.DoesNotContain(report.Frames.SelectMany(f => f.Inputs), o => o is NasdaqHumanBranchApplicabilityObservation);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

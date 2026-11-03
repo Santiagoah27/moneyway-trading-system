@@ -1,5 +1,12 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-11-03 - S11 approval and real Replay #2 applicability binding
+
+- Record the explicit human-approved conservative S10 review pair in [ADR 0026 section 2.10](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#210-human-approved-conservative-applicability-review-pair-2026-11-03-s11), with verified approval-text provenance. Preserve S1-S10 and S9 context times.
+- Approve raw review effective 13:30:37Z and observed 13:30:42Z as latest-known bounds, not first decision/observation instants. Bind only to this run's canonical initial take and active lifecycle Start; register derived availability under unchanged constructor/binder contracts.
+- Add opt-in real-adapter integration coverage and a [local reproduction/checkpoint record](../../backtesting/nasdaq-replay2-s11-applicability-adapter.md). Keep USTEC order evidence separate from native US100 data; no inferred intraminute crossing, fill, reversal or downstream trade evidence.
+- No runtime/evaluator/metadata/strategy algorithm, ACTIVE version, Standard/Forex, cutoff or execution changes. Full Scenario 2 trade replay remains blocked on independent evidence.
+
 ## 2026-11-03 - S10 Replay #2 operational Scenario 2 selection evidence
 
 - Register S10's human decision, decision-text attachment/hash and external screenshot provenance in [ADR 0026 section 2.9](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#29-human-confirmed-operational-selection-and-pending-order-evidence-2026-11-03-s10). Preserve S1–S9 records and S9's context temporal pair.
