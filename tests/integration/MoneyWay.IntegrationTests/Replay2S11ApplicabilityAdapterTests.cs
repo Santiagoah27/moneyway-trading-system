@@ -107,7 +107,7 @@ public sealed partial class LocalNasdaqMentorSessionTests
                 { o.ReviewEffectiveAtUtc, o.ReviewObservedAtUtc, o.EffectiveAtUtc, o.ObservedAtUtc, o.Path, o.SourceReference }) })
     });
 
-    private static (NasdaqMentorSessionReplayInput Input, NasdaqMentorSessionReplay Link, CandleSeries[] Series) RunS11Prefix()
+    private static (NasdaqMentorSessionReplayInput Input, NasdaqMentorSessionReplay Link, CandleSeries[] Series) RunS11Prefix(int endMinute = 33)
     {
         NasdaqMentorSessionReplayInput? input = null;
         ProvideValidatedInput(ref input);
@@ -115,10 +115,10 @@ public sealed partial class LocalNasdaqMentorSessionTests
         Assert.Equal(new DateOnly(2026, 9, 8), input.Session.TradingDay);
         Assert.Equal("oanda-global-markets-mt5-demo", input.Session.ProviderId.Value);
         Assert.Equal("US100", input.Session.Symbol.Value);
-        // Keep every original historical member through 13:33. No CSV is rewritten, no source history
+        // Keep every original historical member through the requested boundary. No CSV is rewritten, no source history
         // is replaced, and no future candles are needed for this first-binding regression.
         var series = input.CsvFiles.Values.Select(path => new CsvMarketDataImporter().ImportFile(path))
-            .Select(s => new CandleSeries(s.ProviderId, s.Symbol, s.Timeframe, s.Candles.Where(c => c.CloseTimeUtc <= S9Time(33)))).ToArray();
+            .Select(s => new CandleSeries(s.ProviderId, s.Symbol, s.Timeframe, s.Candles.Where(c => c.CloseTimeUtc <= S9Time(endMinute)))).ToArray();
         var definitions = new StrategyDefinitionCatalog().GetAll();
         var progression = new AdvanceStrategyReplayProgressionUseCase();
         var runner = new GenerateMultiTimeframeStrategyBacktestRunUseCase(new(), new(), new(MoneyWayReplayRuleEvaluators.GetAll()),

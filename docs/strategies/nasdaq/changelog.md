@@ -1,5 +1,12 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-11-04 - Real S13 reversal adapter and causal WF2 validation
+
+- Add a documentary S13 recognition binding to the external Replay #2 adapter under the unchanged approved semantics and existing constructors/selectors. Preserve S9/S11, native initiating take/Start, all source CSVs and prior reports.
+- Add opt-in real-source tests for exact owner/H4/take ancestry, approved 13:33:10Z recognition/availability, first causal WF2-001/002 frames, independent common-prefix determinism, future-tail safety, foreign-owner rejection and absence of Standard/trade fabrication.
+- Record exact external backup/hashes, documentary EventId/SourceReference, source-only composition over actual bounded child frames and reproduction commands in the [S13 adapter record](../../backtesting/nasdaq-replay2-s13-reversal-adapter.md). The external C# bytes are not part of this commit.
+- Keep production runtime, S1-S13, strategy definitions/metadata, Standard/Forex, lifecycle architecture, SL/TP/risk and execution unchanged. Focused historical causal evaluation does not reproduce a full trading session or authorize the earlier historical entry.
+
 ## 2026-11-04 - S13 human-approved Replay #2 bearish reversal recognition
 
 - Register the explicit approval, retained text attachment and verified SHA256 in [ADR 0026 section 2.12](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#212-human-approved-historical-bearish-reversal-recognition-2026-11-04-s13). Preserve S1-S12, screenshot provenance and earlier uncertainty records.
