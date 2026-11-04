@@ -1,5 +1,12 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-11-04 - S13 human-approved Replay #2 bearish reversal recognition
+
+- Register the explicit approval, retained text attachment and verified SHA256 in [ADR 0026 section 2.12](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#212-human-approved-historical-bearish-reversal-recognition-2026-11-04-s13). Preserve S1-S12, screenshot provenance and earlier uncertainty records.
+- Approve effective/observed 2026-09-08T13:33:10Z as documented recognition/availability of an already-visible genuine bearish reversal. 08:33:10 AM Bogota is historical clock time, not video offset or first tick/onset/mentor-recognition claim.
+- Preserve September-only server conversion, separate displayed SELL entry 13:32Z, native take/Start 13:31Z, S11 applicability binding and S12 conditional-order semantics. Do not retroactively authorize the earlier entry or infer an intraminute crossing/feed equivalence.
+- Temporal semantics now support a subsequent typed-adapter feature; documentary EventId, SourceReference validation, actual canonical ancestry/binding and WF2 results remain to be demonstrated. No runtime, metadata, external adapter, CSV, ACTIVE version, Standard/Forex, SL/TP/risk, execution or fill changes.
+
 ## 2026-11-03 - S12 conditional SELL STOP and reversal semantics reconciliation
 
 - Register the direct human clarification, retained text attachment and verified SHA256 in [ADR 0026 section 2.11](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#211-conditional-order-preparation-versus-strategic-reversal-eligibility-2026-11-03-s12); preserve S1-S11 and original S3/S4 source meanings.
