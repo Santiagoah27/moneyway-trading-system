@@ -1,5 +1,6 @@
 using System.Text.Json;
 using MoneyWay.Application.Backtesting;
+using MoneyWay.Application.Backtesting.Diagnostics;
 using MoneyWay.Application.Strategies.Nasdaq.MentorSessions;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
@@ -107,7 +108,8 @@ public sealed partial class LocalNasdaqMentorSessionTests
                 { o.ReviewEffectiveAtUtc, o.ReviewObservedAtUtc, o.EffectiveAtUtc, o.ObservedAtUtc, o.Path, o.SourceReference }) })
     });
 
-    private static (NasdaqMentorSessionReplayInput Input, NasdaqMentorSessionReplay Link, CandleSeries[] Series) RunS11Prefix(int endMinute = 33)
+    private static (NasdaqMentorSessionReplayInput Input, NasdaqMentorSessionReplay Link, CandleSeries[] Series,
+        MultiTimeframeStrategyBacktestDiagnosticsReport Canonical) RunS11Prefix(int endMinute = 33)
     {
         NasdaqMentorSessionReplayInput? input = null;
         ProvideValidatedInput(ref input);
@@ -125,7 +127,8 @@ public sealed partial class LocalNasdaqMentorSessionTests
             new(definitions, MoneyWayReplayWorkflowDefinitions.GetAll()), progression,
             new(definitions, MoneyWayReplayLifecyclePolicies.GetAll()), new(progression));
         var link = new NasdaqMentorSessionReplay(input);
-        runner.ExecuteMentorSession(MoneyWayNasdaqStrategyDefinition.Instance, series, link);
-        return (input, link, series);
+        var canonical = new GenerateCanonicalMultiTimeframeBacktestUseCase(new(runner, new()), new())
+            .ExecuteMentorSession(MoneyWayNasdaqStrategyDefinition.Instance, series, link);
+        return (input, link, series, canonical);
     }
 }

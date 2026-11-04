@@ -103,3 +103,5 @@ Provenance checks verified the actual retained S13 approval-text SHA256, exact a
 This feature does not modify S1-S13, runtime, rule definitions/evaluators, metadata, strategy activation, canonical architecture, Standard/Forex, SL/TP/risk or broker execution. A focused real-source causal evaluation is not a complete session/trade replay. Exact executable StopPrice, downstream Scenario 2 historical diagnostic ancestry and other risk/TP/execution evidence remain independent; do not generalize M30 selection or stop offsets from this result.
 
 The smallest next diagnostic feature is to persist/read a bounded real WF2 pre-entry diagnostic through existing canonical report tools, showing the proven chain and downstream blockers without creating a trade or choosing SL/TP/risk values.
+
+Follow-up: the [bounded canonical pre-entry diagnostic](nasdaq-replay2-canonical-preentry-diagnostic.md) now records actual safe outcomes, the complete Required matrix and the Standard-ancestry SL blocker using this unchanged adapter.
