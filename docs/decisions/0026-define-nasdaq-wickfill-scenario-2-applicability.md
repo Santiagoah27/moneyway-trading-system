@@ -361,6 +361,88 @@ S12's distinction between conditional preparation, genuine post-sweep reversal, 
 
 This feature creates no typed observation or EventId, changes no contract/evaluator/metadata/lifecycle/replay/adapter/CSV, and marks neither WF2 rule Passed. SL/TP/risk, broker execution, historical fills, Standard/Forex and ACTIVE versions remain unchanged. The smallest next implementation is to add only this approved documentary recognition to the real adapter, with a unique verified source identity and the current run's exact opening-sweep ancestry, then test first causal consumption and safe outcomes. No additional review of the first turning tick is required by this approval.
 
+### 2.13 Candidate human SL evidence contract for Scenario 2 SELL (2026-11-04)
+
+**Specification-first architecture: `candidate`, not implemented.** This section answers the task "MoneyWay - Nasdaq Scenario 2 SELL Human SL Evidence Contract Specification" (retained request attachment `128b48ec-3d16-4584-b8d9-c5e554905641`). That task authorizes specification work, not new historical testimony. No S14 human evidence is registered. S1-S13, including the original S5-S7 provenance and uncertainties, remain intact. This section narrows the earlier candidate contract discussion; it does not approve an automatic SL algorithm or change the registered strategy/version.
+
+#### Evidence and implementation checkpoint
+
+| Finding | Definition classification | Source and limit |
+|---|---|---|
+| Initial protection belongs above the initiating sweep peak for Scenario 2 SELL | `confirmed` | S6, section 2.5: `StopPrice > InitiatingSweepPeak`; a protective concept, not a complete deterministic algorithm |
+| Owned measurement interval starts at the initiating valid London High exceedance and ends at its confirmed reversal effective time | `confirmed` | S7, section 2.6; boundary membership, coverage and observation ordering remain unresolved |
+| Replay #2 selected an upper wick/high while displaying USTEC M30, and later moved SL to secure 1:1 | `context_specific`, with `visual_only` support | S5, section 2.4; S6 identifies that wick as the initiating sweep peak. This does not supply a universal M30 selector or management algorithm |
+| Human-selected reference, exact numerical protective price, native-source mapping and authentic selection/parameter availability for Replay #2 | `human_validation_required` / `unresolved` | S5's "second candle" is not a uniquely resolved candle. Screenshot bytes remain external / not repository-resolved |
+| A documented numerical historical StopPrice | `unresolved` | Original S5 says a value is visible in the trade table but does not transcribe it; original S6/S7 supply no numerical stop. No usable human-approved scalar is registered by those sources |
+| Automatic M30/ordinal/highest-session selection, fixed buffer or inference from later OHLC | `rejected_ai_inference` | Not authorized by S5-S7; neither visual proximity nor a future candle can fill missing fields |
+
+The [real canonical diagnostic](../backtesting/nasdaq-replay2-canonical-preentry-diagnostic.md) at Git `6f0890d5850a7c6fc3b0758a0c083bf8bdaa13c2` documents Start 13:31Z / step 7591 / local instance 1, native initiating event `native-M1-close-2026-09-08T13:31Z`, WF2-001 Passed at 13:34Z and WF2-002 Passed at 13:35Z. At 13:36Z the verdict is Wait, NQ-SL-001 is Waiting and risk remains Waiting; Required coverage is complete (13/13). This is a causal path contract gap, not proof that M30 market data is missing. No Scenario 2 SL fact or executed trade is established.
+
+The existing [SL observation](../../src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqHumanStructuralStopLossObservation.cs) requires `NasdaqPreEntryEligibilityRuleFact`, `NasdaqHumanM5ProtectionAnchor` and a distinct StopPrice. Its effective time follows its closed 5M sources, and availability follows Standard realignment evidence. The [SL evaluator](../../src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayEvaluators/MoneyWayNasdaqHumanStructuralStopLossEvaluator.cs) and [workflow](../../src/backend/MoneyWay.Application/StrategyReplay/Workflow/MoneyWayReplayWorkflowDefinitions.cs) require prior established NQ-M1-003 Passed. Scenario 2 instead makes that Standard gate NotApplicable and supplies `NasdaqWickfillScenario2PreEntryEligibilityRuleFact`. Neither passing a price alone nor relabeling an M30 wick as M5 LH satisfies the existing contract.
+
+Existing [SL tests](../../tests/unit/MoneyWay.Application.UnitTests/Strategies/Nasdaq/ReplayInputs/NasdaqHumanStructuralStopLossTests.cs) enforce exact Standard ancestry, closed M5 sources, strict protective side, missing/conflicting/unavailable evidence, future visibility and terminal/cutoff handling. [WF2 eligibility tests](../../tests/unit/MoneyWay.Application.UnitTests/Strategies/Nasdaq/ReplayInputs/NasdaqWickfillScenario2PreEntryEligibilityTests.cs) enforce exact surviving owner, prior canonical reversal, no same-frame positive transport and no fallback after conflict. [Scoped completion tests](../../tests/unit/MoneyWay.Application.UnitTests/Strategies/Nasdaq/ReplayLifecycle/NasdaqScenario2LifecycleCompletionTests.cs) establish lifecycle completion without downstream readiness. These tests are inspected evidence, not new Scenario 2 SL coverage.
+
+#### Alternatives and recommendation
+
+| Option | Assessment | Classification |
+|---|---|---|
+| A: reuse NQ-SL-001 with a dedicated Scenario 2 SELL input and WF2-002 dependency | Smallest proposed convergence: preserve the existing SL responsibility, RuleId and Required flag; add explicit branch-specific ancestry without pretending the current Standard input/fact is compatible. A later feature must address workflow gating and downstream fact consumers explicitly | `candidate`, recommended; not currently supported |
+| B: separate Scenario 2 SL rule and observation | A dedicated observation is necessary under A as well. An additional RuleId would duplicate the Required SL responsibility and require an independently approved workflow/lifecycle decision; no evidence currently requires that duplication | `candidate`, not selected |
+| C: leave the capability human-only until source evidence is available | Correct present replay behavior remains blocked. Missing historical evidence does not prevent specifying a safe input contract, but does prevent populating a valid real-source input or claiming Passed | `human_validation_required` / `unresolved` for the missing evidence; not a replacement architecture |
+
+Recommendation A is safe only as a future explicit extension, not reuse of the existing constructor, M5 anchor or Standard-only SL fact. Keep Standard behavior isolated. Risk, TP and historical snapshot consumers currently depend on the Standard-shaped SL/eligibility facts; choosing the same RuleId does not make those types branch-neutral. No redundant rule, metadata change, ACTIVE promotion or automatic downstream compatibility follows from this specification.
+
+#### Minimum proposed path-specific evidence
+
+Field labels below are conceptual, not new C# declarations. Contract design is `candidate`; inherited source constraints remain confirmed within S5-S7 scope.
+
+| Evidence group | Minimum content and ownership requirement |
+|---|---|
+| Session/setup identity | Strategy, exact version, provider, native symbol, Nasdaq trading day/timezone, SELL and explicit WickfillScenario2 applicability. For Replay #2: `moneyway-nasdaq`, `nasdaq-0.1.0-draft`, `oanda-global-markets-mt5-demo`, US100, 2026-09-08, America/Bogota |
+| Canonical owner | Exact actual Start observation and its active instance plus the initiating NQ-LIQ-003 fact/event and selected London High reference. Session/direction/time/step/local ordinal alone cannot substitute for owner identity; extensions or another take cannot replace the initiating event |
+| Eligibility ancestry | Exact prior canonical owner and `NasdaqWickfillScenario2PreEntryEligibilityRuleFact` from NQ-WF2-002 Passed with established progression, retaining its own WF2-001 reversal, applicability, opening sweep and Start/take references. Must belong to this same surviving setup; no synthetic Standard M1 facts |
+| Protective reference | Human-selected initiating sweep peak with independently documented protective price, semantic role, authentic source identity/location and source-observable time. Preserve the S7 interval ancestry; do not claim an automatically reconstructed maximum without complete approved coverage/boundary semantics |
+| Visual/candle identity | For a candle-based claim retain source feed/symbol, displayed timeframe, uniquely identified candle open/close and available price evidence under ADR 0025. Alternatively an exact retained external level/event reference and price can identify a non-candle reference. A source-located visual selection can be retained as testimony, but "second candle" or an unexplained scalar cannot qualify as a resolved protective reference. M30 is historical display context, not a mandatory general input timeframe |
+| Stop parameter | Separately documented, human-reviewed initial `StopPrice`, its exact source and assertion time; establish `StopPrice >` the selected protective peak in the same validated price domain. No default, derived buffer or OHLC maximum is a substitute. A later managed stop is a different event |
+| Provenance and feed mapping | Retain reviewer/decision identity, original source location, all compatible supporting assertions, and only actually verified asset identities/hashes. USTEC visual evidence is not native US100 price evidence. A documented mapping/validation must substantiate any native use; normalization validation alone establishes no cross-feed price equivalence |
+| Time/availability | Preserve authentic SL selection/parameter `EffectiveAtUtc` and `ObservedAtUtc` in UTC, with effective <= observed, plus source-event/candle availability. Keep historical placement/activation, later management, subsequent review/import and canonical binding/evaluation times separate |
+
+#### Temporal and causal consumption contract
+
+Apply [ADR 0025 identity and availability](0025-define-nasdaq-demo-human-evidence-contract.md#identity-and-causal-availability). EffectiveAtUtc denotes the documented SL selection/parameter event or reviewed context, not automatically the candle close, take, reversal or eligibility time. ObservedAtUtc denotes authentic availability of that semantic assertion; a visible post-entry SL line alone does not prove that this exact pre-entry parameter was contemporaneously available. Unknown times remain unresolved. Retrospective testimony may be retained for comparison without becoming a historical driving assertion.
+
+Historical placement and canonical strategy eligibility are different events. If authentic SL evidence precedes WF2-002, retain its original times as source evidence without authorizing progression. A future bound observation must retain that raw pair and separately identify the actual later canonical binding/evaluation boundary and exact eligibility owner. Do not rewrite the raw pair with `max(...)`, borrow S11's separately approved bounds, or invent a new historical assertion at the binding time. Transport into the mentor binder requires a subsequent explicit integration design; existing registration-time requirements are not silently relaxed here.
+
+For candidate positive SL consumption at frame T:
+
+- The exact WF2-002 owner must be an actual prior canonical observation (`owner.AsOfUtc < T`), Passed with established progression, for the same surviving Start/take. A same-frame WF2-002 pass cannot supply positive ancestry. Keep eligibility market-effective time distinct from its emission/availability; for this run those are 13:33:10Z and 13:35Z respectively, so 13:35Z cannot already consume its own newly emitted owner.
+- Raw SL semantic availability and all necessary supporting price/source evidence must be <= T and genuinely resolved in the bounded snapshot, with effective <= observed. Availability does not itself grant eligibility or create replay boundaries.
+- Current conflicting/incompatible applicability, reversal, eligibility or SL assertions block consumption; do not fall back to an older favorable fact. Preserve all compatible provenance and conflicting alternatives, with exact semantic equality independent of input order.
+- Existing applicable terminal/session/window protections dominate. Scoped lifecycle completion is not trade readiness or permission to revive an invalidated setup. Validate the separately recorded possible same-frame SL guard gap before runtime integration; it remains an inspection concern, not a reproduced failure or a new cancellation rule.
+
+S12 permits historical conditional-order preparation to be documented separately from reversal eligibility. S13's 13:33:10Z recognition is not the first turning tick or proof of the earlier order's eligibility. Neither earlier SL testimony nor later binding retroactively authorizes the reported 13:32Z entry. S7's market interval still uses the approved take and reversal effective-time ancestry; S13 does not resolve intrabar boundary membership, full price coverage or the protective peak's numerical value.
+
+At T, no final High of an open M30/M5/M1 candle, overlapping candle with unresolved boundary ordering, future price, later management value or later human assertion can fill the interval or StopPrice. Closed source candles must actually be available; partial intervals need independently supported observable price evidence, not final OHLC backfilled before close. No universal closed-M30 requirement is introduced.
+
+#### Expected safe results and implementation boundary
+
+These are proposed runtime expectations under ADR 0025, not modifications to the current evaluator. Rule-definition classifications, selector outcomes, evaluator capability, runtime results and global verdict remain distinct.
+
+| Condition for a future Scenario 2 SL adapter | Expected handling |
+|---|---|
+| No established usable prior WF2-002 ancestry | Waiting; propagate DataUnavailable where the exact prerequisite is unavailable; no SL fact |
+| Eligible stage but human protective selection/basis or authentic availability remains unresolved | HumanValidationRequired; no guessed reference/time or SL fact |
+| Required numerical StopPrice/protective price or referenced source/feed resolution is unavailable | DataUnavailable; distinguish absent numerical data from an unresolved human selection; no fabricated scalar |
+| Conflicting valid driving assertions | HumanValidationRequired; preserve alternatives, no source ranking or latest-wins |
+| Malformed identity, timestamp, wrong branch/owner or nonprotective stop | Reject validation; never reinterpret as positive evidence |
+| Unique, fully resolved, contemporaneously available evidence with exact valid prior ancestry and protections | May be evaluated for Passed under a later implementation; uniqueness alone is not Passed, Ready, risk approval or execution |
+
+The current real replay remains NQ-SL-001 Waiting because it first requires Standard NQ-M1-003. Its capability stays Implemented and definition HumanValidationRequired; no status is changed to match this candidate table. Risk remains downstream; TP/risk algorithms, trade snapshots, orders, fills, exits, PnL and later 1:1 management are outside this feature.
+
+**Missing evidence, not a new strategy decision:** S6/S7 already define the protective concept and interval. A human-assisted representation can be specified without inventing a general selector. Real Replay #2 still needs a uniquely source-resolved protective reference/price, separately transcribed and human-approved initial StopPrice, genuine selection/availability times and validated native-price applicability. S5's untranscribed visible table value cannot satisfy that requirement. A complete deterministic selection/offset algorithm remains unresolved and is not required to preserve honest human testimony.
+
+**Single smallest next implementation step (`candidate`):** add only an immutable dedicated Scenario 2 SELL human-SL evidence primitive and Missing/Unique/Conflict selector through the existing bounded StrategyReplayContext, with exact prior WF2-002/Start/take validation and lossless provenance. Keep original source times separate from consumption/binding; do not implement an evaluator, workflow convergence, binder change, numeric selector, metadata or downstream consumer yet. Synthetic contract tests must cover foreign owners/feeds/versions, pre-eligibility evidence without progression, same-frame owner rejection, future observations/sources, duplicate provenance, conflicting references/prices, missing source resolution, strict protective side and unchanged historical prefixes. Real-source population remains blocked on the evidence above; this primitive alone will not resolve the actual evaluator's Standard-only dependency. Subsequent runtime integration needs a separate scoped task and regression validation of Standard and terminal behavior.
+
 ### 3. Replay #2 interpretation
 
 | Session fact from S1 | Classification | Boundary |

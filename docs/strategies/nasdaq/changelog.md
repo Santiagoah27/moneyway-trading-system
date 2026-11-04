@@ -1,5 +1,12 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-11-04 - Candidate Scenario 2 SELL human SL evidence contract
+
+- Specify the minimum path-specific human evidence, exact Start/take/prior WF2-002 ancestry, separate protective reference and documented StopPrice, feed provenance and causal consumption in [ADR 0026 section 2.13](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#213-candidate-human-sl-evidence-contract-for-scenario-2-sell-2026-11-04). Compare A/B/C; recommend candidate reuse of NQ-SL-001 with a dedicated input, not the current Standard M5/M1 constructor/fact.
+- Preserve S1-S13 and original S5-S7. Record that S5 mentions a visible table value without transcribing a numerical StopPrice; source-resolved reference, price, availability and native feed applicability remain missing. Register no new human evidence ID or fabricated asset identity.
+- Separate historical placement/availability from later canonical binding; preserve S12/S13 and prohibit timestamp clamping, pre-eligibility authorization and future-data reconstruction. Distinguish definition classifications from proposed runtime handling and existing capability/results.
+- Documentation only: no evaluator, contract, metadata, workflow/lifecycle, external adapter, CSV/report, ACTIVE version, Standard/Forex, risk/TP/snapshot or execution change. Next candidate implementation is the dedicated immutable evidence primitive/selector and focused tests, without claiming real SL Passed or a reproduced trade.
+
 ## 2026-11-04 - Real S13 reversal adapter and causal WF2 validation
 
 - Add a documentary S13 recognition binding to the external Replay #2 adapter under the unchanged approved semantics and existing constructors/selectors. Preserve S9/S11, native initiating take/Start, all source CSVs and prior reports.
