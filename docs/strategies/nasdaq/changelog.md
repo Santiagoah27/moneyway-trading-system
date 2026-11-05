@@ -1,5 +1,11 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-11-05 - Scenario 2 SELL human SL evidence primitive and selector
+
+- Implement isolated immutable native protective-reference and initial-SL observation types plus deterministic Missing/Unique/Conflict selection under exact actual prior WF2-002/Start/take/reversal ownership. Preserve raw source times and all compatible/conflicting provenance; reject incomplete parameters and unmapped foreign price domains.
+- Validate bounded source availability, current eligibility/review compatibility and existing canonical lifecycle/window gates. Selection is evidence only; raw same-frame invalidating inputs still require canonical rule evaluation before any progression. Record the implementation boundary and remaining terminal integration concern in [ADR 0026 section 2.13](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#213-candidate-human-sl-evidence-contract-for-scenario-2-sell-2026-11-04).
+- Add focused synthetic tests for ownership, chronology, missing/source/conflict behavior, immutable provenance, future-tail safety and unchanged existing evaluator outputs. No new evaluator, RuleId, metadata, workflow, Standard/Forex behavior, external adapter, CSV/report, risk/TP/snapshot or execution changes. Replay #2 StopPrice/reference availability remain unresolved; no real historical SL is calculated.
+
 ## 2026-11-04 - Candidate Scenario 2 SELL human SL evidence contract
 
 - Specify the minimum path-specific human evidence, exact Start/take/prior WF2-002 ancestry, separate protective reference and documented StopPrice, feed provenance and causal consumption in [ADR 0026 section 2.13](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#213-candidate-human-sl-evidence-contract-for-scenario-2-sell-2026-11-04). Compare A/B/C; recommend candidate reuse of NQ-SL-001 with a dedicated input, not the current Standard M5/M1 constructor/fact.
