@@ -1,5 +1,11 @@
 # MoneyWay Nasdaq changelog
 
+## 2026-11-05 - S14 human-confirmed Replay #2 historical initial SL price
+
+- Register the explicit human approval, retained text identity/SHA256 and honest external screenshot provenance in [ADR 0026 section 2.14](../../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#214-human-confirmed-replay-2-initial-ustec-sl-price-2026-11-05-s14), preserving S1-S13 and original S5-S7. Confirm historical USTEC initial SL `29662.25`, separately from entry `29604.00` and later 1:1 management.
+- Retain displayed position-opening server time `2026.09.08 16:32:00` / `2026-09-08T13:32:00Z` as opening time only. SL placement/effective/observed times, uniquely resolved protective reference/price, native US100 numeric correspondence and general geometry remain unresolved.
+- Documentation only: no runtime/selector/evaluator, metadata, external adapter, CSV/report, ACTIVE version, Standard/Forex, snapshot/risk/TP or execution change. No real observation, derived buffer, native-price substitution or retroactive entry authorization. Recorded SL/risk Waiting and verdict Wait remain unchanged.
+
 ## 2026-11-05 - Scenario 2 SELL human SL evidence primitive and selector
 
 - Implement isolated immutable native protective-reference and initial-SL observation types plus deterministic Missing/Unique/Conflict selection under exact actual prior WF2-002/Start/take/reversal ownership. Preserve raw source times and all compatible/conflicting provenance; reject incomplete parameters and unmapped foreign price domains.
