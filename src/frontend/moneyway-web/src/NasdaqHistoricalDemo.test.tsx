@@ -317,7 +317,7 @@ describe("Nasdaq historical demo", () => {
 
     it("shows canonical NO_TRADE, provenance, blockers and unavailable factual operation", async () => {
         respond();
-        expect(await screen.findByText(report.sessionId)).toBeTruthy();
+        expect(await screen.findByText(report.sessionId!)).toBeTruthy();
         expect(screen.getAllByText("NO_TRADE (NoTrade)")).toHaveLength(2);
         expect(screen.getByText("2026-06-29")).toBeTruthy();
         expect(screen.getByText(/test-demo-provider \/ US100/)).toBeTruthy();
@@ -363,7 +363,7 @@ describe("Nasdaq historical demo", () => {
                     ],
                 },
             });
-            await screen.findByText(report.sessionId);
+            await screen.findByText(report.sessionId!);
             expect(screen.getAllByText(status).length).toBeGreaterThanOrEqual(
                 2,
             );
@@ -459,5 +459,144 @@ describe("Nasdaq historical demo", () => {
         expect((await screen.findByRole("alert")).textContent).toContain(
             "No se pudo consultar",
         );
+    });
+});
+
+// Synthetic bounded transport fixture; no price or trade is supplied.
+function boundedReport(step = 7596): NasdaqHistoricalReport {
+    const steps = [7591, 7592, 7593, 7594, 7595, 7596];
+    const times = [
+        "2026-09-08T13:31:00Z",
+        "2026-09-08T13:32:00Z",
+        "2026-09-08T13:33:00Z",
+        "2026-09-08T13:34:00Z",
+        "2026-09-08T13:35:00Z",
+        "2026-09-08T13:36:00Z",
+    ];
+    const index = steps.indexOf(step);
+    return {
+        ...report,
+        sessionId: null,
+        tradingDay: "2026-09-08",
+        schemaVersion: 1,
+        schema: "moneyway.canonical-preentry-window",
+        reportScope: "BoundedCanonicalDiagnostic",
+        frameCount: 6,
+        evaluatedPrefixFrameCount: 7596,
+        evaluatedPrefixStartUtc: "2026-08-31T22:01:00Z",
+        evaluatedPrefixEndUtc: times[5],
+        replayStartUtc: times[0],
+        replayEndUtc: times[5],
+        finalVerdict: null,
+        canonicalRuntimeCommit: "synthetic:runtime",
+        sourceRecordIds: index >= 3 ? ["early", "reversal"] : ["early"],
+        selectedSessionLastFrame: null,
+        selectedFrame: {
+            ...report.selectedSessionLastFrame!,
+            step,
+            asOfUtc: times[index],
+            verdict: "Wait",
+            blockingRuleId:
+                index < 3
+                    ? "NQ-WF2-001"
+                    : index === 3
+                      ? "NQ-WF2-002"
+                      : "NQ-SL-001",
+            blockingResult: "Waiting",
+            reason: `source canonical ${step}`,
+            rules: ["NQ-WF2-001", "NQ-WF2-002", "NQ-SL-001", "NQ-RISK-001"].map(
+                (id, i) => ({
+                    ruleId: id,
+                    definitionStatus: "Confirmed",
+                    result:
+                        (i === 0 && index >= 3) || (i === 1 && index >= 4)
+                            ? "Passed"
+                            : "Waiting",
+                    sequence: 90 + i * 10,
+                    isRequired: true,
+                    reason: `source rule ${id} ${step}`,
+                    evaluatedAtUtc: times[index],
+                    evidenceId: null,
+                }),
+            ),
+        },
+        navigation: {
+            firstStep: 7591,
+            lastStep: 7596,
+            selectedStep: step,
+            previousStep: steps[index - 1] ?? null,
+            nextStep: steps[index + 1] ?? null,
+            sessionFrameCount: 6,
+        },
+    };
+}
+
+describe("Bounded canonical diagnostic", () => {
+    it("distinguishes the window from prefix and omits final session results and invented evidence", async () => {
+        respond(boundedReport());
+        expect(
+            await screen.findByText("Diagnóstico canónico acotado"),
+        ).toBeTruthy();
+        expect(
+            screen.getByText("Frames exportados de la ventana"),
+        ).toBeTruthy();
+        expect(screen.getByText("Frames del prefijo evaluado")).toBeTruthy();
+        expect(screen.getByText("6")).toBeTruthy();
+        expect(screen.getByText("7596")).toBeTruthy();
+        expect(
+            screen.queryByText("Resultado final del reporte completo"),
+        ).toBeNull();
+        expect(
+            screen.getByText(/No se aporta un resultado final de sesión/),
+        ).toBeTruthy();
+        expect(screen.getByText(/Hora America\/Bogota:.*8:36:00/)).toBeTruthy();
+        expect(
+            screen.getAllByText(/2026-09-08T13:36:00Z/).length,
+        ).toBeGreaterThan(0);
+        expect(screen.getAllByText("NQ-SL-001").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("NQ-RISK-001").length).toBeGreaterThan(0);
+        expect(screen.queryByText("Ready")).toBeNull();
+        expect(screen.queryByText(/29662/)).toBeNull();
+        expect(
+            screen.getByText(/No hay una operación histórica factual completa/),
+        ).toBeTruthy();
+        expect(
+            screen.getByText(/moneyway.canonical-preentry-window/),
+        ).toBeTruthy();
+        expect(screen.queryByText(/EvidenceId:/)).toBeNull();
+    });
+
+    it("preserves Step navigation and WF2 transitions without later evidence on an earlier frame", async () => {
+        const fetchMock = vi.fn((url: string) =>
+            Promise.resolve(
+                jsonResponse(
+                    boundedReport(
+                        Number(
+                            new URL(url).searchParams.get("frameStep") ?? 7596,
+                        ),
+                    ),
+                ),
+            ),
+        );
+        vi.stubGlobal("fetch", fetchMock);
+        const user = userEvent.setup();
+        render(<NasdaqHistoricalDemo apiBaseUrl="http://localhost:5080" />);
+        await screen.findByText("source canonical 7596");
+        await user.click(screen.getByRole("button", { name: "Anterior" }));
+        await screen.findByText("source canonical 7595");
+        expect(screen.getAllByText("Passed")).toHaveLength(2);
+        await user.click(screen.getByRole("button", { name: "Anterior" }));
+        await screen.findByText("source canonical 7594");
+        expect(screen.getAllByText("Passed")).toHaveLength(1);
+        await user.click(screen.getByRole("button", { name: "Anterior" }));
+        await screen.findByText("source canonical 7593");
+        expect(screen.queryByText("Passed")).toBeNull();
+        expect(screen.queryByText(/early, reversal/)).toBeNull();
+        expect(screen.queryByText(/source rule .*7596/)).toBeNull();
+        expect(String(fetchMock.mock.calls.at(-1)?.[0])).toContain(
+            "frameStep=7593",
+        );
+        await user.click(screen.getByRole("button", { name: "Último frame" }));
+        await screen.findByText("source canonical 7596");
     });
 });

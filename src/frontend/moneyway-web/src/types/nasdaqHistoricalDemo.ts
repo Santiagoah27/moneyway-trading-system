@@ -26,13 +26,20 @@ export interface HistoricalFrame {
 }
 
 export interface NasdaqHistoricalReport {
-    sessionId: string;
+    sessionId: string | null;
     strategyId: string;
     strategyVersion: string;
     providerId: string;
     symbol: string;
     tradingDay: string;
     schemaVersion: number;
+    reportScope?: "FullHistoricalReport" | "BoundedCanonicalDiagnostic";
+    schema?: string | null;
+    evaluatedPrefixFrameCount?: number | null;
+    evaluatedPrefixStartUtc?: string | null;
+    evaluatedPrefixEndUtc?: string | null;
+    canonicalRuntimeCommit?: string | null;
+    sourceRecordIds?: string[] | null;
     frameCount: number;
     finalVerdict: string | null;
     replayStartUtc: string | null;

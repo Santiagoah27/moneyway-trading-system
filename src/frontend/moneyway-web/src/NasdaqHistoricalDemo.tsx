@@ -155,6 +155,7 @@ function HistoricalDemoContent({ apiBaseUrl }: { apiBaseUrl: string }) {
 
     const frame = report?.selectedFrame ?? report?.selectedSessionLastFrame;
     const nav = report?.navigation;
+    const bounded = report?.reportScope === "BoundedCanonicalDiagnostic";
     const blockers =
         frame?.rules.filter(
             (rule) =>
@@ -193,7 +194,10 @@ function HistoricalDemoContent({ apiBaseUrl }: { apiBaseUrl: string }) {
                         </div>
                         <div>
                             <dt>Identificador</dt>
-                            <dd>{report.sessionId}</dd>
+                            <dd>
+                                {report.sessionId ??
+                                    "No disponible en la fuente"}
+                            </dd>
                         </div>
                         <div>
                             <dt>Estrategia / versión</dt>
@@ -208,19 +212,64 @@ function HistoricalDemoContent({ apiBaseUrl }: { apiBaseUrl: string }) {
                             </dd>
                         </div>
                         <div>
-                            <dt>Frames del reporte completo</dt>
-                            <dd>{report.frameCount}</dd>
+                            <dt>Alcance del reporte</dt>
+                            <dd>
+                                {bounded
+                                    ? "Diagnóstico canónico acotado"
+                                    : "Reporte histórico completo"}
+                            </dd>
                         </div>
                         <div>
-                            <dt>Resultado final del reporte completo</dt>
-                            <dd>{verdict(report.finalVerdict)}</dd>
+                            <dt>
+                                {bounded
+                                    ? "Frames exportados de la ventana"
+                                    : "Frames del reporte completo"}
+                            </dt>
+                            <dd>{report.frameCount}</dd>
                         </div>
+                        {!bounded && (
+                            <div>
+                                <dt>Resultado final del reporte completo</dt>
+                                <dd>{verdict(report.finalVerdict)}</dd>
+                            </div>
+                        )}
+                        {bounded && (
+                            <>
+                                <div>
+                                    <dt>Frames del prefijo evaluado</dt>
+                                    <dd>
+                                        {report.evaluatedPrefixFrameCount ??
+                                            "No disponible"}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>
+                                        Intervalo del prefijo evaluado (UTC)
+                                    </dt>
+                                    <dd>
+                                        {report.evaluatedPrefixStartUtc ??
+                                            "No disponible"}{" "}
+                                        —{" "}
+                                        {report.evaluatedPrefixEndUtc ??
+                                            "No disponible"}
+                                    </dd>
+                                </div>
+                            </>
+                        )}
                     </dl>
-                    <p>
-                        La clasificación del setup no se infiere del reporte.
-                        Este caso no establece una ganancia o pérdida de un
-                        trade Standard.
-                    </p>
+                    {bounded ? (
+                        <p>
+                            Ventana de diagnóstico de preentrada. No se aporta
+                            un resultado final de sesión ni una operación
+                            histórica completa.
+                        </p>
+                    ) : (
+                        <p>
+                            La clasificación del setup no se infiere del
+                            reporte. Este caso no establece una ganancia o
+                            pérdida de un trade Standard.
+                        </p>
+                    )}
                     {frame ? (
                         <>
                             <h3>Frame seleccionado de la sesión</h3>
@@ -229,7 +278,9 @@ function HistoricalDemoContent({ apiBaseUrl }: { apiBaseUrl: string }) {
                                     <p>
                                         Steps disponibles: {nav.firstStep}–
                                         {nav.lastStep} · {nav.sessionFrameCount}{" "}
-                                        frames de sesión. Step es el
+                                        {bounded
+                                            ? "frames exportados. Step es el"
+                                            : "frames de sesión. Step es el"}{" "}
                                         identificador canónico de base 1 del
                                         replay completo.
                                     </p>
@@ -400,13 +451,29 @@ function HistoricalDemoContent({ apiBaseUrl }: { apiBaseUrl: string }) {
                             Tamaño: {report.reportBytes} bytes · SchemaVersion:{" "}
                             {report.schemaVersion}
                         </p>
+                        {report.schema && <p>Schema: {report.schema}</p>}
+                        {report.canonicalRuntimeCommit && (
+                            <p>
+                                Runtime canónico:{" "}
+                                {report.canonicalRuntimeCommit}
+                            </p>
+                        )}
+                        {!!report.sourceRecordIds?.length && (
+                            <p>
+                                Identificadores documentados hasta el frame
+                                seleccionado:{" "}
+                                {report.sourceRecordIds.join(", ")}
+                            </p>
+                        )}
                         <p>Validación del reporte: {report.validation}</p>
                         <p>
                             Contenido de evidencias: {report.evidenceValidation}{" "}
                             (no se vuelven a validar sus hashes internos).
                         </p>
                         <p>
-                            Intervalo completo:{" "}
+                            {bounded
+                                ? "Intervalo exportado (UTC): "
+                                : "Intervalo completo: "}
                             {report.replayStartUtc ?? "No disponible"} —{" "}
                             {report.replayEndUtc ?? "No disponible"}
                         </p>

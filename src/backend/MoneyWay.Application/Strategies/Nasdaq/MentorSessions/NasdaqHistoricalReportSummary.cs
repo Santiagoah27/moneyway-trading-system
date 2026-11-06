@@ -1,15 +1,19 @@
 namespace MoneyWay.Application.Strategies.Nasdaq.MentorSessions;
 
-/// <summary>Read-only projection of persisted v2 evidence; never evaluates a strategy.</summary>
+/// <summary>Read-only projection of persisted full or bounded canonical evidence; never evaluates a strategy.</summary>
 public sealed record NasdaqHistoricalReportSummary(
-    string SessionId, string StrategyId, string StrategyVersion, string ProviderId, string Symbol,
+    string? SessionId, string StrategyId, string StrategyVersion, string ProviderId, string Symbol,
     DateOnly TradingDay, int SchemaVersion, long FrameCount, string? FinalVerdict,
     DateTimeOffset? ReplayStartUtc, DateTimeOffset? ReplayEndUtc,
     string ReportSha256, long ReportBytes, string Validation, string EvidenceValidation,
     IReadOnlyList<string> InputDiagnosticCodes, IReadOnlyList<string> BindingDiagnosticCodes,
     NasdaqHistoricalFrameSummary? SelectedSessionLastFrame,
     NasdaqHistoricalFrameSummary? SelectedFrame = null,
-    NasdaqHistoricalFrameNavigation? Navigation = null);
+    NasdaqHistoricalFrameNavigation? Navigation = null,
+    string ReportScope = "FullHistoricalReport", string? Schema = null,
+    long? EvaluatedPrefixFrameCount = null, DateTimeOffset? EvaluatedPrefixStartUtc = null,
+    DateTimeOffset? EvaluatedPrefixEndUtc = null, string? CanonicalRuntimeCommit = null,
+    IReadOnlyList<string>? SourceRecordIds = null);
 
 /// <summary>Actual report-global, one-based Steps encountered on the declared session day.</summary>
 public sealed record NasdaqHistoricalFrameNavigation(long? FirstStep, long? LastStep, long? SelectedStep,

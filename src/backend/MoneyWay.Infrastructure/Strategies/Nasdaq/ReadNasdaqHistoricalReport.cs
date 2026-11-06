@@ -76,6 +76,13 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
             else
             {
                 using var document = json.Value();
+                if (name == "Schema")
+                {
+                    Require(document.RootElement.ValueKind == JsonValueKind.String
+                        && document.RootElement.GetString() == ReadNasdaqCanonicalPreEntryWindow.Schema);
+                    stream.Position = 0;
+                    return ReadNasdaqCanonicalPreEntryWindow.Read(stream, expectedSha256, cancellationToken, frameStep);
+                }
                 if (name == "Canonical")
                 {
                     Require(document.RootElement.ValueKind is JsonValueKind.Object or JsonValueKind.Null);
