@@ -29,6 +29,7 @@ does not authenticate connectivity.
 - [MQL5 script](../../tools/market-data/mt5/MoneyWayReadOnlyProbe.mq5).
 - [Diagnostic validator](../../tools/market-data/mt5/Test-Mt5ProbeArtifact.ps1).
 - [Focused checks](../../tests/tools/Mt5ReadOnlyProbe.Tests.ps1).
+- [Offline two-artifact comparator and instructions](mt5-offline-comparator.md).
 
 ## Manual installation and execution
 
@@ -157,12 +158,12 @@ be committed. The script has no external includes/imports or broker execution
 calls. Keep Algo Trading disabled during manual validation.
 
 The first acquisition reconciliation is [documented](mt5-first-real-acquisition.md),
-including open source-contract questions. **Smallest next technical feature:** an
-offline comparison of two identity-compatible probe artifacts to diagnose repeated
-bars, newly exposed native bars and OHLC changes without modifying either input.
-It must preserve unauthenticated times and cannot certify closure or UTC. No
-current-data ingestion is authorized by this diagnostic evidence; do not connect
-unauthenticated native times to `StrategyReplayContext.AsOfUtc`.
+including open source-contract questions. The [offline comparator](mt5-offline-comparator.md)
+now diagnoses repeated bars, newly present native bars and OHLC changes between
+two compatible diagnostics while preserving both inputs and unauthenticated times.
+Its real two-sample validation awaits a second authentic capture. No current-data
+ingestion is authorized by this diagnostic evidence; do not connect unauthenticated
+native times to `StrategyReplayContext.AsOfUtc`.
 
 ## Official technical references
 
