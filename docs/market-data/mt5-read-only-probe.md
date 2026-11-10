@@ -11,14 +11,18 @@ and [ADR 0025 causal availability](../decisions/0025-define-nasdaq-demo-human-ev
 
 The human-reported candidate is OANDA Global Markets Limited, server
 `OANDA_Global-Demo-1`, demo, native `US100`, description `US Tech 100, USD`.
-These are supplied identification facts, not a successful connection test.
-The displayed historical chart does not certify current availability. No account
-identifier or credential belongs in this feature or its output.
+The displayed historical chart alone did not certify current availability. The
+[first real acquisition record](mt5-first-real-acquisition.md) now records a
+human-executed terminal run and independent local validation of its exact bytes.
+No account identifier or credential belongs in this feature or its output.
 
 The source was compiled locally with MetaEditor: **0 errors, 0 warnings**.
-Focused contract/safety checks use explicitly synthetic fixtures. **Execution
-against the user's terminal, native US100 access, and all four timeframe results
-remain UNVERIFIED until an actual diagnostic is produced and reviewed.**
+Focused contract/safety checks use explicitly synthetic fixtures. **One actual
+US100 acquisition is now evidenced:** M1/M5/H1/H4 each returned 16 bars with zero
+CopyRates error; the local artifact matches the supplied SHA256. Continuous
+health, authenticated UTC conversion, provider-confirmed closure and canonical
+current-data ingestion remain unverified or unimplemented. The validator alone
+does not authenticate connectivity.
 
 ## Files
 
@@ -152,10 +156,13 @@ check. No .ex5, generated diagnostic, compilation log or real account data shoul
 be committed. The script has no external includes/imports or broker execution
 calls. Keep Algo Trading disabled during manual validation.
 
-**Smallest next feature after manual acquisition:** reconcile one genuine probe
-artifact into a documented source/timeframe/time-basis readiness result, with its
-actual hash and remaining blockers. Only then specify current-data ingestion;
-do not connect unauthenticated native times to `StrategyReplayContext.AsOfUtc`.
+The first acquisition reconciliation is [documented](mt5-first-real-acquisition.md),
+including open source-contract questions. **Smallest next technical feature:** an
+offline comparison of two identity-compatible probe artifacts to diagnose repeated
+bars, newly exposed native bars and OHLC changes without modifying either input.
+It must preserve unauthenticated times and cannot certify closure or UTC. No
+current-data ingestion is authorized by this diagnostic evidence; do not connect
+unauthenticated native times to `StrategyReplayContext.AsOfUtc`.
 
 ## Official technical references
 
@@ -169,7 +176,8 @@ do not connect unauthenticated native times to `StrategyReplayContext.AsOfUtc`.
   [symbol metadata](https://www.mql5.com/en/docs/marketinformation/symbolinfostring),
   [terminal metadata](https://www.mql5.com/en/docs/constants/environment_state/terminalstatus).
 - [TimeCurrent](https://www.mql5.com/en/docs/dateandtime/timecurrent),
-  [TimeGMT](https://www.mql5.com/en/docs/dateandtime/timegmt) and
+  [TimeGMT](https://www.mql5.com/en/docs/dateandtime/timegmt),
+  [TimeTradeServer](https://www.mql5.com/en/docs/dateandtime/timetradeserver) and
   [local/server time](https://www.mql5.com/en/book/common/timing/timing_local_server).
 - [FileOpen](https://www.mql5.com/en/docs/files/fileopen),
   [file flags](https://www.mql5.com/en/docs/constants/io_constants/fileflags),
