@@ -161,9 +161,10 @@ The first acquisition reconciliation is [documented](mt5-first-real-acquisition.
 including open source-contract questions. The [offline comparator](mt5-offline-comparator.md)
 now diagnoses repeated bars, newly present native bars and OHLC changes between
 two compatible diagnostics while preserving both inputs and unauthenticated times.
-Its real two-sample validation awaits a second authentic capture. No current-data
-ingestion is authorized by this diagnostic evidence; do not connect unauthenticated
-native times to `StrategyReplayContext.AsOfUtc`.
+The [first authentic two-sample comparison](mt5-first-authentic-two-sample-comparison.md)
+is now recorded, preserving uncertain capture order and temporal limitations. No
+current-data ingestion is authorized by this diagnostic evidence; do not connect
+unauthenticated native times to `StrategyReplayContext.AsOfUtc`.
 
 ## Official technical references
 

@@ -122,10 +122,13 @@ populate `StrategyReplayContext.AsOfUtc` or change canonical future-data guards.
 The [first authentic acquisition](mt5-first-real-acquisition.md) remains external:
 `probe-1794315975-132125.json`, SHA256
 `d2dadabb3586bb2378c4b9287cfaa2d1ff3467d70e6f73220d56baebcf7a8f03`.
-It was independently rehashed during this feature. Only that one real artifact was
-present in the reported probe output directory. **A real two-sample comparison is
-UNVERIFIED.** Fixtures and any same-file self-comparison do not establish a second
-authentic acquisition or real feed progression.
+At the comparator implementation checkpoint, only that real artifact was present;
+real two-sample validation was still pending. The subsequent
+[first authentic two-sample comparison](mt5-first-authentic-two-sample-comparison.md)
+now records two other human-supplied captures, their verified hashes and actual
+results. Capture order remains `unverified_caller_labels_only`; confirmation of a
+corrected hash is not acquisition-order attestation. Fixtures and same-file
+self-comparisons remain distinct from that real comparison.
 
 1. Keep the original JSON unchanged. In MT5 verify demo and
    `OANDA_Global-Demo-1`; keep Algo Trading disabled and source unchanged.
@@ -154,7 +157,9 @@ The standalone suites share explicitly synthetic fixture builders. They test
 comparison behavior and probe contract/safety without MT5. Backend/frontend
 runtime tests are not needed for this isolated tool; neither runtime changes.
 
-**Next feature:** register the first authentic two-sample comparison with both
-hashes, operator-attested sequence, observed changes and remaining temporal
-blockers. Independent UTC/completion evidence will still be required before
-implementing current-data ingestion; the comparator cannot supply those facts.
+The first authentic comparison is [registered](mt5-first-authentic-two-sample-comparison.md)
+with both hashes, uncertain capture ordering, observed changes and temporal
+blockers. **Next feature:** a focused source-time mapping evidence audit, scoped
+to the exact server and applicability interval. Independent UTC/completion
+evidence is still required before current-data ingestion; the comparator cannot
+supply those facts or turn observed clock differences into a conversion rule.
