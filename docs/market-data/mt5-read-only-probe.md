@@ -30,6 +30,7 @@ does not authenticate connectivity.
 - [Diagnostic validator](../../tools/market-data/mt5/Test-Mt5ProbeArtifact.ps1).
 - [Focused checks](../../tests/tools/Mt5ReadOnlyProbe.Tests.ps1).
 - [Offline two-artifact comparator and instructions](mt5-offline-comparator.md).
+- [Server-time policy audit and conversion blockers](mt5-server-time-policy-audit.md).
 
 ## Manual installation and execution
 

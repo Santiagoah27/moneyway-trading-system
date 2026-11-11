@@ -159,7 +159,9 @@ runtime tests are not needed for this isolated tool; neither runtime changes.
 
 The first authentic comparison is [registered](mt5-first-authentic-two-sample-comparison.md)
 with both hashes, uncertain capture ordering, observed changes and temporal
-blockers. **Next feature:** a focused source-time mapping evidence audit, scoped
-to the exact server and applicability interval. Independent UTC/completion
-evidence is still required before current-data ingestion; the comparator cannot
-supply those facts or turn observed clock differences into a conversion rule.
+blockers. The [server-time policy audit](mt5-server-time-policy-audit.md) now
+documents first-party policy applicability and remaining conversion requirements.
+The next evidence step is a dated clarification for this exact demo server's
+seasonal changeover and historical labeling. Independent UTC/completion evidence
+is still required before current-data ingestion; observed clock differences do
+not become a conversion rule.
