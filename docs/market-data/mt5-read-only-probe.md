@@ -31,6 +31,8 @@ does not authenticate connectivity.
 - [Focused checks](../../tests/tools/Mt5ReadOnlyProbe.Tests.ps1).
 - [Offline two-artifact comparator and instructions](mt5-offline-comparator.md).
 - [Server-time policy audit and conversion blockers](mt5-server-time-policy-audit.md).
+- [Automatic read-only collector](mt5-automatic-read-only-collector.md): separate
+  EA and manifest contract; the manual probe is unchanged.
 
 ## Manual installation and execution
 
