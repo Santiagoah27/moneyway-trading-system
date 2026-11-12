@@ -1,5 +1,10 @@
 using MoneyWay.Worker;
 
+if (args.Length > 0 && string.Equals(args[0], "mt5-receipt", StringComparison.Ordinal))
+{
+    return new Mt5ReceiptCommand().Execute(args, Console.Out, Console.Error);
+}
+
 if (args.Length > 0 && string.Equals(args[0], "replay-csv", StringComparison.Ordinal))
 {
     return new HistoricalReplayCommand().Execute(args, Console.Out, Console.Error);

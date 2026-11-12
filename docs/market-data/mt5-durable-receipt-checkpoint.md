@@ -178,6 +178,7 @@ Candle closure and historical availability remain unverified, position zero stay
 provisional and `CanonicalReady=false`. Current-data ingestion into the canonical
 engine is **not operational**. No manual API/Worker testing is necessary.
 
-The smallest next feature is a bounded **on-demand local receipt command** that
-uses these ports, exposes diagnostics and makes durable acknowledgment explicit,
-without adding background ingestion or passing native data to the engine.
+The [on-demand local receipt command](mt5-on-demand-receipt-command.md) now uses
+these ports, exposes diagnostics and requires explicit reviewed acknowledgment.
+It runs before host creation, without background ingestion or passing native data
+to the engine.

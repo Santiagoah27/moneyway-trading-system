@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\..\src\backend\MoneyWay.Api\MoneyWay.Api.csproj" />
     <ProjectReference Include="..\..\..\src\backend\MoneyWay.Application\MoneyWay.Application.csproj" />
     <ProjectReference Include="..\..\..\src\backend\MoneyWay.Infrastructure\MoneyWay.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\backend\MoneyWay.Worker\MoneyWay.Worker.csproj" />
   </ItemGroup>
 
   <ItemGroup>
