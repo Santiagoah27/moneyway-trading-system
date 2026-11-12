@@ -11,13 +11,15 @@ the configured company is OANDA Global Markets Limited, server is
 Trading is **disabled**. Each poll rechecks those conditions; an unsafe change
 stops the timer and removes this EA rather than changing terminal permissions.
 
-**Compilation:** MetaEditor reported 0 errors and 0 warnings. **Continuous
-terminal execution remains UNVERIFIED.** Automated checks exercise pure decision
-functions, synthetic artifact validation and source constraints; they do not
-establish a real OANDA timer run, filesystem publication or reconnection trace.
+**Compilation:** MetaEditor reported 0 errors and 0 warnings. Subsequent
+[authentic local receipt verification](mt5-local-dotnet-receipt-adapter.md#authentic-local-verification--november-12-2026)
+checked real initial/M1-triggered artifacts and their hashes. Long-term continuity
+and real reconnect handling remain unverified; synthetic tests do not establish them.
 
 Automatic source collection is **not canonical market-data readiness**. No
-runtime UTC converter or .NET ingestion adapter is implemented. Preserve the
+runtime UTC converter or canonical ingestion adapter is implemented. The
+[local .NET receipt adapter](mt5-local-dotnet-receipt-adapter.md) remains outside
+the engine. Preserve the
 [server-time audit](mt5-server-time-policy-audit.md),
 [ADR 0001](../decisions/0001-select-application-stack.md),
 [ADR 0004](../decisions/0004-support-observable-market-data-resolution-in-canonical-replay.md)
@@ -179,10 +181,11 @@ account switches, enable trading or deliberately disconnect merely to test this
 feature. Capture unavailable/recovery evidence if naturally observed. Record what
 actually happened; no real automatic run or reconnect is claimed by these tests.
 
-**Next smallest feature:** a local .NET receipt/validation adapter for this folder,
-verifying immutable manifests/probe hashes, identity, sequence and quality, with
-idempotent receipt and explicit temporal blockers. It must keep native data outside
-the canonical engine until the independent UTC/closure/availability contract is met.
+The [local .NET receipt/validation adapter](mt5-local-dotnet-receipt-adapter.md)
+now verifies manifests/probes, identity, sequence and quality with caller-owned
+idempotency checkpoints. Durable receipt storage is a separate next feature.
+Native data remains outside the canonical engine until the independent
+UTC/closure/availability contract is met.
 
 ## Official references
 
