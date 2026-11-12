@@ -36,8 +36,9 @@ var next = reader.Read(sourceDirectory, first.Checkpoint, pins);
 // diagnostic acquisitions or shutdown metadata, never canonical candles.
 ```
 
-There is no implicit default directory or persistent receipt state. The caller
-owns the checkpoint and must retain it for idempotency between invocations.
+There is no implicit default directory or hidden persistence in the reader. The caller
+owns the checkpoint; [explicit durable storage](mt5-durable-receipt-checkpoint.md)
+can retain it for idempotency between processes.
 The port is an application-facing architectural contract, not an HTTP API.
 
 ## Integrity, discovery and receipt semantics
@@ -73,7 +74,8 @@ Receipt statuses are separate from strategy results:
 An accepted observation has disposition `New` or `AlreadyReceived`. Invalid,
 conflicting or inaccessible artifacts have `NotReceived`, no observation and are
 not newly acknowledged. A later call can retry missing/incomplete publication.
-Incomplete but structurally valid diagnostic acquisitions are acknowledged once;
+Incomplete but structurally valid diagnostic acquisitions are recognized once per
+caller-owned checkpoint;
 that acknowledgment is not acceptance of usable trading data. Shutdown is retained
 as metadata with no fabricated candles.
 
@@ -81,8 +83,9 @@ The returned checkpoint defensively copies immutable filename/hash/sequence/run/
 poll/event identities. Identical files plus the same checkpoint produce identical
 results. Reprocessing returns no new observations; changes under an acknowledged
 filename conflict. There is no automatic exactly-once delivery across crashes or
-concurrent callers: durable checkpoint storage and consumer transaction handling
-are outside this feature. No database is introduced.
+concurrent callers. The [durable checkpoint store](mt5-durable-receipt-checkpoint.md)
+now provides explicit receipt commits; consumer transaction handling remains
+outside the receipt boundary. No database is introduced.
 
 Directory scope is a digest of the normalized absolute local path (case-normalized
 on Windows). It prevents accidental checkpoint reuse for another configured path;
@@ -174,9 +177,9 @@ dotnet test tests/integration/MoneyWay.IntegrationTests/MoneyWay.IntegrationTest
 & ./tests/tools/Mt5ProbeComparator.Tests.ps1
 ```
 
-No manual API/Worker execution is required: neither is integrated. The smallest
-next implementation feature is an explicit local durable receipt checkpoint/store
-with restart and atomic checkpoint tests, still outside the canonical engine.
+No manual API/Worker execution is required: neither is integrated.
+[Explicit durable receipt storage and recovery](mt5-durable-receipt-checkpoint.md)
+are now implemented, still outside the canonical engine.
 Separately, source-backed UTC/closure/availability decisions are required before
 any canonical current-data ingestion. Canonical current-data ingestion is **not
 operational**.

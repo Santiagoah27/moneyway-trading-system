@@ -183,7 +183,8 @@ actually happened; no real automatic run or reconnect is claimed by these tests.
 
 The [local .NET receipt/validation adapter](mt5-local-dotnet-receipt-adapter.md)
 now verifies manifests/probes, identity, sequence and quality with caller-owned
-idempotency checkpoints. Durable receipt storage is a separate next feature.
+idempotency checkpoints. [Durable receipt storage](mt5-durable-receipt-checkpoint.md)
+now adds explicit commits and restart recovery at that boundary.
 Native data remains outside the canonical engine until the independent
 UTC/closure/availability contract is met.
 

@@ -50,7 +50,7 @@ public sealed record Mt5NativeAcquisition(string DirectoryScope, string RecordFi
 public sealed record Mt5ReceivedRecordIdentity(string FileName, string Sha256, long Sequence,
     string RunId, long PollSequence, string Event);
 
-/// <summary>Caller-owned, defensively copied receipt ledger. Not a persisted or globally unique run registry.</summary>
+/// <summary>Caller-owned receipt progress; durable acknowledgment requires an explicit store commit. Run IDs are local.</summary>
 public sealed class Mt5ReceiptCheckpoint
 {
     public Mt5ReceiptCheckpoint(string directoryScope, IEnumerable<Mt5ReceivedRecordIdentity> records)
