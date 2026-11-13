@@ -190,7 +190,7 @@ position zero remains provisional; provider closure and historical availability
 are not verified. No freshness threshold is invented, no strategy verdict is
 derived, no canonical ingestion is operational and no trading is executed.
 
-The smallest next feature toward supervised continuous receipt is a separately
-invoked **bounded receipt watch session with inspection-only output and explicit
-stop/iteration limits**, reusing these ports and preserving manual commit. It must
-not add automatic acknowledgment or canonical ingestion.
+The [bounded supervised observation command](mt5-bounded-receipt-observation.md)
+now provides periodic inspection with explicit pass/interval limits and compact
+NDJSON output. Durable acknowledgment continues through the separate manual
+inspect/review/commit workflow.

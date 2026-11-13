@@ -13,7 +13,8 @@ public sealed class Mt5ReceiptCommand
         CheckpointConflict = 5, PersistenceFailure = 6;
     private static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true };
     private const string Usage = "mt5-receipt inspect --source <absolute-directory> --checkpoint <absolute-file>\n"
-        + "mt5-receipt commit --source <absolute-directory> --checkpoint <absolute-file> --expected-revision <sha256|missing> --review-token <sha256> --acknowledge-receipt";
+        + "mt5-receipt commit --source <absolute-directory> --checkpoint <absolute-file> --expected-revision <sha256|missing> --review-token <sha256> --acknowledge-receipt\n"
+        + "mt5-receipt observe --source <absolute-directory> --checkpoint <absolute-file> --max-passes <positive-integer> --interval-ms <positive-integer>";
 
     public int Execute(IReadOnlyList<string> args, TextWriter output, TextWriter error)
     {
@@ -23,14 +24,11 @@ public sealed class Mt5ReceiptCommand
         try
         {
             // Follow the existing one-shot command composition convention. No hosted services or configuration defaults.
-            IMt5ReceiptCheckpointStore store = new LocalMt5ReceiptCheckpointStore(options.Checkpoint, options.Source);
-            IMt5CollectorReceiptReader reader = new LocalMt5CollectorReceiptReader();
-            var loaded = store.Load();
+            var (loaded, batch, inspectionExit) = InspectCurrent(options.Source, options.Checkpoint);
             if (loaded.Status is not (Mt5CheckpointStatus.Missing or Mt5CheckpointStatus.Loaded))
-                return Report(options, loaded, loaded.Verification, null, null, StoreExit(loaded), output);
+                return Report(options, loaded, batch, null, null, inspectionExit, output);
 
-            var batch = loaded.Verification ?? reader.Read(options.Source, loaded.Checkpoint);
-            var safe = batch.ReceiptAcknowledgmentEligible;
+            var safe = batch!.ReceiptAcknowledgmentEligible;
             var token = safe ? ReviewToken(options, loaded.Revision, batch.Checkpoint) : null;
             if (options.Operation == "inspect")
                 return Report(options, loaded, batch, token, null, safe ? Success : ReceiptExit(batch), output);
@@ -42,6 +40,7 @@ public sealed class Mt5ReceiptCommand
                 return Report(options, loaded, batch, token, "reviewed_progress_changed_inspect_again", CheckpointConflict, output);
 
             // Store revalidates hashes/ancestry under its lock and commits only this exact reviewed ledger.
+            IMt5ReceiptCheckpointStore store = new LocalMt5ReceiptCheckpointStore(options.Checkpoint, options.Source);
             var committed = store.Commit(batch.Checkpoint, options.ExpectedRevision);
             var code = committed.Status is Mt5CheckpointStatus.Committed or Mt5CheckpointStatus.Unchanged ? Success : StoreExit(committed);
             return Report(options, committed, committed.Verification ?? batch, null, null, code, output);
@@ -133,10 +132,21 @@ public sealed class Mt5ReceiptCommand
         return exit;
     }
 
-    private static bool IsDiscovered(Mt5ReceiptRecord record) => !record.Diagnostics.Contains("expected_or_received_file_unavailable_not_deletion", StringComparer.Ordinal);
-    private static bool Acknowledged(Mt5ReceiptRecord record, Mt5ReceiptCheckpoint? committed) => record.FileName is { } name
+    internal static (Mt5CheckpointResult State, Mt5ReceiptBatch? Batch, int ExitCode) InspectCurrent(string source, string checkpoint,
+        IMt5CollectorReceiptReader? reader = null)
+    {
+        IMt5ReceiptCheckpointStore store = new LocalMt5ReceiptCheckpointStore(checkpoint, source);
+        var state = store.Load();
+        if (state.Status is not (Mt5CheckpointStatus.Missing or Mt5CheckpointStatus.Loaded))
+            return (state, state.Verification, StoreExit(state));
+        var batch = state.Verification ?? (reader ?? new LocalMt5CollectorReceiptReader()).Read(source, state.Checkpoint);
+        return (state, batch, batch.ReceiptAcknowledgmentEligible ? Success : ReceiptExit(batch));
+    }
+
+    internal static bool IsDiscovered(Mt5ReceiptRecord record) => !record.Diagnostics.Contains("expected_or_received_file_unavailable_not_deletion", StringComparer.Ordinal);
+    internal static bool Acknowledged(Mt5ReceiptRecord record, Mt5ReceiptCheckpoint? committed) => record.FileName is { } name
         && committed?.Records.TryGetValue(name, out var identity) == true && identity.Sha256 == record.ActualSha256;
-    private static bool ProbeUnavailable(Mt5ReceiptRecord record) => record.ActualSha256 is not null
+    internal static bool ProbeUnavailable(Mt5ReceiptRecord record) => record.ActualSha256 is not null
         && record.Diagnostics.Contains("artifact_unavailable_or_unreadable", StringComparer.Ordinal);
 
     private static int StoreExit(Mt5CheckpointResult result) => result.Status switch
