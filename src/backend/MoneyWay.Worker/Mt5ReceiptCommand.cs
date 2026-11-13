@@ -30,7 +30,7 @@ public sealed class Mt5ReceiptCommand
                 return Report(options, loaded, loaded.Verification, null, null, StoreExit(loaded), output);
 
             var batch = loaded.Verification ?? reader.Read(options.Source, loaded.Checkpoint);
-            var safe = batch.Status == Mt5ReceiptStatus.Validated;
+            var safe = batch.ReceiptAcknowledgmentEligible;
             var token = safe ? ReviewToken(options, loaded.Revision, batch.Checkpoint) : null;
             if (options.Operation == "inspect")
                 return Report(options, loaded, batch, token, null, safe ? Success : ReceiptExit(batch), output);
@@ -55,7 +55,7 @@ public sealed class Mt5ReceiptCommand
     private static int Report(Options options, Mt5CheckpointResult state, Mt5ReceiptBatch? batch,
         string? token, string? code, int exit, TextWriter output)
     {
-        var safe = batch?.Status == Mt5ReceiptStatus.Validated && state.Status is Mt5CheckpointStatus.Missing or Mt5CheckpointStatus.Loaded;
+        var safe = batch?.ReceiptAcknowledgmentEligible == true && state.Status is Mt5CheckpointStatus.Missing or Mt5CheckpointStatus.Loaded;
         var candidate = safe ? batch!.Checkpoint : null;
         var response = new
         {
@@ -65,7 +65,8 @@ public sealed class Mt5ReceiptCommand
             SourceDirectory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(options.Source)),
             CheckpointPath = Path.GetFullPath(options.Checkpoint),
             ExpectedSource = new { Company = "OANDA Global Markets Limited", Server = "OANDA_Global-Demo-1", NativeSymbol = "US100", Demo = true },
-            SourceIdentityValidated = batch?.Status == Mt5ReceiptStatus.Validated,
+            SourceIdentityValidated = batch?.SourceIdentityValidated == true,
+            ReceiptIntegrityValidated = batch?.ReceiptIntegrityValidated == true,
             CheckpointStatus = state.Status.ToString(),
             CheckpointRevision = state.Revision,
             ExpectedRevision = state.Status == Mt5CheckpointStatus.Missing ? "missing" : state.Revision,
@@ -73,13 +74,18 @@ public sealed class Mt5ReceiptCommand
             RecordsReported = batch?.Records.Count ?? 0,
             // Reader placeholders for unavailable old ledger files were not discovered in this inventory.
             DiscoveredRecords = batch?.Records.Count(IsDiscovered) ?? 0,
-            VerifiedAcknowledgedRecords = batch?.Records.Count(r => Acknowledged(r, state.Checkpoint) && r.Status == Mt5ReceiptStatus.Validated) ?? 0,
-            NewlyValidatedPendingRecords = batch?.Records.Count(r => !Acknowledged(r, state.Checkpoint) && r.Status == Mt5ReceiptStatus.Validated) ?? 0,
-            BlockedRecords = batch?.Records.Count(r => r.Status != Mt5ReceiptStatus.Validated) ?? 0,
+            VerifiedAcknowledgedRecords = batch?.Records.Count(r => Acknowledged(r, state.Checkpoint) && r.ReceiptAcknowledgmentEligible) ?? 0,
+            NewlyValidatedPendingRecords = batch?.Records.Count(r => !Acknowledged(r, state.Checkpoint) && r.ReceiptAcknowledgmentEligible) ?? 0,
+            BlockedRecords = batch?.Records.Count(r => !r.ReceiptAcknowledgmentEligible) ?? 0,
+            SourceUnavailableDiagnosticEvents = batch?.Records.Count(r => r.ReceiptIntegrityValidated
+                && r.Observation?.EvidenceKind == Mt5ReceiptEvidenceKind.SourceUnavailableWithoutSample) ?? 0,
+            CompleteNativeSamples = batch?.Records.Count(r => r.CompleteNativeSampleObserved) ?? 0,
+            UnresolvedAcquisitions = batch?.Records.Count(r => r.Status == Mt5ReceiptStatus.Unresolved) ?? 0,
             MissingPredecessors = batch?.Records.Count(r => r.Diagnostics.Contains("missing_predecessor_not_deletion")) ?? 0,
             UnavailableProbeDependencies = batch?.Records.Count(ProbeUnavailable) ?? 0,
             SequenceGaps = batch?.Records.Count(r => r.Diagnostics.Contains("publication_sequence_gap_cause_unresolved")) ?? 0,
-            IntegrityStatus = batch?.Status.ToString(),
+            IntegrityStatus = batch?.ReceiptIntegrityValidated == true ? Mt5ReceiptStatus.Validated.ToString() : batch?.Status.ToString(),
+            AcquisitionStatus = batch?.Status.ToString(),
             SafeToAcknowledge = safe,
             ReviewToken = options.Operation == "inspect" ? token : null,
             CandidateCheckpoint = candidate is null ? null : new
@@ -96,6 +102,11 @@ public sealed class Mt5ReceiptCommand
                 Discovered = IsDiscovered(r),
                 r.ActualSha256,
                 Status = r.Status.ToString(),
+                r.ReceiptIntegrityValidated,
+                r.SourceIdentityValidated,
+                r.ReceiptAcknowledgmentEligible,
+                r.CompleteNativeSampleObserved,
+                EvidenceKind = r.Observation?.EvidenceKind.ToString(),
                 ReceiptDisposition = r.Disposition.ToString(),
                 DurablyAcknowledged = Acknowledged(r, state.Checkpoint),
                 ProbeDependencyUnavailable = ProbeUnavailable(r),

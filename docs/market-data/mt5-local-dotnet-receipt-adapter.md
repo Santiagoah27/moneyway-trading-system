@@ -79,6 +79,12 @@ caller-owned checkpoint;
 that acknowledgment is not acceptance of usable trading data. Shutdown is retained
 as metadata with no fabricated candles.
 
+Receipt integrity, source identity, acknowledgment eligibility and complete native
+sample observation are now [separate properties](mt5-diagnostic-event-receipts.md).
+A verified disconnected `source_unavailable` no-sample event can be acknowledged
+without changing its `Unresolved` acquisition status or filling any candles.
+This exception does not make other unresolved samples CLI-eligible.
+
 The returned checkpoint defensively copies immutable filename/hash/sequence/run/
 poll/event identities. Identical files plus the same checkpoint produce identical
 results. Reprocessing returns no new observations; changes under an acknowledged

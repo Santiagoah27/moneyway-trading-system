@@ -5,6 +5,7 @@ namespace MoneyWay.Application.MarketData.Receipt;
 // Receipt statuses are independent from RuleEvaluationResult and StrategyVerdict.
 public enum Mt5ReceiptStatus { Validated, Unresolved, DataUnavailable, Conflict, Invalid }
 public enum Mt5ReceiptDisposition { New, AlreadyReceived, NotReceived }
+public enum Mt5ReceiptEvidenceKind { AcquisitionSnapshot, SourceUnavailableWithoutSample, Shutdown }
 
 /// <summary>A source-native coordinate, deliberately not a DateTimeOffset/UTC instant.</summary>
 public sealed record Mt5NativeTimestamp(long Raw, string Display);
@@ -39,6 +40,8 @@ public sealed record Mt5NativeAcquisition(string DirectoryScope, string RecordFi
     Mt5NativeTimestamp? ServerQuoteBefore, Mt5NativeTimestamp? ServerQuoteAfter,
     IReadOnlyList<Mt5NativeFrame> Timeframes)
 {
+    // Assigned by the reader only after schema, source, dependencies and chain validation.
+    public Mt5ReceiptEvidenceKind EvidenceKind { get; init; }
     public string Company => "OANDA Global Markets Limited";
     public string Server => "OANDA_Global-Demo-1";
     public string NativeSymbol => "US100";
@@ -73,12 +76,27 @@ public sealed class Mt5ReceiptCheckpoint
 
 public sealed record Mt5ReceiptRecord(string? FileName, string? ActualSha256, bool? ExpectedHashMatched,
     Mt5ReceiptStatus Status, Mt5ReceiptDisposition Disposition, Mt5NativeAcquisition? Observation,
-    IReadOnlyList<string> Diagnostics);
+    IReadOnlyList<string> Diagnostics)
+{
+    public bool ReceiptIntegrityValidated => Observation is not null && Status is Mt5ReceiptStatus.Validated or Mt5ReceiptStatus.Unresolved;
+    public bool SourceIdentityValidated => ReceiptIntegrityValidated;
+    public bool ReceiptAcknowledgmentEligible => ReceiptIntegrityValidated && (Status == Mt5ReceiptStatus.Validated
+        || Observation!.EvidenceKind == Mt5ReceiptEvidenceKind.SourceUnavailableWithoutSample);
+    // Only capture-level completeness; never authenticated UTC, closure, freshness or canonical usability.
+    public bool CompleteNativeSampleObserved => Status == Mt5ReceiptStatus.Validated && Observation is
+    {
+        EvidenceKind: Mt5ReceiptEvidenceKind.AcquisitionSnapshot, Metadata: { M1Usable: true, SampleComplete: true, SourceStable: true },
+        ProbeGate: "passed", ConnectedBefore: true, ConnectedAfter: true
+    };
+}
 
 public sealed record Mt5ReceiptBatch(string DirectoryScope, IReadOnlyList<Mt5ReceiptRecord> Records,
     IReadOnlyList<string> Diagnostics, Mt5ReceiptCheckpoint Checkpoint)
 {
     public bool CanonicalReady => false;
+    public bool ReceiptIntegrityValidated => Diagnostics.Count == 0 && Records.Count > 0 && Records.All(r => r.ReceiptIntegrityValidated);
+    public bool SourceIdentityValidated => Diagnostics.Count == 0 && Records.Count > 0 && Records.All(r => r.SourceIdentityValidated);
+    public bool ReceiptAcknowledgmentEligible => Diagnostics.Count == 0 && Records.Count > 0 && Records.All(r => r.ReceiptAcknowledgmentEligible);
     public Mt5ReceiptStatus Status => Diagnostics.Count > 0 || Records.Count == 0 ? Mt5ReceiptStatus.DataUnavailable
         : Records.Any(x => x.Status == Mt5ReceiptStatus.Conflict) ? Mt5ReceiptStatus.Conflict
         : Records.Any(x => x.Status == Mt5ReceiptStatus.Invalid) ? Mt5ReceiptStatus.Invalid

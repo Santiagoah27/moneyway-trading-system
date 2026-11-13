@@ -142,6 +142,28 @@ internal sealed class Mt5ReceiptSyntheticFixture : IDisposable
             ["sequence_basis"] = "local_single_writer_publication_not_utc"
         });
     }
+    internal void AddUnavailable(long sequence, long previous, long run = 1, long? poll = null,
+        int condition = 1, bool connectedAfter = false)
+    {
+        Add(sequence, previous, run: run, poll: poll, ev: "source_unavailable");
+        ChangeProbe(sequence, p =>
+        {
+            p["gate"] = "terminal_disconnected"; p["source"]!["connected_before"] = false; p["connected_after"] = connectedAfter;
+            var symbol = p["symbol"]!.AsObject(); symbol["query_attempted"] = false; symbol["exists"] = false; symbol["selected"] = false;
+            foreach (var key in new[] { "description", "description_error_code", "profit_currency", "profit_currency_error_code", "digits", "digits_error_code" }) symbol[key] = null;
+            foreach (var item in p["timeframes"]!.AsArray())
+            {
+                var frame = item!.AsObject();
+                foreach (var key in frame.Select(x => x.Key).Where(k => k is not ("timeframe" or "period_seconds" or "requested_count")).ToArray()) frame.Remove(key);
+                frame["status"] = "not_attempted"; frame["copy_return"] = null; frame["copy_error_code"] = null; frame["bars"] = new JsonArray();
+            }
+        });
+        ChangeRecord(sequence, r =>
+        {
+            r["condition"] = condition; r["trigger_m1_head_native"] = null; r["captured_m1_head_native"] = null;
+            r["previous_committed_m1_head_native"] = Native(Head); r["m1_usable"] = false; r["sample_complete"] = false;
+        });
+    }
     internal void ChangeRecord(long n, Action<JsonObject> change)
     { var value = JsonNode.Parse(File.ReadAllText(RecordPath(n)))!.AsObject(); change(value); Write(RecordPath(n), value); }
     internal void ChangeProbe(long n, Action<JsonObject> change, bool rebind = true)

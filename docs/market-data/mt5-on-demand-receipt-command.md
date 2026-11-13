@@ -56,15 +56,19 @@ can exceed `discoveredRecords`. `durablyAcknowledgedRecords` is stored progress;
 flag describes the actual committed identity, not proposed progress.
 
 The report identifies the **expected** OANDA Global Markets demo/US100 source;
-`sourceIdentityValidated` is false when full batch validation does not pass.
-Only a fully `Validated` batch has `safeToAcknowledge=true`, a `reviewToken` and
+`sourceIdentityValidated` describes verified receipt identity independently from
+market-data availability. `receiptIntegrityValidated` / `integrityStatus` describe
+receipt checks; `acquisitionStatus` retains aggregate sample-quality status.
+Only a fully receipt-eligible batch has `safeToAcknowledge=true`, a `reviewToken` and
 `candidateCheckpoint` summary (scope/count/last identity). Record rows expose
 the actual hashes and local identities underlying that candidate. The token
 commits to the entire ledger, not only its last sequence.
 
-Unlike the lower-level store, which can acknowledge an `Unresolved` diagnostic
-acquisition, this operator command **blocks all incomplete/unresolved snapshots**.
-This is a stricter command acknowledgment policy, not a changed strategy rule.
+This command still blocks ordinary incomplete/unresolved snapshots. The narrow
+[verified disconnected/no-sample diagnostic profile](mt5-diagnostic-event-receipts.md)
+can now be acknowledged as evidence while remaining `Unresolved` as an acquisition.
+New receipt, diagnostic and complete-native-sample counters keep those meanings
+separate. This is not a changed strategy rule or blanket acceptance of `Unresolved`.
 Explicitly linked publication gaps remain permitted according to the existing
 reader: the unresolved cause is reported, without inventing missing provider bars.
 
@@ -102,7 +106,8 @@ Only `inspect` issues a token; a rejected commit requires a fresh inspection.
 Commit reloads and revalidates the files, compares the supplied revision and token,
 then invokes the existing store's locked `Commit(candidate, expectedRevision)`.
 Changed evidence, missing probes/predecessors, incomplete snapshots, source
-mismatch or chain conflict blocks acknowledgment. New records discovered before
+mismatch or chain conflict blocks acknowledgment, except that a verified no-sample
+diagnostic is eligible as receipt evidence rather than a complete sample. New records discovered before
 the command's final review comparison change the token and require review again.
 Additional publications after that comparison are not implicitly added: the store
 commits only the reviewed ledger and revalidates its identities under its lock.

@@ -106,6 +106,7 @@ internal static class Mt5WireContract
         var captured = Stamp(r.GetProperty("captured_m1_head_native"));
         var usable = B(r, "m1_usable"); var complete = B(r, "sample_complete"); var stable = B(r, "source_stable");
         if (ev == "new_native_m1") Need(condition == 0 && trigger is not null && previousHead is not null && trigger.Raw > previousHead.Raw, "false_new_m1");
+        if (ev == "source_unavailable") Need(condition is 1 or 2 && (condition != 1 || trigger is null), "invalid_source_unavailable_condition_or_trigger");
         var previous = NullableText(r, "previous_record"); var previousHash = Hash(r, "previous_record_sha256");
         Need((previous is null) == (previousHash is null), "predecessor_reference_pair");
         if (previous is not null) Need(RecordName(previous) && long.Parse(previous.AsSpan(7, 12), CultureInfo.InvariantCulture) < seq, "unsafe_predecessor_reference");
@@ -190,8 +191,14 @@ internal static class Mt5WireContract
         Need(!metadata.SampleComplete || metadata.M1Usable && frames.All(f => Usable(f) && f.CopyReturn == metadata.SampleBars), "incomplete_sample_assertion");
         var limitations = r.GetProperty("limitations"); Need(limitations.ValueKind == JsonValueKind.Array && limitations.GetArrayLength() <= 32);
         foreach (var item in limitations.EnumerateArray()) _ = Text(item); // Never echo arbitrary source text.
+        // Narrow collector-supported profile: unavailable poll, verified source, disconnected capture with no queries/bars.
+        // Do not infer receipt eligibility for other unresolved samples or poll/capture races.
+        var unavailableWithoutSample = metadata.Event == "source_unavailable" && metadata.Condition is 1 or 2
+            && metadata.SourceStable && !metadata.M1Usable && !metadata.SampleComplete && metadata.CapturedM1HeadNative is null
+            && gate == "terminal_disconnected" && !connected && !B(symbol, "query_attempted") && !B(symbol, "exists") && !B(symbol, "selected")
+            && frames.All(f => f.AcquisitionStatus == "not_attempted" && f.Bars.Count == 0 && f.CopyReturn is null && f.CopyErrorCode is null);
         return new(build, gate, connected, B(r, "connected_after"), Stamp(r.GetProperty("generated_gmt_candidate")),
-            Stamp(r.GetProperty("server_quote_before")), Stamp(r.GetProperty("server_quote_after")), frames.AsReadOnly());
+            Stamp(r.GetProperty("server_quote_before")), Stamp(r.GetProperty("server_quote_after")), frames.AsReadOnly(), unavailableWithoutSample);
     }
 
     private static ExactPrice? Price(JsonElement value)
@@ -226,4 +233,5 @@ internal static class Mt5WireContract
 
 internal sealed class Mt5WireException(string code) : Exception(code) { internal string Code { get; } = code; }
 internal sealed record Mt5WireProbe(int Build, string Gate, bool ConnectedBefore, bool ConnectedAfter,
-    Mt5NativeTimestamp? Generated, Mt5NativeTimestamp? QuoteBefore, Mt5NativeTimestamp? QuoteAfter, IReadOnlyList<Mt5NativeFrame> Frames);
+    Mt5NativeTimestamp? Generated, Mt5NativeTimestamp? QuoteBefore, Mt5NativeTimestamp? QuoteAfter, IReadOnlyList<Mt5NativeFrame> Frames,
+    bool SourceUnavailableWithoutSample);

@@ -115,7 +115,12 @@ public sealed class LocalMt5CollectorReceiptReader : IMt5CollectorReceiptReader
                     }
                     entry.Observation = new(scope, entry.Name, entry.Hash!, meta, probe?.Build, probe?.Gate, probe?.ConnectedBefore,
                         probe?.ConnectedAfter, probe?.Generated, probe?.QuoteBefore, probe?.QuoteAfter,
-                        probe?.Frames ?? Array.Empty<Mt5NativeFrame>());
+                        probe?.Frames ?? Array.Empty<Mt5NativeFrame>())
+                    {
+                        EvidenceKind = meta.Event == "shutdown" ? Mt5ReceiptEvidenceKind.Shutdown
+                            : probe?.SourceUnavailableWithoutSample == true ? Mt5ReceiptEvidenceKind.SourceUnavailableWithoutSample
+                            : Mt5ReceiptEvidenceKind.AcquisitionSnapshot
+                    };
                     entry.Disposition = ledger.ContainsKey(entry.Name) ? Mt5ReceiptDisposition.AlreadyReceived : Mt5ReceiptDisposition.New;
                 }
                 catch (Exception e) when (IsSourceError(e)) { FailSource(entry, e); }
