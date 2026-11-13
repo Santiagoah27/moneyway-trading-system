@@ -331,3 +331,229 @@ provider identity, read ordering and quote uncertainty, then assess whether that
 specific event can distinguish the hour-offset candidates. This requires a fresh
 local observation and retains all seasonal/historical gaps above. The current
 feature performs no broker-support contact. [MetaQuotes MqlTick](https://www.mql5.com/en/docs/constants/structures/mqltick)
+
+## November 13 correlated US100 tick diagnostic
+
+Initial checkpoint for this extension was `main` at
+`f8785fad2d7bfd4495431142ca7bd14906f578c8`, clean and synchronized with
+`origin/main`. The operational entry point is
+[Invoke-Mt5CorrelatedTickCapture.ps1](../../tools/market-data/mt5/Invoke-Mt5CorrelatedTickCapture.ps1).
+It reuses the existing bounded W32Time implementation and exact decimal sample
+parser through [Mt5CorrelatedTickEvidence.ps1](../../tools/market-data/mt5/Mt5CorrelatedTickEvidence.ps1).
+The dedicated [MoneyWayCorrelatedTick EA](../../tools/market-data/mt5/MoneyWayCorrelatedTick.mq5)
+and its [scalar decisions](../../tools/market-data/mt5/MoneyWayCorrelatedTickDecision.mqh)
+operate in `FILE_COMMON\MoneyWayCorrelatedTick\<nonce>`. Existing production
+collector code, receipt contracts/checkpoints and canonical replay retain their
+current behavior and isolation under ADR 0001 and ADR 0004.
+
+### Correlation and event semantics
+
+1. The host generates a 32-byte cryptographic nonce, creates a fresh directory and
+   atomically publishes `offer.txt` with that nonce, explicit session duration and
+   `US100` identity. Protocol text uses UTF-8 and LF with a versioned first line.
+2. The operator attaches the EA to a separate US100 chart with `SessionNonce`.
+   The EA checks company/server/demo/chart symbol, connection, tester status and
+   disabled Algo Trading. It holds an exclusive session lock. Existing ready,
+   request, response or cancellation files disqualify a reused nonce.
+3. The EA publishes `ready.json` with the offer hash and a per-instance token.
+   The host verifies identity, nonce and offer hash. It queries Windows source and
+   synchronization status and collects a bounded external measurement.
+4. The host atomically publishes `request.txt`, binding nonce, ready token, US100
+   and remaining capture duration. A request predating EA readiness is rejected.
+   The token prevents an earlier request from arming a different EA instance.
+5. The EA accepts that exact request on its timer, records its hash and obtains a
+   baseline latest tick. A subsequent `OnTick` callback must advance both callback
+   ordinal and native `time_msc` beyond that baseline. Cached or regressing tick
+   timestamps remain ineligible. Equal-millisecond updates can remain unavailable.
+6. Within `OnTick`, `SymbolInfoTick(_Symbol, captured)` preserves raw seconds and
+   milliseconds, bid/ask/last, volume, real volume and flags. Floating-point fields
+   use scientific decimal strings with 17 significant digits. The context includes
+   `TimeCurrent`, `TimeTradeServer`, `TimeGMT`, `TimeLocal`, optional native M1 head
+   and error codes. `context.json` is hashed into the response.
+7. The EA flushes and closes pending output before a create-only final move.
+   `response.json` binds nonce, ready token, request hash, context hash, source
+   identity, callback counters and terminal monotonic readings. The host validates
+   these fields, retains receipt boundaries and measures the external reference
+   again. Host publication/receipt boundaries use Stopwatch plus host UTC candidates.
+
+The fresh-tick assessment is `context_specific_subsequent_OnTick_with_native_timestamp_progression`.
+It describes local handler observation and timestamp progression. The event queue
+can coalesce updates, and the latest lookup may reflect an update different from
+the queued event that caused the callback. Network quote generation after the
+request and exact queued-event identity remain `unresolved`. MetaQuotes documents
+that `OnTick` continues when Algo Trading is disabled and that queued NewTick
+events can be coalesced. [MetaQuotes OnTick](https://www.mql5.com/en/docs/event_handlers/ontick)
+
+The same nonce identifies one session and its single accepted tick observation.
+Its role is correlation. Source provenance remains dependent on the local terminal
+and operator, with source identity validation kept separate from UTC authority.
+Host-recorded repository source hashes document the tool inputs. They cannot attest
+which compiled binary was attached to a chart.
+
+### Evidence bundle and UTC assessment
+
+Each session retains `offer.txt`, `ready.json`, `request.txt`, `context.json`,
+`response.json`, a session lock and cancellation marker as those phases occur.
+The compact final `evidence.json` uses schema
+`moneyway.mt5-correlated-tick-evidence`, version 1. It includes nonce, outcome,
+reason, publication/receipt windows, monotonic frequency, native response/context,
+raw Windows outputs, external measurement results, tool/input hashes, assessments
+and unresolved guarantees. Unobserved request/receipt fields remain null.
+Raw files stay external to Git. Partial files and failed sessions remain available
+for audit. Retain the entire directory together with the final report hash.
+
+The host performs one external sample immediately before request publication and
+one after receipt or session termination. Each uses the existing explicitly named
+reference, bounded timeout, raw `/rdtsc` output and exact decimal offset/roundtrip
+parser. Missing references are `data_unavailable`. Host synchronization and external
+reference authentication remain `unverified`, including when measurements succeed.
+Windows query failures are retained. [Windows Time tools](https://learn.microsoft.com/en-us/windows-server/networking/windows-time-service/Windows-Time-Service-Tools-and-Settings)
+
+The report preserves the exact native millisecond tick minus computer-derived GMT
+difference. For each published +7200/+10800 hypothesis it records a conditional
+coordinate and membership in the **uncorrected host observation interval**. That
+interval brackets local request publication and response receipt. Its precision
+comes from retained host candidates and monotonic counters. NTP measurements and
+roundtrips remain separate evidence with their original uncertainty. This test of
+compatibility supplies a `candidate` hypothesis and applies no NTP correction or
+skew tolerance. Native source-event UTC remains unresolved even if only one
+hypothesis fits the local interval. [OANDA MT5 policy](https://help.oanda.com/bvi/en/faqs/mt5-user-guide-bvi.htm)
+
+| Evidence                | Independent limitation                                                            |
+| ----------------------- | --------------------------------------------------------------------------------- |
+| `TimeCurrent`           | An event-associated native server clock value retains provider clock semantics    |
+| Cached `SymbolInfoTick` | Latest stored data alone cannot establish a subsequent event                      |
+| `TimeGMT`               | Computer settings and synchronization determine this clock                        |
+| Unsigned NTP sample     | Offset and roundtrip measurements retain authority, network and delay uncertainty |
+| Nonce handshake         | Correlates local artifacts while network quote generation time remains unresolved |
+| Native M1 head          | Identifies a bar opening with closure and availability assessed separately        |
+
+`canonical_utc_conversion_authorized`, `utc_conversion_authenticated` and
+`canonical_ready` remain `false`. Provider historical DST selection, transition
+authority/instants, ambiguous times, historical policy validity, authenticated UTC
+event mapping, provider candle closure, historical availability, atomic
+multi-timeframe acquisition and canonical integration retain their earlier blockers.
+Nasdaq strategy time remains `America/Bogota`.
+
+### Supervised operator procedure
+
+Keep Algo Trading disabled throughout. Use MT5 **File > Open Data Folder** to
+identify the active terminal's data folder, then set `$terminalData` below to that
+exact path. Run installation commands from the repository root. The unique expert
+subdirectory keeps each installation separate.
+
+```powershell
+$terminalData = '<paste the MT5 data folder here>'
+$eaFolder = Join-Path $terminalData ('MQL5\Experts\MoneyWayDiagnostics\CorrelatedTick-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $eaFolder -Force | Out-Null
+Copy-Item -LiteralPath ./tools/market-data/mt5/MoneyWayCorrelatedTick.mq5 -Destination $eaFolder
+Copy-Item -LiteralPath ./tools/market-data/mt5/MoneyWayCorrelatedTickDecision.mqh -Destination $eaFolder
+$ea = Join-Path $eaFolder 'MoneyWayCorrelatedTick.mq5'
+$log = Join-Path $eaFolder 'compile.log'
+$editor = Start-Process -FilePath 'C:\Program Files\MetaTrader 5\MetaEditor64.exe' `
+    -ArgumentList @('/compile:"' + $ea + '"', '/log:"' + $log + '"') `
+    -WindowStyle Hidden -PassThru
+$editor.WaitForExit()
+Get-Content -LiteralPath $log
+```
+
+Alternatively open `$ea` in MetaEditor and press F7. Verify the actual compiler
+result and generated `.ex5` before attachment. In MT5, open a **new US100 chart**
+on the demo account, leaving the production collector on its existing chart.
+Refresh Navigator and locate `MoneyWayCorrelatedTick` in the unique expert folder.
+Prepare its Inputs dialog with Algo Trading still disabled.
+
+Start the host command, then attach the EA to that separate chart using the
+printed `SessionNonce` before the operator-selected session expires.
+
+```powershell
+& ./tools/market-data/mt5/Invoke-Mt5CorrelatedTickCapture.ps1 `
+    -SessionSeconds 180 -ReferenceHost time.windows.com -QueryTimeoutMilliseconds 5000
+```
+
+SessionSeconds is required, between 1 and 900. QueryTimeoutMilliseconds is required,
+between 1000 and 30000. Ready/capture waiting uses the same monotonic session
+deadline. Four bounded Windows queries can extend total command time by at most
+four query timeouts beyond that waiting limit, plus local I/O/scheduling. The EA
+also has its own operator-supplied duration and checks cancellation on timer/tick
+callbacks. A forced host termination leaves the EA's independent limit in place.
+
+Outputs appear under
+`%APPDATA%\MetaQuotes\Terminal\Common\Files\MoneyWayCorrelatedTick\<printed-nonce>`.
+For supervised cancellation, create the marker in a second PowerShell window.
+Replace the nonce with the printed value. The coordinator then writes a normal
+`data_unavailable` cancellation report.
+
+```powershell
+$nonce = '<printed nonce>'
+$session = Join-Path $env:APPDATA ('MetaQuotes\Terminal\Common\Files\MoneyWayCorrelatedTick\' + $nonce)
+New-Item -ItemType File -Path (Join-Path $session 'cancel.txt')
+```
+
+The same marker also closes a normally completed session. After completion,
+inspect `evidence.json`, compare request/response/report nonce, verify recorded
+SHA256 values and retain the report's own SHA256. The host already validates the
+ready token, request hash and context hash before accepting a capture.
+
+```powershell
+$report = Join-Path $session 'evidence.json'
+Get-Content -LiteralPath $report -Raw | ConvertFrom-Json | Select-Object nonce,outcome,reason,assessment
+Get-FileHash -LiteralPath $report -Algorithm SHA256
+```
+
+The EA removes itself after a terminal outcome. If it remains attached after an
+interruption, remove it from the separate chart using **Expert List > Remove**.
+Close that diagnostic chart if desired. Keep the evidence directory for audit.
+Every subsequent attempt uses a fresh coordinator nonce. MoneyWay API/Worker
+startup is outside this local procedure.
+
+### Actual validation and remaining manual observation
+
+MetaEditor was available and compiled the final EA plus shared header with
+**0 errors and 0 warnings**. The build is retained externally in
+`%LOCALAPPDATA%\Temp\moneyway-correlated-tick-final-269dd8160ba4493f8723708d8057bb75`.
+The generated `.ex5` SHA256 is
+`4162676c3897575258a55a3b884b9005efdd4d0dc5e8b478f6c20a20317294cb`.
+Compilation establishes a successful build. Attaching that binary and observing
+an authentic US100 callback remain manual validation steps.
+
+The final host-only run used a 2-second session and 1000 ms query timeout with
+`time.windows.com`. The EA was left unattached. The real result was
+`data_unavailable` / `ea_unavailable_timeout`, with request/receipt boundaries null
+and canonical authorization false. This outcome establishes host timeout behavior.
+Market tick delivery was untested.
+
+- Nonce `5553ac5f50515b88484cbe9da832f516664feeb8a0652be582007b51c0df81aa`.
+- External report `MoneyWayCorrelatedTick\<nonce>\evidence.json` under the common
+  files directory above, SHA256
+  `e96466bdd0411c3bca4a68b858f12146468ebe8d0a80f2b52caf53f40f7f1eee`.
+- Real post-session reference sample at local request candidate
+  `2026-11-13T19:03:44.1649480Z`, roundtrip `0.0868949` seconds and reported NTP
+  offset `-0.7479470` seconds. Pre-request reference and Windows status/source
+  queries remained unobserved because EA readiness was absent.
+- Input and tool hashes were checked against the retained final bundle. Existing
+  authentic record 310, predecessor 309 and probe 310 still matched the hashes
+  registered in the earlier audit. Production receipt/checkpoint paths were absent
+  from the new workflow's writes.
+
+The [new automated suite](../../tests/tools/Mt5CorrelatedTickEvidence.Tests.ps1)
+passed 56 synthetic tests. It executes the actual shared MQL scalar decisions in
+a C# host, validates protocol/evidence handling and exercises the real coordinator
+against a synthetic file peer with mocked Windows queries. These tests cover
+success, cache rejection, nonce replay/mismatch, identity, cancellation/timeouts,
+atomic publication, partial files, context binding, bounds, conditional +2/+3,
+precision, hashes and safety isolation. Terminal APIs and authentic OnTick delivery
+remain outside those synthetic tests.
+
+Full solution build passed with 0 warnings/errors. Existing .NET MT5 receipt,
+checkpoint and observation regressions passed 184 tests. Existing PowerShell
+native-UTC, collector, probe and comparator suites passed 28 + 39 + 27 + 32 tests.
+Together with the 56 new tests, totals are **366 passed, 0 failed, 0 skipped**.
+PowerShell AST, Markdown format/local links, retained bundle integrity and
+`git diff --check` are verified before publication.
+
+The smallest next action is one supervised execution of this compiled diagnostic
+on the separate demo US100 chart while source ticks are available. Retain the
+nonce-bound bundle and assess its actual native tick against the two reference
+measurements. The remaining historical/DST/finality contracts above continue to
+govern any later canonical integration decision.
