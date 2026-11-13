@@ -2,7 +2,8 @@
 
 Audit date: 2026-11-11. Initial Git checkpoint: `main`,
 `93dff96a3e2ca86d8e10cb7fdeafc35db850983d`, clean and synchronized.
-Documentation only: no timestamp converter, changed evidence or strategy behavior.
+The initial November 11 audit was documentation-only. The November 13 diagnostic
+extension is recorded below.
 
 ## Provider statement and exact applicability
 
@@ -140,11 +141,11 @@ retain an unresolved result rather than label native data UTC/canonical-ready.
   input provenance; attaching a zero offset to an unconverted server value does
   not satisfy the source contract.
 
-No code or tests changed. Focused runtime tests were inspected, not executed for
-this documentary change. Validation consists of three actual artifact checks,
+The November 11 audit changed documentation only. Focused runtime tests were
+inspected for that audit. Its validation consisted of three actual artifact checks,
 hash verification, primary-reference inspection and documentation/link/diff checks.
 
-## Smallest independent next evidence step
+## November 11 proposed evidence step
 
 Obtain one retained, dated provider clarification for **OANDA_Global-Demo-1** that
 defines the governing seasonal-clock authority, exact changeover instants and
@@ -154,3 +155,179 @@ human submission; this audit sends no message and requests no credentials. If th
 provider cannot establish those facts, keep them unresolved rather than implement
 a guessed converter. Closure and historical availability still require their own
 evidence after any clock-policy clarification.
+
+## November 13 bounded native-to-UTC diagnostic
+
+Initial checkpoint was `main` at `30aa3945ce1c21494cc0bcc11acbed4bf53567ce`,
+clean and synchronized with `origin/main`. This extension adds a locally invoked
+PowerShell diagnostic with schema `moneyway.mt5-native-utc-evidence`, version 1.
+The [entry point](../../tools/market-data/mt5/New-Mt5NativeUtcEvidence.ps1),
+[assessment helpers](../../tools/market-data/mt5/Mt5NativeUtcEvidence.ps1) and
+[focused tests](../../tests/tools/Mt5NativeUtcEvidence.Tests.ps1) are diagnostic tooling.
+The existing manual probe, automatic collector and their v1 validators supply
+native identity, quote coordinates, M1 head, connection state and copy errors.
+The receipt reader, checkpoint store and replay pipeline remain isolated.
+
+The workflow reads an existing immutable probe or collector record, validates it,
+retains exact input bytes and SHA256, then queries Windows time and an explicitly
+selected external reference. Monotonic counters and host UTC candidates bracket
+file reads and Windows queries. These brackets describe diagnostic reads of old
+files. The native event was captured earlier, outside those brackets.
+
+`TimeCurrent` can identify the last quote of any selected Market Watch symbol in
+this script context. The existing probes cannot establish a fresh US100-specific
+tick or bind their original capture to the new host measurement. Quote freshness,
+symbol binding and independent discrimination between hour-offset hypotheses
+remain `unresolved`. [MetaQuotes TimeCurrent](https://www.mql5.com/en/docs/dateandtime/timecurrent)
+
+### Operator procedure and artifact contract
+
+Run from the repository root in Windows PowerShell. Select an existing validated
+acquisition record with a probe. The report parent must already exist. Each run
+requires a fresh filename and creates a separate `<ReportPath>.inputs` directory.
+
+```powershell
+$record = Join-Path $env:APPDATA 'MetaQuotes\Terminal\Common\Files\MoneyWayAutomaticReadOnly\record-000000000310.json'
+$report = Join-Path $env:TEMP ('moneyway-native-utc-' + [guid]::NewGuid().ToString('N') + '.json')
+& ./tools/market-data/mt5/New-Mt5NativeUtcEvidence.ps1 `
+    -RecordPath $record -ReferenceHost time.windows.com -ReportPath $report `
+    -ReferenceSamples 3 -QueryTimeoutMilliseconds 10000
+Get-FileHash -LiteralPath $report -Algorithm SHA256
+```
+
+Alternatively supply `-ProbePath` with an absolute manual-probe path in place of
+`-RecordPath`. The reference hostname is mandatory. Reference samples are bounded
+to 1–5 and each Windows query to 1–30 seconds. Official policy retrieval uses a
+10-second timeout per page. No API, Worker, MT5 recompilation or elevated session
+is required for this workflow. Unavailable queries retain their errors.
+
+The report preserves source paths/hashes, immediate predecessor when supplied by
+a record, read windows, tool hashes, raw Windows outputs, exact decimal reference
+measurements, source identity, policy provenance and assessment. The input bundle
+retains original JSON bytes and UTF-8 reencodings of the web client's decoded HTML.
+Policy hashes identify that saved representation. Retrieval timestamps use the
+unverified host clock and carry no historical policy-effective meaning.
+
+Source handles allow concurrent reads while excluding writes during the audit.
+Output uses create-only writes and a final move into a fresh report path. Existing
+reports and bundles are rejected. An interrupted run can leave a partial bundle
+or pending file for inspection. Retry with a fresh path. Retention of the report
+and bundle is an operator responsibility because the example uses temporary
+storage. Neither a record's immediate predecessor hash nor schema validation
+authenticates the complete historical chain or independent source authenticity.
+
+The bounded Windows calls are `/query /source`, `/query /status /verbose` and
+`/stripchart /computer:<explicit-host> /samples:<count> /period:1 /rdtsc /dataonly`.
+The CSV parser preserves request FILETIME, counter order, reported roundtrip and
+NTP offset. FILETIME remains a local request UTC candidate. Offset corrections
+and latency/skew acceptance thresholds are unspecified. An exit-zero query with
+valid samples yields `context_specific` reference evidence. Timeout, error or
+missing valid samples yields `data_unavailable`. Reference authentication and
+host synchronization remain `unverified`. [Windows Time tools](https://learn.microsoft.com/en-us/windows-server/networking/windows-time-service/Windows-Time-Service-Tools-and-Settings)
+
+### Authentic November 13 execution
+
+The final diagnostic consumed existing acquisition 310 from the external
+`MoneyWayAutomaticReadOnly` directory. All three original files and retained byte
+copies were independently rehashed and matched the report, including the hashes
+already checked during this audit before the final run.
+
+| Input                      | SHA256                                                             |
+| -------------------------- | ------------------------------------------------------------------ |
+| `record-000000000310.json` | `c00d4a163fac035207f2dc85ca656761d201735849c6aaad064629acef11f356` |
+| `record-000000000309.json` | `013582e9346b21cdae92495204c5e3414cf59fb4ad82aefd332aaac6ec382f99` |
+| `probe-000000000310.json`  | `17d5692e4ec081c90bf04f3e8f27d28327d025dd2fb372ac0b3cc6d9223d59a0` |
+
+The external report is retained at
+`%LOCALAPPDATA%\Temp\moneyway-native-utc-final-8a40c3421d6c49c99c2a96ba788dd13e\native-utc.json`
+with SHA256 `d329d20423c88e03de8907b3244c8261d9c95d16d965602e99a03a062e16de23`.
+Its trace is `92d26927ba6849fc9f03dd1ad5094f8f`. Raw artifacts remain external to
+Git. This section registers the measurements and hashes in the repository.
+
+Source identity is OANDA Global Markets Limited / `OANDA_Global-Demo-1`, demo
+verified, native `US100`. Gate passed, connected before and after, and every
+M1/M5/H1/H4 copy returned 16 bars with copy error zero. Native quote before/after
+and M1 head are raw `1794599880`, displayed `2026.11.13 19:58:00`. Computer-derived
+GMT is raw `1794592681`, displayed `2026.11.13 17:58:01`. Exact subtraction is
+**7199 seconds** in both cases. It matches neither published integer offset.
+The assessment is `unresolved`. No tolerance, rounding or causal explanation for
+the one-second difference is selected. The unchanged quote does not establish age.
+
+The host diagnostic bracket is `2026-11-13T18:09:13.6201687+00:00` through
+`2026-11-13T18:09:19.1175924+00:00`, all host-clock candidates. Source query failed
+with `0x80070005` access denied. Status query exited zero but reported Leap
+Indicator 3 (not synchronized), Stratum 0, State Machine 0 (Unset), source
+`time.windows.com,0x9` and Last Sync Error 1 (no time data).
+
+The independent network measurement against `time.windows.com` returned three
+samples with exit zero. These are newly measured external reference evidence,
+classified `context_specific`. The NTP exchange is unauthenticated and cannot
+attest absolute UTC accuracy or authenticate the older native event.
+
+| Local request UTC candidate    | Reported roundtrip seconds | Reported NTP offset seconds |
+| ------------------------------ | -------------------------: | --------------------------: |
+| `2026-11-13T18:09:16.7057975Z` |                `0.1010499` |                `-0.7293726` |
+| `2026-11-13T18:09:17.8175509Z` |                `0.0983213` |                `-0.7277818` |
+| `2026-11-13T18:09:18.9307232Z` |                `0.0897412` |                `-0.7350449` |
+
+The broker/reference relationship is
+`insufficient_existing_probe_capture_not_bracketed_by_host_measurement`.
+`canonical_utc_conversion_authorized`, `utc_conversion_authenticated` and
+`canonical_ready` are all `false`. Native raw coordinates retain their original
+meaning. No historical availability, candle closure or atomic multi-timeframe
+snapshot is established.
+
+### Refetched provider evidence and coverage
+
+Both fixed official pages were retrieved during the final run. The MT5 guide
+identified the demo server and the published GMT+2/GMT+3 pair, retaining literal
+EST wording. Retrieval candidate was `2026-11-13T18:09:19.1175924+00:00`, saved
+HTML SHA256 `688c76b45b424ab658c16159ca8fe25d86a809fb8583a5a08d93b9fadd9e5db9`.
+The selection rule, historical effective dates and transition authority remain
+`unresolved`. [OANDA Global Markets MT5 guide](https://help.oanda.com/bvi/en/faqs/mt5-user-guide-bvi.htm)
+
+The mobile guide corroborates the published offset pair within its own product
+scope. It explicitly requires a live MT5 account and excludes demo use of that
+mobile application. Its evidence therefore cannot independently establish demo
+applicability. Retrieval candidate was `2026-11-13T18:09:20.7715557+00:00`, saved
+HTML SHA256 `e8bc6752569b1bce414fcf10cbe2dfebbb91b13a22d488f9b7f36a9b112e5275`.
+[OANDA mobile guide](https://help.oanda.com/bvi/es/faqs/oanda-mobile-user-guide-bvi.htm)
+
+| Area                                | Actual coverage                                                                        | Evidence still required                                                             |
+| ----------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Standard/winter +2                  | Published policy and earlier November +7200 computer-derived observations, `candidate` | Contemporaneous native event independently related to UTC                           |
+| Daylight/summer +3                  | Published policy, synthetic candidate tests                                            | Authentic independently anchored observation within that regime                     |
+| Provider transitions                | `unresolved`                                                                           | Source-backed authority, exact before/after instants and observed boundary behavior |
+| Historical applicability            | `unresolved`                                                                           | Dated policy validity and native historical labeling evidence                       |
+| Ambiguous/nonexistent times         | `unresolved`                                                                           | Provider-specific disambiguation and boundary evidence                              |
+| Quote freshness and timing          | `unverified`, insufficient event pairing                                               | Symbol-specific tick and causally bound measurement windows                         |
+| Closure and historical availability | `unresolved`                                                                           | Separate source-backed finality and availability contracts                          |
+
+The host timezone, a generic seasonal calendar, current November observations
+and the separately scoped September mapping cannot establish missing historical
+periods. Nasdaq strategy time remains `America/Bogota`. Canonical integration
+continues to require the independent contracts in the matrix above.
+
+### Validation and smallest next feature
+
+Full solution build passed with zero warnings/errors. The five focused .NET MT5
+receipt/observation/checkpoint regression classes passed 184 tests, failed 0,
+skipped 0. Existing PowerShell collector, probe and comparator suites passed
+39 + 27 + 32 tests. The new synthetic diagnostic suite passed 28 tests. Combined
+results are 310 passed, 0 failed, 0 skipped. Synthetic +7200/+10800 cases validate
+assessment behavior only. They provide no authentic seasonal observations.
+
+The new tests cover policy scope/provenance, identity failures, native timestamp
+validation, unknown freshness/synchronization, missing and regressing host
+readings, exact external offsets, failed/timed-out/malformed samples, capture
+ordering, +2/+3 candidates, exact 7199 mismatch, unresolved historical/DST cases,
+partial inputs, immutable outputs, checkpoint/source preservation and the absence
+of execution/strategy calls. PowerShell AST parsing, Markdown formatting, local
+links and `git diff --check` are checked before publication.
+
+The next smallest feature is one bounded, nonce-bound US100 tick diagnostic
+capture, bracketed by host/external measurements. Preserve `MqlTick` raw fields,
+provider identity, read ordering and quote uncertainty, then assess whether that
+specific event can distinguish the hour-offset candidates. This requires a fresh
+local observation and retains all seasonal/historical gaps above. The current
+feature performs no broker-support contact. [MetaQuotes MqlTick](https://www.mql5.com/en/docs/constants/structures/mqltick)
