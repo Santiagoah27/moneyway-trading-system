@@ -189,3 +189,200 @@ are now implemented, still outside the canonical engine.
 Separately, source-backed UTC/closure/availability decisions are required before
 any canonical current-data ingestion. Canonical current-data ingestion is **not
 operational**.
+
+## Native candle lifecycle and observed availability audit (2026-11-16)
+
+The offline [lifecycle analyzer](../../src/backend/MoneyWay.Infrastructure/MarketData/Mt5/Mt5NativeLifecycleAudit.cs)
+consumes `Mt5ReceiptBatch` from the existing validated receipt boundary. The
+[one-shot command](../../src/backend/MoneyWay.Worker/Mt5LifecycleCommand.cs) calls
+`LocalMt5CollectorReceiptReader.Read(source)` without a checkpoint, checkpoint
+store, acknowledgment, terminal call or hosted service. It accepts no direct probe
+JSON. Blocked receipts contribute diagnostics, never bar facts. This is a native
+evidence diagnostic with no canonical replay or strategy integration.
+
+### Fields, comparison and continuity
+
+The original collector/probe v1 schema actually stores **OHLC, not volume**.
+`volume_evidence=data_unavailable`; no collector/schema change was made. Source,
+run, publication sequence, poll sequence, event, native raw/display timestamps,
+series positions/roles, OHLC literals, sample completeness, source stability,
+frame acquisition status/synchronization/head consistency, record predecessor and
+probe hashes are available. Samples contain a bounded trailing window, not a
+complete native price history. The authentic captures inspected here request 16
+bars each for M1, M5, H1 and H4. Acquisition across frames remains non-atomic.
+
+Candle identity inside one source-directory scope is native symbol + timeframe +
+native raw open coordinate. The original display string is retained. Comparing
+that coordinate across runs establishes matching observed native identities,
+not continuous collection. First/last references include sequence, run, poll,
+event, record SHA256 and probe SHA256. Positions, observation/revision/identical
+comparison counts, active-then-historical facts and interruption flags are
+separate. The existing wire parser's normalized sign/digits/arbitrary-precision
+exponent representation also supplies exact numerical equality: `101.25`,
+`101.2500` and `1.0125e2` compare equal, while differences below decimal/double
+precision remain differences. Original literals survive in before/after details.
+No tolerance or rounding is applied.
+
+Only connected, stable, head-consistent, synchronized, error-free frames with
+valid OHLC supply bar facts. A validated partial acquisition may describe its
+usable frames/bars; its incompleteness is retained and it breaks continuity.
+Empty/unusable frames are counted separately. Validated diagnostic
+`SourceUnavailableWithoutSample` receipts remain evidence without price bars.
+Other `source_unavailable` acquisitions retain their own validated quality.
+Unavailable/blocked records, incomplete samples, shutdown, sequence/run changes
+and regressed heads break continuity conservatively. Head advancement counts
+require uninterrupted same-run observations; active-then-historical positions
+can still be observed across an explicitly flagged interruption.
+
+Non-period native coordinate differences are counted in adjacent sampled bars
+and head advancements. Neither those differences nor local publication sequence
+gaps establish missing market candles, a trading schedule or a collection-time
+interval. Missing dependencies remain blocked. Duplicate receipts are excluded;
+duplicate acquisition identities are already rejected by the reader. No gaps are
+interpolated and separate runs are never assumed continuous.
+
+### Command and report
+
+Build the solution, then run from Git Bash in the repository root. This exact
+invocation was executed successfully against the authentic directory:
+
+```bash
+dotnet ./src/backend/MoneyWay.Worker/bin/Debug/net10.0/MoneyWay.Worker.dll mt5-lifecycle --source "$(cygpath -m "$APPDATA")/MetaQuotes/Terminal/Common/Files/MoneyWayAutomaticReadOnly" --through-sequence 643 --details 8
+```
+
+`--source` is mandatory and absolute. Optional `--report` must be a new absolute
+file outside Git, the source directory and reparse ancestors. Default output is
+`%LOCALAPPDATA%/MoneyWay/audits/mt5-lifecycle-<guid>.json`, opened with `CreateNew`.
+`--details` defaults to 16 and accepts 0–128. It bounds selected bars, selected
+events and revisions per selected bar; all aggregate counts remain complete and
+omitted counts are explicit. Selection prefers a representative from each frame,
+then bars with more revisions. Stdout contains a concise count summary and report
+path. There is no overwrite, automatic acknowledgment or durable receipt change.
+Exit codes: 0 diagnostic completed, 2 invalid arguments/path, 3 blocked/empty
+receipt inventory or inventory diagnostics, 4 report I/O failure. Exit 0 does not
+mean canonical readiness.
+
+`--through-sequence` is an optional positive local publication-sequence cutoff.
+It is **not historical UTC T**. The analyzer filters before folding snapshots;
+later validated observations cannot rewrite returned objects or facts for the
+same validated prefix. The reader still inspects the bounded source inventory and
+revalidates its integrity; later integrity conflicts can invalidate trust in an
+earlier receipt. This does not make later price contents visible in an earlier
+prefix. The diagnostic supplies no `ObservedAtUtc`, `AvailableAtUtc` or
+`StrategyReplayContext`.
+
+Report schema is `moneyway.mt5-native-candle-lifecycle`, version 1. Source identity,
+directory scope, inspected/validated/blocked counts, event/evidence-kind/diagnostic
+histograms, run boundary references, native coordinate coverage, lifecycle counts,
+bounded provenance and omitted counts are included. The input manifest digest is
+SHA256 of UTF-8 `filename:actualSha256:receiptStatus` lines ordered by local
+sequence then ordinal filename, joined with LF without a final LF. It identifies
+the inspected record inventory/validation result; each record transitively pins
+its probe. It is not provider authentication or a full report retention protocol.
+
+### Authentic findings
+
+The explicit source was
+`%APPDATA%/MetaQuotes/Terminal/Common/Files/MoneyWayAutomaticReadOnly`, with source
+OANDA Global Markets Limited / `OANDA_Global-Demo-1` / demo `US100`, MT5 build 6246.
+The fixed analyzed prefix is records 1–643: **643 validated receipts, 0 blocked**,
+642 hash-verified probe dependencies and 1,027 distinct sampled native bars.
+Validated includes structurally valid unresolved acquisition evidence.
+
+| Timeframe | Distinct bars | Only active head | Active then historical | Revised bars | Identical across all sampled observations | Single observation | Active-to-historical revisions | Historical-to-historical revisions |
+| --------- | ------------: | ---------------: | ---------------------: | -----------: | ----------------------------------------: | -----------------: | -----------------------------: | ---------------------------------: |
+| M1        |           723 |                6 |                    623 |          624 |                                        89 |                 10 |                            623 |                                  0 |
+| M5        |           213 |                4 |                    126 |          130 |                                        83 |                  0 |                            126 |                                  0 |
+| H1        |            62 |                2 |                     13 |           15 |                                        47 |                  0 |                             12 |                                  0 |
+| H4        |            29 |                1 |                      6 |            7 |                                        22 |                  0 |                              5 |                                  0 |
+
+Native open-coordinate coverage, without UTC conversion or a continuity claim:
+M1 `2026.11.12 19:18:00`–`2026.11.16 21:06:00`; M5
+`2026.11.12 18:15:00`–`2026.11.16 21:05:00`; H1
+`2026.11.12 04:00:00`–`2026.11.16 21:00:00`; H4
+`2026.11.10 04:00:00`–`2026.11.16 20:00:00`.
+
+Events: 2 initial snapshots, 627 new-native-M1 events, 4 source recoveries,
+9 source-unavailable events and 1 shutdown. Evidence kinds: 635 acquisition
+snapshots, 7 valid unavailable-without-sample diagnostics and 1 shutdown.
+Nine acquisitions have incomplete-sample/M1-unusable diagnostics; seven also have
+unavailable/disconnected acquisition diagnostics. Two runs are observed:
+`run-000000000001` (records 1–216, ending in shutdown) and
+`run-000000000217` (217–643). No linked publication-sequence gap or blocked
+dependency was found in this prefix. M1/M5 have one non-period head advancement
+each; H1/H4 have 28/147 non-period adjacent-coordinate observations respectively.
+These are repeated sampled coordinate differences, not counts of missing bars.
+
+For example, M1 native `2026.11.16 19:10:00`, raw `1794856200`, is active in
+record 525, remains active at recovery 527 across an interruption, and is at
+position 1 in record 528. Close changes exactly from
+`27441.7999999999992725` to `27439.0999999999985448`, then
+`27438.2000000000007276`. The 527→528 change also raises High from
+`27444.2999999999992724` to `27446.2000000000007276`.
+The report retains all before/after OHLC and record/probe hashes. This is
+active-bar evolution and subsequent observed historical position. It is not an
+observed historical-to-historical correction or a provider closure guarantee.
+
+The final report is external:
+`%LOCALAPPDATA%/MoneyWay/audits/mt5-lifecycle-260286bcdd214818a8930dc54e97774c.json`,
+122,940 bytes, SHA256
+`e725e81781f8ca4cb23281e91199ff9faf8b148b040a440d9ff4321fc1a01d08`.
+Its input manifest digest is
+`a84bf6bb39f87128a14d4e6937197097e819bec6c636e39687f30850fa20e3fb`.
+The last record 643 SHA256 is
+`984a8a26ca1f93182eec60e3a643e432494294b08a3a4b7319c2305608917f26`;
+its probe SHA256 is
+`483b32c975860b8a743f7e98c877c794d24b5830bf7b338a309a35e06b3c95fc`.
+
+An independent read-only raw-file smoke check, retained outside Git with the
+report working artifacts, rechecked all 642 probe hashes and matched the four
+frames' bar/revised/stable/active-then-historical and revision-category totals.
+It compared literal prices only after checking the actual source's uniform
+positive fixed-16-decimal format; it did not parse prices through floating point.
+All 1,283 original files pinned before inspection remained byte-identical. The
+collector was active and appended evidence during inspection; record 643 and its
+probe were validated/pinned by the report rather than claimed as part of that
+earlier hash inventory. `collector.lock` was held by the running collector and
+was not hashed or modified. The existing
+`%LOCALAPPDATA%/MoneyWay/mt5-receipt-observation/checkpoint.json` retained its
+before/after hash; no checkpoint store or acknowledgment was invoked.
+
+### Temporal conclusions and validation
+
+Observed head supersession, historical position and identical sampled content
+are supported. Post-supersession stability helps measure the observed revision
+profile and detect later sampled conflicts. It supplies no promise that an
+unobserved revision cannot occur. The absence of historical-to-historical
+changes in this bounded dataset is not proof of immutable finality.
+`provider_confirmed_closed`, `open_time_utc` and
+`historical_available_at_utc` remain null; closure and availability are
+`unresolved`. First collector observation establishes a local evidence reference,
+not broker publication time or availability to a historical strategy decision.
+
+The [canonical replay contract](../decisions/0004-support-observable-market-data-resolution-in-canonical-replay.md)
+keeps closed canonical candles at or before `AsOfUtc`, immutable synchronized
+frames and provider/symbol-bound chronological observations. This diagnostic
+does not supply the missing authenticated native-to-UTC mapping, provider
+finalization/availability evidence, warmup/freshness policy or atomic capture.
+The [UTC capability result](mt5-server-time-policy-audit.md) remains
+`REQUIRE_ENVIRONMENT_PREREQUISITE`. No usable authenticated UTC reference or NTS
+experiment was established by this feature. All three flags remain false:
+`canonical_utc_conversion_authorized`, `utc_conversion_authenticated`,
+`canonical_ready`.
+
+Full .NET build passed with zero warnings/errors. The
+[focused lifecycle suite](../../tests/integration/MoneyWay.IntegrationTests/Mt5NativeLifecycleTests.cs)
+passed 31 cases; existing receipt/checkpoint/observation suites passed 184;
+canonical application visibility/prefix suites passed 15, domain multi-timeframe
+replay passed 7 and canonical replay/backtest boundary scenarios passed 4.
+Total: **241 passed, 0 failed, 0 skipped**. Focused cases include missing/corrupt
+dependencies, invalid source/chain, duplicate evidence, partial/unusable frames,
+recovery/shutdown/runs, coordinate/sequence gaps, head regression, precise
+sub-decimal revisions, immutable prefix/results, source/checkpoint preservation,
+bounded output and no overwrite. Markdown/local links, C# whitespace formatting,
+report provenance and `git diff --check` are checked before publication.
+
+The single next smallest feature remains a separately authorized supported NTS
+client environment prerequisite, followed by a bounded authenticated-reference
+experiment. It advances the independent UTC blocker without treating observed
+bar stability as a new provider finalization rule.

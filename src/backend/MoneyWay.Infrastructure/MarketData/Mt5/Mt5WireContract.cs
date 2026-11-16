@@ -201,6 +201,13 @@ internal static class Mt5WireContract
             Stamp(r.GetProperty("server_quote_before")), Stamp(r.GetProperty("server_quote_after")), frames.AsReadOnly(), unavailableWithoutSample);
     }
 
+    internal static bool SamePrice(string left, string right)
+    {
+        using var a = Document(System.Text.Encoding.UTF8.GetBytes(left));
+        using var b = Document(System.Text.Encoding.UTF8.GetBytes(right));
+        return Price(a.RootElement) == Price(b.RootElement);
+    }
+
     private static ExactPrice? Price(JsonElement value)
     {
         if (value.ValueKind == JsonValueKind.Null) return null;

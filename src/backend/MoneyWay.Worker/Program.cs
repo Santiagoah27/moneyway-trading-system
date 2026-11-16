@@ -1,5 +1,10 @@
 using MoneyWay.Worker;
 
+if (args.Length > 0 && args[0] == "mt5-lifecycle")
+{
+    return new Mt5LifecycleCommand().Execute(args, Console.Out, Console.Error);
+}
+
 if (args.Length > 0 && string.Equals(args[0], "mt5-receipt", StringComparison.Ordinal))
 {
     if (args.Length > 1 && args[1] == "observe")
