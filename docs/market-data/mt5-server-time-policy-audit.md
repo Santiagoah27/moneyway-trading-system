@@ -557,3 +557,198 @@ on the separate demo US100 chart while source ticks are available. Retain the
 nonce-bound bundle and assess its actual native tick against the two reference
 measurements. The remaining historical/DST/finality contracts above continue to
 govern any later canonical integration decision.
+
+## November 16 first authentic correlated tick admission
+
+Review date is 2026-11-16. Initial checkpoint was `main` at
+`8267853f89366f7afec88b0606f88fd63d0e4b1f`, clean and synchronized with
+`origin/main`. The human operator reported running the actual diagnostic EA and
+coordinator on the demo terminal. Codex independently accessed and revalidated the
+original local bundle. The historical terminal execution remains human-attested;
+the file integrity, lineage and calculations below were independently checked.
+
+Session nonce is
+`d4542012e0528790739f573642ec1271eb0151d59758bb1c53dd29467d491dfa`.
+The original directory is
+`%APPDATA%\MetaQuotes\Terminal\Common\Files\MoneyWayCorrelatedTick\<nonce>`.
+All seven evidentiary files were available. Their exact SHA256 values matched the
+original manifest and the two separately supplied human hash pins.
+
+| Original file   | Verified SHA256                                                    |
+| --------------- | ------------------------------------------------------------------ |
+| `offer.txt`     | `5c5cbb13e2b97468b72986eeacd2a29670efbd26149471df84185c27d457f816` |
+| `ready.json`    | `5db48481d2bb339151dc919a401be427383593d5f980ce9095dbbf3cd04f4b67` |
+| `request.txt`   | `6e05be2b48fb20f1aea337848a053bb9701482a674e47eabfc8b89c89df737af` |
+| `context.json`  | `ed997c95a9fcbcf2de72f923affdb31ee125aea5a14a6a997032122a25af6311` |
+| `response.json` | `4b9760ac783abe49ada999f71a4c7df0e3d7a6481a622ae8a4f202e4badd7557` |
+| `cancel.txt`    | `ce23e4e0d2320b30199a4293d463fa19794b7768dd1cb74b57024ad4735b9394` |
+| `evidence.json` | `e8627f3c80c4bae81dcfd17f3397df525e855fbdc12d368ffc252f5f2230379b` |
+
+### Lineage and provenance verification
+
+| Component                         | Independent review result                    | Scope                                                                                                                                            |
+| --------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Versioned schemas and outcomes    | `confirmed`                                  | Evidence/ready/response v1, `captured`, `subsequent_ontick_timestamp_progressed`, canonical authorization false                                  |
+| Recorded source identity          | `confirmed` artifact contents                | OANDA Global Markets Limited, `OANDA_Global-Demo-1`, demo true, native US100, connected true, Algo Trading false in ready and response           |
+| Offer and request                 | `confirmed`                                  | Exact nonce, US100, operator limits, ready token and request SHA256 bindings validated                                                           |
+| Context and standalone response   | `confirmed`                                  | Context SHA256 and native representations validated; standalone values equal embedded evidence values semantically                               |
+| Original evidence manifest        | `confirmed`                                  | All six referenced raw files match their hashes; evidence itself matches the separate supplied hash                                              |
+| Recorded diagnostic source hashes | `confirmed` repository correspondence        | All five match repository files at review checkpoint; deployment of a particular binary remains human-attested                                   |
+| Reference samples                 | `confirmed` recorded measurement consistency | Both raw CSV outputs were reparsed with the existing exact-decimal parser and compared with embedded samples                                     |
+| Assessment                        | `confirmed` reproducibility                  | Recomputed using the existing evaluator from independently validated response/context, host bounds and reparsed reference measurements           |
+| Authentic EA operation            | Human-observed historical evidence           | The operator's observation and retained terminal artifacts establish this session's provenance; Codex reviewed the resulting artifacts afterward |
+
+The ready token is `375025968-3303-99695352353280`. Request duration was 272866 ms
+within the 300-second session limit. Ready and response source identities match.
+The five source files are `Invoke-Mt5CorrelatedTickCapture.ps1`,
+`Mt5CorrelatedTickEvidence.ps1`, `Mt5NativeUtcEvidence.ps1`,
+`MoneyWayCorrelatedTick.mq5` and `MoneyWayCorrelatedTickDecision.mqh`. Their original
+hashes and review-time matches remain in the retained evidence and review manifest.
+
+### Native progression and host observation
+
+| Recorded field                                 | Exact value                             |
+| ---------------------------------------------- | --------------------------------------- |
+| Baseline native `time_msc`                     | `1794856450359`                         |
+| Captured native `time_msc`                     | `1794856450417`                         |
+| Native progression                             | `58` milliseconds                       |
+| Captured native seconds/display                | `1794856450` / `2026.11.16 19:14:10`    |
+| Captured bid decimal string                    | `2.7442200000000001e+04`                |
+| Captured ask decimal string                    | `2.7444000000000000e+04`                |
+| Captured last decimal string                   | `2.7443099999999999e+04`                |
+| Flags / volume / real volume                   | `1030` / `0` / `0.0000000000000000e+00` |
+| Tick error                                     | `0`                                     |
+| Armed callback count / captured callback count | `23` / `25`                             |
+| Cached callbacks rejected                      | `1`                                     |
+| Request publication before                     | `2026-11-16T17:14:10.2482979+00:00`     |
+| Request publication after                      | `2026-11-16T17:14:10.3057568+00:00`     |
+| Host receipt before                            | `2026-11-16T17:14:10.5750488+00:00`     |
+| Host receipt after                             | `2026-11-16T17:14:10.6067635+00:00`     |
+| Uncorrected host observation interval          | `358.4656` milliseconds                 |
+| Native tick minus computer-derived GMT         | `7200.417` seconds                      |
+
+The host boundary order was checked in both the recorded UTC candidates and their
+monotonic counters. The raw terminal progression and callback counters passed the
+existing capture contract. This is `context_specific` fresh-tick evidence with
+`nonce_correlated=true`, `source_identity_contract_valid=true` and
+`handler_observation_bounded=true`. It preserves
+`queued_event_to_latest_lookup_identity=unresolved`,
+`network_quote_generated_after_request=unresolved` and
+`source_event_UTC_bounded=false`. A latest-tick lookup can differ from the queued
+update that caused a callback, and callback counts cannot enumerate every feed
+update. The recorded native M1 head is `2026.11.16 19:14:00`, with its closure and
+availability unresolved.
+
+### External reference and candidate policy
+
+| Reference phase | Local request UTC candidate    | Reported NTP offset seconds | Reported roundtrip seconds |
+| --------------- | ------------------------------ | --------------------------: | -------------------------: |
+| Before request  | `2026-11-16T17:14:09.7849729Z` |                `+0.0151833` |                `0.1176115` |
+| After receipt   | `2026-11-16T17:14:11.3093792Z` |                `+0.0002248` |                `0.0892331` |
+
+Both measurements targeted `time.windows.com`, exited zero and were recorded in
+the expected before/after order. The Windows source query returned access denied
+`0x80070005`. The separate status query exited zero and reported Leap Indicator 3
+(not synchronized), Stratum 0, source `time.windows.com,0x9` and Last Sync Error 1.
+Host synchronization and reference authentication remain `unverified`. The offset
+and roundtrip numbers retain their measured precision and uncertainty.
+
+Under the conditional GMT+2 hypothesis, the native coordinate corresponds to
+`2026-11-16T17:14:10.417Z` and falls inside the uncorrected host observation
+interval. Under GMT+3 it corresponds to `2026-11-16T16:14:10.417Z`, outside that
+interval. The recomputed comparison supports GMT+2 as `candidate` for this
+observation. It establishes a reproducible local consistency result. Independently
+authenticated UTC event timing, provider-wide policy activation and historical
+offset selection remain `unresolved`. No NTP correction or skew tolerance was
+applied.
+
+Official sources were retrieved and reviewed on **2026-11-16** with these scopes.
+
+| Official source                                                                                                                                          | Relevant scope and remaining limit                                                                                                                                            |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [MetaQuotes OnTick](https://www.mql5.com/en/docs/event_handlers/ontick)                                                                                  | Chart-symbol event handling, event coalescing and operation with Algo Trading disabled; broker-specific UTC authority remains outside this API contract                       |
+| [MetaQuotes MqlTick](https://www.mql5.com/en/docs/constants/structures/mqltick)                                                                          | Latest-price fields, seconds/milliseconds and tick flags; provider-specific timestamp interpretation requires separate evidence                                               |
+| [OANDA Global Markets MT5 guide](https://help.oanda.com/bvi/en/faqs/mt5-user-guide-bvi.htm)                                                              | Correct division/demo server and published GMT+2/GMT+3 pair with literal EST wording; exact transition authority, instants and historical effective periods remain unresolved |
+| [Microsoft Windows Time tools](https://learn.microsoft.com/en-us/windows-server/networking/windows-time-service/Windows-Time-Service-Tools-and-Settings) | Query/stripchart semantics, local request FILETIME and reported NTP computations; these outputs retain their synchronization, authentication and delay limitations            |
+
+### Local retention and reproducible admission
+
+Existing tools already provide create-only publication, SHA256 and immutable-input
+copies. The repository had no whole-session retention/import command. The new
+[Import-Mt5CorrelatedTickEvidence.ps1](../../tools/market-data/mt5/Import-Mt5CorrelatedTickEvidence.ps1)
+reuses those primitives and the existing ready/response/native/NTP/assessment
+helpers. It adds one offline admission workflow outside the production ledger.
+
+The seven original files were copied byte for byte into
+`%LOCALAPPDATA%\MoneyWay\Evidence\Mt5CorrelatedTick\<nonce>`.
+The empty operational `session.lock` remains in the source directory and is
+excluded from retained evidence. A `retention.json` manifest adds provenance,
+the seven hashes, independent check results and the recomputed assessment.
+`retention.sha256` binds that review manifest's bytes. Its SHA256 is
+`306b5fa501307af9385f9baabe4dd71be8cfd2047add79a6e4c74e7b14ec18fa`.
+Review-time host UTC candidate is `2026-11-16T17:42:33.3288008+00:00`, recorded
+separately from the earlier native capture and host observation bounds.
+
+Source provenance is `human_attested_local_artifacts`. Input handles exclude
+writers throughout validation/copying. Copies and metadata use create-only writes,
+hash checks and a final directory move. Existing nonce directories are verified
+and return `already_retained` when identical. A conflicting or partial retained
+session blocks import without replacing or completing it. Interrupted publication
+can leave a uniquely named `.pending-*` directory for inspection. A subsequent
+import can publish a new complete copy while preserving that interrupted attempt.
+Concurrent publications cannot overwrite the winning directory. A losing caller
+can retry to verify it as `already_retained`.
+
+Retention is local, append-only by workflow convention, with no automatic expiry
+or deletion. SHA256 supplies content-integrity checks. Local administrative
+rewrites and cryptographic source authentication remain outside that guarantee.
+The retained files, manifest and checksum must be kept together. Repeating this
+authentic admission returned `already_retained`, preserving all bytes and the
+original review timestamp. Original source hashes remained unchanged.
+
+From the repository root, the following command revalidates the authentic source
+and performs the idempotent import. RetentionRoot must be an existing local
+directory outside the repository, source tree and MT5 common-files directory.
+
+```powershell
+$nonce = 'd4542012e0528790739f573642ec1271eb0151d59758bb1c53dd29467d491dfa'
+$source = Join-Path $env:APPDATA ('MetaQuotes\Terminal\Common\Files\MoneyWayCorrelatedTick\' + $nonce)
+$retention = Join-Path $env:LOCALAPPDATA 'MoneyWay\Evidence\Mt5CorrelatedTick'
+New-Item -ItemType Directory -Path $retention -Force | Out-Null
+& ./tools/market-data/mt5/Import-Mt5CorrelatedTickEvidence.ps1 `
+    -SourceDirectory $source -RetentionRoot $retention `
+    -ExpectedEvidenceSHA256 e8627f3c80c4bae81dcfd17f3397df525e855fbdc12d368ffc252f5f2230379b `
+    -ExpectedResponseSHA256 4b9760ac783abe49ada999f71a4c7df0e3d7a6481a622ae8a4f202e4badd7557
+```
+
+### Admission status, validation and next feature
+
+File integrity, nonce lineage, recorded identity and native progression are
+`confirmed` at the local artifact-review level. Authentic terminal execution is
+human-observed provenance. The feed observation and handler bounds are
+`context_specific`. GMT+2 interpretation remains `candidate` for this session.
+The three flags `canonical_utc_conversion_authorized`,
+`utc_conversion_authenticated` and `canonical_ready` remain `false`.
+Independently authenticated UTC, historical/DST selection and transitions,
+ambiguous native times, provider candle closure, historical availability, atomic
+multi-timeframe acquisition and canonical current-data integration remain
+`unresolved`. Nasdaq session timezone remains `America/Bogota`.
+
+Full .NET solution build passed with 0 warnings/errors. The
+[new retention suite](../../tests/tools/Mt5CorrelatedTickRetention.Tests.ps1) passed
+33 synthetic tests, and the existing correlated-tick/native-UTC/collector/probe/
+comparator PowerShell suites passed 56 + 28 + 39 + 27 + 32 tests. Total is
+**215 passed, 0 failed, 0 skipped**. Synthetic tests cover complete lineage,
+negative/tampered/partial bundles, exact times/prices, 58 ms progression, semantic
+property reordering on PowerShell 5.1, host/reference order, candidate comparison,
+idempotency/conflicts, hashes and source/checkpoint preservation. They remain
+separate from the authentic admission above. Receipt runtime code was untouched;
+.NET receipt tests were outside this change's affected surface. AST, Markdown
+format/links, source/retained hash integrity and `git diff --check` are verified
+before publication.
+
+The next smallest feature is a read-only feasibility audit of authenticated UTC
+references available to this host. It should identify what authority evidence can
+be retained with the current tools and how it could accompany a future correlated
+capture. This addresses the unresolved reference-authentication contract while
+preserving the separate historical/DST/finality blockers.
