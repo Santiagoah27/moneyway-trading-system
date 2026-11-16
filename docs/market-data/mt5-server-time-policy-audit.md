@@ -1504,3 +1504,180 @@ remain null. `windows_clock_authenticated=false`,
 `utc_conversion_authenticated=false` and `canonical_ready=false`. The earlier
 Linux NTS authentication remains valid within its original scope. No strategy,
 active metadata or canonical replay behavior changed.
+
+## Selection interval semantics audit (2026-11-16)
+
+Initial checkpoint was clean `main` at
+`138bd006817cf82bd350d4250ef9f1445a38b8cf`, synchronized with `origin/main`.
+The [offline command](../../tools/market-data/mt5/Get-Mt5NtsSelectionSemantics.ps1)
+uses the existing selection evidence rereader and a
+[focused semantic evaluator](../../tools/market-data/mt5/Mt5NtsSelectionSemantics.ps1).
+It verifies independently supplied report/log hashes, recomputes existing
+selection authentication and emits an immutable version-1 assessment outside Git.
+
+### Ubuntu package compatibility and retained source audit
+
+Official source archives and the amd64 binary package for `4.5-1ubuntu4.2` were
+downloaded for inspection on Windows. Archive SHA256 values match the Ubuntu
+source descriptor. Both binary executable hashes match the retained capture's
+pins. Nine reviewed C files match the upstream 4.5 files byte for byte, covering
+NTP acquisition, statistics, source selection, reference handling, logging,
+scheduling, local clocks, timestamp formatting and startup. The quilt series
+contains two patches touching `examples/chronyd-restricted.service` and
+`examples/chrony.nm-dispatcher.dhcp`. Build rules were also reviewed. This
+establishes compatibility of the audited source paths with the published package.
+The source descriptor's OpenPGP signature was not independently verified and no
+reproducible binary build was performed. Downloads used the official Ubuntu HTTPS
+archive. [Ubuntu source descriptor](https://archive.ubuntu.com/ubuntu/pool/main/c/chrony/chrony_4.5-1ubuntu4.2.dsc).
+
+The source inspection is retained under
+`%LOCALAPPDATA%\MoneyWay\Evidence\NtsSelectionSemantics\sources-7443e7b7ad3e4513af0e6075bdd63c26\`.
+Its `source-audit.json` SHA256 is
+`dd175d4bbab427d6361f22245a8f6ee2be06df1a4eac89998b97011499c67595`.
+It records source/archive hashes, code comparisons, patched paths and binary
+matches. Source archive SHA256 is
+`19fe1d9f4664d445a69a96c71e8fdb60bcd8df24c73d1386e02287f7366ad422` and
+Debian archive SHA256 is
+`ad09d3f40cfb28ce22cbc0e266d0a4818d8e4f98ee24634a8cc851065f37a29b`.
+The retained inspection also includes the reviewed glibc formatting source.
+
+### Sign, clock and epoch contract
+
+All following source references were accessed on **2026-11-16**. Line locations
+refer to the complete C files in the retained Ubuntu original archive.
+
+| Path                                                             | Verified operation                                                                                          | Consequence                                                |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `ntp_core.c`, `process_rx_known`, lines 2178/2188                | NTP sample offset is remote average minus local average, with sample time set to the local midpoint         | Positive sample offset means reference ahead               |
+| `sourcestats.c`, `SST_AccumulateSample`, line 315                | Stores `-sample->offset`                                                                                    | Statistics use local minus reference                       |
+| `sourcestats.c`, `SST_GetSelectionData`, lines 648–681           | Best-single-sample offset plus elapsed times estimated frequency, with endpoints formed using root distance | Positive selection endpoints describe local clock ahead    |
+| `sources.c`, `SRC_SelectSource` and `mark_source`, lines 887/716 | Uses cached cooked scheduler time for evaluation and the log                                                | Selected interval belongs to that event's model evaluation |
+| `reference.c`, `special_mode_sync`, lines 898–899                | PrintOnce prints the negative of its reference-update offset estimate                                       | Final `-Q` output has the corrective sign                  |
+
+The source sample, stored statistics and final PrintOnce value therefore have
+explicit sign relationships. The selection interval uses a best-sample-based
+estimate. PrintOnce receives the tracking/regression estimate through the
+reference update path, and prints six fractional decimal places. Their values
+and epochs require their respective estimator contracts. A positive selected
+interval supports the conditional interpretation that the local clock is ahead
+of the selected reference. [NTP acquisition](https://raw.githubusercontent.com/mlichvar/chrony/4.5/ntp_core.c),
+[statistics](https://raw.githubusercontent.com/mlichvar/chrony/4.5/sourcestats.c),
+[PrintOnce](https://raw.githubusercontent.com/mlichvar/chrony/4.5/reference.c).
+
+The local domain is Chrony's cooked Linux clock. `LCL_ReadRawTime` reads
+`CLOCK_REALTIME`, and `LCL_CookTime` adds the driver's offset correction.
+`-Q` selects `SYS_Null`. Its initial offset/frequency correction is zero, and
+the captured isolated configuration has no drift file or normal reference
+update applying a later software correction. This source path relates the model
+to guest realtime within that execution. Hyper-V clock changes retain their
+independent uncertainty. Windows Stopwatch and Linux BOOTTIME remain separate
+counter domains. [Local clock](https://raw.githubusercontent.com/mlichvar/chrony/4.5/local.c),
+[null driver](https://raw.githubusercontent.com/mlichvar/chrony/4.5/sys_null.c).
+
+`SST_GetSelectionData` uses the absolute elapsed difference from the selected
+best sample's local midpoint to the cached evaluation time. Its root distance
+adds half the sample root delay, sample root dispersion and elapsed times skew.
+The displayed sample age concerns the newest sample and can differ from the
+best sample's age. The original capture lacks the internal best-sample epoch
+and unrounded model parameters. [Statistics implementation](https://raw.githubusercontent.com/mlichvar/chrony/4.5/sourcestats.c).
+
+`SCH_GetLastEventTime` returns cached cooked `last_select_ts`. `mark_source`
+passes `now.tv_sec` to `UTI_TimeToLogForm`, which uses `gmtime` and
+`%Y-%m-%d %H:%M:%S`. The fractional second is omitted. Thus the printed
+`2026-11-16 23:12:55` identifies the whole-second component of the cached
+scheduler time. Its subsecond coordinate and the later code-execution instant
+remain unresolved. An exact event at the second boundary and propagation to
+another instant remain unsupported.
+[Scheduler](https://raw.githubusercontent.com/mlichvar/chrony/4.5/sched.c),
+[selection logger](https://raw.githubusercontent.com/mlichvar/chrony/4.5/sources.c),
+[timestamp formatter](https://raw.githubusercontent.com/mlichvar/chrony/4.5/util.c).
+
+### Formatting enclosure and authentic result
+
+Selection endpoints use `%10.3e`, passed through `vfprintf`. Width 10 supplies
+padding and `.3` supplies three fractional mantissa digits, yielding four
+significant digits. The normalized exponent determines the least printed digit,
+`q = 10^(exponent - 3)`. The original signed literals are retained.
+[Selection logger](https://raw.githubusercontent.com/mlichvar/chrony/4.5/sources.c),
+[logging implementation](https://raw.githubusercontent.com/mlichvar/chrony/4.5/logging.c).
+
+The reviewed glibc formatter selects rounding through `get_rounding_mode` and
+`round_away`, supporting nearest with ties to even, upward, downward and toward
+zero. The Chrony source archive contains no locale or floating-point environment
+setter calls. C startup locale explains the observed decimal point. Historical
+libc bytes and the actual floating-point rounding mode were not captured, so the
+assessment states the standard formatter compatibility assumption. It encloses
+each printed finite nonzero endpoint `p` by `[p - q, p + q]`, conservatively
+covering all four standard modes. Closed endpoints include tie boundaries and
+mantissa/exponent carry cases. This margin follows from formatting precision.
+[glibc formatting](https://raw.githubusercontent.com/bminor/glibc/glibc-2.39/stdio-common/printf_fp.c),
+[rounding decisions](https://raw.githubusercontent.com/bminor/glibc/glibc-2.39/include/rounding-mode.h).
+
+Scientific signed zero retains its sign in text and has a zero-value enclosure.
+Nonfinite, malformed, unsupported-format and inexact decimal enclosures produce
+an unavailable result. Large/small finite values are accepted when their printed
+value and enclosure are exactly representable by Decimal. The actual internal
+binary floating-point endpoints remain unrecoverable.
+
+The authentic source/log/manifest bindings all validate for session
+`f645b4fd27968d7265deec9f69ab63dde8191ab552347bbcb0f245541e4111e2`.
+Its log SHA256 remains
+`30eb24c0ced88baecd17afae11003ecb90a8ee6f66d3fd50eedc48dcdf6b8b46`.
+The selected source is `162.159.200.1`, with previously verified same-session
+NTS authentication preserved.
+
+| Representation            | Lower seconds | Upper seconds | Qualification                                                         |
+| ------------------------- | ------------- | ------------- | --------------------------------------------------------------------- |
+| Original printed interval | `3.768e-03`   | `1.043e-01`   | Literal bytes retained                                                |
+| Parsed printed interval   | `0.003768`    | `0.1043`      | Exact decimal interpretation of text                                  |
+| Formatting-aware interval | `0.003767`    | `0.1044`      | Conservative enclosure under the reviewed standard formatter contract |
+| Nearest-only candidate    | `0.0037675`   | `0.10435`     | Requires historical FE_TONEAREST, which remains unverified            |
+
+The complete sequence remains `M → M → * → S`. M denotes insufficient
+measurement/statistics state, `*` selection at that event, and S the older-sample
+state in Chrony's terminology. The later S row remains part of the evidence.
+Continuous or final selection is unsupported. The original authenticated
+selection event retains its provenance. [Chrony 4.5 state definitions](https://chrony-project.org/doc/4.5/chrony.conf.html).
+
+The actual offline assessment is
+`%LOCALAPPDATA%\MoneyWay\Evidence\NtsSelectionSemantics\semantics-724b2c96060b43969b5515c58ec5b2e3.json`,
+SHA256 `a2c7a06e07527060706a6bdbd1693bd4bce534e33c63de7b8a6f4ee0ad595f85`.
+It contains source paths/pins, semantic contract/version/references, exact
+printed values, conditional formatting enclosure, full state sequence,
+authentication scope, missing epochs, method hashes and authorization flags.
+The CLI requires the original correlation hash and independent original log
+hash. Create-only publication protects previous reports.
+
+### Validation and minimum next action
+
+The [new suite](../../tests/tools/Mt5NtsSelectionSemantics.Tests.ps1) passed
+**33** cases, including normal CLI publication, independent source/log pins,
+tampered-log rejection, signed zero, exponent boundaries, Decimal limits,
+unverified rounding mode, state history, session/source mismatches, counter-domain
+restrictions and source/checkpoint sentinel preservation. Existing selection,
+NTS correlation, uncertainty, capability, native UTC, correlated-tick and
+retention suites passed **42 + 48 + 40 + 33 + 28 + 56 + 33**.
+Total **313 passed, 0 failed, 0 skipped**. PowerShell AST and full .NET build
+pass, with zero build warnings/errors. Markdown formatting/local links,
+source/report hashes, before/after preservation and `git diff --check` are
+verified before publication.
+
+Eleven selected preservation hashes cover the original selection capture, log,
+manifest, method snapshot and safety report, earlier correlation/reassessment/
+uncertainty report, checkpoint, record 643 and probe 643. All match. This task
+performed offline evaluation and source inspection on Windows. No new timing
+measurement, WSL process or MT5 interaction was invoked.
+
+The single next technical action is to define the minimum same-session capture
+contract that binds a subsecond selection epoch and the Linux clock evolution
+between that event and the existing guest realtime reads. It must state the
+required drift/step evidence before permitting interval propagation. The present
+record leaves these quantities unresolved. Ultimate reference accuracy,
+Windows/MT5 binding, provider historical timezone/DST, closure and availability
+retain their independent requirements.
+
+`overall_utc_uncertainty=unresolved`, with Windows UTC bound and MT5 event interval
+null. `windows_clock_authenticated=false`, `mt5_native_utc_authenticated=false`,
+`canonical_utc_conversion_authorized=false`, `utc_conversion_authenticated=false`
+and `canonical_ready=false`. Linux NTS packet authentication retains its original
+verified scope.
