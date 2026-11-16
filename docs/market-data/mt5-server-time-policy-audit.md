@@ -752,3 +752,164 @@ references available to this host. It should identify what authority evidence ca
 be retained with the current tools and how it could accompany a future correlated
 capture. This addresses the unresolved reference-authentication contract while
 preserving the separate historical/DST/finality blockers.
+
+## Authenticated UTC reference availability audit — November 16, 2026
+
+Initial checkpoint was `main` at `408c1e2804062bef4adbbabbd0a7a88e421ac16a`,
+clean and synchronized with `origin/main`. The decision is
+**`REQUIRE_ENVIRONMENT_PREREQUISITE`**. This Windows execution environment did not
+demonstrate an authenticated UTC reference usable by the current diagnostic.
+Cloudflare NTS remains the protocol candidate. A compatible established client,
+approved supported environment and validated read-only capture mode remain
+prerequisites for an actual authenticated exchange.
+
+The [on-demand audit](../../tools/market-data/mt5/Get-Mt5UtcReferenceCapability.ps1)
+and [capability helpers](../../tools/market-data/mt5/Mt5UtcReferenceCapability.ps1)
+reuse existing bounded W32Time calls, exact-decimal parsing, immutable publication,
+path checks and SHA256. Network activity is confined to this explicit diagnostic.
+ADR 0001 and ADR 0004 continue to govern isolation from strategy/replay code.
+
+### Official features and platform scope
+
+The following primary sources were retrieved and reviewed on **2026-11-16**.
+Published capability and local availability are recorded independently.
+
+| Source                                                                                                                                         | Documented capability and scope                                                                                                                                                                                                                                                                                                 |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [RFC 8915](https://www.rfc-editor.org/rfc/rfc8915.html)                                                                                        | Standards-track NTS requires authenticated NTS-KE over TLS 1.3 or later, `ntske/1` ALPN and authenticated NTP extension fields using negotiated key material. NTS-KE uses TCP 4460. A successful TLS connection alone cannot authenticate a subsequent NTP packet.                                                              |
+| [Cloudflare NTS](https://developers.cloudflare.com/time-services/nts/)                                                                         | Public provider documentation identifies `time.cloudflare.com` and separates key establishment from authenticated NTP synchronization. It lists chrony, NTPsec and ntpd-rs implementations.                                                                                                                                     |
+| [How Windows Time works](https://learn.microsoft.com/en-us/windows-server/networking/windows-time-service/how-the-windows-time-service-works)  | Applies to Windows 10/11 and Windows Server 2016/2019/2022/2025, among others. AD DS hierarchy packets use domain security/session keys. A manually selected external source does not inherit this authentication. The reviewed documentation and this host establish no RFC 8915 query mode for W32Time.                       |
+| [Windows Time tools](https://learn.microsoft.com/en-us/windows-server/networking/windows-time-service/Windows-Time-Service-Tools-and-Settings) | Defines status/source queries and bounded stripchart measurements, including local request FILETIME, roundtrip and offset. Query success retains separate synchronization/authentication questions.                                                                                                                             |
+| [chrony supported systems](https://chrony-project.org/) and [chronyd 4.7](https://chrony-project.org/doc/4.7/chronyd.html)                     | Upstream lists Linux, FreeBSD, NetBSD, OpenBSD, macOS and illumos. Native Windows is outside that published list. The documented `-Q` mode reports an offset while leaving the clock alone, disables server ports and can run without root when configuration needs no privileged features. `-t` bounds its execution.          |
+| [chronyc 4.7](https://chrony-project.org/doc/4.7/chronyc.html) and [configuration](https://chrony-project.org/doc/4.7/chrony.conf.html)        | `-c` supplies CSV monitoring output. `authdata` identifies NTS versus symmetric-key mode; `ntpdata` reports authentication of the last measurement. Certificate trust/name/time checks and exact invocation/configuration need provenance. A certificate-time-check exception cannot silently qualify as complete verification. |
+| [NTPsec platform policy](https://www.ntpsec.org/supported-platforms.html)                                                                      | Documents POSIX Unix-like systems and removal of legacy Windows-toolchain support. A working native Windows NTS build was not established. Its [ntpd quit mode](https://docs.ntpsec.org/latest/ntpd.html) sets the clock, so that mode is ineligible for this read-only workflow.                                               |
+| [ntpd-rs installation](https://docs.ntpd-rs.pendulum-project.org/latest/guide/installation/)                                                   | Documents Linux/FreeBSD installation and macOS source-build context. The reviewed material did not establish a native Windows build or a bounded, no-clock-adjustment NTS measurement mode.                                                                                                                                     |
+| [WSL commands](https://learn.microsoft.com/en-us/windows/wsl/basic-commands)                                                                   | `--list --running --quiet` enumerates running distributions. This query supplies environment-discovery evidence independently of client availability or clock-domain correspondence.                                                                                                                                            |
+
+The chrony 4.7 manuals define the scope of the report-interpretation tests. They
+are documentation references rather than a decision to install that particular
+version. A future approved client must have its release, features, safe invocation
+and output contract verified explicitly.
+
+### Actual local host observations
+
+The audit executed in the Windows workspace containing the repository and the
+previously admitted source/retention artifacts. Its scope is this local execution
+host. Machine names, account identifiers, domain names, private addresses and
+distribution names are excluded from the report.
+
+| Check                       | Actual observation                                                                                                                                                                                           |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Platform                    | Microsoft Windows 11 Pro, version `10.0.26300`, x64                                                                                                                                                          |
+| Shell                       | Windows PowerShell Desktop `5.1.26100.9818`, 64-bit process                                                                                                                                                  |
+| Current privilege           | Administrative token false; no privileged mutation was attempted                                                                                                                                             |
+| Windows Time service        | Running, Automatic startup                                                                                                                                                                                   |
+| Domain applicability        | `PartOfDomain=false`; an authenticated AD DS hierarchy is not applicable to this observed setup                                                                                                              |
+| Source query                | Access denied, native exit `-2147024891`, exact failure `The following error occurred: Access is denied. (0x80070005)`                                                                                       |
+| Status query                | Exit zero, Leap Indicator 3 (not synchronized), Stratum 0, source `time.windows.com,0x9`, Last Sync Error 1                                                                                                  |
+| Candidate executables       | No `chronyd`, `chronyc`, `ntpd`, `ntpq`, `ntp-daemon`, `ntp-ctl` or `ntpd-rs` found on PATH. Named Program Files NTP binary locations also had no match. This bounded search cannot exclude other locations. |
+| WSL                         | Launcher found. The read-only running-distribution query exited zero and returned count 0. Stopped distributions and their clients were left uninspected; no distribution was started.                       |
+| Observed NTS authentication | NTS-KE, certificate verification for the NTS endpoint and authenticated NTP packet exchange remained unexercised                                                                                             |
+
+The report represents each mechanism with ten separate stages covering protocol
+documentation, platform support, installed client, service reachability,
+authentication attempted/verified, measurement, uncertainty, relation to an actual
+MT5 capture and historical applicability. Nullable values preserve unverified
+conditions. It supplies no single generic availability flag.
+
+| Mechanism                      | Evidence obtained                                                                                  | Decision and limitation                                                                                                                                         |
+| ------------------------------ | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W32Time with external NTP      | Configured source/status observed separately from one transient Cloudflare stripchart sample       | `context_specific` ordinary NTP. The transient target does not change the configured source. Authentication remains unverified.                                 |
+| Authenticated domain hierarchy | Domain membership false                                                                            | `not_applicable` on this host. Domain membership/synchronization alone would still require evidence of actual authentication and upstream authority.            |
+| RFC 8915 NTS at Cloudflare     | Provider support documented; TCP 4460 reachable                                                    | `candidate`. TCP reachability precedes TLS/NTS-KE, negotiated NTP endpoint validation and packet authentication.                                                |
+| Established client             | No candidate executable in inspected locations; native platform/safe-mode requirements unresolved  | `human_validation_required`. No installed approved client was demonstrated.                                                                                     |
+| HTTPS/TLS Date comparison      | HTTPS HEAD succeeded under default OS certificate policy and returned a Date header                | Transport authentication observed; authenticated time synchronization false. Date generation, caching, second granularity and network delay retain uncertainty. |
+| Existing MoneyWay measurements | Admitted November 16 bundle pins rechecked; prior native/host/NTP observations retained separately | `context_specific` relationship to that actual MT5 capture. This new audit cannot retroactively authenticate it.                                                |
+
+### Real diagnostic output and measurements
+
+The final report is version 1 of `moneyway.mt5-utc-reference-capability`, retained
+outside Git at
+`%LOCALAPPDATA%\MoneyWay\Evidence\UtcReferenceCapability\audit-423e88b4dbe0424285eaccda25a94f44.json`.
+Its SHA256 is
+`6fc68716d3bb46a4b4c46383cff19fded02b78895c57c7d108a76191b4f9b49d`.
+It is compact JSON, 18678 bytes. Collection spanned host UTC candidates
+`2026-11-16T18:27:18.2275688+00:00` through
+`2026-11-16T18:27:21.2122680+00:00`; monotonic boundaries and tool hashes are
+retained. These host UTC labels remain unauthenticated.
+
+| Actual network check                           | Recorded result                                                                                                             |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Ordinary NTP at `time.cloudflare.com:123/UDP`  | Local request candidate `2026-11-16T18:27:20.7786813Z`, reported offset `-0.0012982` seconds, roundtrip `0.0069120` seconds |
+| TCP prerequisite at `time.cloudflare.com:4460` | Connected, elapsed `27.3533` ms; TLS/NTS-KE and authenticated NTP were not attempted                                        |
+| HTTPS HEAD of the Cloudflare NTS documentation | HTTP 200 under default OS TLS validation; Date `Mon, 16 Nov 2026 18:27:20 GMT`; Age header absent; elapsed `187.6448` ms    |
+
+Ordinary NTP keeps the native raw CSV and exact-decimal interpretation. The single
+sample is a bounded diagnostic choice, with no required sample count or acceptable
+offset/latency threshold established. HTTP Date remains a coarse comparison, and
+an absent Age header establishes no cache guarantee. Source-query failures are
+preserved while source/reference identifiers and unrecognized status lines are
+withheld. Both TCP and HTTPS results remain separate from authenticated time.
+
+The read-only audit checked 16 original/retained evidence files before and after
+collection; all hashes remained identical. The admitted evidence, response and
+retention manifest matched their previously registered pins. This rechecks those
+content anchors and does not repeat or alter their original admission. Diagnostic
+writes are confined to a fresh report and its temporary publication path outside
+the repository, MT5 common files and retained capture directories. Production
+receipt/checkpoint operations are absent.
+
+`authenticated_utc_reference_observed=false` and
+`host_clock_error_bound_seconds=null`. Canonical flags
+`canonical_utc_conversion_authorized`, `utc_conversion_authenticated` and
+`canonical_ready` all remain `false`. Server-response authentication, host
+synchronization/error bounds, local monotonic time, network asymmetry, EA event
+processing, native broker timestamps, publication/availability and provider
+timezone conversion remain separate contracts. Historical/DST mapping, source
+event UTC bounds, candle closure, availability and atomic multi-timeframe
+acquisition retain their earlier blockers. Nasdaq remains `America/Bogota`.
+
+### Operator invocation, validation and next prerequisite
+
+From Git Bash in the repository root, the following exact command was also
+executed successfully in the Windows environment.
+
+```bash
+powershell.exe -NoLogo -NoProfile -File ./tools/market-data/mt5/Get-Mt5UtcReferenceCapability.ps1 -QueryTimeoutMilliseconds 5000
+```
+
+The required timeout argument accepts 1000–30000 ms. The audit makes bounded native
+W32Time/TCP/WSL checks and a HEAD request using the .NET request timeout. Native
+DNS scheduling can extend an HTTP timeout, so this is not a hard real-time
+deadline. Query failure retains an unavailable/unverified result. The caller can
+choose a fresh absolute `-ReportPath` whose parent exists outside the protected
+directories. Existing output and pending paths are rejected. Default output uses
+a new GUID filename for each invocation. No MT5 interaction is required.
+
+Full .NET build passed with zero warnings/errors. The
+[new capability tests](../../tests/tools/Mt5UtcReferenceCapability.Tests.ps1)
+passed 33 synthetic cases. Existing correlated-tick, native-UTC, collector, probe,
+comparator and retention suites passed 56 + 28 + 39 + 27 + 32 + 33 tests.
+Total is **248 passed, 0 failed, 0 skipped**. AST, Markdown format/local links,
+report/tool provenance, evidence preservation and `git diff --check` are verified
+before publication.
+
+Tests of chrony output interpretation use controlled human-readable 4.7
+`authdata`/`ntpdata` fixtures, bound endpoint/output hashes and recorded
+configuration/certificate-check provenance. A recognized claim is a client-report
+interpretation result. The parser performs no cryptographic verification and
+always leaves its own authenticated-reference-observed flag false. TLS-only,
+key-establishment-only, failed authentication, incomplete provenance/certificate
+checks and endpoint mismatch remain insufficient. These tests establish no real
+end-to-end NTS authentication. Automated safety checks also cover immutable
+outputs and absence of clock/service/registry/trading mutations.
+
+The single next feature is an explicitly authorized supported-client environment
+prerequisite for a bounded NTS experiment. Chrony's documented `-Q` plus `-t` mode
+makes it the smallest researched candidate for a separately approved supported
+environment with an established NTS-enabled build. The combined capture of native
+authentication telemetry and uncertainty still needs adapter validation. WSL
+launcher presence alone cannot establish that environment or its correspondence
+to Windows host observation boundaries. Installing/provisioning a runtime or
+client requires separate operator authorization. A bounded adapter can follow
+once this prerequisite is demonstrated; no current source is selected as ready.
