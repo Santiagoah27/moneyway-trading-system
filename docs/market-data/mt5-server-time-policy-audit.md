@@ -1127,3 +1127,194 @@ The single next feature is a read-only uncertainty-contract audit of these
 host/guest exchange observations, defining which additional resolution and clock
 stability evidence is required before a Windows MT5 event can receive a justified
 UTC interval. No total-error threshold is selected by this capture.
+
+## Offline Windows/WSL/NTS uncertainty contract, November 16
+
+Initial checkpoint: `main`, `939daf11533bc557bf6b652da49ece638d18210d`,
+clean index/tree and synchronized `origin/main`. This feature adds an
+[offline command](../../tools/market-data/mt5/Get-Mt5NtsTemporalUncertainty.ps1),
+[deterministic assessment helper](../../tools/market-data/mt5/Mt5NtsTemporalUncertainty.ps1)
+and [synthetic contract tests](../../tests/tools/Mt5NtsTemporalUncertainty.Tests.ps1).
+Existing acquisition, canonical replay and strategy code remain unchanged.
+
+### Evidence integrity and reproducible output
+
+The original correlation and reassessment named above were independently read
+and hashed. Their SHA256 values are respectively
+`311d5f74dd1cc0548222f5000c43aed2b544cc4444e8e86373a4222eb9f1b249` and
+`4a0f217147e3120c8cff9cba6835b4f900fed491f7b5c3fd8adb4eb929cd8db4`.
+All six retained raw-field digests validate: configuration, authdata, ntpdata,
+capabilities, client stderr and client stdout. Reassessment schema, session and
+source-report bindings validate. Numerical conclusions are recomputed from the
+retained capture rather than copied from its earlier assessment.
+
+This independently revalidates content and recorded bindings, not packet
+cryptography or every byte of the historical execution environment. Three of the
+five current acquisition sources match their recorded runtime hashes. The
+coordinator and correlation helper changed after capture; their exact historical
+runtime byte snapshots were not separately retained. Comparing current files
+does not recover those snapshots. The later reassessment's assessment-source
+hash matches the unchanged current correlation helper. This provenance limit
+does not retract the previously verified Linux NTS authentication.
+
+The actual offline report is outside Git:
+`%LOCALAPPDATA%\MoneyWay\Evidence\NtsUncertainty\uncertainty-5c2e6d3f3685491db34ea9a16036a897.json`,
+SHA256 `4c35b2fcbc12def57aa7c1975356190b634c8fffa8d55a03436fefe3c0e9726b`.
+It records schema version 1, method
+`offline_interval_and_field_provenance_audit_v1`, exact timing inputs, raw-field
+references, source identity, field provenance, method-source hashes, missing
+evidence and required human review. The pure assessment is deterministic;
+publication uses a unique create-only filename. No new measurement occurs.
+
+Reproduce from Git Bash at the repository root; omit ReportPath to create a new
+report without replacing this one:
+
+```bash
+evidence="$(cygpath -m "$LOCALAPPDATA")/MoneyWay/Evidence/NtsCorrelation"
+powershell.exe -NoLogo -NoProfile -File ./tools/market-data/mt5/Get-Mt5NtsTemporalUncertainty.ps1 \
+  -CapturePath "$evidence/correlation-00ce059575293d5dcaaa168bbfc82627a58d34447e9b46b9dbeac52aec544459.json" \
+  -ExpectedCaptureSha256 311d5f74dd1cc0548222f5000c43aed2b544cc4444e8e86373a4222eb9f1b249 \
+  -ReassessmentPath "$evidence/reassessment-00ce059575293d5dcaaa168bbfc82627a58d34447e9b46b9dbeac52aec544459.json" \
+  -ExpectedReassessmentSha256 4a0f217147e3120c8cff9cba6835b4f900fed491f7b5c3fd8adb4eb929cd8db4
+```
+
+### Clock domains and supported constraints
+
+The report inventories each API, representation, ordering, overhead, possible
+clock changes and authentication scope. Printed resolution is not accuracy.
+Raw boundaries reside in `capture.initialization_before/after`, `launch`,
+`ready`, `before/after.sent/received`, `before/after.linux`, `completion` and
+`result` in the pinned source.
+
+| Domain                  | Coordinate and representation                                 | Boundary, overhead and evidential limit                                                                                                                       |
+| ----------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Windows wall clock      | `DateTimeOffset.UtcNow`, 100 ns representation                | Host reads around staging, launch and exchanges; API/scheduling latency; endpoint order cannot exclude intervening steps; unauthenticated UTC candidates      |
+| Windows counter         | `Stopwatch.GetTimestamp`, ticks divided by recorded frequency | Same-domain elapsed/order only, including process/transport overhead; no UTC rate calibration                                                                 |
+| Linux wall clock        | GNU `date +%s.%N`, nine decimal places                        | Read inside session-bound request/response, including shell/process overhead; Hyper-V can change guest time; local reading is not independently authenticated |
+| Linux counter           | `/proc/uptime`, CLOCK_BOOTTIME, 0.01 s truncation             | Counter reads bracket `date`; shell scheduling included; includes suspend; rate relative to UTC unmeasured                                                    |
+| Chrony reference        | `-Q`, `authdata`, `ntpdata`                                   | Same private client instance; network and estimator latency; authenticated response plus offset estimate, not a total clock-error bound                       |
+| Host/guest exchange     | Nonce/session-bound BEFORE/AFTER protocol                     | Request, guest read, response order depends on the recorded procedure; full transport overhead retained; two clock domains                                    |
+| WSL lifecycle           | Windows staging, launch, ready, completion                    | Preparation 0.4182056 s; launch-to-ready 0.2008534 s; execution 6.7968218 s; shutdown interval absent                                                         |
+| Hyper-V synchronization | Pre-existing platform mechanism; no event telemetry           | Dependent clocks without a measured equality, step schedule, drift limit or authentication guarantee                                                          |
+
+Windows candidate readings range from `2026-11-16T20:22:09.2122414Z` to
+`2026-11-16T20:22:16.4386626Z`. Same-domain counter order passes independently
+of wall-clock availability. Linux's elapsed coordinate lies conservatively in
+`[6.52, 6.55] s`, including both truncated endpoints. The implementation of
+[`/proc/uptime`](https://raw.githubusercontent.com/microsoft/WSL2-Linux-Kernel/linux-msft-wsl-6.6.87.2/fs/proc/uptime.c)
+supports that quantization treatment. This constrains local counter coordinates,
+without calibrating their rate to UTC. No cross-domain counter subtraction is
+performed.
+
+Let `L` be a Linux wall reading and `Ws`, `Wr` its surrounding Windows wall
+reads. Under trusted protocol/API provenance and a nondecreasing Windows wall
+clock throughout the exchange, the instantaneous Linux-minus-Windows difference
+is conditionally within `[L - Wr, L - Ws]`:
+
+| Read   | Candidate interval, seconds  | Windows counter exchange elapsed |
+| ------ | ---------------------------- | -------------------------------- |
+| BEFORE | [-0.008743687, +0.005255713] | 0.0139205 s                      |
+| AFTER  | [-0.016948725, +0.043615275] | 0.0608806 s                      |
+
+These conditions are not verified by endpoint order. With the additional
+unverified hypothesis that the difference remained constant between the two
+guest readings, their intersection is
+`[-0.008743687, +0.005255713] s`. The hypothesis is feasible; it is not established.
+Disjoint intervals in a synthetic case reject that hypothesis without proving
+the underlying measurements contradictory. No intermediate/future propagation
+or drift rate follows from an intersection.
+
+Linux realtime elapsed `6.531462162 s` fits the local counter bracket, so a
+unit-rate/no-step hypothesis is feasible but unverified. Endpoint wall readings
+and counter differences cannot rule out intervening steps. No mathematical
+contradiction or realtime reversal was observed in this authentic record.
+Observed Windows realtime-minus-counter differences remain `+0.0000789 s` and
+`-0.0003166 s`; neither becomes a skew tolerance or a UTC error bound.
+
+### Chrony 4.5 field and mode decision
+
+The version-specific [chronyc manual](https://chrony-project.org/doc/4.5/chronyc.html)
+distinguishes local tracking System time from Last offset and from the measured
+source offset. Its error formula
+`abs(system_time_offset) + root_dispersion + root_delay / 2` is conditional on
+the ultimate reference being correct. The needed fields must describe the same
+local tracking observation. Peer delay cannot replace cumulative root delay.
+
+The capture has final `-Q` offset `-0.005158 s` and last monitored packet offset
+`-0.012779095 s`, peer delay `0.025116688 s`, peer dispersion `0.000050441 s`,
+packet root delay `0.091095 s` and packet root dispersion `0.000626 s`.
+Packet leap is Normal, reference time is `Mon Nov 16 20:21:27 2026` and precision
+is `-26 (0.000000015 seconds)`. The packet root, leap, reference and precision
+fields originate from the remote response. They do not provide the missing
+local tracking state. No `tracking`, `sources`, `sourcestats` or `selectdata`
+report was captured. Missing values remain null, including the actual formula
+result; no remote-root/peer-delay/final-offset substitution is permitted.
+
+The [chronyd manual](https://chrony-project.org/doc/4.5/chronyd.html) documents
+non-adjusting `-Q`. Upstream [4.5 reference.c](https://raw.githubusercontent.com/mlichvar/chrony/4.5/reference.c)
+adds a concrete constraint: `REF_SetReference` returns through `special_mode_sync`
+before normal local root/reference/tracking updates. PrintOnce logs an offset
+and exits without applying it. Therefore merely adding a `tracking` read to
+this `-Q` capture does not establish normal tracking semantics. This is upstream
+source inspection, not an independent review of every Ubuntu package patch.
+Missing captured fields already suffice to block the formula.
+
+The synthetic formula test supplies all fields and explicit reference,
+same-observation, reviewed-mode and observation-only assumptions; it checks exact
+decimal arithmetic, not authentic timing accuracy. Its candidate result never
+authorizes canonical conversion.
+
+### Authentication scope and next measurement decision
+
+The retained session still shows NTS-KE, eight cookies and two accepted
+authenticated packets. [RFC 8915](https://www.rfc-editor.org/rfc/rfc8915.html)
+does not turn packet authentication into proof of ultimate reference accuracy
+or Windows/MT5 event timing. [Ubuntu's WSL explanation](https://ubuntu.com/wsl/docs/stable/explanation/time-sync/)
+also precludes treating host and guest clocks as independent references.
+
+Technical sources in this section were accessed on **2026-11-16**. The concrete
+decision is to retain `overall_utc_uncertainty=unresolved`, Windows-host UTC error
+bound null and MT5 event UTC interval null. The only defensible finite
+constraints concern recorded local elapsed coordinates and quantization. The
+cross-clock intervals above remain conditional candidates.
+
+The smallest next implementation is to retain the source-selection interval
+from `selection.log` in a future, separately authorized bounded `-Q` session,
+bound to the same endpoint/session, raw hashes and local counter brackets.
+The [4.5 logging contract](https://chrony-project.org/doc/4.5/chrony.conf.html)
+defines selection state, sample age and lower/upper source-offset endpoints.
+Upstream [sources.c](https://raw.githubusercontent.com/mlichvar/chrony/4.5/sources.c)
+logs the selected source before calling `REF_SetReference`, avoiding the
+PrintOnce tracking-update gap. Preserve log rounding, estimator clock semantics
+and reference-correctness assumptions; a retained selection interval would
+reduce missing Linux estimator evidence, not automatically bound Windows UTC.
+If the selected entry is absent or cannot be bound, report `data_unavailable`.
+No such capture or acquisition change was made by this offline feature.
+
+Still required independently: reviewed estimator-to-system-clock uncertainty,
+bounded clock evolution through the host/guest path, event-to-reference binding,
+provider historical timezone/DST mapping, provider candle closure and historical
+availability. The November 16 US100 tick is not retrospectively authenticated.
+All five flags remain false: `windows_clock_authenticated`,
+`mt5_native_utc_authenticated`, `canonical_utc_conversion_authorized`,
+`utc_conversion_authenticated` and `canonical_ready`.
+
+### Validation and preservation
+
+The new suite passed **40** cases; NTS correlation, reference capability,
+native UTC, correlated tick and retention regressions passed
+**48 + 33 + 28 + 56 + 33**, respectively: **238 passed, 0 failed, 0 skipped**.
+Cases cover hash/session/raw provenance failures, missing wall readings with
+independent counter order, domain rejection, quantization, discontinuities,
+conditional formula prerequisites, interval conflicts, deterministic results,
+immutable reports and checkpoint preservation. The entry points pass PowerShell
+AST checks. Full `dotnet build MoneyWay.sln --no-restore -v quiet` passed with
+zero warnings and errors. No shell source changed or shell syntax validation
+required a WSL launch. Markdown formatting/local links, method/report integrity
+and `git diff --check` are verified before commit.
+
+Before/after SHA256 checks preserve the original correlation, reassessment,
+selected durable receipt checkpoint, automatic record 643 and probe 643. This
+assertion covers those five selected artifacts, not all collector files. No WSL
+process, new NTS measurement, MT5 capture, clock/service/configuration change,
+checkpoint advancement or canonical mutation was invoked.
