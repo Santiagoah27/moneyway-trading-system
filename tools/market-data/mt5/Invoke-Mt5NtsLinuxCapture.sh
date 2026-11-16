@@ -43,6 +43,8 @@ port 0
 cmdport 0
 bindcmdaddress $dir/chronyd.sock
 pidfile $dir/chronyd.pid
+log selection
+logdir $dir
 EOF
 chown _chrony:_chrony "$dir" "$dir/chrony.conf"
 chmod 700 "$dir"
@@ -61,10 +63,14 @@ printf 'READY|%s|%s\n' "$sid" "$cfg"
 observe BEFORE
 read -r command received
 [ "$command" = RUN ] && [ "$received" = "$sid" ]
+# A newly staged private directory must never supply a previous log.
+[ ! -e "$dir/selection.log" ] && [ ! -L "$dir/selection.log" ]
 : > "$dir/authdata.txt"
 : > "$dir/ntpdata.txt"
 : > "$dir/capabilities.txt"
 : > "$dir/monitor.stderr"
+read -r query_start ignored < /proc/uptime
+query_start_real=$(date -u +%s.%N)
 timeout --signal=TERM --kill-after=2s "$((query_seconds + 5))s" \
     setpriv --bounding-set=-all --reuid=_chrony --regid=_chrony --init-groups --no-new-privs \
     /usr/sbin/chronyd -Q -t "$query_seconds" -f "$dir/chrony.conf" \
@@ -99,6 +105,8 @@ wait "$query_pid"
 result=$?
 set -e
 query_pid=
+query_end_real=$(date -u +%s.%N)
+read -r query_end ignored < /proc/uptime
 if [ -s "$dir/monitor.stderr" ]; then
     printf '\nMonitoring stderr:\n' >> "$dir/client.stderr"
     cat "$dir/monitor.stderr" >> "$dir/client.stderr"
@@ -108,6 +116,25 @@ observe AFTER
 # Remove the local interface address from retained client output.
 sed -i 's/^Local address[[:space:]]*:.*$/Local address   : [withheld]/' "$dir/ntpdata.txt"
 encode() { base64 -w0 "$1"; }
+# Retain the complete log only after the bounded writer has terminated.
+selection_state=missing
+selection_hash=-
+selection_data=
+if [ -f "$dir/selection.log" ] && [ ! -L "$dir/selection.log" ]; then
+    selection_state=present
+    selection_size=$(wc -c < "$dir/selection.log")
+    if [ "$selection_size" -le 65536 ]; then
+        selection_hash=$(sha256sum "$dir/selection.log" | cut -d' ' -f1)
+        selection_data=$(encode "$dir/selection.log")
+    else
+        selection_state=oversized
+    fi
+fi
+printf 'SELECTION|%s|%s|%s|%s|%s|%s|%s|%s|' "$sid" "$selection_state" "$selection_hash" "$selection_data" "$query_start" "$query_end" "$query_start_real" "$query_end_real"
+printf '/usr/sbin/chronyd -Q -t %s -f %s/chrony.conf' "$query_seconds" "$dir" | base64 -w0
+printf '|'
+base64 -w0 /etc/os-release
+printf '\n'
 printf 'RESULT|%s|%s|%s|' "$sid" "$result" "$cfg"
 encode "$dir/chrony.conf"; printf '|'
 encode "$dir/authdata.txt"; printf '|'

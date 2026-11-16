@@ -10,6 +10,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'Mt5NtsCorrelation.ps1')
+. (Join-Path $PSScriptRoot 'Mt5NtsSelectionEvidence.ps1')
 if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) { throw 'intended_Windows_host_required' }
 if ($SessionTimeoutSeconds -lt $QueryTimeoutSeconds + 10) { throw 'session_timeout_must_allow_query_and_cleanup' }
 $session = New-Mt5TickNonce
@@ -31,6 +32,9 @@ foreach ($protected in @($repo, (Join-Path $env:APPDATA 'MetaQuotes/Terminal/Com
         $report.StartsWith($root + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'protected_output_location' }
 }
 if ((Test-Path -LiteralPath $report) -or (Test-Path -LiteralPath ($report + '.pending'))) { throw 'diagnostic_path_already_exists' }
+foreach ($suffix in @('.selection.log','.selection.json','.selection.log.pending','.selection.json.pending')) {
+    if (Test-Path -LiteralPath ($report + $suffix)) { throw 'diagnostic_path_already_exists' }
+}
 
 function Get-PreservedCorrelationInputs {
     $paths = @((Join-Path $env:APPDATA 'MetaQuotes/Terminal/Common/Files/MoneyWayAutomaticReadOnly/record-000000000643.json'),
@@ -59,6 +63,7 @@ if ($available -and $running.exit_code -eq 0) {
     $capture = [pscustomobject]@{ session = $session; error = 'selected_distribution_unavailable'; result = $null; exit_code = $null }
 }
 $assessment = Get-Mt5NtsCorrelationAssessment $capture $session
+$selectionEvidence = Publish-Mt5NtsSelectionEvidence $capture $session $report $Distribution $assessment
 $after = @(Get-PreservedCorrelationInputs)
 $unchanged = ($before | ConvertTo-Json -Compress) -ceq ($after | ConvertTo-Json -Compress)
 $rawHashes = @()
@@ -73,7 +78,7 @@ $artifact = [pscustomobject][ordered]@{
     distribution_running_before_capture = $wasRunning; distribution_termination_invoked = $false
     query_timeout_seconds = $QueryTimeoutSeconds; session_timeout_seconds = $SessionTimeoutSeconds
     client_profile = 'Ubuntu_chrony_4.5-1ubuntu4.2_executable_hash_pinned'; reference_server = 'time.cloudflare.com'
-    capture = $capture; assessment = $assessment; retained_evidence_hashes = $rawHashes
+    capture = $capture; assessment = $assessment; retained_evidence_hashes = $rawHashes; selection_evidence = $selectionEvidence
     selected_existing_inputs_before = $before; selected_existing_inputs_after = $after; selected_input_hashes_unchanged = $unchanged
     preservation_scope = 'selected_record_probe_checkpoint_and_provisioning_report_not_entire_active_collector'
     raw_client_redaction = 'ntpdata_local_interface_address_withheld_before_retention_other_nonsecret_client_lines_preserved'
@@ -85,12 +90,14 @@ $artifact = [pscustomobject][ordered]@{
     canonical_utc_conversion_authorized = $false; utc_conversion_authenticated = $false; canonical_ready = $false
     tool_sources = @(@($PSCommandPath, (Join-Path $PSScriptRoot 'Mt5NtsCorrelation.ps1'),
         (Join-Path $PSScriptRoot 'Invoke-Mt5NtsLinuxCapture.sh'), (Join-Path $PSScriptRoot 'Mt5CorrelatedTickEvidence.ps1'),
-        (Join-Path $PSScriptRoot 'Mt5NativeUtcEvidence.ps1')) | ForEach-Object {
+        (Join-Path $PSScriptRoot 'Mt5NativeUtcEvidence.ps1'), (Join-Path $PSScriptRoot 'Mt5NtsSelectionEvidence.ps1')) | ForEach-Object {
         [pscustomobject]@{ file_name = [IO.Path]::GetFileName($_); sha256 = (Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash.ToLowerInvariant() }
     })
 }
 Publish-Mt5TickFile $report (($artifact | ConvertTo-Json -Depth 20 -Compress) + "`n")
 [pscustomobject]@{ ReportPath = $report; SHA256 = (Get-FileHash -LiteralPath $report -Algorithm SHA256).Hash.ToLowerInvariant()
     NtsAuthenticatedMeasurementObserved = $assessment.nts_authenticated_measurement_observed
+    SelectionGate = $selectionEvidence.assessment.gate; SelectionIntervalStatus = $selectionEvidence.assessment.chrony_selection_interval_status
+    SelectionManifest = $selectionEvidence.manifest_file; SelectionLogSha256 = $selectionEvidence.raw_log_sha256
     WindowsClockCorrelation = 'unresolved'; OverallUtcUncertainty = 'unresolved'; SelectedInputHashesUnchanged = $unchanged
     CanonicalUtcConversionAuthorized = $false; CanonicalReady = $false; Diagnostics = $assessment.diagnostics } | ConvertTo-Json -Depth 4

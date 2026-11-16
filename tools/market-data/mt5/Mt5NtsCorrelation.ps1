@@ -92,12 +92,23 @@ function Invoke-Mt5NtsLiveCapture {
                 $process.StandardInput.WriteLine("RUN $Session"); $process.StandardInput.Flush()
             } else { $state.after = $exchange }
         }
-        $result = ConvertFrom-Mt5NtsLine (Wait-Mt5NtsTask ($process.StandardOutput.ReadLineAsync()) $deadline $CancellationToken) RESULT $Session 10
+        $resultLine = Wait-Mt5NtsTask ($process.StandardOutput.ReadLineAsync()) $deadline $CancellationToken
+        $selection = $null
+        if ($null -ne $resultLine -and $resultLine.StartsWith('SELECTION|', [StringComparison]::Ordinal)) {
+            $parts = ConvertFrom-Mt5NtsLine $resultLine SELECTION $Session 11
+            $selection = [pscustomobject]@{ session = $parts[1]; availability = $parts[2]; sha256 = $parts[3]; raw_base64 = $parts[4]
+                start_boottime = $parts[5]; end_boottime = $parts[6]; start_realtime_candidate = $parts[7]; end_realtime_candidate = $parts[8]
+                command = (New-Object Text.UTF8Encoding($false, $true)).GetString([Convert]::FromBase64String($parts[9]))
+                os_release = (New-Object Text.UTF8Encoding($false, $true)).GetString([Convert]::FromBase64String($parts[10])) }
+            $resultLine = Wait-Mt5NtsTask ($process.StandardOutput.ReadLineAsync()) $deadline $CancellationToken
+        }
+        $result = ConvertFrom-Mt5NtsLine $resultLine RESULT $Session 10
         if ($ready[2] -cne $result[3] -or $done[2] -cne $result[2]) { throw 'query_binding_mismatch' }
         $decoded = @()
         foreach ($part in $result[4..9]) { $decoded += (New-Object Text.UTF8Encoding($false, $true)).GetString([Convert]::FromBase64String($part)) }
         $state.result = [pscustomobject]@{ session = $result[1]; query_exit_code = [int]$result[2]; configuration_sha256 = $result[3]
             configuration = $decoded[0]; authdata = $decoded[1]; ntpdata = $decoded[2]; capabilities = $decoded[3]; client_stderr = $decoded[4]; client_stdout = $decoded[5] }
+        if ($null -ne $selection) { $state.result | Add-Member selection $selection }
         $process.StandardInput.WriteLine("ACK $Session"); $process.StandardInput.Close()
         $null = ConvertFrom-Mt5NtsLine (Wait-Mt5NtsTask ($process.StandardOutput.ReadLineAsync()) $deadline $CancellationToken) DONE $Session 2
         while (-not $process.WaitForExit(10)) {
@@ -155,7 +166,9 @@ function Get-Mt5NtsCorrelationAssessment($Capture, [string]$Session) {
         if ($null -eq $r -or $r.session -cne $Session -or $Capture.exit_code -ne 0 -or $r.query_exit_code -ne 0) { throw 'incomplete_or_failed_query' }
         $dir = '/tmp/mw-nts-' + $Session
         $expected = "server time.cloudflare.com nts iburst`nauthselectmode require`nport 0`ncmdport 0`nbindcmdaddress $dir/chronyd.sock`npidfile $dir/chronyd.pid`n"
-        if ($r.configuration -cne $expected -or $r.configuration_sha256 -cne (Get-Mt5TickHash ([Text.Encoding]::UTF8.GetBytes($expected)))) { throw 'configuration_or_source_binding_mismatch' }
+        $withSelection = $expected + "log selection`nlogdir $dir`n"
+        if (($r.configuration -cne $expected -and $r.configuration -cne $withSelection) -or
+            $r.configuration_sha256 -cne (Get-Mt5TickHash ([Text.Encoding]::UTF8.GetBytes($r.configuration)))) { throw 'configuration_or_source_binding_mismatch' }
         if ($r.client_stderr -notmatch 'chronyd version 4\.5 starting \([^\r\n]*\+NTS' -or $r.client_stderr -notmatch 'Disabled control of system clock') { throw 'client_profile_unverified' }
         if ($r.capabilities -notmatch '(?m)^Uid:\s+100\s+100\s+100\s+100\s*$' -or
             $r.capabilities -notmatch '(?m)^CapEff:\s+0000000000000000\s*$' -or $r.capabilities -notmatch '(?m)^CapBnd:\s+0000000000000000\s*$' -or

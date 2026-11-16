@@ -1318,3 +1318,189 @@ selected durable receipt checkpoint, automatic record 643 and probe 643. This
 assertion covers those five selected artifacts, not all collector files. No WSL
 process, new NTS measurement, MT5 capture, clock/service/configuration change,
 checkpoint advancement or canonical mutation was invoked.
+
+## Chrony 4.5 selection evidence capture (2026-11-16)
+
+Initial Git checkpoint: `main`, `af6de78ee533121eda586885187144779f998838`,
+clean and synchronized with `origin/main`. This feature extends the existing
+[coordinator](../../tools/market-data/mt5/Get-Mt5NtsTimeCorrelation.ps1),
+[protocol/authentication helper](../../tools/market-data/mt5/Mt5NtsCorrelation.ps1)
+and [isolated Linux capture](../../tools/market-data/mt5/Invoke-Mt5NtsLinuxCapture.sh).
+The [selection helper](../../tools/market-data/mt5/Mt5NtsSelectionEvidence.ps1)
+assesses, publishes and independently rereads the retained evidence; there is no
+second acquisition coordinator or canonical integration.
+
+### Version-specific contract and implementation
+
+Official sources accessed **2026-11-16**:
+[chrony.conf 4.5](https://chrony-project.org/doc/4.5/chrony.conf.html),
+[chronyd 4.5](https://chrony-project.org/doc/4.5/chronyd.html),
+[chronyc 4.5](https://chrony-project.org/doc/4.5/chronyc.html),
+[sources.c](https://raw.githubusercontent.com/mlichvar/chrony/4.5/sources.c) and
+[reference.c](https://raw.githubusercontent.com/mlichvar/chrony/4.5/reference.c).
+`log selection` writes source decisions to `selection.log` under `logdir`.
+Rows contain a source timestamp, address, selection state/options, reach, score,
+sample age and two offset endpoints. The endpoints are expected containment
+estimates under Chrony's source/root-distance model. They do not certify an
+unconditional UTC bound.
+
+In upstream 4.5, `SRC_SelectSource` calls `mark_source(..., SRC_SELECTED)`
+before `REF_SetReference`; `mark_source` writes the selection log. The latter
+reference call takes the PrintOnce exit path without normal tracking updates.
+This establishes an expectation of useful `-Q` logging, independently confirmed
+by the single authentic experiment below. The review does not independently
+audit every Ubuntu patch. Upstream prints endpoint and age values with
+`%10.3e`; original literals are retained without pretending to recover unprinted
+digits. The source timestamp label has whole-second resolution and is not
+independently authenticated UTC.
+
+The only configuration additions are `log selection` and
+`logdir /tmp/mw-nts-<64-hex-session>`. A fresh directory is created exclusively;
+pre-existing log/symlink paths are rejected before Chrony starts. The existing
+private socket, NTS-required single source, no-capability user, timeout and
+BEFORE/AFTER exchanges are preserved. The complete original log is read only
+after the writer terminates, transferred with its Linux SHA256 and published
+separately without replacing any file. A 64 KiB transfer limit fails closed;
+the summary retains at most 16 parsed rows plus the selected event and total
+count. The shared safe rereader accepts artifacts up to 32 KiB, so an oversized
+retained report remains unavailable to that reader instead of being truncated.
+
+An optional session-bound SELECTION protocol record carries the log, query
+counter/realtime bounds, exact inner command and `/etc/os-release`. The version-1
+correlation JSON retains its original six raw-field hashes and adds a selection
+manifest descriptor. Legacy RESULT messages/configurations and reports remain
+accepted; absent selection evidence is explicit. The manifest hash is pinned in
+the correlation report; the manifest binds the captured execution, configuration,
+raw client hashes and separate log hash. The offline rereader checks these
+bindings and recomputes the selection assessment.
+
+Only a selected row, valid interval, correct private-session configuration and
+same-execution NTS telemetry can reach gate G. IP equality alone is insufficient.
+Missing, empty, header-only, not-selected and unauthenticated-selected cases
+remain distinct. Missing selection does not erase independently recognized NTS
+authentication. Assumptions about reference correctness, applicability of the
+source-selection model and clock evolution remain explicitly unverified.
+
+### One authentic bounded experiment
+
+Session: `f645b4fd27968d7265deec9f69ab63dde8191ab552347bbcb0f245541e4111e2`.
+Ubuntu 24.04.5, WSL 2 kernel `6.6.87.2-microsoft-standard-WSL2`, Chrony
+`4.5-1ubuntu4.2`, GnuTLS `3.8.3-1.1ubuntu3.6`. Host invocation:
+
+```powershell
+powershell.exe -NoLogo -NoProfile -File tools/market-data/mt5/Get-Mt5NtsTimeCorrelation.ps1 -Distribution MoneyWay-NTS-Ubuntu-24.04 -QueryTimeoutSeconds 20 -SessionTimeoutSeconds 50
+```
+
+The exact inner command was `/usr/sbin/chronyd -Q -t 20 -f
+/tmp/mw-nts-f645b4fd27968d7265deec9f69ab63dde8191ab552347bbcb0f245541e4111e2/chrony.conf`.
+It ran through the existing GNU timeout and `setpriv` wrapper. Chrony and the
+transport exited with code 0. Client output states clock control was disabled
+and final offset `-0.054047 seconds (ignored)`. Query counter bounds were
+`[16.87, 23.30]` CLOCK_BOOTTIME seconds; realtime candidates were
+`[1794870768.814327955, 1794870775.237575288]`. These bracket process execution,
+without authenticating those timestamps or the exact estimator epoch.
+
+The complete log is **616 bytes, four data rows**:
+
+| Source timestamp label | Address       | State | Reach | Sample age | Lower original | Upper original |
+| ---------------------- | ------------- | ----- | ----- | ---------- | -------------- | -------------- |
+| 2026-11-16 23:12:51    | 162.159.200.1 | M     | 1     | 4.898e-03  | 2.640e-03      | 1.046e-01      |
+| 2026-11-16 23:12:53    | 162.159.200.1 | M     | 3     | 3.401e-03  | 4.206e-03      | 1.035e-01      |
+| 2026-11-16 23:12:55    | 162.159.200.1 | *     | 7     | 4.138e-03  | 3.768e-03      | 1.043e-01      |
+| 2026-11-16 23:12:55    | 162.159.200.1 | S     | 0     | 4.138e-03  | 3.768e-03      | 1.043e-01      |
+
+The selected event's original interval is `[3.768e-03, 1.043e-01] s`, exactly
+`[0.003768, 0.1043] s` as decimal representations of the printed endpoints.
+The later S row is preserved and means stale source state; the report selects
+the earlier historical `*` event, not a claim that the source remains selected
+after termination. The exact transition trigger is not separately instrumented.
+No manual sign reversal, rounding margin or tracking-formula substitution is
+applied to these literals.
+
+Configuration SHA256:
+`7eecd53ae357f1da63a729b39d21b9f17db192c21b022d12d1b9f3e89f9f6341`.
+The configuration names `time.cloudflare.com` with `nts` and
+`authselectmode require`; its private instance's `authdata` and `ntpdata` both
+identify `162.159.200.1`. Retained telemetry shows NTS KeyID 1, AEAD type 30,
+128-bit key length, eight cookies, no failed attempts/NAKs, `Authenticated: Yes`
+and two good received packets. These are counters/diagnostics, not retained
+cookies or keys. Monitoring preceded the last selection update; the report does
+not assert that the two-packet snapshot individually records every later packet.
+The single NTS-only source/configuration, private socket, logdir and nonce-bound
+execution establish source-level linkage. This is client-verified authentication
+evidence, not independent re-verification of packet cryptography.
+
+Gate **G_authenticated_selected_interval** is observed;
+`selected_source_authenticated=true` and
+`chrony_selection_interval_status=context_specific`.
+
+### Retention, provenance and safety
+
+All artifacts are outside Git in
+`%LOCALAPPDATA%\MoneyWay\Evidence\NtsCorrelation\`. Let `R` denote
+`correlation-f645b4fd27968d7265deec9f69ab63dde8191ab552347bbcb0f245541e4111e2.json`:
+
+| Artifact                                           | SHA256                                                             |
+| -------------------------------------------------- | ------------------------------------------------------------------ |
+| `R`                                                | `3b29d7e74e5511b0e88330dc20b3faca8b6573a91a470141af35bb26a050db40` |
+| `R.selection.log`                                  | `30eb24c0ced88baecd17afae11003ecb90a8ee6f66d3fd50eedc48dcdf6b8b46` |
+| `R.selection.json` manifest                        | `8d33b33d0198fbc5c84bda00a4542465e5f4b63783dded725301a24466a911de` |
+| `R.selection-method.ps1` capture-time helper bytes | `e42abc5745f76d5d28eb31e33ec2a43cdd574f4b039b37e9fcb422833ff537a3` |
+| `R.safety.json` before/after verification          | `487ea787f1368b3f720dd5c61a28fc1438d28fc546a94ad0a398ad04edf2459e` |
+
+The original capture-time helper bytes were retained because a subsequent
+offline-only correction preserves independent NTS status when selection evidence
+is missing or assumptions are absent. That correction leaves the authentic G
+assessment unchanged; the rereader verifies it against the immutable report and
+manifest. No second authentic capture was performed. The safety report records
+both helper hashes rather than silently relabeling the measured method.
+
+Before/after environment output matches: executable hashes, `/etc/wsl.conf`,
+`policy-rc.d`, package versions, nine service masks and no active time client.
+Chrony ran as UID 100, effective/bounding capabilities zero, NoNewPrivs 1.
+Pre-existing SysV links comprise three K stop links and four S start links;
+they were not created or removed here. PID 1 is WSL init with `systemd=false`,
+not a SysV runlevel launcher; service masks and the start-denial policy remain
+in place. This audit does not label those existing links as newly enabled
+services or claim that they are absent.
+
+The query directory's absence and no lingering time-client process were verified.
+Only the dedicated MoneyWay distribution was then terminated, returning it to
+its initial stopped state. Docker stayed stopped; no Docker operation or global
+WSL shutdown was invoked. `.wslconfig` remained absent. No clock correction,
+package/service change, MT5 capture or checkpoint advancement occurred.
+Six selected preservation pins match: original correlation, its reassessment,
+prior uncertainty report, receipt checkpoint, record 643 and probe 643. This
+scope does not claim a hash check of every collector file.
+
+### Validation and next action
+
+The [selection suite](../../tests/tools/Mt5NtsSelectionEvidence.Tests.ps1) passed
+**42** synthetic cases. Existing correlation, uncertainty, capability,
+native-UTC, correlated-tick and retention suites passed
+**48 + 40 + 33 + 28 + 56 + 33**: **280 passed, 0 failed, 0 skipped**.
+Tests include scientific notation and exact precision, missing/empty/header-only
+logs, selection/authentication separation, stale session/command/source rejection,
+invalid bounds/hashes, partial publication, manifest/log tampering, original
+input preservation and legacy compatibility. PowerShell AST and POSIX shell
+syntax checks pass. Full .NET build passed with zero warnings/errors.
+Markdown format/local links, report/log/manifest hashes, raw client bindings,
+preservation pins and `git diff --check` are checked before publication.
+
+The concrete outcome is that bounded non-adjusting `-Q` **does produce usable
+selection evidence** in this pinned environment; no different Chrony mode is
+required to obtain it. The smallest next action is an offline contract review
+mapping the selection estimate's sign, estimator clock and epoch, printed
+rounding and evolution assumptions to the Linux system-clock observations.
+Do not request another measurement or propagate to Windows/MT5 until that
+mapping is justified. The source-selection estimate is not the local tracking
+formula and does not resolve ultimate reference accuracy, oscillator drift,
+host/guest continuity, event binding, provider historical DST, candle closure
+or historical availability.
+
+`overall_utc_uncertainty=unresolved`; Windows UTC bound and MT5 event interval
+remain null. `windows_clock_authenticated=false`,
+`mt5_native_utc_authenticated=false`, `canonical_utc_conversion_authorized=false`,
+`utc_conversion_authenticated=false` and `canonical_ready=false`. The earlier
+Linux NTS authentication remains valid within its original scope. No strategy,
+active metadata or canonical replay behavior changed.
