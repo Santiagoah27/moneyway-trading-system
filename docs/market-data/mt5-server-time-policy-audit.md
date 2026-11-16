@@ -913,3 +913,217 @@ launcher presence alone cannot establish that environment or its correspondence
 to Windows host observation boundaries. Installing/provisioning a runtime or
 client requires separate operator authorization. A bounded adapter can follow
 once this prerequisite is demonstrated; no current source is selected as ready.
+
+## Bounded Windows/WSL NTS correlation (2026-11-16)
+
+The operator subsequently authorized an isolated Ubuntu 24.04 WSL 2 environment
+and retention of pre-existing Hyper-V implicit synchronization. Provisioning used
+the signed Canonical Ubuntu Base 24.04.5 image, a dedicated
+`MoneyWay-NTS-Ubuntu-24.04` distribution, Chrony `4.5-1ubuntu4.2` and GnuTLS
+`3.8.3-1.1ubuntu3.6`. The external provisioning report is
+`%LOCALAPPDATA%/MoneyWay/NtsEnvironment/provision-d6ab96b1308c47f7aba31aaae87bc27c/provisioning-report.json`,
+SHA256 `ec0208a28b7852ec9d807e9afe26d904e9b46bd66ee9afd3146040ca61d546ca`.
+Its 20 image/procedure/raw-output hash pins were independently rechecked and all
+matched. The recovered shell procedure, configuration, authentication reports and
+capability records were inspected. The provisioning measurement printed
+`-0.003012 seconds`; its scope remains that earlier Linux observation.
+
+This feature adds a [PowerShell 5.1 coordinator](../../tools/market-data/mt5/Get-Mt5NtsTimeCorrelation.ps1),
+[protocol/assessment helpers](../../tools/market-data/mt5/Mt5NtsCorrelation.ps1)
+and a [private POSIX shell capture](../../tools/market-data/mt5/Invoke-Mt5NtsLinuxCapture.sh).
+It reuses existing random-nonce, SHA256, safe local path and immutable publication
+helpers. The earlier 4.7 capability-report interpreter remains unchanged. The new
+assessment covers the installed 4.5 profile and current-session outputs. No
+canonical market-data or strategy component consumes these records.
+
+### Invocation and supported environment
+
+From Git Bash in the repository root, the exact operator command exercised was:
+
+```bash
+powershell.exe -NoLogo -NoProfile -File ./tools/market-data/mt5/Get-Mt5NtsTimeCorrelation.ps1 -Distribution MoneyWay-NTS-Ubuntu-24.04 -QueryTimeoutSeconds 20 -SessionTimeoutSeconds 60
+```
+
+Both timeouts and the exact distribution are required. Query bounds are 1–60
+seconds, session bounds 15–180 seconds, and the latter must allow the query plus
+10 seconds for protocol/cleanup. These are diagnostic resource limits, not
+latency/skew acceptance thresholds. An outer Linux GNU timeout and kill grace
+bound the session and its children. Each Chrony query has its own `-t` limit and
+an outer query limit five seconds longer, following the recovered procedure.
+
+Discovery enumerates installed distributions, including stopped ones. It selects
+only `MoneyWay-NTS-Ubuntu-24.04`; the running-before flag is recorded. The Linux
+guard verifies the exact package version and both previously validated executable
+hashes before its network query. Changed versions/binaries require review of the
+installed-client contract. The supported executable hashes are:
+
+- `chronyd`: `7a834e478d8a904c39a348606a5d0ac58fd1ccbca24f333a8170c786af8ca508`
+- `chronyc`: `271ea54c67206559437bd299d0e08c9e3d42ee6be322b1722e76311cd5d9df8d`
+
+The established configuration is copied into a new nonce-specific private
+`/tmp/mw-nts-<64-hex-session>` directory. It contains only
+`server time.cloudflare.com nts iburst`, `authselectmode require`, zero server
+and UDP command ports, and private Unix socket/pidfile paths. CA name/chain/time
+checks use the client's defaults. No certificate-check bypass, key/cookie dump,
+ordinary NTP fallback or external configuration include is introduced.
+
+Chrony runs as `_chrony`, using the established `setpriv --bounding-set=-all
+--reuid=_chrony --regid=_chrony --init-groups --no-new-privs` restrictions and
+`chronyd -Q -t <query-seconds> -f <private-config>`. Monitoring queries only
+`authdata -a` and `ntpdata` from that private socket. The retained pair comes from
+one running instance and matching remote endpoint. A successful query exit,
+printed offset, fresh session/configuration binding, NTS key/cookie evidence,
+accepted authenticated response and zero-capability record are all required for
+`nts_authenticated_measurement_observed=true`.
+
+The script verifies `systemd=false`, policy exit 101, nine time-unit masks and
+absence of an existing time-client process before starting. Cleanup kills/waits
+only its own child and removes its private session directory. The coordinator
+does not terminate any distribution. Cancellation closes the session stream and
+signals its private cancel marker. If cleanup cannot be confirmed, the failure
+report retains a requirement for reinspection while the inner GNU timeout still
+bounds its processes. No packages, services, `.wslconfig`, Docker settings or
+clock controls are changed by the diagnostic.
+
+Optional `-ReportPath` selects a new local file with an existing, non-reparse
+parent outside protected source/repository/provisioning locations. Default output
+is a unique JSON file under `%LOCALAPPDATA%/MoneyWay/Evidence/NtsCorrelation`.
+Publication uses the existing exclusive pending-file and no-overwrite protocol.
+Stdout contains the report path, hash and concise assessment. Invocation completion
+alone supplies no authentication conclusion; inspect the assessment and diagnostics.
+PowerShell callers can pass a cancellation token. Console interruption runs the
+session's cleanup path; an interrupted host may require checking the bounded
+Linux session's completion.
+
+### Observation domains and ordering
+
+The coordinator measures staging/possible WSL initialization separately from the
+capture process's launch-to-ready interval. A single capture process then handles
+nonce-bound BEFORE/RUN/AFTER/ACK messages. Windows records `UtcNow` and Stopwatch
+before sending each observation request and after receiving its response.
+Linux brackets GNU `date -u +%s.%N` with reads of `/proc/uptime`.
+
+The installed kernel's [uptime implementation](https://raw.githubusercontent.com/microsoft/WSL2-Linux-Kernel/linux-msft-wsl-6.6.87.2/fs/proc/uptime.c)
+uses `CLOCK_BOOTTIME`, includes suspend and truncates to hundredths of a second.
+The parser checks that format, preserves native literals and widens the displayed
+elapsed bracket by 0.01 seconds at each end to account for difference
+quantization. This is a local elapsed-time observation with explicit resolution.
+It establishes no clock-error acceptance threshold.
+
+Windows Stopwatch and Linux boottime have separate epochs and rate guarantees.
+They are never subtracted from one another. Elapsed times are calculated only
+inside their respective domains. The assessment retains differences between
+Windows realtime elapsed and Stopwatch elapsed without applying an invented
+tolerance or declaring clock-rate equivalence. Observed decreasing realtime,
+invalid monotonic ordering, missing timestamps and domain/frequency mismatches
+remain explicit failures of the temporal interpretation.
+
+For each response, the candidate Linux-minus-Windows realtime interval is
+`[LinuxRealtime - WindowsReceiptUtc, LinuxRealtime - WindowsSendUtc]`.
+This read bracket contains transport, process scheduling and timestamp-read
+sequencing. It is conditional on the observed realtime clocks and establishes no
+certified UTC correction. Subsample clock changes, rate uncertainty and network
+asymmetry remain unresolved. Hyper-V synchronization also prevents an assumption
+of independent Windows/Linux clocks.
+
+### Authentic capture and retained failures
+
+The authenticated capture session is
+`00ce059575293d5dcaaa168bbfc82627a58d34447e9b46b9dbeac52aec544459`.
+Its immutable report is
+`%LOCALAPPDATA%/MoneyWay/Evidence/NtsCorrelation/correlation-00ce059575293d5dcaaa168bbfc82627a58d34447e9b46b9dbeac52aec544459.json`,
+SHA256 `311d5f74dd1cc0548222f5000c43aed2b544cc4444e8e86373a4222eb9f1b249`.
+It retains raw non-secret client text, local observations, configuration and field
+hashes. The local interface address is withheld from `ntpdata` before retention;
+the report identifies that redaction and hashes the retained representation.
+
+Host UTC candidates span initialization at `2026-11-16T20:22:09.2122414Z` through
+completion at `2026-11-16T20:22:16.4386626Z`. Client timestamps report start/end at
+`20:22:09Z`/`20:22:16Z`. These local timestamps preserve their candidate provenance.
+Chrony reported the following current-session evidence:
+
+- NTS endpoint `162.159.200.123`, from the configured `time.cloudflare.com` source.
+- `authdata`: NTS mode, KeyID 1, AEAD type 30, 128-bit key length, last establishment
+  age 3 seconds, zero failed attempts/NAKs, eight cookies of length 64.
+- `ntpdata`: `Authenticated: Yes`, two received/valid/accepted responses.
+- Final printed offset `-0.005158 seconds`, ignored by clock control.
+- Last monitored packet offset `-0.012779095 seconds`, peer delay `0.025116688`,
+  peer dispersion `0.000050441`, root delay `0.091095`, root dispersion `0.000626`.
+- UID 100, zero effective/bounding capabilities, `NoNewPrivs=1`,
+  `Disabled control of system clock`, query and capture exit codes 0.
+
+The final estimator output and last monitored packet are different observations;
+their values are preserved individually. NTS-KE is evidenced by the established
+client's fresh NTS key/cookie report. Packet authentication is evidenced by its
+matching accepted-response report. No TLS transcript or cryptographic session
+secrets are retained. Interpretation follows the installed
+[Chrony 4.5 monitoring contract](https://chrony-project.org/doc/4.5/chronyc.html)
+and its [non-adjusting mode](https://chrony-project.org/doc/4.5/chronyd.html).
+
+| Observation                                           | Measured value                 |
+| ----------------------------------------------------- | ------------------------------ |
+| Initialization and staging, Windows Stopwatch         | 0.4182056 s                    |
+| Capture process launch to ready                       | 0.2008534 s                    |
+| Capture execution                                     | 6.7968218 s                    |
+| BEFORE exchange                                       | 0.0139205 s                    |
+| AFTER exchange                                        | 0.0608806 s                    |
+| Linux realtime elapsed between observations           | 6.531462162 s                  |
+| Linux boottime elapsed bracket including quantization | [6.52, 6.55] s                 |
+| BEFORE candidate Linux-minus-Windows interval         | [-0.008743687, +0.005255713] s |
+| AFTER candidate Linux-minus-Windows interval          | [-0.016948725, +0.043615275] s |
+| BEFORE Windows realtime minus Stopwatch elapsed       | +0.0000789 s                   |
+| AFTER Windows realtime minus Stopwatch elapsed        | -0.0003166 s                   |
+
+Quantization handling was tightened after the original report was published.
+An offline reassessment preserves the original report and raw measurements:
+`reassessment-00ce059575293d5dcaaa168bbfc82627a58d34447e9b46b9dbeac52aec544459.json`
+in the same directory, SHA256
+`4a0f217147e3120c8cff9cba6835b4f900fed491f7b5c3fd8adb4eb929cd8db4`.
+It binds the source report hash and assessment-source hash. The widened bracket
+above comes from that reassessment; it required no further NTS query.
+
+Development retained an earlier aborted exchange with session `bd0ed4b6…` before
+RUN, caused by Windows CRLF request framing. A second session `b7cd3cc7…` completed
+a real Chrony query but retained no authentication reports because the long Unix
+directory also had to accommodate `chronyc`'s reply-socket name. Both failure
+artifacts remain immutable with authentication false. LF request framing and the
+shorter private-directory prefix are regression tested. There were **two actual
+NTS query executions**, including that failed evidence capture, followed by the
+successful session above. The operator's requested one authentic capture required
+this bounded retry; the failed result was not promoted or overwritten.
+
+The post-capture read-only check verified all nine masks, zero service enablement
+links, no active time-client process and removal of the private session directory.
+The two executable and two Linux protection-file hashes match provisioning.
+Selected original record 643, probe 643, durable checkpoint and provisioning
+report hashes match before/after. This check covers those four selected inputs,
+not every file in the active collector. Docker remained stopped and `.wslconfig`
+remained absent. No distribution termination was invoked by the coordinator.
+
+### Conclusions and validation
+
+`nts_authenticated_measurement_observed=true` applies to the Linux client's
+current reference measurement. Windows/Linux read exchange timing is measured,
+but host UTC correlation is **insufficient** for MT5 authorization.
+`overall_utc_uncertainty=unresolved`; total UTC/Windows clock-error bounds remain
+null. Network peer delay and server dispersion are recorded components, without
+being promoted to a rigorous total uncertainty bound.
+
+`windows_clock_authenticated=false`, `mt5_native_utc_authenticated=false`,
+`canonical_utc_conversion_authorized=false`, `utc_conversion_authenticated=false`
+and `canonical_ready=false`. The measurement cannot retrospectively authenticate
+the earlier provisioning or MT5 captures. Provider historical DST mapping,
+provider-confirmed closure and historical information availability retain their
+independent evidence requirements. Canonical ingestion remains blocked.
+
+The [synthetic suite](../../tests/tools/Mt5NtsCorrelation.Tests.ps1) passed 48
+cases. Existing capability, native-UTC, correlated-tick and retention suites
+passed 33 + 28 + 56 + 33. Total **198 passed, 0 failed, 0 skipped**. Full .NET build
+passed with zero warnings/errors. PowerShell AST, Linux shell syntax, Markdown
+format/local links, immutable report hashes and `git diff --check` are checked
+before publication. Synthetic cases supply no authentic NTS evidence.
+
+The single next feature is a read-only uncertainty-contract audit of these
+host/guest exchange observations, defining which additional resolution and clock
+stability evidence is required before a Windows MT5 event can receive a justified
+UTC interval. No total-error threshold is selected by this capture.
