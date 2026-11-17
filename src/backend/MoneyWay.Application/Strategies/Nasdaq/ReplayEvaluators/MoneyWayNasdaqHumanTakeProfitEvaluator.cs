@@ -19,6 +19,12 @@ public sealed class MoneyWayNasdaqHumanTakeProfitEvaluator : IReplayRuleEvaluato
         var blocked = NasdaqFvgReplayPrerequisites.Check(context, RuleId);
         if (blocked is not null) return blocked;
         var latest = context.PriorObservations.LastOrDefault(o => o.Evaluations.Any(e => e.RuleId.Value == "NQ-SL-001"));
+        if (latest?.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").Result == RuleEvaluationResult.Passed
+            && NasdaqFvgReplayPrerequisites.Eligible(context, "NQ-SL-001")
+            && latest.RuleFacts.Any(f => f.RuleId.Value == "NQ-SL-001" && f.Fact is NasdaqHumanWickfillScenario2StopLossRuleFact wf2 && wf2.Session.Matches(context)))
+            return new(RuleEvaluationResult.HumanValidationRequired,
+                "The prior canonical Scenario 2 SL is established. A WF2-compatible human target consumer/input is still required; no target or Take Profit is inferred.",
+                latest.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").EvidenceReference);
         var stop = latest?.RuleFacts.Where(f => f.RuleId.Value == "NQ-SL-001").Select(f => f.Fact)
             .OfType<NasdaqHumanStructuralStopLossRuleFact>().SingleOrDefault();
         if (stop is null || !stop.Session.Matches(context)

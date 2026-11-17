@@ -141,7 +141,7 @@ public sealed class NasdaqScenario2MentorSessionTests : IDisposable
             .OfType<NasdaqScenario2LifecycleCompletionEvidence>().Any(e => e.Eligibility is not null) == true);
         Assert.True(eligibilityOwner.Strategy.AsOfUtc < completed.Strategy.AsOfUtc);
         Assert.All(StandardRules, id => Assert.Equal(RuleEvaluationResult.NotApplicable, Result(completed, id)));
-        Assert.Equal(RuleEvaluationResult.Waiting, Result(completed, "NQ-SL-001"));
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired, Result(completed, "NQ-SL-001"));
         Assert.NotNull(report.Frames.Last().Strategy.LifecycleProgression!.ActiveInstance);
         var path = Path.Combine(directory, "report.json");
         using (var stream = File.Create(path)) NasdaqMentorSessionReportJson.Write(stream, report);
@@ -157,6 +157,14 @@ public sealed class NasdaqScenario2MentorSessionTests : IDisposable
         Assert.Equal("Passed", summary.SelectedFrame.Rules.Single(r => r.RuleId == "NQ-WF2-002").Result);
         Assert.All(StandardRules, id => Assert.Equal("NotApplicable", summary.SelectedFrame.Rules.Single(r => r.RuleId == id).Result));
         Assert.NotEqual("Ready", summary.SelectedFrame.Verdict);
+        // A pre-convergence v2 presentation can legitimately retain NotImplemented. Do not upgrade its canonical result.
+        var legacy = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(path))!;
+        var stored = legacy["Frames"]!.AsArray().Single(f => f!["Step"]!.GetValue<int>() == completed.Strategy.Step)!;
+        stored["TradeLifecycle"]!["Stages"]!.AsArray().Single(s => s!["Stage"]!.GetValue<string>() == "StopLoss")!["Status"] = "NotImplemented";
+        File.WriteAllText(path, legacy.ToJsonString());
+        var oldView = await reader.ExecuteAsync(path, null, frameStep: completed.Strategy.Step);
+        Assert.Equal("NotImplemented", oldView.SelectedFrame!.TradeLifecycle!.Stages.Single(s => s.Stage == "StopLoss").Status);
+        Assert.Equal("HumanValidationRequired", oldView.SelectedFrame.Rules.Single(r => r.RuleId == "NQ-SL-001").Result);
     }
 
     private static JsonElement Resolve(JsonElement value, JsonElement scope)

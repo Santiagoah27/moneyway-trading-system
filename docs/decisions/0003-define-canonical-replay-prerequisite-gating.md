@@ -4,6 +4,26 @@
 
 Accepted.
 
+### Scoped OR prerequisite extension (2026-11-17)
+
+The explicitly requested WF2-to-NQ-SL-001 convergence reviews the OR/choice
+condition listed below. `StrategyReplayRulePrerequisite` retains its original
+AND group and optional latest-pass behavior. One explicitly declared
+`AlternativePrerequisiteRuleId` can satisfy that rule instead, only when it was
+established **and** its immediately prior eligibility snapshot established
+Passed. A same-frame pass or an older accumulated alternative pass is
+insufficient. If the original AND group is satisfied it remains the chosen
+route; otherwise the satisfied alternative is recorded as the actual prerequisite.
+Unknown, duplicate, self-dependent and cyclic edges are validated across both
+routes. Generic orchestration receives no Nasdaq IDs or evaluator logic.
+
+Only the built-in Nasdaq **draft** workflow declares this alternative:
+NQ-SL-001 retains Standard NQ-M1-003 and may instead consume prior NQ-WF2-002.
+The strategy-owned evaluator/selector still verify SELL, exact active ancestry,
+current source compatibility and human native SL evidence before Passed.
+No ACTIVE definition, activation, required flag, sequence, strategy verdict
+mapping or same-frame propagation policy is changed.
+
 This decision defines the architectural boundary for prerequisite eligibility. Runtime implementation and Nasdaq setup-lifecycle rules remain deferred.
 
 ## Date
@@ -150,16 +170,16 @@ Canonical diagnostics will project the preserved raw evaluation, eligibility/pro
 
 ## Alternatives considered
 
-| Alternative | Benefits | Risks and impact | Decision |
-|---|---|---|---|
-| A. Each evaluator enforces prerequisites | Localized initial code | Evaluator coupling, duplicated logic, hidden history/state, evaluator-to-evaluator calls, poor auditability and future-data risk | Rejected |
-| B. Canonical orchestration plus explicit strategy-owned workflow metadata | Generic infrastructure, stateless evaluators, auditable raw/effective separation, one chronological state owner | Adds workflow metadata and progression snapshots; requires lifecycle and status-mapping decisions | Selected |
-| C. Observation constructor performs gating | Keeps data together | Places policy in a validation model that has no strategy history or workflow metadata; constructor side effects would obscure orchestration | Rejected |
-| D. Outcome/verdict processing performs gating | Central final result | Too late to preserve progression semantics cleanly; conflates eligibility with verdict and current required blockers | Rejected |
-| E. Infer every lower `Sequence` as prerequisite | No new metadata | Factually incorrect for optional/parallel rules and silently redefines existing contracts | Rejected |
-| F. Infer dependencies from `IsRequired` | No new metadata | Conflates coverage with causality and makes every required rule a universal predecessor | Rejected |
-| G. Nasdaq-specific replay coordinator | Smaller one-strategy implementation | Creates a parallel path and hardcodes strategy identity into canonical behavior | Rejected |
-| H. Reconstruct history independently inside every evaluator | Avoids shared state object | Repeated scans, duplicated lifecycle interpretation, poor consistency and evaluator contract expansion | Rejected |
+| Alternative                                                               | Benefits                                                                                                        | Risks and impact                                                                                                                            | Decision |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| A. Each evaluator enforces prerequisites                                  | Localized initial code                                                                                          | Evaluator coupling, duplicated logic, hidden history/state, evaluator-to-evaluator calls, poor auditability and future-data risk            | Rejected |
+| B. Canonical orchestration plus explicit strategy-owned workflow metadata | Generic infrastructure, stateless evaluators, auditable raw/effective separation, one chronological state owner | Adds workflow metadata and progression snapshots; requires lifecycle and status-mapping decisions                                           | Selected |
+| C. Observation constructor performs gating                                | Keeps data together                                                                                             | Places policy in a validation model that has no strategy history or workflow metadata; constructor side effects would obscure orchestration | Rejected |
+| D. Outcome/verdict processing performs gating                             | Central final result                                                                                            | Too late to preserve progression semantics cleanly; conflates eligibility with verdict and current required blockers                        | Rejected |
+| E. Infer every lower `Sequence` as prerequisite                           | No new metadata                                                                                                 | Factually incorrect for optional/parallel rules and silently redefines existing contracts                                                   | Rejected |
+| F. Infer dependencies from `IsRequired`                                   | No new metadata                                                                                                 | Conflates coverage with causality and makes every required rule a universal predecessor                                                     | Rejected |
+| G. Nasdaq-specific replay coordinator                                     | Smaller one-strategy implementation                                                                             | Creates a parallel path and hardcodes strategy identity into canonical behavior                                                             | Rejected |
+| H. Reconstruct history independently inside every evaluator               | Avoids shared state object                                                                                      | Repeated scans, duplicated lifecycle interpretation, poor consistency and evaluator contract expansion                                      | Rejected |
 
 ## Consequences
 

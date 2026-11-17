@@ -91,6 +91,7 @@ public sealed class NasdaqHistoricalTradeLifecycleTests : IDisposable
     [InlineData("null-sources")]
     [InlineData("invented-rule-result")]
     [InlineData("fabricated-economic-outcome")]
+    [InlineData("unowned-scenario2-stop")]
     public async Task MalformedOrFuturePresentationEvidenceFailsClosed(string corruption)
     {
         Save(Run()); var root = JsonNode.Parse(File.ReadAllText(path))!;
@@ -105,6 +106,12 @@ public sealed class NasdaqHistoricalTradeLifecycleTests : IDisposable
         if (corruption == "null-sources") trade["Sources"] = null;
         if (corruption == "invented-rule-result") trade["Stages"]![0]!["RuleResult"] = "Passed";
         if (corruption == "fabricated-economic-outcome") trade["Stages"]![6]!["Status"] = "RecordedArtifact";
+        if (corruption == "unowned-scenario2-stop")
+        {
+            var at = frame["AsOfUtc"]!.GetValue<DateTimeOffset>();
+            var source = NasdaqHistoricalTradeLifecycleSummary.Source("SyntheticInput", at, "synthetic:unowned");
+            trade["Scenario2StopLoss"] = JsonSerializer.SerializeToNode(new NasdaqHistoricalScenario2Stop("synthetic:unowned", 115, 116, at, at, source, source));
+        }
         File.WriteAllText(path, root.ToJsonString());
         using var reader = new ReadNasdaqHistoricalReport();
         await Assert.ThrowsAsync<InvalidDataException>(() => reader.ExecuteAsync(path, null));

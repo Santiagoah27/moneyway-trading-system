@@ -1,5 +1,123 @@
 # Nasdaq historical report in the supervised local demo
 
+## WF2-to-NQ-SL-001 canonical convergence (2026-11-17)
+
+This functional increment supersedes the earlier delivery's **NotImplemented
+WF2-to-SL convergence** row below. Preflight verified clean synchronized `main`
+at `0b328067b4d145d8c7cd8b4ae984033e7364f18b`. The audited definition remains
+`nasdaq-0.1.0-draft`; no ACTIVE version, activation, Required flag or Sequence
+is modified.
+
+The existing NQ-SL-001 evaluator now routes actual surviving Scenario 2 SELL
+ancestry through `NasdaqHumanWickfillScenario2StopLossObservationSelector`.
+Missing native reference/price, independently documented initial StopPrice and
+authentic temporal/provenance fields require human validation. Complete compatible
+evidence publishes `NasdaqHumanWickfillScenario2StopLossRuleFact`; no Standard
+5M LH or M1 fact is manufactured. Conflicts remain human-review cases; unavailable
+exact sources, including competing unavailable assertions, prevent Passed.
+
+The draft workflow retains Standard's original AND route and adds explicit
+prior WF2-002 as a latest-pass OR alternative. Its satisfied route is recorded
+in `RuleEligibility.PrerequisiteRuleIds`. Same-frame WF2 completion, an older
+favorable pass after current failure, unknown/cyclic metadata and foreign owners
+cannot establish the new SL progression. The canonical dispatcher's terminal
+liquidity gate now also covers SL **only for actual WF2 ancestry**. Direct source
+selection is not a canonical terminal evaluation or execution authorization.
+Standard's route, selector, fact type and terminal predicate remain unchanged.
+See [ADR 0003](../decisions/0003-define-canonical-replay-prerequisite-gating.md)
+and [ADR 0026](../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md).
+
+The mentor binder accepts the existing SL observation with exact session,
+actual Start and prior eligibility references. It never clamps the original
+selection/availability time to binding or emission time. A bound observation is
+not automatically usable or Passed. The lifecycle summary/API/UI preserve an
+optional `Scenario2StopLoss` selection, including protective-reference identity,
+separate reference/stop prices, original times and both source references.
+This standalone SL evidence is distinct from the prices of a complete historical
+trade snapshot. Risk/TP consumers remain Standard-owned and cannot consume this
+new fact as an approved exposure/target. On the following eligible frame they
+explicitly acknowledge that the canonical WF2 SL exists and return
+HumanValidationRequired for their own unimplemented positive contracts/inputs,
+rather than claiming the SL prerequisite is absent. They never inherit a success
+from SL. Authentic Replay #2, which still has no approved SL, keeps both Waiting.
+
+### Authentic regenerated Replay #2
+
+The protected original report retains SHA256
+`41b35b81c05ebd3705b530322034567376b4d21d29cd43cf2e18468d7f587df2`.
+It remains an honest record of the older runtime's Wait result; the report
+reader does not reevaluate old artifacts. Configure the **new report** to view
+the new canonical result.
+
+The existing opt-in exporter imports the unchanged reviewed native CSVs through
+`GenerateCanonicalMultiTimeframeBacktestUseCase.ExecuteMentorSession`, evaluates
+the complete 7,596-frame prefix and independently compares the 7,597-frame prefix.
+All common historical rule/evidence and native diagnostic fingerprints match;
+future 13:37Z evidence does not alter 13:36Z or earlier. The selected six-frame
+window is exported after evaluation, not used as a truncated source history.
+The newly generated artifact is then read through the configured HTTP API with
+its expected SHA256. The existing adapter retains SHA256
+`8a6ac872022a170fa0cbda6d23a5cbad736bed9a8009e58647a2e8c2ebe09aa2`.
+
+| UTC frame | WF2-001 | WF2-002 | NQ-SL-001               | Canonical verdict       |
+| --------- | ------- | ------- | ----------------------- | ----------------------- |
+| 13:34     | Passed  | Waiting | Waiting                 | Wait                    |
+| 13:35     | Passed  | Passed  | Waiting                 | Wait                    |
+| 13:36     | Passed  | Passed  | HumanValidationRequired | HumanValidationRequired |
+
+At 13:36Z the actual SL selector has been reached. Native SL evidence remains
+missing; no reference/StopPrice, entry, target, exposure, exit, PnL or operation
+is invented. Risk and TP remain Waiting, and failure classification stays
+`inconclusive`. The diagrammatic M30 "second candle", sweep extreme and S14
+USTEC scalars are not selectors or numeric US100 substitutes.
+
+Published artifact: `C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-68e61670d99141f7b6025983d3f033be.json`.
+SHA256: `c60d0caa3615c3e944df8aa519c16942ef030f44e0fb57a982a65d8d09c7bd5e`.
+The envelope records its runtime base commit plus hashes of changed convergence
+code, source CSV identities/hashes, original evidence, complete prefix bounds,
+capabilities and actual canonical observations. Its base commit is explicitly
+the pre-feature checkpoint, not a claim that the old code generated the new
+result. Native data is not reacquired/renormalized and old reports are not
+overwritten. The initial exploratory export is retained separately.
+
+Use the existing report configuration and
+`http://localhost:5173/#nasdaq-historical-demo` with this new file/hash. To
+regenerate with the reviewed external adapter from repository root:
+
+```powershell
+$env:MONEYWAY_MENTOR_INPUT_SOURCE = 'C:\MoneyWay\session\validation\2026-09-08\ValidatedInput.cs'
+try {
+    dotnet test tests/integration/MoneyWay.IntegrationTests --no-restore "-p:NasdaqMentorSessionInputSource=$env:MONEYWAY_MENTOR_INPUT_SOURCE" --filter FullyQualifiedName~ExportReplay2CanonicalPreEntryDiagnosticFromRealHistoricalOutcomes --logger 'console;verbosity=detailed'
+} finally {
+    Remove-Item Env:MONEYWAY_MENTOR_INPUT_SOURCE
+}
+```
+
+Controlled synthetic tests exercise the real synchronized canonical coordinator,
+mentor binder, dedicated SL fact, workflow eligibility and serialized lifecycle
+projection, preserving independent risk/TP gates. Synthetic prices are never
+registered as authentic Replay #2 evidence. The selector suite also covers
+missing stop/reference, invalid provenance, mismatched feed, source availability,
+conflict, current terminal invalidation and unchanged earlier/future-prefix
+results. Old Waiting assertions specific to WF2's former Standard-only SL
+blocker are updated to HumanValidationRequired; their Standard exclusion and
+no-trade protections remain asserted.
+
+Final validation: 1,990 Application Nasdaq/workflow/canonical cases, 108 Nasdaq integration cases, 19 domain replay cases, one authentic regenerated canonical/API case and one legacy authentic API case: **2,119 .NET passed, zero failed, zero skipped**. The 47-case SL selector/convergence selection overlaps those totals. All **30 frontend tests** passed; complete .NET/frontend builds, ESLint, formatting, links and `git diff --check` passed. Synthetic integration success is separate from authentic SL completion. The published report is 4,429,846 bytes. Independent 7,596/7,597-frame generations have identical common-prefix rule/evidence and diagnostic fingerprints; no byte-equality claim is made between different runtime manifests or different prefix scopes.
+
+The remaining authentic human input is one complete native SL record: uniquely
+identified protective reference and price, independently approved initial native
+StopPrice, original effective/available times, source/human provenance and any
+explicitly validated USTEC-to-US100 numeric applicability. S14's USTEC initial
+price remains historically recorded, but does not supply those native fields or
+SL timestamps. No universal M30 geometry, buffer or historical timestamp is
+inferred.
+
+The next smallest functional feature is WF2-compatible documented risk exposure
+under NQ-RISK-001, reusing the existing exact 1% comparison and requiring a prior
+canonical WF2 SL plus independently documented account basis/maximum loss. No
+sizing, TP, execution or complete Nasdaq Demo v0 claim follows from this delivery.
+
 ## Historical trade lifecycle panel (Demo recovery)
 
 The existing historical-demo page/API now expose a **trade lifecycle for the

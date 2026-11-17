@@ -71,10 +71,10 @@ const tradeFixture = {
     stages: [
         {
             stage: "StopLoss",
-            status: "NotImplemented",
+            status: "MissingOrBlocked",
             ruleId: "NQ-SL-001",
             ruleResult: "Waiting",
-            reason: "Scenario 2 native SL ancestry is not integrated.",
+            reason: "Scenario 2 SL selector evaluated: native evidence missing.",
         },
         {
             stage: "SessionAttempts",
@@ -118,7 +118,9 @@ it("shows the incomplete trade lifecycle and human provenance without invented p
         name: "Ciclo de la operación histórica",
     });
     expect(
-        screen.getByText("Scenario 2 native SL ancestry is not integrated."),
+        screen.getByText(
+            "Scenario 2 SL selector evaluated: native evidence missing.",
+        ),
     ).toBeTruthy();
     expect(
         screen.getByText("Falta evidencia de entrada en el snapshot canónico"),
@@ -162,6 +164,49 @@ it("shows a source-documented close without claiming profit or a valid strategy 
     expect(
         screen.getByText(/sesión supervisada completa sigue pendiente/),
     ).toBeTruthy();
+});
+
+it("shows the separate canonical WF2 stop selection while entry risk and TP remain incomplete", async () => {
+    respond({
+        ...report,
+        selectedSessionLastFrame: {
+            ...report.selectedSessionLastFrame,
+            tradeLifecycle: {
+                ...tradeFixture,
+                stages: [
+                    {
+                        stage: "StopLoss",
+                        status: "RecordedEvaluation",
+                        ruleId: "NQ-SL-001",
+                        ruleResult: "Passed",
+                        reason: "Scenario 2 SL selector established native evidence.",
+                    },
+                ],
+                scenario2StopLoss: {
+                    referenceId: "synthetic:peak",
+                    protectivePrice: 115,
+                    stopPrice: 116,
+                    effectiveAtUtc: "2026-06-29T13:31:00Z",
+                    observedAtUtc: "2026-06-29T13:33:00Z",
+                    source: {
+                        sourceReference: "synthetic:human-stop",
+                        sourceReferenceSha256: "a".repeat(64),
+                    },
+                    protectiveSource: {
+                        sourceReference: "synthetic:human-peak",
+                        sourceReferenceSha256: "b".repeat(64),
+                    },
+                },
+            },
+        },
+    });
+    await screen.findByText(/SL canónico Scenario 2: 116/);
+    expect(screen.getByText(/synthetic:peak · 115/)).toBeTruthy();
+    expect(screen.getByText(/Fuente SL: synthetic:human-stop/)).toBeTruthy();
+    expect(
+        screen.getByText("Falta evidencia de entrada en el snapshot canónico"),
+    ).toBeTruthy();
+    expect(screen.getByText(/requisitos independientes/)).toBeTruthy();
 });
 
 // Synthetic transport fixtures: explicit timestamps, never an ordinal-to-time formula.

@@ -42,7 +42,7 @@ public sealed class StrategyReplayWorkflowCatalog
                 if (!knownRuleIds.Contains(declaration.DownstreamRuleId))
                     throw new InvalidOperationException(
                         $"Workflow '{workflow.StrategyId}' version '{workflow.StrategyVersion}' references unknown downstream rule '{declaration.DownstreamRuleId}'.");
-                var unknownPrerequisite = declaration.PrerequisiteRuleIds.FirstOrDefault(ruleId => !knownRuleIds.Contains(ruleId));
+                var unknownPrerequisite = declaration.AllPrerequisiteRuleIds.FirstOrDefault(ruleId => !knownRuleIds.Contains(ruleId));
                 if (unknownPrerequisite is not null)
                     throw new InvalidOperationException(
                         $"Workflow '{workflow.StrategyId}' version '{workflow.StrategyVersion}' references unknown prerequisite rule '{unknownPrerequisite}' for downstream rule '{declaration.DownstreamRuleId}'.");

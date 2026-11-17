@@ -47,7 +47,7 @@ public sealed class NasdaqScenario2LifecycleCompletionTests
             Assert.DoesNotContain(frame.LifecycleProgression.TransitionHistory, t => t.Kind == StrategyReplayLifecycleTransitionKind.Expire);
             Assert.DoesNotContain(frame.WorkflowProgression!.EstablishedRuleIds, id => id.Value is "NQ-M1-003" or "NQ-SL-001" or "NQ-RISK-001");
         }
-        Assert.Equal(RuleEvaluationResult.Waiting, next.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").Result);
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired, next.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").Result);
         Assert.Equal(RuleEvaluationResult.Waiting, next.Evaluations.Single(e => e.RuleId.Value == "NQ-RISK-001").Result);
         Assert.NotEqual(StrategyVerdict.Ready, new EvaluateStrategyReplayContextOutcomeUseCase().Execute(LiquidityFixture.Definition, next).Verdict);
         Assert.Equal(signature, JsonSerializer.Serialize(next.LifecycleProgression));

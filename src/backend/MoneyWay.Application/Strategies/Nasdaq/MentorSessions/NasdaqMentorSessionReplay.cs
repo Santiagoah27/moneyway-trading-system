@@ -83,6 +83,7 @@ public sealed class NasdaqMentorSessionReplay(NasdaqMentorSessionReplayInput inp
                 NasdaqHumanWickfillScenario2PostSweepReversalObservation o => o.Session,
                 NasdaqHistoricalObservedEntryObservation o => o.Session,
                 NasdaqHumanStructuralStopLossObservation o => o.Session,
+                NasdaqHumanWickfillScenario2StopLossObservation o => o.Session,
                 NasdaqHumanTakeProfitObservation o => o.Session,
                 NasdaqRiskExposureObservation o => o.Session,
                 NasdaqHistoricalDocumentedExitObservation o => o.Session,
@@ -97,6 +98,7 @@ public sealed class NasdaqMentorSessionReplay(NasdaqMentorSessionReplayInput inp
             {
                 NasdaqHumanBranchApplicabilityObservation o => o.InitialTakeObservation,
                 NasdaqHumanWickfillScenario2PostSweepReversalObservation o => o.OpeningSweep.TakeObservation,
+                NasdaqHumanWickfillScenario2StopLossObservation o => o.StartOwner,
                 _ => null,
             };
             if (setupOwner is not null && !OwnsActiveSetup(context, setupOwner))
@@ -108,6 +110,7 @@ public sealed class NasdaqMentorSessionReplay(NasdaqMentorSessionReplayInput inp
                 NasdaqHumanM1RealignmentObservation o => new IReplayRuleFact[] { o.Pullback },
                 NasdaqHistoricalObservedEntryObservation o => [o.PreEntryEligibility],
                 NasdaqHumanStructuralStopLossObservation o => [o.PreEntryEligibility],
+                NasdaqHumanWickfillScenario2StopLossObservation o => [o.PreEntryEligibility],
                 NasdaqHumanTakeProfitObservation o => [o.StopLoss],
                 NasdaqRiskExposureObservation o => [o.PreEntryEligibility, o.StopLoss],
                 _ => [],

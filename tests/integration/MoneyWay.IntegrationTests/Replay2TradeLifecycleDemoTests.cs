@@ -35,7 +35,7 @@ public sealed class Replay2TradeLifecycleDemoTests(ITestOutputHelper output)
         Assert.Equal("Passed", frame.Rules.Single(r => r.RuleId == "NQ-WF2-001").Result);
         Assert.Equal("Passed", frame.Rules.Single(r => r.RuleId == "NQ-WF2-002").Result);
         Assert.Equal("Waiting", trade.Stages.Single(s => s.Stage == "StopLoss").RuleResult);
-        Assert.Equal("NotImplemented", trade.Stages.Single(s => s.Stage == "StopLoss").Status);
+        Assert.Equal("MissingOrBlocked", trade.Stages.Single(s => s.Stage == "StopLoss").Status);
         Assert.Null(trade.Entry); Assert.Null(trade.StopPrice); Assert.Null(trade.TakeProfitPrice); Assert.Null(trade.Exit);
         Assert.Equal("inconclusive", trade.FailureClassification); Assert.False(trade.CompleteSupervisedTrade);
         Assert.Contains(trade.Sources, s => s.SourceReference.Contains("human:S13", StringComparison.Ordinal));

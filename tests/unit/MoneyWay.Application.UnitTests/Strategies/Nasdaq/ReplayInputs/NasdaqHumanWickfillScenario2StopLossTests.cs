@@ -12,7 +12,7 @@ using F = MoneyWay.Application.UnitTests.Strategies.Nasdaq.ReplayInputs.NasdaqHu
 namespace MoneyWay.Application.UnitTests.Strategies.Nasdaq.ReplayInputs;
 
 // All prices, times, source labels and candles here are synthetic, never Replay #2 evidence.
-public sealed class NasdaqHumanWickfillScenario2StopLossTests
+public sealed partial class NasdaqHumanWickfillScenario2StopLossTests
 {
     private static readonly NasdaqHumanWickfillScenario2StopLossObservationSelector Selector = new();
     private static DateTimeOffset At(int hour, int minute = 0) => LiquidityFixture.At(hour).AddMinutes(minute);
@@ -345,6 +345,8 @@ public sealed class NasdaqHumanWickfillScenario2StopLossTests
         Assert.IsType<NasdaqHumanWickfillScenario2StopLossSelection.Unique>(Selector.Select(terminalContext));
         var raw = new EvaluateStrategyReplayContextUseCase(MoneyWayReplayRuleEvaluators.GetAll()).Execute(LiquidityFixture.Definition, terminalContext);
         Assert.Equal(RuleEvaluationResult.Failed, raw.Evaluations.Single(e => e.RuleId.Value == "NQ-WF2-002").Result);
+        Assert.Equal(RuleEvaluationResult.Failed, raw.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").Result);
+        Assert.DoesNotContain(raw.RuleFacts, f => f.Fact is NasdaqHumanWickfillScenario2StopLossRuleFact);
         var advanced = new AdvanceStrategyReplayLifecycleUseCase(new()).Execute(MoneyWayReplayWorkflowDefinitions.GetAll().Single(),
             new MoneyWayNasdaqReplayLifecyclePolicy(), raw, setup.Owner.LifecycleProgression);
         var terminal = raw.WithProgressions(advanced.WorkflowProgression, advanced.LifecycleProgression);
@@ -354,7 +356,7 @@ public sealed class NasdaqHumanWickfillScenario2StopLossTests
     }
 
     [Fact]
-    public void FutureTailCannotChangeEarlierSelectionAndPrimitiveCannotAlterStandardOrSLResults()
+    public void FutureTailCannotChangeEarlierSelectionAndCanonicalConvergenceChangesOnlySL()
     {
         var setup = BuildStopSetup(); var stop = Stop(setup); var context = Frame(setup, null, stop);
         var series = context.AvailableTimeframes.Select(t =>
@@ -380,9 +382,10 @@ public sealed class NasdaqHumanWickfillScenario2StopLossTests
         Assert.Equal(JsonSerializer.Serialize(selected), JsonSerializer.Serialize(expandedSelection));
         var before = new EvaluateStrategyReplayContextUseCase(MoneyWayReplayRuleEvaluators.GetAll()).Execute(LiquidityFixture.Definition, Frame(setup));
         var after = new EvaluateStrategyReplayContextUseCase(MoneyWayReplayRuleEvaluators.GetAll()).Execute(LiquidityFixture.Definition, context);
-        Assert.Equal(JsonSerializer.Serialize(before.Evaluations), JsonSerializer.Serialize(after.Evaluations));
-        Assert.Equal(JsonSerializer.Serialize(before.RuleFacts), JsonSerializer.Serialize(after.RuleFacts));
-        Assert.Equal(RuleEvaluationResult.Waiting, after.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").Result);
+        Assert.Equal(JsonSerializer.Serialize(before.Evaluations.Where(e => e.RuleId.Value != "NQ-SL-001")), JsonSerializer.Serialize(after.Evaluations.Where(e => e.RuleId.Value != "NQ-SL-001")));
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired, before.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").Result);
+        Assert.Equal(RuleEvaluationResult.Passed, after.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").Result);
+        Assert.Contains(after.RuleFacts, f => f.Fact is NasdaqHumanWickfillScenario2StopLossRuleFact);
         Assert.DoesNotContain(after.RuleFacts, f => f.Fact is NasdaqHumanStructuralStopLossRuleFact);
     }
 }

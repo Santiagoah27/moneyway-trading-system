@@ -20,11 +20,11 @@ Source S1 is the user's explicit human-reviewed evidence supplied in the task **
 
 The cited original is [JacoggFX's mentor video](https://www.youtube.com/watch?v=QcN8dE8ry6I). The supplied review gives these references:
 
-| Original-video reference supplied by S1 | Tight paraphrase of the human-reviewed evidence | Scope |
-|---|---|---|
-| [06:40–06:55](https://www.youtube.com/watch?v=QcN8dE8ry6I&t=400s) | Taking a trade near the opening requires an already well-organized structure/context and clear prior corrective movement. | Context supporting early-session execution; no numerical detector |
-| [38:02–39:40](https://www.youtube.com/watch?v=QcN8dE8ry6I&t=2282s) | Scenario 1 cannot immediately sell while price remains at the lower part of the range; it must first retrace to the relevant zone during the session. In Scenario 2 price is already at the relevant H4 zone before opening; the opening liquidity sweep and subsequent rejection/break remain necessary. | Historical S1 general-context attribution; not causal Replay #2 entry evidence. S3 below explicitly excludes 38:43–39:03 as entry-trigger or geometry evidence |
-| Replay #2 opening/execution observations in S1; separate video offsets not supplied | The mentor wanted the opening move above London High and said he would not enter without that sweep. After the sweep/rejection he used a Sell Stop on M30, executing approximately 08:32. M1 and a pre-entry FVG or M5 SC/IFVG were not used; M5 was reviewed later around 08:35 as confluence. | Historical session observations, not universal order or M30 mechanics |
+| Original-video reference supplied by S1                                             | Tight paraphrase of the human-reviewed evidence                                                                                                                                                                                                                                                           | Scope                                                                                                                                                          |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [06:40–06:55](https://www.youtube.com/watch?v=QcN8dE8ry6I&t=400s)                   | Taking a trade near the opening requires an already well-organized structure/context and clear prior corrective movement.                                                                                                                                                                                 | Context supporting early-session execution; no numerical detector                                                                                              |
+| [38:02–39:40](https://www.youtube.com/watch?v=QcN8dE8ry6I&t=2282s)                  | Scenario 1 cannot immediately sell while price remains at the lower part of the range; it must first retrace to the relevant zone during the session. In Scenario 2 price is already at the relevant H4 zone before opening; the opening liquidity sweep and subsequent rejection/break remain necessary. | Historical S1 general-context attribution; not causal Replay #2 entry evidence. S3 below explicitly excludes 38:43–39:03 as entry-trigger or geometry evidence |
+| Replay #2 opening/execution observations in S1; separate video offsets not supplied | The mentor wanted the opening move above London High and said he would not enter without that sweep. After the sweep/rejection he used a Sell Stop on M30, executing approximately 08:32. M1 and a pre-entry FVG or M5 SC/IFVG were not used; M5 was reviewed later around 08:35 as confluence.           | Historical session observations, not universal order or M30 mechanics                                                                                          |
 
 These are attributed human-reviewed paraphrases, not a newly extracted transcript. The earlier assistant access check retrieved video metadata but no usable captions/audiovisual content; it did **not** independently verify the full video. S1 is the current explicit human confirmation. This record makes no invented quotation, missing video offset or claim of independent audiovisual inspection.
 
@@ -91,14 +91,14 @@ Scenario 2 pre-open context
 -> future reviewed post-sweep behavior
 ```
 
-| Assertion | State | Boundary |
-|---|---|---|
-| Required opening-sweep reference belongs to `{LondonHigh, LondonLow}` | `confirmed` | Current closed admissible set; this is not an arbitrary SessionLevel or Structural reference |
-| The exact selected endpoint must be swept | `confirmed` | Existing strict take arithmetic: High requires `ObservedPrice > ReferencePrice`; Low requires `ObservedPrice < ReferencePrice`; equality is insufficient and no penetration threshold/tolerance is added |
-| Which London endpoint is relevant for the setup/session | `human_validation_required` | Retain the human's exact selection and provenance; no automatic winner |
-| Autonomous endpoint-selection algorithm | `unresolved` | No selection or side-selection detector is defined |
-| Expansion to AsiaHigh, AsiaLow or structural/session alternatives | `unresolved` | Not admitted by the current definition; future expansion is candidate research/evidence only |
-| BUY-specific branch semantics or universal branch-direction/endpoint mapping | `unresolved` where not independently confirmed | The existing supported branch remains SELL-only; the endpoint set does not establish BUY symmetry |
+| Assertion                                                                    | State                                          | Boundary                                                                                                                                                                                                 |
+| ---------------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Required opening-sweep reference belongs to `{LondonHigh, LondonLow}`        | `confirmed`                                    | Current closed admissible set; this is not an arbitrary SessionLevel or Structural reference                                                                                                             |
+| The exact selected endpoint must be swept                                    | `confirmed`                                    | Existing strict take arithmetic: High requires `ObservedPrice > ReferencePrice`; Low requires `ObservedPrice < ReferencePrice`; equality is insufficient and no penetration threshold/tolerance is added |
+| Which London endpoint is relevant for the setup/session                      | `human_validation_required`                    | Retain the human's exact selection and provenance; no automatic winner                                                                                                                                   |
+| Autonomous endpoint-selection algorithm                                      | `unresolved`                                   | No selection or side-selection detector is defined                                                                                                                                                       |
+| Expansion to AsiaHigh, AsiaLow or structural/session alternatives            | `unresolved`                                   | Not admitted by the current definition; future expansion is candidate research/evidence only                                                                                                             |
+| BUY-specific branch semantics or universal branch-direction/endpoint mapping | `unresolved` where not independently confirmed | The existing supported branch remains SELL-only; the endpoint set does not establish BUY symmetry                                                                                                        |
 
 This clarification supersedes any generic reading of section 2 item 3 as "Scenario 2 always uses LondonHigh", and any reading of "trade-relevant opening sweep" as admitting any canonical High/Low reference. Replay #2 retains its source-selected `LondonHigh`; that historical endpoint does not define the generic set. London commonly breaking Asia liquidity is a human research observation, not authorization for Asia or structural fallback.
 
@@ -118,11 +118,11 @@ Reviewed pre-open Scenario 2 context
 -> consideration of a future SELL early-entry path
 ```
 
-| Video reference reviewed by S3 | Authoritative evidence treatment | Classification / boundary |
-|---|---|---|
-| [08:18–08:27](https://www.youtube.com/watch?v=QcN8dE8ry6I&t=498s) | The mentor wants price to take/exceed the London highs, then turn bearish, and from there consider a SELL. The reviewer confirms that the historical trade subsequently follows this sequence. | `confirmed` strategy concept; recognition remains `human_validation_required`, deterministic geometry `unresolved` |
-| [06:11–06:28](https://www.youtube.com/watch?v=QcN8dE8ry6I&t=371s) | A response to a student's hypothetical trade without first taking liquidity; described as risky. It is not the causal evidence for Replay #2 Scenario 2 progression. | Inferring a required green first session candle from this passage is `rejected_ai_inference`; do not encode it |
-| [38:43–39:03](https://www.youtube.com/watch?v=QcN8dE8ry6I&t=2323s) | Later conversation after the historical trade had resolved around video 18:08; not authorized by S3 as causal entry evidence for Replay #2. | Inferring a required structural break, entry trigger or deterministic geometry from this passage is `rejected_ai_inference`; general strategy interpretation requires a separate future audit |
+| Video reference reviewed by S3                                     | Authoritative evidence treatment                                                                                                                                                               | Classification / boundary                                                                                                                                                                     |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [08:18–08:27](https://www.youtube.com/watch?v=QcN8dE8ry6I&t=498s)  | The mentor wants price to take/exceed the London highs, then turn bearish, and from there consider a SELL. The reviewer confirms that the historical trade subsequently follows this sequence. | `confirmed` strategy concept; recognition remains `human_validation_required`, deterministic geometry `unresolved`                                                                            |
+| [06:11–06:28](https://www.youtube.com/watch?v=QcN8dE8ry6I&t=371s)  | A response to a student's hypothetical trade without first taking liquidity; described as risky. It is not the causal evidence for Replay #2 Scenario 2 progression.                           | Inferring a required green first session candle from this passage is `rejected_ai_inference`; do not encode it                                                                                |
+| [38:43–39:03](https://www.youtube.com/watch?v=QcN8dE8ry6I&t=2323s) | Later conversation after the historical trade had resolved around video 18:08; not authorized by S3 as causal entry evidence for Replay #2.                                                    | Inferring a required structural break, entry trigger or deterministic geometry from this passage is `rejected_ai_inference`; general strategy interpretation requires a separate future audit |
 
 Video offsets, including the approximate trade-resolution reference at 18:08, are source locations, not exact UTC market-event or historical assertion-availability timestamps. They cannot backfill replay. S3's treatment takes precedence over conflicting interpretations in the AI-assisted report and over using the later S1 context-discussion citation to define Replay #2's entry condition; the earlier attributions are retained as historical reasoning only within those limits.
 
@@ -216,11 +216,11 @@ Standard Nasdaq, Scenario 2 BUY, Forex, the general 5M HL/LH concept and unrelat
 
 **Scope:** Replay #2, 2026-09-08, SELL. S8 supports the already approved S1 Wickfill Scenario 2 interpretation; it supplies new pre-open source-chart observations, not a new strategy rule. The following visible contents and times are `confirmed` as the user's attributed screenshot report; their visual support is `visual_only`, not an autonomous classifier. Video offsets locate the selected images and are not UTC market timestamps.
 
-| User-selected screenshot | Reported source chart and visible clock | UTC equivalent of that chart-clock reading | Supported observation and limit |
-|---|---|---|---|
-| 1 — video `02:21` | TradingView US Nas 100 / OANDA, **H4** selected; `08:21:54 UTC-5` | `2026-09-08T13:21:54Z` | Crosshair identifies the September 8 `04:00` candle, previously closed at `08:00`. Displayed OHLC: O `29471.4`, H `29618.6`, L `29448.8`, C `29618.6`. Supports identifying the reviewed H4 candle, not dating every component of the complete Wickfill interpretation. |
-| 2 — video `06:58` | TradingView **H4** selected; `08:26:31 UTC-5` | `2026-09-08T13:26:31Z` | Upper resistance region and illustrated retest context remain visible. This image is not an M30 chart or proof of a completed future retest. |
-| 3 — video `08:08` | TradingView **H4** selected; `08:27:42 UTC-5` | `2026-09-08T13:27:42Z` | Yellow scenario illustration and upper H4 reference support S1's SELL/Wickfill interpretation. The drawing is illustrative, not an observed future price path or a future market confirmation. |
+| User-selected screenshot | Reported source chart and visible clock                           | UTC equivalent of that chart-clock reading | Supported observation and limit                                                                                                                                                                                                                                         |
+| ------------------------ | ----------------------------------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 — video `02:21`        | TradingView US Nas 100 / OANDA, **H4** selected; `08:21:54 UTC-5` | `2026-09-08T13:21:54Z`                     | Crosshair identifies the September 8 `04:00` candle, previously closed at `08:00`. Displayed OHLC: O `29471.4`, H `29618.6`, L `29448.8`, C `29618.6`. Supports identifying the reviewed H4 candle, not dating every component of the complete Wickfill interpretation. |
+| 2 — video `06:58`        | TradingView **H4** selected; `08:26:31 UTC-5`                     | `2026-09-08T13:26:31Z`                     | Upper resistance region and illustrated retest context remain visible. This image is not an M30 chart or proof of a completed future retest.                                                                                                                            |
+| 3 — video `08:08`        | TradingView **H4** selected; `08:27:42 UTC-5`                     | `2026-09-08T13:27:42Z`                     | Yellow scenario illustration and upper H4 reference support S1's SELL/Wickfill interpretation. The drawing is illustrative, not an observed future price path or a future market confirmation.                                                                          |
 
 **Source reconciliation:**
 
@@ -232,14 +232,14 @@ Standard Nasdaq, Scenario 2 BUY, Forex, the general 5M HL/LH concept and unrelat
 
 **Temporal fields remain separate:**
 
-| Field / meaning | Evidence state after S8 |
-|---|---|
-| Reviewed H4 candle interval | `confirmed`: September 8 `04:00–08:00 America/Bogota`, or `09:00–13:00Z`, under the already retained September source mapping. The candle close is `13:00Z`. |
-| Source chart observation | The three chart-clock readings and their UTC equivalents above are retained exactly as reported. They locate the displayed context; they are not automatically runtime `ObservedAtUtc` values for the full strategy assertion. |
+| Field / meaning                         | Evidence state after S8                                                                                                                                                                                                                         |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reviewed H4 candle interval             | `confirmed`: September 8 `04:00–08:00 America/Bogota`, or `09:00–13:00Z`, under the already retained September source mapping. The candle close is `13:00Z`.                                                                                    |
+| Source chart observation                | The three chart-clock readings and their UTC equivalents above are retained exactly as reported. They locate the displayed context; they are not automatically runtime `ObservedAtUtc` values for the full strategy assertion.                  |
 | Complete mentor strategy interpretation | S1 already confirms SELL/Wickfill pre-open context and the completed macro move. S8 adds supporting illustrations; exact completion of the full interpretation/verbalization at `13:27:42Z` or `13:27:46Z` remains `human_validation_required`. |
-| Full WF2 context `EffectiveAtUtc` | `human_validation_required`: do not assign the H4 close `13:00Z` to every semantic component merely because the candle was closed. No complete-context effective timestamp is selected here. |
-| Full WF2 context `ObservedAtUtc` | `human_validation_required`: neither a screenshot's clock, the older preparation available-by boundary `13:27Z`, nor the current audit date automatically establishes when the complete assertion became historically source-observable. |
-| Subsequent human audit | S8 was supplied on `2026-10-30`; that audit date is not a historical market event or availability timestamp. Screenshot bytes/hashes remain external and unverified here. |
+| Full WF2 context `EffectiveAtUtc`       | `human_validation_required`: do not assign the H4 close `13:00Z` to every semantic component merely because the candle was closed. No complete-context effective timestamp is selected here.                                                    |
+| Full WF2 context `ObservedAtUtc`        | `human_validation_required`: neither a screenshot's clock, the older preparation available-by boundary `13:27Z`, nor the current audit date automatically establishes when the complete assertion became historically source-observable.        |
+| Subsequent human audit                  | S8 was supplied on `2026-10-30`; that audit date is not a historical market event or availability timestamp. Screenshot bytes/hashes remain external and unverified here.                                                                       |
 
 ADR 0025's effective/observed-time distinction still applies. No new typed Scenario 2 pre-open context is fully authorized solely by these screenshots. The next human-validation step is to confirm the effective time and historically source-observable availability of the complete pre-open assertion against contemporaneous source material, retaining distinct times where applicable. Reversal event/availability, canonical Start binding and all other existing typed-input requirements remain separate. No runtime, evaluator, metadata, adapter, strategy version, SL/TP/risk or execution behavior changes.
 
@@ -247,11 +247,11 @@ ADR 0025's effective/observed-time distinction still applies. No new typed Scena
 
 **Scope: `confirmed`, Replay #2 on 2026-09-08 only.** S9 explicitly confirms two separate historical meanings for the complete H4 SELL/Wickfill context, including the completed H4 corrective movement toward the relevant zone:
 
-| Field | Approved historical value | Meaning and source |
-|---|---|---|
-| `EffectiveAtUtc` | `2026-09-08T13:00:00Z` | At `08:00 America/Bogota`, when the reviewed H4 candle closed, the complete context conditions had already been fulfilled. S9 directly confirms this semantic fact; it is not inferred merely from candle closure. |
-| `ObservedAtUtc` | `2026-09-08T13:27:42Z` | The mentor had explicitly recognized the complete interpretation no later than `08:27:42 America/Bogota`. S9 approves this available-by boundary for the historical record, not a claim that first recognition or an exact utterance began at that second. |
-| Subsequent human audit | `2026-10-30` | The date of the user's confirmation, distinct from both historical fields. It is not substituted for historical observation time. |
+| Field                  | Approved historical value | Meaning and source                                                                                                                                                                                                                                         |
+| ---------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EffectiveAtUtc`       | `2026-09-08T13:00:00Z`    | At `08:00 America/Bogota`, when the reviewed H4 candle closed, the complete context conditions had already been fulfilled. S9 directly confirms this semantic fact; it is not inferred merely from candle closure.                                         |
+| `ObservedAtUtc`        | `2026-09-08T13:27:42Z`    | The mentor had explicitly recognized the complete interpretation no later than `08:27:42 America/Bogota`. S9 approves this available-by boundary for the historical record, not a claim that first recognition or an exact utterance began at that second. |
+| Subsequent human audit | `2026-10-30`              | The date of the user's confirmation, distinct from both historical fields. It is not substituted for historical observation time.                                                                                                                          |
 
 America/Bogota is UTC-5 for these source times; no DST or America/New_York conversion is applied. The approved pair satisfies `EffectiveAtUtc <= ObservedAtUtc`. Existing ADR 0025 visibility remains mandatory: at `StrategyReplayContext.AsOfUtc < 2026-09-08T13:27:42Z`, this complete observation must not be supplied or consumed, despite its earlier effective time. At or after the approved availability, consumption remains subject to the existing source, identity, workflow and lifecycle contracts. Auxiliary observations create no new replay boundary; a later existing canonical frame can consume them without shifting their effective/observed times or backfilling earlier frames.
 
@@ -267,25 +267,25 @@ S9 does not establish branch-applicability review timestamps, a reversal `EventI
 
 The following are **human-provided visual observations**, not locally verified image bytes:
 
-| Screenshot item | Attributed observation | Boundary |
-|---|---|---|
-| Platform / instrument / chart | MetaTrader 5 / `USTEC` / M30 | Operational source identity; distinct from native CSV `US100`. No source-feed or price equivalence is inferred. |
-| Pending order | SELL STOP at `29605.75`, status `placed` | Pending placement only, not proof of fill, executed entry price or historical trade outcome. |
-| Order creation | `2026.09.08 16:30:37` server | Exact displayed placement timestamp; approved September-pack mapping gives `2026-09-08T13:30:37Z`. |
-| Market Watch | `16:30:42` server | Visible observation clock maps to `2026-09-08T13:30:42Z`; not proof of earliest source observation. |
-| Windows clock | 08:30 a.m., 2026-09-08 | Minute precision only; does not establish seconds or replace either MT5 timestamp. |
+| Screenshot item               | Attributed observation                   | Boundary                                                                                                        |
+| ----------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Platform / instrument / chart | MetaTrader 5 / `USTEC` / M30             | Operational source identity; distinct from native CSV `US100`. No source-feed or price equivalence is inferred. |
+| Pending order                 | SELL STOP at `29605.75`, status `placed` | Pending placement only, not proof of fill, executed entry price or historical trade outcome.                    |
+| Order creation                | `2026.09.08 16:30:37` server             | Exact displayed placement timestamp; approved September-pack mapping gives `2026-09-08T13:30:37Z`.              |
+| Market Watch                  | `16:30:42` server                        | Visible observation clock maps to `2026-09-08T13:30:42Z`; not proof of earliest source observation.             |
+| Windows clock                 | 08:30 a.m., 2026-09-08                   | Minute precision only; does not establish seconds or replace either MT5 timestamp.                              |
 
 For this audited September source only, UTC = server time minus three hours; the mapped times correspond to 08:30:37 and 08:30:42 America/Bogota (UTC-5). This does not establish a general MT5/provider timezone rule. The registration date `2026-11-03` is a subsequent human evidence record, not historical event time.
 
-| Temporal meaning | S10 evidence and remaining limit |
-|---|---|
-| Operational selection already established | **No later than `2026-09-08T13:30:37Z`**, an upper bound supported by placement. |
-| First effective selection instant | `human_validation_required`: exact earliest decision time is not independently established. Do not automatically assign `ReviewEffectiveAtUtc = 2026-09-08T13:30:37Z`. |
-| Visible source clock | Exact displayed `2026-09-08T13:30:42Z`; earliest historical observation is unknown. Do not automatically assign `ReviewObservedAtUtc = 2026-09-08T13:30:42Z`. |
-| First intraminute London High crossing | Unknown. The human recognition/order record does not create an earlier native price event. |
-| Existing native closed-M1 take | Retain `2026-09-08T13:31:00Z`; this availability is distinct from the unknown first intraminute crossing. |
-| Canonical lifecycle Start | Must be the actual replay run's initiating-take owner, with its real identity and availability. Neither screenshot nor pending order substitutes for it. |
-| S9 complete pre-open context | Preserve `EffectiveAtUtc = 2026-09-08T13:00:00Z` and `ObservedAtUtc = 2026-09-08T13:27:42Z`; context availability and operational selection remain separate. |
+| Temporal meaning                          | S10 evidence and remaining limit                                                                                                                                       |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Operational selection already established | **No later than `2026-09-08T13:30:37Z`**, an upper bound supported by placement.                                                                                       |
+| First effective selection instant         | `human_validation_required`: exact earliest decision time is not independently established. Do not automatically assign `ReviewEffectiveAtUtc = 2026-09-08T13:30:37Z`. |
+| Visible source clock                      | Exact displayed `2026-09-08T13:30:42Z`; earliest historical observation is unknown. Do not automatically assign `ReviewObservedAtUtc = 2026-09-08T13:30:42Z`.          |
+| First intraminute London High crossing    | Unknown. The human recognition/order record does not create an earlier native price event.                                                                             |
+| Existing native closed-M1 take            | Retain `2026-09-08T13:31:00Z`; this availability is distinct from the unknown first intraminute crossing.                                                              |
+| Canonical lifecycle Start                 | Must be the actual replay run's initiating-take owner, with its real identity and availability. Neither screenshot nor pending order substitutes for it.               |
+| S9 complete pre-open context              | Preserve `EffectiveAtUtc = 2026-09-08T13:00:00Z` and `ObservedAtUtc = 2026-09-08T13:27:42Z`; context availability and operational selection remain separate.           |
 
 **Existing contract compatibility and blocker.** [NasdaqHumanBranchApplicabilityObservation](../../src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqHumanBranchApplicabilityObservation.cs) accepts a review preceding the initial take. It requires concrete UTC `ReviewEffectiveAtUtc` and `ReviewObservedAtUtc`, with observed >= effective, and binds `EffectiveAtUtc = max(ReviewEffectiveAtUtc, InitialTakeObservation.AsOfUtc)` and `ObservedAtUtc = max(ReviewObservedAtUtc, InitialTakeObservation.AsOfUtc)`. An earlier decision can therefore bind to a later canonical initiating setup once its actual owner is available, subject to existing identity, causality and active-setup validation. No contract change is needed for that ordering.
 
@@ -297,10 +297,10 @@ Reversal event identity and effective/observed evidence, initial SL realization,
 
 **Scope: `confirmed`, `context_specific`, Replay #2 on 2026-09-08 only.** S11 explicitly approves the following fields for the existing `NasdaqHumanBranchApplicabilityObservation`, supplementing S10 rather than rewriting its earlier uncertainty:
 
-| Raw review field | Approved UTC value | Approved meaning |
-|---|---|---|
+| Raw review field       | Approved UTC value     | Approved meaning                                                                                                              |
+| ---------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `ReviewEffectiveAtUtc` | `2026-09-08T13:30:37Z` | Operational Wickfill Scenario 2 SELL selection already existed no later than this time; not its exact first decision instant. |
-| `ReviewObservedAtUtc` | `2026-09-08T13:30:42Z` | Evidence of that selection was visible no later than this time; not its first possible observation instant. |
+| `ReviewObservedAtUtc`  | `2026-09-08T13:30:42Z` | Evidence of that selection was visible no later than this time; not its first possible observation instant.                   |
 
 These are exact approved input values representing conservative latest-known bounds. S11 supplies the explicit authority missing from section 2.9; it does not establish the mentor's unknowable mental decision second. Preserve S9 context effective/observed values `13:00:00Z` / `13:27:42Z`, S10's pending-order placement versus fill distinction, external screenshot provenance and USTEC versus native US100 identity. The first intraminute London High crossing remains unknown.
 
@@ -314,13 +314,13 @@ This approval changes no strategy algorithm, contract, evaluator, metadata, vers
 
 **Scope: `confirmed`, `context_specific`, historical Replay #2 SELL on 2026-09-08.** After recognizing London High liquidity as taken in the established H4 SELL/Wickfill context, the mentor interpreted a potential bearish opportunity and selected Scenario 2 SELL. He placed a pending SELL STOP at the lows of the relevant zone to condition entry on subsequent downward movement. The order was later activated and bearish movement was observed. The reviewer explicitly clarifies that the mentor did not wait for the entire bearish move to finish before preparing the pending order. This does not establish the first reversal instant, whether a distinct turn had already been recognized at placement, or an executable zone-low algorithm.
 
-| Meaning | Evidence / strategy boundary | What it does not establish |
-|---|---|---|
-| Setup selection | Human selection of this potential Scenario 2 SELL opportunity after the recognized London High take; represented by branch applicability under S10/S11. | A completed reversal, NQ-WF2-001 Passed or strategic eligibility. |
-| Conditional pending-order preparation | Historical SELL STOP placement at the identified zone's lows; preparation may precede demonstrated completion of the bearish turnaround. | A universal SELL STOP, placement geometry/threshold, MoneyWay order authorization, fill or Passed reversal. |
-| Post-sweep bearish turnaround | Genuine bearish reversal remains required for strategic eligibility under S3/S4. Its recognition is human-assisted; autonomous geometry is unresolved. | A completed entire bearish move, an additional M5/M1 signal, mandatory close or separate chart pattern. |
-| Strategic pre-entry eligibility | NQ-WF2-001 evaluates the reviewed reversal; NQ-WF2-002 derives scoped eligibility from the prior established canonical reversal. Both concern analysis/evaluation. | Broker submission, pending preparation, activation/fill, opened position, executable entry or global Ready. |
-| Historical activation/fill | The reviewer reports later activation and downward movement as separate historical execution evidence. | Automatic proof of NQ-WF2-001, its effective/observed times, a typed execution record or a universal trading rule. |
+| Meaning                               | Evidence / strategy boundary                                                                                                                                       | What it does not establish                                                                                         |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| Setup selection                       | Human selection of this potential Scenario 2 SELL opportunity after the recognized London High take; represented by branch applicability under S10/S11.            | A completed reversal, NQ-WF2-001 Passed or strategic eligibility.                                                  |
+| Conditional pending-order preparation | Historical SELL STOP placement at the identified zone's lows; preparation may precede demonstrated completion of the bearish turnaround.                           | A universal SELL STOP, placement geometry/threshold, MoneyWay order authorization, fill or Passed reversal.        |
+| Post-sweep bearish turnaround         | Genuine bearish reversal remains required for strategic eligibility under S3/S4. Its recognition is human-assisted; autonomous geometry is unresolved.             | A completed entire bearish move, an additional M5/M1 signal, mandatory close or separate chart pattern.            |
+| Strategic pre-entry eligibility       | NQ-WF2-001 evaluates the reviewed reversal; NQ-WF2-002 derives scoped eligibility from the prior established canonical reversal. Both concern analysis/evaluation. | Broker submission, pending preparation, activation/fill, opened position, executable entry or global Ready.        |
+| Historical activation/fill            | The reviewer reports later activation and downward movement as separate historical execution evidence.                                                             | Automatic proof of NQ-WF2-001, its effective/observed times, a typed execution record or a universal trading rule. |
 
 **Correction of the prior ambiguity:** S3/S4's "consider entry" / "pre-entry eligibility" must not be expanded into an independent mandatory reversal confirmation before preparing a conditional pending order. Current source evidence establishes no such preparation gate. This clarification preserves their genuine post-sweep reversal requirement for strategic eligibility and does not assert that reversal is never required before any kind of entry. Neither a bearish expectation after liquidity take nor order placement confirms the reversal. Activation/fill and later bearish movement do not automatically satisfy it either.
 
@@ -328,14 +328,14 @@ This approval changes no strategy algorithm, contract, evaluator, metadata, vers
 
 Preserve the following distinct temporal meanings:
 
-| UTC on 2026-09-08 | Existing evidence and limit |
-|---|---|
-| `13:27:42Z` | S9 complete pre-open context historically observable; context effective time remains `13:00:00Z`. |
-| `13:30:37Z` | S10 pending SELL STOP placement; S11 conservative selection-already-established bound, not first decision or reversal time. |
-| `13:30:42Z` | S10 visible clock; S11 conservative evidence-already-visible bound, not first observation or reversal time. |
-| `13:31:00Z` | Native closed-M1 take and canonical Start; not the first actual intraminute crossing. Derived S11 applicability effective/observed values remain `13:31:00Z`. |
-| `13:32:00Z` | First actual S11 applicability binding verified by the real canonical prefix runs; not historical order authorization. |
-| `13:33:10Z` | Later screenshot is reported by the human source as showing bearish movement and an open SELL position. Its image bytes are external / not locally verified; it is not a fully typed reversal/fill event, exact activation time or proof of reversal onset. |
+| UTC on 2026-09-08 | Existing evidence and limit                                                                                                                                                                                                                                 |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `13:27:42Z`       | S9 complete pre-open context historically observable; context effective time remains `13:00:00Z`.                                                                                                                                                           |
+| `13:30:37Z`       | S10 pending SELL STOP placement; S11 conservative selection-already-established bound, not first decision or reversal time.                                                                                                                                 |
+| `13:30:42Z`       | S10 visible clock; S11 conservative evidence-already-visible bound, not first observation or reversal time.                                                                                                                                                 |
+| `13:31:00Z`       | Native closed-M1 take and canonical Start; not the first actual intraminute crossing. Derived S11 applicability effective/observed values remain `13:31:00Z`.                                                                                               |
+| `13:32:00Z`       | First actual S11 applicability binding verified by the real canonical prefix runs; not historical order authorization.                                                                                                                                      |
+| `13:33:10Z`       | Later screenshot is reported by the human source as showing bearish movement and an open SELL position. Its image bytes are external / not locally verified; it is not a fully typed reversal/fill event, exact activation time or proof of reversal onset. |
 
 The mentor's intraminute discretionary observation and current replay's native closed-M1 evidence are different resolutions. Preserve USTEC operational-chart versus native US100 identities without price-feed equivalence. Order-before-native-take chronology is not silently repaired: the pending order does not move canonical timestamps or demonstrate a strategy violation by itself. Current reversal validation still requires a source-backed effective event strictly after its represented take and availability no earlier than its relied-upon sweep evidence; S11's conservative review representation is not automatically transferred to reversal timestamps. No open M30 candle's eventual High/Low, M1 OHLC ordering, later position screenshot or subsequent result supplies those missing facts.
 
@@ -345,11 +345,11 @@ NQ-WF2-001/002, their contracts/tests, evaluators, metadata, lifecycle, pipeline
 
 **Scope: `confirmed`, `context_specific`, historical Replay #2 Scenario 2 SELL on 2026-09-08 only.** The user explicitly approves documenting the already-visible genuine bearish reversal as a historical recognition/establishment event at **08:33:10 AM America/Bogota**. This is the historical platform/session clock, not playback minute 08:33, the current audit time, or a claim about the first turning tick.
 
-| Approved field | UTC value | Authorized meaning |
-|---|---|---|
-| `EffectiveAtUtc` | `2026-09-08T13:33:10Z` | Documented historical recognition/establishment of the already-visible bearish reversal. |
-| `ObservedAtUtc` | `2026-09-08T13:33:10Z` | Historical availability of that documented evidence. |
-| Subsequent approval registration | `2026-11-04` | Human approval record date, separate from both historical fields; no exact message time is asserted. |
+| Approved field                   | UTC value              | Authorized meaning                                                                                   |
+| -------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------- |
+| `EffectiveAtUtc`                 | `2026-09-08T13:33:10Z` | Documented historical recognition/establishment of the already-visible bearish reversal.             |
+| `ObservedAtUtc`                  | `2026-09-08T13:33:10Z` | Historical availability of that documented evidence.                                                 |
+| Subsequent approval registration | `2026-11-04`           | Human approval record date, separate from both historical fields; no exact message time is asserted. |
 
 Neither field claims the first bearish tick, original turning-point instant, or the first time the mentor recognized the move. The approved recognition is evidence-backed for this setup, not a universal reversal detector, threshold, candle-close rule or new strategy algorithm. This resolves the specific recognition-time representation left open in S12; S12's original uncertainty and all earlier source records remain historical. The exact original onset and the general relationship between reversal, conditional triggering and trade entry are not resolved by this pair.
 
@@ -369,14 +369,14 @@ This feature creates no typed observation or EventId, changes no contract/evalua
 
 #### Evidence and implementation checkpoint
 
-| Finding | Definition classification | Source and limit |
-|---|---|---|
-| Initial protection belongs above the initiating sweep peak for Scenario 2 SELL | `confirmed` | S6, section 2.5: `StopPrice > InitiatingSweepPeak`; a protective concept, not a complete deterministic algorithm |
-| Owned measurement interval starts at the initiating valid London High exceedance and ends at its confirmed reversal effective time | `confirmed` | S7, section 2.6; boundary membership, coverage and observation ordering remain unresolved |
-| Replay #2 selected an upper wick/high while displaying USTEC M30, and later moved SL to secure 1:1 | `context_specific`, with `visual_only` support | S5, section 2.4; S6 identifies that wick as the initiating sweep peak. This does not supply a universal M30 selector or management algorithm |
-| Human-selected reference, exact numerical protective price, native-source mapping and authentic selection/parameter availability for Replay #2 | `human_validation_required` / `unresolved` | S5's "second candle" is not a uniquely resolved candle. Screenshot bytes remain external / not repository-resolved |
-| A documented numerical historical StopPrice | `unresolved` | Original S5 says a value is visible in the trade table but does not transcribe it; original S6/S7 supply no numerical stop. No usable human-approved scalar is registered by those sources |
-| Automatic M30/ordinal/highest-session selection, fixed buffer or inference from later OHLC | `rejected_ai_inference` | Not authorized by S5-S7; neither visual proximity nor a future candle can fill missing fields |
+| Finding                                                                                                                                        | Definition classification                      | Source and limit                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Initial protection belongs above the initiating sweep peak for Scenario 2 SELL                                                                 | `confirmed`                                    | S6, section 2.5: `StopPrice > InitiatingSweepPeak`; a protective concept, not a complete deterministic algorithm                                                                           |
+| Owned measurement interval starts at the initiating valid London High exceedance and ends at its confirmed reversal effective time             | `confirmed`                                    | S7, section 2.6; boundary membership, coverage and observation ordering remain unresolved                                                                                                  |
+| Replay #2 selected an upper wick/high while displaying USTEC M30, and later moved SL to secure 1:1                                             | `context_specific`, with `visual_only` support | S5, section 2.4; S6 identifies that wick as the initiating sweep peak. This does not supply a universal M30 selector or management algorithm                                               |
+| Human-selected reference, exact numerical protective price, native-source mapping and authentic selection/parameter availability for Replay #2 | `human_validation_required` / `unresolved`     | S5's "second candle" is not a uniquely resolved candle. Screenshot bytes remain external / not repository-resolved                                                                         |
+| A documented numerical historical StopPrice                                                                                                    | `unresolved`                                   | Original S5 says a value is visible in the trade table but does not transcribe it; original S6/S7 supply no numerical stop. No usable human-approved scalar is registered by those sources |
+| Automatic M30/ordinal/highest-session selection, fixed buffer or inference from later OHLC                                                     | `rejected_ai_inference`                        | Not authorized by S5-S7; neither visual proximity nor a future candle can fill missing fields                                                                                              |
 
 The [real canonical diagnostic](../backtesting/nasdaq-replay2-canonical-preentry-diagnostic.md) at Git `6f0890d5850a7c6fc3b0758a0c083bf8bdaa13c2` documents Start 13:31Z / step 7591 / local instance 1, native initiating event `native-M1-close-2026-09-08T13:31Z`, WF2-001 Passed at 13:34Z and WF2-002 Passed at 13:35Z. At 13:36Z the verdict is Wait, NQ-SL-001 is Waiting and risk remains Waiting; Required coverage is complete (13/13). This is a causal path contract gap, not proof that M30 market data is missing. No Scenario 2 SL fact or executed trade is established.
 
@@ -386,11 +386,11 @@ Existing [SL tests](../../tests/unit/MoneyWay.Application.UnitTests/Strategies/N
 
 #### Alternatives and recommendation
 
-| Option | Assessment | Classification |
-|---|---|---|
-| A: reuse NQ-SL-001 with a dedicated Scenario 2 SELL input and WF2-002 dependency | Smallest proposed convergence: preserve the existing SL responsibility, RuleId and Required flag; add explicit branch-specific ancestry without pretending the current Standard input/fact is compatible. A later feature must address workflow gating and downstream fact consumers explicitly | `candidate`, recommended; not currently supported |
-| B: separate Scenario 2 SL rule and observation | A dedicated observation is necessary under A as well. An additional RuleId would duplicate the Required SL responsibility and require an independently approved workflow/lifecycle decision; no evidence currently requires that duplication | `candidate`, not selected |
-| C: leave the capability human-only until source evidence is available | Correct present replay behavior remains blocked. Missing historical evidence does not prevent specifying a safe input contract, but does prevent populating a valid real-source input or claiming Passed | `human_validation_required` / `unresolved` for the missing evidence; not a replacement architecture |
+| Option                                                                           | Assessment                                                                                                                                                                                                                                                                                      | Classification                                                                                      |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| A: reuse NQ-SL-001 with a dedicated Scenario 2 SELL input and WF2-002 dependency | Smallest proposed convergence: preserve the existing SL responsibility, RuleId and Required flag; add explicit branch-specific ancestry without pretending the current Standard input/fact is compatible. A later feature must address workflow gating and downstream fact consumers explicitly | `candidate`, recommended; not currently supported                                                   |
+| B: separate Scenario 2 SL rule and observation                                   | A dedicated observation is necessary under A as well. An additional RuleId would duplicate the Required SL responsibility and require an independently approved workflow/lifecycle decision; no evidence currently requires that duplication                                                    | `candidate`, not selected                                                                           |
+| C: leave the capability human-only until source evidence is available            | Correct present replay behavior remains blocked. Missing historical evidence does not prevent specifying a safe input contract, but does prevent populating a valid real-source input or claiming Passed                                                                                        | `human_validation_required` / `unresolved` for the missing evidence; not a replacement architecture |
 
 Recommendation A is safe only as a future explicit extension, not reuse of the existing constructor, M5 anchor or Standard-only SL fact. Keep Standard behavior isolated. Risk, TP and historical snapshot consumers currently depend on the Standard-shaped SL/eligibility facts; choosing the same RuleId does not make those types branch-neutral. No redundant rule, metadata change, ACTIVE promotion or automatic downstream compatibility follows from this specification.
 
@@ -398,16 +398,16 @@ Recommendation A is safe only as a future explicit extension, not reuse of the e
 
 Field labels below are conceptual, not new C# declarations. Contract design is `candidate`; inherited source constraints remain confirmed within S5-S7 scope.
 
-| Evidence group | Minimum content and ownership requirement |
-|---|---|
-| Session/setup identity | Strategy, exact version, provider, native symbol, Nasdaq trading day/timezone, SELL and explicit WickfillScenario2 applicability. For Replay #2: `moneyway-nasdaq`, `nasdaq-0.1.0-draft`, `oanda-global-markets-mt5-demo`, US100, 2026-09-08, America/Bogota |
-| Canonical owner | Exact actual Start observation and its active instance plus the initiating NQ-LIQ-003 fact/event and selected London High reference. Session/direction/time/step/local ordinal alone cannot substitute for owner identity; extensions or another take cannot replace the initiating event |
-| Eligibility ancestry | Exact prior canonical owner and `NasdaqWickfillScenario2PreEntryEligibilityRuleFact` from NQ-WF2-002 Passed with established progression, retaining its own WF2-001 reversal, applicability, opening sweep and Start/take references. Must belong to this same surviving setup; no synthetic Standard M1 facts |
-| Protective reference | Human-selected initiating sweep peak with independently documented protective price, semantic role, authentic source identity/location and source-observable time. Preserve the S7 interval ancestry; do not claim an automatically reconstructed maximum without complete approved coverage/boundary semantics |
-| Visual/candle identity | For a candle-based claim retain source feed/symbol, displayed timeframe, uniquely identified candle open/close and available price evidence under ADR 0025. Alternatively an exact retained external level/event reference and price can identify a non-candle reference. A source-located visual selection can be retained as testimony, but "second candle" or an unexplained scalar cannot qualify as a resolved protective reference. M30 is historical display context, not a mandatory general input timeframe |
-| Stop parameter | Separately documented, human-reviewed initial `StopPrice`, its exact source and assertion time; establish `StopPrice >` the selected protective peak in the same validated price domain. No default, derived buffer or OHLC maximum is a substitute. A later managed stop is a different event |
-| Provenance and feed mapping | Retain reviewer/decision identity, original source location, all compatible supporting assertions, and only actually verified asset identities/hashes. USTEC visual evidence is not native US100 price evidence. A documented mapping/validation must substantiate any native use; normalization validation alone establishes no cross-feed price equivalence |
-| Time/availability | Preserve authentic SL selection/parameter `EffectiveAtUtc` and `ObservedAtUtc` in UTC, with effective <= observed, plus source-event/candle availability. Keep historical placement/activation, later management, subsequent review/import and canonical binding/evaluation times separate |
+| Evidence group              | Minimum content and ownership requirement                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Session/setup identity      | Strategy, exact version, provider, native symbol, Nasdaq trading day/timezone, SELL and explicit WickfillScenario2 applicability. For Replay #2: `moneyway-nasdaq`, `nasdaq-0.1.0-draft`, `oanda-global-markets-mt5-demo`, US100, 2026-09-08, America/Bogota                                                                                                                                                                                                                                                         |
+| Canonical owner             | Exact actual Start observation and its active instance plus the initiating NQ-LIQ-003 fact/event and selected London High reference. Session/direction/time/step/local ordinal alone cannot substitute for owner identity; extensions or another take cannot replace the initiating event                                                                                                                                                                                                                            |
+| Eligibility ancestry        | Exact prior canonical owner and `NasdaqWickfillScenario2PreEntryEligibilityRuleFact` from NQ-WF2-002 Passed with established progression, retaining its own WF2-001 reversal, applicability, opening sweep and Start/take references. Must belong to this same surviving setup; no synthetic Standard M1 facts                                                                                                                                                                                                       |
+| Protective reference        | Human-selected initiating sweep peak with independently documented protective price, semantic role, authentic source identity/location and source-observable time. Preserve the S7 interval ancestry; do not claim an automatically reconstructed maximum without complete approved coverage/boundary semantics                                                                                                                                                                                                      |
+| Visual/candle identity      | For a candle-based claim retain source feed/symbol, displayed timeframe, uniquely identified candle open/close and available price evidence under ADR 0025. Alternatively an exact retained external level/event reference and price can identify a non-candle reference. A source-located visual selection can be retained as testimony, but "second candle" or an unexplained scalar cannot qualify as a resolved protective reference. M30 is historical display context, not a mandatory general input timeframe |
+| Stop parameter              | Separately documented, human-reviewed initial `StopPrice`, its exact source and assertion time; establish `StopPrice >` the selected protective peak in the same validated price domain. No default, derived buffer or OHLC maximum is a substitute. A later managed stop is a different event                                                                                                                                                                                                                       |
+| Provenance and feed mapping | Retain reviewer/decision identity, original source location, all compatible supporting assertions, and only actually verified asset identities/hashes. USTEC visual evidence is not native US100 price evidence. A documented mapping/validation must substantiate any native use; normalization validation alone establishes no cross-feed price equivalence                                                                                                                                                        |
+| Time/availability           | Preserve authentic SL selection/parameter `EffectiveAtUtc` and `ObservedAtUtc` in UTC, with effective <= observed, plus source-event/candle availability. Keep historical placement/activation, later management, subsequent review/import and canonical binding/evaluation times separate                                                                                                                                                                                                                           |
 
 #### Temporal and causal consumption contract
 
@@ -430,13 +430,13 @@ At T, no final High of an open M30/M5/M1 candle, overlapping candle with unresol
 
 These are proposed runtime expectations under ADR 0025, not modifications to the current evaluator. Rule-definition classifications, selector outcomes, evaluator capability, runtime results and global verdict remain distinct.
 
-| Condition for a future Scenario 2 SL adapter | Expected handling |
-|---|---|
-| No established usable prior WF2-002 ancestry | Waiting; propagate DataUnavailable where the exact prerequisite is unavailable; no SL fact |
-| Eligible stage but human protective selection/basis or authentic availability remains unresolved | HumanValidationRequired; no guessed reference/time or SL fact |
-| Required numerical StopPrice/protective price or referenced source/feed resolution is unavailable | DataUnavailable; distinguish absent numerical data from an unresolved human selection; no fabricated scalar |
-| Conflicting valid driving assertions | HumanValidationRequired; preserve alternatives, no source ranking or latest-wins |
-| Malformed identity, timestamp, wrong branch/owner or nonprotective stop | Reject validation; never reinterpret as positive evidence |
+| Condition for a future Scenario 2 SL adapter                                                                 | Expected handling                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| No established usable prior WF2-002 ancestry                                                                 | Waiting; propagate DataUnavailable where the exact prerequisite is unavailable; no SL fact                                  |
+| Eligible stage but human protective selection/basis or authentic availability remains unresolved             | HumanValidationRequired; no guessed reference/time or SL fact                                                               |
+| Required numerical StopPrice/protective price or referenced source/feed resolution is unavailable            | DataUnavailable; distinguish absent numerical data from an unresolved human selection; no fabricated scalar                 |
+| Conflicting valid driving assertions                                                                         | HumanValidationRequired; preserve alternatives, no source ranking or latest-wins                                            |
+| Malformed identity, timestamp, wrong branch/owner or nonprotective stop                                      | Reject validation; never reinterpret as positive evidence                                                                   |
 | Unique, fully resolved, contemporaneously available evidence with exact valid prior ancestry and protections | May be evaluated for Passed under a later implementation; uniqueness alone is not Passed, Ready, risk approval or execution |
 
 The current real replay remains NQ-SL-001 Waiting because it first requires Standard NQ-M1-003. Its capability stays Implemented and definition HumanValidationRequired; no status is changed to match this candidate table. Risk remains downstream; TP/risk algorithms, trade snapshots, orders, fills, exits, PnL and later 1:1 management are outside this feature.
@@ -463,22 +463,58 @@ Validation on 2026-11-05: the combined primitive/SL/Scenario 2 ancestry, opening
 
 Real Replay #2 still cannot instantiate a complete authentic input from S5-S7: numerical StopPrice, uniquely resolved protective reference/price, authentic availability and native-feed applicability remain missing. No historical SL was calculated, real adapter executed/modified, rule evaluated by this selector, metadata changed or trade reproduced. Next smallest feature: resolve those existing historical source fields with explicit human provenance before populating a real observation; do not add an automatic M30 selector, buffer or general SL algorithm. Evaluator convergence and its terminal regressions remain subsequent scoped work.
 
+#### Runtime convergence checkpoint (2026-11-17)
+
+The scoped WF2-to-NQ-SL-001 task now connects the existing native SL primitive
+and selector to `MoneyWayNasdaqHumanStructuralStopLossEvaluator`. It implements
+option A's common Required SL responsibility, with a distinct
+`NasdaqHumanWickfillScenario2StopLossRuleFact`, not a fabricated Standard 5M LH
+fact or a new RuleId. The draft workflow's prior-frame OR route is documented
+in [ADR 0003](0003-define-canonical-replay-prerequisite-gating.md).
+The existing binder now validates Scenario 2 SL session, actual Start and prior
+eligibility references before transporting an observation; selection remains
+independent from Bound and from Passed.
+
+Missing native inputs return HumanValidationRequired after established WF2;
+missing prerequisite progression stays Waiting, unresolved exact sources return
+DataUnavailable and conflicting valid reviews require human validation. Unique
+with an unavailable competing assertion cannot pass. Same-frame canonical
+liquidity invalidation also gates SL for actual Scenario 2 ancestry; Standard's
+terminal predicate is unchanged. The original reference/selection/availability
+times are retained without clamping them to binding or emission time.
+
+The historical lifecycle report can preserve a standalone canonical Scenario 2
+stop selection and its protective reference/source times, separately from a
+complete trade snapshot. Risk/TP, observed entry, trade snapshot, execution and
+economic outcome are not enabled by SL alone. Their Standard-owned contracts
+remain separate. No source price, M30 ordinal, sweep maximum, buffer, quantity or
+cross-feed mapping is derived. S1-S14 evidence is unchanged; the approved S14
+USTEC scalar remains distinct from a native US100 StopPrice. The task's statement
+that no initial scalar was confirmed is not used to erase S14's historical
+record: the unresolved native applicability and other required fields remain
+the actual runtime blockers.
+
+This supersedes earlier implementation-absence statements only for WF2-to-SL
+runtime convergence. Native Replay #2 still lacks a complete evaluable SL input.
+No ACTIVE strategy version or metadata activation is changed; the audited
+definition remains `nasdaq-0.1.0-draft` / draft.
+
 ### 2.14 Human-confirmed Replay #2 initial USTEC SL price (2026-11-05, S14)
 
 **Current evidence: `confirmed`, `context_specific` historical initial price, supported by human-reviewed visual evidence (`visual_only` source support).** S14 supplements S5-S7 for the September 8, 2026 Wickfill Scenario 2 SELL operation. The reviewer explicitly identifies the displayed stop as the ORIGINAL initial protective SL before subsequent stop management. This resolves the previously untranscribed historical USTEC initial price only; earlier statements in sections 2.4/2.13 that no numerical stop was registered describe the evidence available before S14 and remain historical. No earlier source is overwritten.
 
-| Field | Human-confirmed value / classification | Exact scope |
-|---|---|---|
-| Session / platform / displayed instrument / direction | 2026-09-08 / MetaTrader 5 / USTEC / SELL; `confirmed`, `context_specific` | Historical open-position row reported by S14; not a native US100 observation |
-| Historical entry price | `29604.00`; `confirmed`, `context_specific` | Position entry, kept separate from its stop and from the previously reported pending-order price |
-| Historical INITIAL Stop Loss | `29662.25`; `confirmed`, `context_specific` | Original protective stop, explicitly distinguished from later gain protection or 1:1 management |
-| Position opening time shown | `2026.09.08 16:32:00` MT5 server; `confirmed`, `context_specific` | Position-opening field only |
-| Position opening UTC conversion | `2026-09-08T13:32:00Z`; `confirmed`, `context_specific` | Existing September-pack mapping: server = America/Bogota + 8h. This converts the supplied opening field only |
-| Historical operational display / protective concept | M30 upper wick/high selected by the human reviewer; S5 `context_specific`, S6/S7 protective concept/interval `confirmed` | S14 adds the stop parameter, not a new candle selection or peak measurement |
-| Exact protective reference identity and price | `human_validation_required` / `unresolved` for runtime use | Reviewer-relative "second candle" remains insufficient for a unique source candle/level; no protective peak coordinate is inferred from StopPrice |
-| SL placement/selection EffectiveAtUtc and semantic ObservedAtUtc | `unresolved` | Neither the exact initial placement time nor first source-observable availability is supplied. Position opening is not either timestamp; later review/import is not historical availability |
-| Approved native US100 numerical StopPrice / USTEC-US100 correspondence | `unresolved` | Independently validated native dataset does not establish cross-feed numeric equivalence |
-| Universal selector, offset, tolerance or automatic SL algorithm | `unresolved`; automatic inference remains `rejected_ai_inference` | No geometry, stop distance, buffer, M5 LH substitution or universal M30 requirement follows |
+| Field                                                                  | Human-confirmed value / classification                                                                                   | Exact scope                                                                                                                                                                                 |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Session / platform / displayed instrument / direction                  | 2026-09-08 / MetaTrader 5 / USTEC / SELL; `confirmed`, `context_specific`                                                | Historical open-position row reported by S14; not a native US100 observation                                                                                                                |
+| Historical entry price                                                 | `29604.00`; `confirmed`, `context_specific`                                                                              | Position entry, kept separate from its stop and from the previously reported pending-order price                                                                                            |
+| Historical INITIAL Stop Loss                                           | `29662.25`; `confirmed`, `context_specific`                                                                              | Original protective stop, explicitly distinguished from later gain protection or 1:1 management                                                                                             |
+| Position opening time shown                                            | `2026.09.08 16:32:00` MT5 server; `confirmed`, `context_specific`                                                        | Position-opening field only                                                                                                                                                                 |
+| Position opening UTC conversion                                        | `2026-09-08T13:32:00Z`; `confirmed`, `context_specific`                                                                  | Existing September-pack mapping: server = America/Bogota + 8h. This converts the supplied opening field only                                                                                |
+| Historical operational display / protective concept                    | M30 upper wick/high selected by the human reviewer; S5 `context_specific`, S6/S7 protective concept/interval `confirmed` | S14 adds the stop parameter, not a new candle selection or peak measurement                                                                                                                 |
+| Exact protective reference identity and price                          | `human_validation_required` / `unresolved` for runtime use                                                               | Reviewer-relative "second candle" remains insufficient for a unique source candle/level; no protective peak coordinate is inferred from StopPrice                                           |
+| SL placement/selection EffectiveAtUtc and semantic ObservedAtUtc       | `unresolved`                                                                                                             | Neither the exact initial placement time nor first source-observable availability is supplied. Position opening is not either timestamp; later review/import is not historical availability |
+| Approved native US100 numerical StopPrice / USTEC-US100 correspondence | `unresolved`                                                                                                             | Independently validated native dataset does not establish cross-feed numeric equivalence                                                                                                    |
+| Universal selector, offset, tolerance or automatic SL algorithm        | `unresolved`; automatic inference remains `rejected_ai_inference`                                                        | No geometry, stop distance, buffer, M5 LH substitution or universal M30 requirement follows                                                                                                 |
 
 S5 preserves initial visual protection above the indicated wick/high on an MT5 USTEC M30 display, separately from later movement to secure approximately 1:1. S6 identifies that wick with this setup's initiating sweep peak and confirms protection above it. S7 retains the exact initiating-take/reversal-owned measurement interval and its unresolved boundary/coverage details. S14 does not numerically reconstruct the peak, prove a geometric relationship in native prices, select a candle or calculate any offset/tolerance. It neither redefines Standard SL nor authorizes a broker instruction or general stop formula.
 
@@ -490,18 +526,18 @@ S9-S13 chronology, including S12's conditional-order distinction and S13's 13:33
 
 ### 3. Replay #2 interpretation
 
-| Session fact from S1 | Classification | Boundary |
-|---|---|---|
-| 2026-09-08, `America/Bogota`, SELL | `confirmed` | Historical session identity |
-| H4 04:00–08:00 completed the upward corrective move into the relevant H4 zone before opening | `confirmed` | Human-reviewed historical context; no universal zone coordinates |
-| Asia/London references and relevant London High identified before opening | `confirmed` | Marking is distinct from the subsequent trade-relevant sweep |
-| Required opening London High sweep not satisfied before 08:30 | `confirmed` | Does not assert that no earlier numerical price crossing ever occurred |
+| Session fact from S1                                                                                      | Classification                  | Boundary                                                                          |
+| --------------------------------------------------------------------------------------------------------- | ------------------------------- | --------------------------------------------------------------------------------- |
+| 2026-09-08, `America/Bogota`, SELL                                                                        | `confirmed`                     | Historical session identity                                                       |
+| H4 04:00–08:00 completed the upward corrective move into the relevant H4 zone before opening              | `confirmed`                     | Human-reviewed historical context; no universal zone coordinates                  |
+| Asia/London references and relevant London High identified before opening                                 | `confirmed`                     | Marking is distinct from the subsequent trade-relevant sweep                      |
+| Required opening London High sweep not satisfied before 08:30                                             | `confirmed`                     | Does not assert that no earlier numerical price crossing ever occurred            |
 | Opening sweep approximately 08:30–08:31, then stall/rejection and Sell Stop execution approximately 08:32 | `confirmed`, `context_specific` | Approximate source times; no second-level availability, offset or fill derivation |
-| M30 operational/execution chart | `confirmed`, `context_specific` | Not a universal M30 gate or candle pattern |
-| M1 not used for this execution | `confirmed`, `context_specific` | Standard M1 rules remain intact |
-| No pre-entry FVG identified/used | `confirmed`, `context_specific` | Does not prove all FVGs absent or prohibit future FVG support |
-| No explicit pre-entry M5 StructuralChange/IFVG used; later M5 close was confluence for an open trade | `confirmed`, `context_specific` | Does not weaken the standard M5-close contract |
-| Replay #2 is Wickfill Scenario 2 / pre-established higher-timeframe context | `context_specific` | Future branch-validation case; not an oracle for standard-chain entry at 08:32 |
+| M30 operational/execution chart                                                                           | `confirmed`, `context_specific` | Not a universal M30 gate or candle pattern                                        |
+| M1 not used for this execution                                                                            | `confirmed`, `context_specific` | Standard M1 rules remain intact                                                   |
+| No pre-entry FVG identified/used                                                                          | `confirmed`, `context_specific` | Does not prove all FVGs absent or prohibit future FVG support                     |
+| No explicit pre-entry M5 StructuralChange/IFVG used; later M5 close was confluence for an open trade      | `confirmed`, `context_specific` | Does not weaken the standard M5-close contract                                    |
+| Replay #2 is Wickfill Scenario 2 / pre-established higher-timeframe context                               | `context_specific`              | Future branch-validation case; not an oracle for standard-chain entry at 08:32    |
 
 Earlier Replay #2 notes and the local binder retain an initial `FAKEOUT` label and a standard closed-M5 observation. Those records are not edited here. S1 establishes the new Wickfill Scenario 2 interpretation; the old binder does not represent this branch. No automatic conversion between an initial H4 classification and a contextual branch, or new Breakout/Wickfill/Fakeout precedence rule, is inferred. Earlier M1 observations must not be used retrospectively to explain this mentor's 08:32 execution.
 
@@ -515,20 +551,20 @@ Existing time-window, future-data, terminal-state and risk/execution protections
 
 ### 5. Remaining boundaries
 
-| Boundary | State |
-|---|---|
-| Reviewed pre-open zone/context membership and completed macro corrective movement | `human_validation_required` |
-| Deterministic “already at H4 zone” geometry, tolerance and minimum Wickfill depth | `unresolved` |
-| Exact macro liquidity algorithm and automatic branch selection | `unresolved` |
-| Required post-sweep bearish turn/reversal before considering SELL | `confirmed` concept under S3; recognition `human_validation_required` |
-| Scoped SELL eligibility after valid context, London sweep and confirmed bearish reversal | `confirmed` by S4 section 2.3; no additional strategic confirmation currently evidenced, no execution implied |
-| Autonomous post-sweep reversal geometry and exact structural reference | `unresolved`; no CHoCH/M5/M1 or pivot-break mapping is authorized |
-| Scenario 2 eligibility runtime and downstream Standard/workflow/lifecycle integration | Isolated scoped SELL derivation implemented by NQ-WF2-002; full downstream integration remains `unresolved` / not implemented |
-| Universal post-sweep candle-close requirements/non-requirements | `unresolved` unless independently specified; execution timing alone does not define them |
-| Sell Stop offset, distance from a candle/open/consolidation and executable order mechanics | `unresolved` |
-| Autonomous M30 pattern detector and universal M30 candle requirements | `unresolved`; historical M30 use does not establish such requirements |
-| Universal order type and BUY-side symmetry | `unresolved`; neither is generalized from this SELL example |
-| Exact historical source-availability boundaries for a future typed branch input | `human_validation_required` |
+| Boundary                                                                                   | State                                                                                                                         |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| Reviewed pre-open zone/context membership and completed macro corrective movement          | `human_validation_required`                                                                                                   |
+| Deterministic “already at H4 zone” geometry, tolerance and minimum Wickfill depth          | `unresolved`                                                                                                                  |
+| Exact macro liquidity algorithm and automatic branch selection                             | `unresolved`                                                                                                                  |
+| Required post-sweep bearish turn/reversal before considering SELL                          | `confirmed` concept under S3; recognition `human_validation_required`                                                         |
+| Scoped SELL eligibility after valid context, London sweep and confirmed bearish reversal   | `confirmed` by S4 section 2.3; no additional strategic confirmation currently evidenced, no execution implied                 |
+| Autonomous post-sweep reversal geometry and exact structural reference                     | `unresolved`; no CHoCH/M5/M1 or pivot-break mapping is authorized                                                             |
+| Scenario 2 eligibility runtime and downstream Standard/workflow/lifecycle integration      | Isolated scoped SELL derivation implemented by NQ-WF2-002; full downstream integration remains `unresolved` / not implemented |
+| Universal post-sweep candle-close requirements/non-requirements                            | `unresolved` unless independently specified; execution timing alone does not define them                                      |
+| Sell Stop offset, distance from a candle/open/consolidation and executable order mechanics | `unresolved`                                                                                                                  |
+| Autonomous M30 pattern detector and universal M30 candle requirements                      | `unresolved`; historical M30 use does not establish such requirements                                                         |
+| Universal order type and BUY-side symmetry                                                 | `unresolved`; neither is generalized from this SELL example                                                                   |
+| Exact historical source-availability boundaries for a future typed branch input            | `human_validation_required`                                                                                                   |
 
 ## Alternatives considered
 
@@ -545,7 +581,6 @@ The [specification](../strategies/nasdaq/strategy-specification.md#97-wickfill-s
 This ADR supersedes universal strategy-scope readings of standard pre-entry descriptions in ADR 0025 and the Nasdaq workflow documents; it does not rewrite their historical decisions or generic replay infrastructure.
 
 The next recommended primitive is a small immutable **human-reviewed Wickfill Scenario 2 pre-open context observation and Missing/Unique/Conflict selector**. `NasdaqHumanWickfillScenario2ContextObservation` is a proposed identifier, not an implemented API. It should retain session/version/provider identity, SELL applicability, reviewed H4/zone and completed pre-open movement evidence, authentic effective/observed times and provenance. It must not detect geometry, synthesize opening-sweep evidence, select a branch automatically, emit entry eligibility or create an order. Its detailed contract requires its own audit before implementation; no implementation is authorized by this document alone.
-
 
 ## Limited human-assisted reversal rule implementation (2026-10-15)
 

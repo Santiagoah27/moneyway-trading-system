@@ -180,10 +180,24 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
             var original = fallback.Stages.Single(s => s.Stage == stage.Stage);
             Require(!string.IsNullOrWhiteSpace(stage.Reason) && stage.Reason.Length <= 4096
                 && stage.RuleId == original.RuleId && stage.RuleResult == original.RuleResult
-                && (stage.Status == original.Status || stage.Status == "RecordedArtifact" && snapshotState == "Available"
+                && (stage.Status == original.Status
+                    || stage.Stage == "StopLoss" && stage.Status == "NotImplemented" && result.Path == "WickfillScenario2"
+                        && stage.RuleResult != "Passed" && result.Scenario2StopLoss is null
+                    || stage.Status == "RecordedArtifact" && snapshotState == "Available"
                     && stage.Stage is "Entry" or "StopLoss" or "Risk" or "TakeProfit" or "DocumentedExit"));
         }
-        foreach (var source in result.Sources)
+        var sources = result.Sources.AsEnumerable();
+        if (result.Scenario2StopLoss is { } stop)
+        {
+            Require(result.Path == "WickfillScenario2" && rules.SingleOrDefault(r => r.RuleId == "NQ-SL-001")?.Result == "Passed"
+                && !string.IsNullOrWhiteSpace(stop.ReferenceId) && stop.ReferenceId.Length <= 4096
+                && stop.StopPrice > stop.ProtectivePrice && stop.EffectiveAtUtc.Offset == TimeSpan.Zero
+                && stop.ObservedAtUtc.Offset == TimeSpan.Zero && stop.EffectiveAtUtc <= stop.ObservedAtUtc && stop.ObservedAtUtc <= at
+                && stop.Source is not null && stop.ProtectiveSource is not null
+                && stop.Source.ObservedAtUtc == stop.ObservedAtUtc && stop.ProtectiveSource.ObservedAtUtc <= stop.ObservedAtUtc);
+            sources = sources.Concat([stop.Source!, stop.ProtectiveSource!]);
+        }
+        foreach (var source in sources)
             Require(source is not null && source.ObservedAtUtc.Offset == TimeSpan.Zero && source.ObservedAtUtc <= at
                 && !string.IsNullOrWhiteSpace(source.SourceReference) && source.SourceReference.Length <= 512
                 && !string.IsNullOrWhiteSpace(source.InputType) && source.InputType.Length <= 256

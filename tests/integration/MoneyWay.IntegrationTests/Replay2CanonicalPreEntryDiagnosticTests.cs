@@ -8,6 +8,9 @@ using MoneyWay.Application.StrategyDefinitions.Nasdaq;
 using MoneyWay.Application.StrategyReplay;
 using MoneyWay.Application.StrategyReplay.Capabilities;
 using MoneyWay.Domain.Strategies;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using System.Net.Http.Json;
 
 namespace MoneyWay.IntegrationTests;
 
@@ -19,6 +22,9 @@ public sealed partial class LocalNasdaqMentorSessionTests
         const string adapterPath = @"C:\MoneyWay\session\validation\2026-09-08\ValidatedInput.cs";
         const string adapterHash = "8a6ac872022a170fa0cbda6d23a5cbad736bed9a8009e58647a2e8c2ebe09aa2";
         Assert.Equal(adapterHash, FileSha256(adapterPath));
+        const string original = @"C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-d0d69f182a0b456ba4662896192dc242.json";
+        const string originalHash = "41b35b81c05ebd3705b530322034567376b4d21d29cd43cf2e18468d7f587df2";
+        Assert.Equal(originalHash, FileSha256(original));
         var first = RunS11Prefix(36);
         var longer = RunS11Prefix(37);
         var definition = MoneyWayNasdaqStrategyDefinition.Instance;
@@ -26,8 +32,18 @@ public sealed partial class LocalNasdaqMentorSessionTests
         Assert.Same(first.Link.Frames[0].Strategy, canonical.OutcomeRun.StrategyRun.StrategyObservations[0]);
         Assert.Equal(S13Fingerprint(first.Link.Frames), S13Fingerprint(longer.Link.Frames.Where(f => f.Strategy.AsOfUtc <= S9Time(36))));
         string DiagnosticFingerprint(IEnumerable<MoneyWay.Application.Backtesting.Diagnostics.MultiTimeframeStrategyFrameDiagnostic> frames) =>
-            JsonSerializer.Serialize(frames.Select(d => new { d.Step, d.AsOfUtc, d.Verdict, d.HasCompleteRequiredCoverage,
-                d.Reason, d.BlockingRuleId, d.BlockingSequence, d.BlockingResult, d.MissingRequiredRuleIds }));
+            JsonSerializer.Serialize(frames.Select(d => new
+            {
+                d.Step,
+                d.AsOfUtc,
+                d.Verdict,
+                d.HasCompleteRequiredCoverage,
+                d.Reason,
+                d.BlockingRuleId,
+                d.BlockingSequence,
+                d.BlockingResult,
+                d.MissingRequiredRuleIds
+            }));
         Assert.Equal(DiagnosticFingerprint(canonical.Frames), DiagnosticFingerprint(longer.Canonical.Frames.Where(f => f.AsOfUtc <= S9Time(36))));
         var selected = first.Link.Frames.Where(f => f.Strategy.AsOfUtc >= S9Time(31)).ToArray();
         Assert.Equal(6, selected.Length);
@@ -36,9 +52,9 @@ public sealed partial class LocalNasdaqMentorSessionTests
         var finalOutcome = canonical.OutcomeRun.Outcomes.Single(o => o.Step == final.Strategy.Step);
         Assert.Same(final.Strategy, finalOutcome.Observation);
         Assert.Equal(finalOutcome.Verdict, finalDiagnostic.Verdict);
-        Assert.Equal(StrategyVerdict.Wait, finalDiagnostic.Verdict);
+        Assert.Equal(StrategyVerdict.HumanValidationRequired, finalDiagnostic.Verdict);
         Assert.Equal("NQ-SL-001", finalDiagnostic.BlockingRuleId!.Value);
-        Assert.Equal(RuleEvaluationResult.Waiting, finalDiagnostic.BlockingResult);
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired, finalDiagnostic.BlockingResult);
         Assert.True(finalDiagnostic.HasCompleteRequiredCoverage);
         Assert.Empty(finalDiagnostic.MissingRequiredRuleIds);
         var required = definition.Rules.Where(r => r.IsRequired).Select(r => r.RuleId).ToArray();
@@ -71,7 +87,10 @@ public sealed partial class LocalNasdaqMentorSessionTests
         Assert.Same(start, branch.InitialTakeObservation);
         Assert.Contains("S9", reversal.OpeningSweep.PreOpenContext.Fact.SourceReference);
         var slProgression = final.Strategy.WorkflowProgression!.RuleEligibility.Single(e => e.RuleId.Value == "NQ-SL-001");
-        Assert.Contains(slProgression.MissingPrerequisiteRuleIds, r => r.Value == "NQ-M1-003");
+        Assert.Contains("SL selector evaluated", final.Strategy.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").Reason);
+        Assert.Empty(slProgression.MissingPrerequisiteRuleIds);
+        Assert.Equal("NQ-WF2-002", Assert.Single(slProgression.PrerequisiteRuleIds).Value);
+        Assert.True(slProgression.IsEligible);
         Assert.Equal(RuleEvaluationResult.NotApplicable, S13Result(final, "NQ-M1-003"));
         Assert.Equal(RuleEvaluationResult.Waiting, S13Result(final, "NQ-RISK-001"));
         Assert.Equal(RuleEvaluationResult.Waiting, S13Result(final, "NQ-TP-001"));
@@ -84,23 +103,49 @@ public sealed partial class LocalNasdaqMentorSessionTests
         var options = new JsonSerializerOptions { ReferenceHandler = ReferenceHandler.Preserve };
         var artifact = new
         {
-            Schema = "moneyway.canonical-preentry-window", SchemaVersion = 1,
-            CanonicalRuntimeCommit = "6ae551f5e2fed7e112732db8c13191b8a517167b",
+            Schema = "moneyway.canonical-preentry-window",
+            SchemaVersion = 1,
+            CanonicalRuntimeCommit = "0b328067b4d145d8c7cd8b4ae984033e7364f18b",
+            RuntimeChanges = "WF2-to-NQ-SL-001 convergence; no native SL evidence invented",
             Generator = "tests/integration/MoneyWay.IntegrationTests/Replay2CanonicalPreEntryDiagnosticTests.cs",
-            Adapter = new { Path = adapterPath, SHA256 = adapterHash }, first.Input.Session,
+            Adapter = new { Path = adapterPath, SHA256 = adapterHash },
+            first.Input.Session,
             Inputs = first.Input.CsvFiles.Select(p => new { Timeframe = p.Key, Path = p.Value, SHA256 = FileSha256(p.Value) }).ToArray(),
-            EvaluatedPrefixStartUtc = canonical.FirstAsOfUtc, EvaluatedPrefixEndUtc = canonical.LastAsOfUtc,
-            EvaluatedPrefixFrameCount = canonical.FrameCount, DiagnosticWindowStartUtc = S9Time(31), DiagnosticWindowEndUtc = S9Time(36),
-            ComparedLongerPrefixEndUtc = longer.Canonical.LastAsOfUtc, CommonPrefixIdentical = true,
-            StrategyDefinition = definition, Capability = capability,
+            EvaluatedPrefixStartUtc = canonical.FirstAsOfUtc,
+            EvaluatedPrefixEndUtc = canonical.LastAsOfUtc,
+            EvaluatedPrefixFrameCount = canonical.FrameCount,
+            DiagnosticWindowStartUtc = S9Time(31),
+            DiagnosticWindowEndUtc = S9Time(36),
+            ComparedLongerPrefixEndUtc = longer.Canonical.LastAsOfUtc,
+            CommonPrefixIdentical = true,
+            StrategyDefinition = definition,
+            Capability = capability,
+            RuntimeWorkingTreeCodeHashes = new[] {
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayEvaluators/MoneyWayNasdaqHumanStructuralStopLossEvaluator.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayEvaluators/MoneyWayNasdaqRiskExposureEvaluator.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayEvaluators/MoneyWayNasdaqHumanTakeProfitEvaluator.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/MentorSessions/NasdaqMentorSessionReplay.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqLiquidityTakeRuleFact.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqHumanWickfillScenario2StopLossRuleFact.cs",
+                "src/backend/MoneyWay.Application/StrategyReplay/Workflow/AdvanceStrategyReplayProgressionUseCase.cs",
+                "src/backend/MoneyWay.Application/StrategyReplay/Workflow/MoneyWayReplayWorkflowDefinitions.cs",
+                "src/backend/MoneyWay.Application/StrategyReplay/Workflow/StrategyReplayRulePrerequisite.cs",
+                "src/backend/MoneyWay.Application/StrategyReplay/Workflow/StrategyReplayWorkflowDefinition.cs",
+                "src/backend/MoneyWay.Application/StrategyReplay/Workflow/StrategyReplayWorkflowCatalog.cs"
+            }.ToDictionary(p => p, p => FileSha256(Path.Combine(FindRepositoryRoot(), p))),
             BindingDiagnostics = first.Link.Diagnostics.Where(d => d.AsOfUtc >= S9Time(31)).ToArray(),
             Frames = selected.Select(f => new
             {
                 CanonicalDiagnostic = canonical.Frames.Single(d => d.Step == f.Strategy.Step),
-                StrategyObservation = f.Strategy, f.Inputs, f.SnapshotDiagnostic,
-                f.Snapshot, f.ContactResolution, f.DocumentedExit, f.FactualEvaluation
+                StrategyObservation = f.Strategy,
+                f.Inputs,
+                f.SnapshotDiagnostic,
+                f.Snapshot,
+                f.ContactResolution,
+                f.DocumentedExit,
+                f.FactualEvaluation
             }).ToArray(),
-            Limitations = "Bounded canonical pre-entry diagnostic only; no trade, fill, SL/TP/risk/PnL or retroactive authorization of 08:32 entry. Runtime and adapter unchanged."
+            Limitations = "Bounded canonical pre-entry diagnostic only; no trade, fill, SL/TP/risk/PnL or retroactive authorization of 08:32 entry. WF2-to-SL convergence implemented; adapter and CSVs unchanged."
         };
         var directory = @"C:\MoneyWay\session\reports\2026-09-08";
         Directory.CreateDirectory(directory);
@@ -110,6 +155,20 @@ public sealed partial class LocalNasdaqMentorSessionTests
         Assert.Equal("moneyway.canonical-preentry-window", parsed.RootElement.GetProperty("Schema").GetString());
         Assert.Equal(6, parsed.RootElement.GetProperty("Frames").GetArrayLength());
         Assert.Equal(adapterHash, FileSha256(adapterPath));
+        Assert.Equal(originalHash, FileSha256(original));
+        using var reader = new MoneyWay.Infrastructure.Strategies.Nasdaq.ReadNasdaqHistoricalReport();
+        var view = reader.ExecuteAsync(path, FileSha256(path)).GetAwaiter().GetResult();
+        Assert.Equal("HumanValidationRequired", view.SelectedFrame!.Verdict);
+        Assert.Equal("HumanValidationRequired", view.SelectedFrame.TradeLifecycle!.Stages.Single(s => s.Stage == "StopLoss").RuleResult);
+        Assert.Null(view.SelectedFrame.TradeLifecycle.Scenario2StopLoss);
+        Assert.Null(view.SelectedFrame.TradeLifecycle.Entry);
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b => b.UseEnvironment("Development")
+            .UseSetting("NasdaqHistoricalDemo:ReportPath", path).UseSetting("NasdaqHistoricalDemo:ExpectedSha256", FileSha256(path)));
+        using var client = factory.CreateClient();
+        var http = client.GetFromJsonAsync<NasdaqHistoricalReportSummary>("/api/nasdaq/historical-demo?frameStep=" + final.Strategy.Step).GetAwaiter().GetResult()!;
+        Assert.Equal("HumanValidationRequired", http.SelectedFrame!.Verdict);
+        Assert.Equal("HumanValidationRequired", http.SelectedFrame.TradeLifecycle!.Stages.Single(s => s.Stage == "StopLoss").RuleResult);
+        Assert.Null(http.SelectedFrame.TradeLifecycle.Scenario2StopLoss);
         output.WriteLine($"ARTIFACT: {path}\nSHA256: {FileSha256(path)}\nBytes: {new FileInfo(path).Length}");
         output.WriteLine($"PREFIX: {canonical.FirstAsOfUtc:O} through {canonical.LastAsOfUtc:O}; {canonical.FrameCount} frames. WINDOW: 13:31Z-13:36Z.");
         foreach (var f in selected)
@@ -125,5 +184,11 @@ public sealed partial class LocalNasdaqMentorSessionTests
     {
         using var stream = File.OpenRead(path);
         return Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
+    }
+    private static string FindRepositoryRoot()
+    {
+        for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
+            if (File.Exists(Path.Combine(directory.FullName, "MoneyWay.sln"))) return directory.FullName;
+        throw new InvalidOperationException("Repository source is needed to pin the generation code.");
     }
 }

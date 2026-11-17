@@ -27,6 +27,18 @@ export interface HistoricalFrame {
 }
 
 export interface HistoricalTradeLifecycle {
+    scenario2StopLoss?: {
+        referenceId: string;
+        protectivePrice: number;
+        stopPrice: number;
+        effectiveAtUtc: string;
+        observedAtUtc: string;
+        source: { sourceReference: string; sourceReferenceSha256: string };
+        protectiveSource: {
+            sourceReference: string;
+            sourceReferenceSha256: string;
+        };
+    } | null;
     path: string;
     stages: {
         stage: string;

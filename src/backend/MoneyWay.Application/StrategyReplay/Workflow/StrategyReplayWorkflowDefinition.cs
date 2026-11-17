@@ -21,11 +21,11 @@ public sealed class StrategyReplayWorkflowDefinition
             throw new ArgumentException("Workflow declarations cannot contain null.", nameof(rulePrerequisites));
         foreach (var declaration in declarations)
         {
-            if (declaration.PrerequisiteRuleIds.Distinct().Count() != declaration.PrerequisiteRuleIds.Count)
+            if (declaration.AllPrerequisiteRuleIds.Distinct().Count() != declaration.AllPrerequisiteRuleIds.Count())
                 throw new ArgumentException(
                     $"Workflow '{strategyId}' version '{strategyVersion}' rule '{declaration.DownstreamRuleId}' contains a duplicate prerequisite.",
                     nameof(rulePrerequisites));
-            if (declaration.PrerequisiteRuleIds.Contains(declaration.DownstreamRuleId))
+            if (declaration.AllPrerequisiteRuleIds.Contains(declaration.DownstreamRuleId))
                 throw new ArgumentException(
                     $"Workflow '{strategyId}' version '{strategyVersion}' rule '{declaration.DownstreamRuleId}' cannot depend on itself.",
                     nameof(rulePrerequisites));
@@ -63,7 +63,7 @@ public sealed class StrategyReplayWorkflowDefinition
         var byRule = declarations.ToDictionary(declaration => declaration.DownstreamRuleId);
         var states = new Dictionary<RuleId, VisitState>();
         foreach (var ruleId in declarations
-            .SelectMany(declaration => declaration.PrerequisiteRuleIds.Prepend(declaration.DownstreamRuleId))
+            .SelectMany(declaration => declaration.AllPrerequisiteRuleIds.Prepend(declaration.DownstreamRuleId))
             .Distinct())
         {
             Visit(ruleId);
@@ -83,7 +83,7 @@ public sealed class StrategyReplayWorkflowDefinition
             states[ruleId] = VisitState.Visiting;
             if (byRule.TryGetValue(ruleId, out var declaration))
             {
-                foreach (var prerequisiteRuleId in declaration.PrerequisiteRuleIds)
+                foreach (var prerequisiteRuleId in declaration.AllPrerequisiteRuleIds)
                     Visit(prerequisiteRuleId);
             }
             states[ruleId] = VisitState.Visited;

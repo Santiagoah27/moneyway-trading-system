@@ -60,6 +60,37 @@ function TradeLifecycle({ trade }: { trade: HistoricalTradeLifecycle }) {
                     </tbody>
                 </table>
             </div>
+            {trade.scenario2StopLoss && (
+                <div>
+                    <p>
+                        SL canónico Scenario 2:{" "}
+                        {trade.scenario2StopLoss.stopPrice}. Referencia
+                        protectora: {trade.scenario2StopLoss.referenceId} ·{" "}
+                        {trade.scenario2StopLoss.protectivePrice}.
+                    </p>
+                    <p>
+                        Selección efectiva:{" "}
+                        {trade.scenario2StopLoss.effectiveAtUtc} · Disponible:{" "}
+                        {trade.scenario2StopLoss.observedAtUtc}.
+                    </p>
+                    <p>
+                        Fuente SL:{" "}
+                        {trade.scenario2StopLoss.source.sourceReference}
+                    </p>
+                    <p>
+                        Fuente protectora:{" "}
+                        {
+                            trade.scenario2StopLoss.protectiveSource
+                                .sourceReference
+                        }
+                    </p>
+                    <p>
+                        La selección de SL conserva su propia procedencia.
+                        Entrada, riesgo y TP mantienen sus requisitos
+                        independientes.
+                    </p>
+                </div>
+            )}
             <dl>
                 <dt>Entrada documentada</dt>
                 <dd>
@@ -70,7 +101,7 @@ function TradeLifecycle({ trade }: { trade: HistoricalTradeLifecycle }) {
                           ? "Registrada en el informe original; detalle pendiente de proyección"
                           : "Falta evidencia de entrada en el snapshot canónico"}
                 </dd>
-                <dt>SL documentado</dt>
+                <dt>SL del snapshot histórico</dt>
                 <dd>{trade.stopPrice ?? "No disponible"}</dd>
                 <dt>TP documentado</dt>
                 <dd>{trade.takeProfitPrice ?? "No disponible"}</dd>

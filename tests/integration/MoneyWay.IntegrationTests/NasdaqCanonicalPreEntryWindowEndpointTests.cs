@@ -137,7 +137,7 @@ public sealed class NasdaqCanonicalPreEntryWindowEndpointTests : IDisposable
         Assert.Null(frame.TradeLifecycle.Entry);
         Assert.Null(frame.TradeLifecycle.Exit);
         Assert.Equal("inconclusive", frame.TradeLifecycle.FailureClassification);
-        Assert.Equal(eligibility == "Passed" ? "NotImplemented" : "MissingOrBlocked",
+        Assert.Equal("MissingOrBlocked",
             frame.TradeLifecycle.Stages.Single(s => s.Stage == "StopLoss").Status);
         Assert.Equal(7591, result.Navigation!.FirstStep);
         Assert.Equal(7596, result.Navigation.LastStep);

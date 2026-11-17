@@ -27,7 +27,7 @@ public sealed partial class NasdaqHumanWickfillScenario2ReversalEvaluatorTests
         Assert.DoesNotContain(after.RuleFacts, fact => fact.RuleId.Value == id);
         Assert.DoesNotContain(new RuleId(id), after.WorkflowProgression!.EstablishedRuleIds);
         Assert.False(after.WorkflowProgression.RuleEligibility.Single(e => e.RuleId.Value == id).EstablishesProgression);
-        Assert.Equal(RuleEvaluationResult.Waiting, after.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").Result);
+        Assert.Equal(RuleEvaluationResult.HumanValidationRequired, after.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").Result);
         Assert.False(after.WorkflowProgression.RuleEligibility.Single(e => e.RuleId.Value == "NQ-SL-001").EstablishesProgression);
         var wf = Assert.IsType<NasdaqWickfillScenario2PreEntryEligibilityRuleFact>(after.RuleFacts.Single(fact => fact.RuleId == EligibilityRule).Fact);
         Assert.Equal(At(13, 32), wf.EligibilityEffectiveAtUtc);
