@@ -1990,3 +1990,138 @@ and a retained causal link from publication to witness. A new witness bounds
 availability at that new operation; it cannot authenticate earlier historical
 availability retrospectively. Obtain that evidence before designing a production
 verifier; do not repeat Chrony endpoint sampling to infer missing continuity.
+
+## Independent RFC 3161 digest witness
+
+Implemented from clean, synchronized `main` at
+`9a90c42ff0516c066a22a67d550080a72a36f28f`. This feature obtains one external
+digest witness and supports offline verification; it does not open temporal
+admission. [Authentic artifacts and invocation](mt5-local-dotnet-receipt-adapter.md#rfc-3161-witness-for-receiptprobe-643).
+
+### Standards, endpoint and diagnostic trust profile
+
+The contract follows [RFC 3161](https://www.rfc-editor.org/rfc/rfc3161.html) and
+its [RFC 5816 ESSCertIDv2 update](https://www.rfc-editor.org/rfc/rfc5816.html).
+DigiCert's official [endpoint documentation](https://knowledge.digicert.com/solution/troubleshooting-timestamping-problems)
+identifies `http://timestamp.digicert.com`. No officially documented HTTPS
+equivalent was established in this review. HTTP transport is unauthenticated;
+acceptance depends on the signed response and its exact request binding.
+
+The current official [legal repository](https://www.digicert.com/legal-repository)
+links [Public Trust CP/CPS 7.10](https://www.digicert.com/content/dam/digicert/pdfs/legal/digicert-public-trust-cp-cps-v7-10.pdf).
+Section 6.8 describes an RFC 3161 service, recommends timestamping signed code
+and describes clock maintenance, without supplying a numerical error bound for
+this token when signed accuracy is absent. This review uses the endpoint as a
+digest-only diagnostic candidate, not a provider guarantee for market data or
+an assertion of commercial/legal reliance. Direct PDF archival was blocked by
+the provider's WAF; the official PDF was readable through the web tool. The
+review retains the URL/version and this archival limitation, not an invented PDF
+hash. Endpoint/OID/root-source documents and the root DER were retained locally.
+
+The narrow cryptographic profile recognizes timestamp policy
+`2.16.840.1.114412.7.1` from the
+[official OID list](https://github.com/digicert/digicert_official_oids).
+It requires DigiCert Trusted Root G4, SHA256
+`552f7bdcf1a7af9e6ce672017f4f12abf77240c78e761ac203d1d9d20ac89988`,
+independently listed in DigiCert's
+[trust-anchor identifiers](https://github.com/digicert/digicert_official_oids/blob/master/trust_anchor_identifiers.md).
+The root is supplied as a DER file and checked against that pin before any POST;
+embedded certificates are not automatically trusted. A matching OID alone is
+insufficient: signature, ESS binding, exclusive critical TSA EKU, validity,
+pinned path and revocation checks remain separate requirements.
+
+### Implementation and proof boundary
+
+[`Mt5TimestampManifest`](../../src/backend/MoneyWay.Infrastructure/MarketData/Mt5/Mt5TimestampManifest.cs)
+consumes the existing validated prefix and explicit receipt/probe hashes.
+Its version-1 UTF8 JSON uses fixed property order and compact serialization;
+these exact bytes are retained. It includes source, directory-scope digest,
+terminal identity, prefix-manifest digest, run/poll/receipt and probe identities.
+It contains no private path, OHLC or account identifier. This is a specified local
+serialization, not a claim of implementing general JSON canonicalization.
+
+Only SHA256 of those bytes is submitted, with the SHA256 algorithm OID,
+a fresh cryptographic 24-byte nonce and certificate-inclusion request. There is
+no requested policy override, extension payload or original file upload.
+The timestamp is on the **manifest digest**; local manifest-to-source verification
+is required separately and is not independently performed by the TSA.
+
+[`Rfc3161WitnessVerifier`](../../src/backend/MoneyWay.Infrastructure/MarketData/Mt5/Rfc3161WitnessVerifier.cs)
+uses framework `Rfc3161TimestampRequest`, `Rfc3161TimestampToken` and CMS APIs.
+It checks complete request/response consumption, successful RFC status, version,
+algorithm, imprint, nonce, signature, ESSCertID/ESSCertID2 certificate binding,
+TSA EKU and signer validity at signed `genTime`. Directory-name TSA hints must
+match the signer subject; unsupported hints/critical TSTInfo extensions prevent
+complete profile validation. Protocol results have no public constructor or
+settable verification flags and copy certificate/token bytes defensively.
+
+The new official Microsoft `System.Security.Cryptography.Pkcs` dependency is
+pinned to **10.0.13**. NuGet rejected 10.0.10 for the published
+[CVE-2026-70162](https://github.com/advisories/GHSA-2fmv-rv2c-59x7) and
+[CVE-2026-84008](https://github.com/advisories/GHSA-846f-f764-76mx)
+denial-of-service issues; no warning suppression or framework replacement was
+used. The authentic run loaded crypto file version `10.0.1326.50504` on .NET
+runtime `10.0.10`, SDK `10.0.302`.
+
+The [bounded transport](../../src/backend/MoneyWay.Infrastructure/MarketData/Mt5/Rfc3161WitnessTransport.cs)
+performs one POST with `application/timestamp-query`, accepts at most 128 KiB,
+uses an explicit 1–30 second total request deadline and at most ten seconds for
+connection establishment. Redirects, cookies, decompression and retries are
+disabled. Transport failures remain separate from cryptographic verification.
+
+`X509Chain` runs with the pinned custom root, timestamping purpose, no ignored
+verification flags, revocation enabled and verification time from signed
+`genTime`, never a host UTC reading. Offline mode prohibits certificate downloads;
+optional online mode explicitly permits platform revocation retrieval. Platform
+cache success alone is not archived independent revocation proof.
+
+The optional [archived CRL verifier](../../src/backend/MoneyWay.Infrastructure/MarketData/Mt5/Rfc3161ArchivedRevocation.cs)
+uses the **existing Git for Windows OpenSSL**, not a new installation, because
+`X509Chain` does not expose an archived CRL input API. It verifies retained CRLs
+offline against the pinned certificate path with `-crl_check_all`, timestamping
+purpose and explicit `-attime`. Other CA paths/stores and downloads are disabled;
+the child receives an empty local configuration. Fractional timestamps require
+both surrounding whole-second checks. A bounded child-process deadline kills
+the process tree on timeout. Tool binary hash, version, arguments, results and all
+certificate/CRL inputs are retained for reproduction. No system trust store changes.
+[OpenSSL verification options](https://docs.openssl.org/3.2/man1/openssl-verification-options/).
+
+Without that archived verification, complete trust remains false even if the
+platform reports success. With cryptographic/profile/pinned-path checks and
+archived CRL verification successful, `CompleteTrustValidation` describes only
+the RFC 3161 witness at its signed time. It is not a MoneyWay admission credential.
+
+### Signed time, uncertainty and causal limits
+
+Original `genTime` text, fractional precision, serial, policy, ordering and signed
+accuracy components are preserved with the untouched response. Signed accuracy,
+if present and applicable, supports only a **conditional** calculation of
+`[genTime - accuracy, genTime + accuracy]`. Excess precision or arithmetic overflow
+does not manufacture an interval. An absent accuracy field remains null, not zero.
+
+The authentic token has `genTime = 2026-11-17T14:30:26Z`, second precision,
+`ordering = false`, and **no signed accuracy**. No auditable numerical bound was
+established from the reviewed policy. Therefore `tsa_utc_uncertainty = unresolved`
+and `AuthorizedUtcInterval = null`, despite successful cryptographic/trust checks.
+
+This is evidence about existence of the submitted digest at a later TSA issuance,
+subject to the issuer's signed statement. It does not authenticate original broker
+publication, file creation, collector capture time, historical candle availability,
+MT5 native time or provider finalization. Local validation-before-request counters
+remain local instrumentation, not a TSA-witnessed source-to-host causal link.
+The November 17 token cannot backdate receipt 643 or its candles.
+
+The existing `Mt5TemporalEvidenceAdmission` remains unchanged and fail-closed.
+No canonical series, UTC conversion, replay observation or `AsOfUtc` is generated.
+Preserve `selection_interval_propagation = unresolved`,
+`overall_utc_uncertainty = unresolved`, `windows_clock_authenticated = false`,
+`mt5_native_utc_authenticated = false`, `canonical_utc_conversion_authorized = false`,
+`utc_conversion_authenticated = false` and `canonical_ready = false`.
+The authenticated Linux NTS observations retain their previous scope.
+
+The single next action is to obtain an **authoritative numerical UTC accuracy
+contract applicable to this TSA policy/token**, since the token omits accuracy.
+Do not infer it from HTTP duration or local clocks, and do not send another
+timestamp request solely to hope for a different field. Even resolving that bound
+would leave the independent source-publication linkage and candle-finalization
+requirements separate.

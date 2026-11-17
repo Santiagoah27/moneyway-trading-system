@@ -647,3 +647,163 @@ regression cases**. Total across non-overlapping selections: **372 passed,
 and `git diff --check` are verified before publication. Repeating the authentic
 assessment with the final build produced `authentic-admission-643-final.json`
 with the same report SHA256 and another successful 1,286-file preservation check.
+
+## RFC 3161 witness for receipt/probe 643
+
+This diagnostic starts from `9a90c42ff0516c066a22a67d550080a72a36f28f`, clean
+and synchronized. The [RFC 3161 trust and uncertainty contract](mt5-server-time-policy-audit.md#independent-rfc-3161-digest-witness)
+defines the reviewed endpoint, root/policy profile, verification methods and
+limits. No existing temporal admission, replay, strategy, collector or checkpoint
+contract changes.
+
+### Authentic subject and single external request
+
+The existing reader validated the pinned 643-record prefix, including its
+predecessor/probe dependencies and source OANDA Global Markets Limited /
+`OANDA_Global-Demo-1` / demo `US100`. It did not select a moving latest record.
+The selected pair is:
+
+| Identity                          | Value                                                              |
+| --------------------------------- | ------------------------------------------------------------------ |
+| Terminal and selected receipt     | `record-000000000643.json`, sequence 643                           |
+| Receipt SHA256                    | `984a8a26ca1f93182eec60e3a643e432494294b08a3a4b7319c2305608917f26` |
+| Run / poll                        | `run-000000000217` / 5237                                          |
+| Probe                             | `probe-000000000643.json`                                          |
+| Probe SHA256                      | `483b32c975860b8a743f7e98c877c794d24b5830bf7b338a309a35e06b3c95fc` |
+| Prefix manifest                   | `7360bd85d817b673ed98a7023139e4c9392f056d741731f1ee80dbda06eb05f0` |
+| Timestamp subject manifest SHA256 | `d20b5f2fe16afd0f84f790e89176274ab1f5672827b2aadc1126ef7270c55e67` |
+
+Exactly **one** real timestamp POST was sent to
+`http://timestamp.digicert.com/`, with a 20-second total deadline and 128 KiB
+response cap. The request carried only the manifest digest and RFC protocol
+fields, not the manifest, OHLC or private paths. HTTP 200 returned
+`application/timestamp-reply`, **6,024 response bytes**. Local Stopwatch counters
+retain validation/request/response order but are not UTC evidence. There was no
+timestamp retry. Later runs were offline against the original request/response.
+
+| Retained protocol artifact | SHA256                                                             |
+| -------------------------- | ------------------------------------------------------------------ |
+| Exact `request.tsq` DER    | `24a6a72ad726e2652343fd4c00188e72c28a45b0135d96545270f4a5639374bc` |
+| Exact `response.tsr` DER   | `ec66c7d6eaac6df70e54f71617ee7f366f75f6fc6fd8b2864dc08d7cdb5c3f56` |
+
+The framework verified response status, version 1, SHA256 algorithm and imprint,
+the original fresh nonce, CMS signature, ESS certificate binding, critical
+timestamping EKU and signer validity. The signer is
+`DigiCert SHA256 RSA4096 Timestamp Responder 2026 1`, SHA256
+`2da09da7f4131f9fe72db6c5e6e9c9656755af043f1ea742cc0d2120e141ebfc`.
+Its issuer is `DigiCert Trusted G4 TimeStamping RSA4096 SHA256 2025 CA1`, whose
+path ends at the explicitly pinned DigiCert Trusted Root G4. Policy
+`2.16.840.1.114412.7.1` matches the reviewed diagnostic profile.
+
+### Independent revocation evidence and offline reproduction
+
+The first capture reported platform chain/revocation success but **not complete
+archived trust**, because a cache result does not retain its CRL/OCSP proof.
+Two bounded, separate CRL GETs then obtained the signed objects named by the
+certificates. These were not additional timestamp requests:
+
+| CRL          | Issuer                | thisUpdate / nextUpdate                     | SHA256                                                             |
+| ------------ | --------------------- | ------------------------------------------- | ------------------------------------------------------------------ |
+| `signer.crl` | Timestamping 2025 CA1 | 2026-11-11 16:40:26Z / 2026-12-02 16:40:26Z | `41e687c3f7c0316762c0933d2475e7b5256e478042e87592d1fcfe926342f244` |
+| `issuer.crl` | Trusted Root G4       | 2026-11-13 17:42:35Z / 2026-12-04 17:42:35Z | `057cf252d73ef58e8188da588da4eccc7e7aa2b7708b9455da6e7b42c8c1c594` |
+
+Sources were the certificate-declared paths under `http://crl3.digicert.com/`:
+`DigiCertTrustedG4TimeStampingRSA4096SHA2562025CA1.crl` and
+`DigiCertTrustedRootG4.crl`. HTTP origin alone is not trusted; signatures, issuer
+binding and validity were checked from the retained objects.
+
+Independent OpenSSL `ts -verify`, with the original request and the signed
+`genTime` as the verification epoch, returned **Verification: OK**. Offline
+certificate verification with both archived CRLs, `-crl_check_all`, timestamping
+purpose, pinned CA file and `-attime 1794925826` also returned **OK**. The command's
+optional archived-verification path reproduces that result with Git for Windows
+OpenSSL **3.2.4**, executable SHA256
+`e7c10875d990b320a6000653b3a8c12f5aa06442c1937a246d2daeb342b7c9c5`.
+No new OpenSSL installation, global configuration or trust-store modification.
+
+`CompleteTrustValidation = true` in the later offline report means that the
+cryptographic/profile/pinned-chain and archived revocation checks succeeded for
+this external witness at its signed time. It does not assert permanent future
+certificate status, rigorous UTC uncertainty, independent witnessing of local
+source publication or canonical readiness. Earlier incomplete reports remain
+untouched rather than silently being upgraded.
+
+The signed time is **`2026-11-17T14:30:26Z`**, original text
+`20261117143026Z`, zero fractional-second digits. `ordering = false`.
+**Accuracy is absent**, with all accuracy components null. No acceptable numerical
+policy bound was established, so `tsa_utc_uncertainty = unresolved` and
+`AuthorizedUtcInterval = null`. This authentic token does not backdate the older
+receipt/probe or prove when any underlying candle originally became available.
+`Mt5TemporalEvidenceAdmission` still denies admission.
+
+### Retention and command
+
+Artifacts are outside Git under
+`%LOCALAPPDATA%/MoneyWay/audits/mt5-rfc3161-466bd98cf360449c96e7b93f129315e7/`.
+`witness/` retains the single real response. Subsequent `witness-offline-*`
+directories retain independent reruns, certificates, archived CRLs, verifier
+arguments/results, exact subject/request/response bytes and SHA256 inventories.
+`independent/` retains manual cross-verification and CRL retrieval evidence.
+`provider-review-v2.json` records official provenance and the direct CPS PDF
+archival blocker. No private key material was retained.
+
+Reports use create-only publication into a new directory outside Git/source;
+published files are marked read-only and pinned by hashes. These are operational
+immutability/integrity controls, not WORM storage or authenticated filesystem
+timestamps. Existing evidence is never overwritten. All **1,286** pinned original
+record/probe/checkpoint files retained their SHA256 values.
+
+The [Worker command](../../src/backend/MoneyWay.Worker/Mt5TimestampWitnessCommand.cs)
+requires explicit source, prefix, selected pair hashes, endpoint, request deadline,
+root DER and a new output directory. `--verify-bundle` performs no timestamp POST;
+offline mode also disables platform downloads. `--crl-directory` consumes the
+retained `signer.crl` and `issuer.crl` files. It does not download CRLs automatically.
+Exit codes are 0 for cryptographically verified request-linked response, 2 for
+invalid arguments/profile/subject, 3 for unavailable/invalid prefix or response,
+and 4 for evidence I/O. **Exit 0 alone is not complete trust or temporal admission.**
+
+Git Bash reproduction from repository root, using a new output name, is:
+
+```bash
+base="$(cygpath -m "$LOCALAPPDATA")/MoneyWay/audits/mt5-rfc3161-466bd98cf360449c96e7b93f129315e7"
+dotnet ./src/backend/MoneyWay.Worker/bin/Debug/net10.0/MoneyWay.Worker.dll mt5-timestamp-witness \
+  --source "$(cygpath -m "$APPDATA")/MetaQuotes/Terminal/Common/Files/MoneyWayAutomaticReadOnly" \
+  --through-sequence 643 \
+  --through-sha256 984a8a26ca1f93182eec60e3a643e432494294b08a3a4b7319c2305608917f26 \
+  --record record-000000000643.json \
+  --record-sha256 984a8a26ca1f93182eec60e3a643e432494294b08a3a4b7319c2305608917f26 \
+  --probe-sha256 483b32c975860b8a743f7e98c877c794d24b5830bf7b338a309a35e06b3c95fc \
+  --tsa http://timestamp.digicert.com/ --timeout-seconds 20 \
+  --trust-root "$base/DigiCertTrustedRootG4.crt" \
+  --verify-bundle "$base/witness" --crl-directory "$base/independent" \
+  --revocation-mode offline --output "$base/recheck-$RANDOM-$RANDOM"
+```
+
+The actual diagnostic has already used its one authorized external request.
+Omitting `--verify-bundle` would create a new POST and requires a new authorized
+execution. No MT5 session or Worker background service is needed for verification.
+
+The [synthetic suite](../../tests/integration/MoneyWay.IntegrationTests/Mt5TimestampWitnessTests.cs)
+uses generated certificates/tokens/CRLs for signature, nonce, imprint, ESS, EKU,
+expiry, policy, accuracy, revoked/stale/future/tampered CRL, transport and retention
+failure paths. These fixtures are not authentic DigiCert evidence. The real token
+and the archived CRLs were verified separately. The single next evidence action
+and all unchanged UTC/readiness flags are defined in the linked temporal contract.
+
+The final reproducible result is `witness-offline-published/verification.json`,
+SHA256 `f9809dc0f9d85d8cacb0171ef58b96f95dcfa4820e3874d3c3563b9a77abdb19`.
+Its `artifacts.json` inventory SHA256 is
+`967c942e0354254de46eff19bb13f2bcfc2afdb91c2095d37a7ab36d64d4ca77`.
+The original capture inventory remains
+`0d07f337dd1f15933f8aa4f8ed59f0338770e0e254ee3530a21eeb9eb3d85526`.
+Both inventories were checked against every listed artifact's bytes/hash, and
+all 1,286 source/checkpoint pins were rechecked after offline reproduction.
+
+Full .NET build passed with **0 warnings/errors**. The focused witness suite
+passed **40** tests; the broader non-overlapping selections passed **332 MT5
+integration tests** (including those 40, receipt/lifecycle/causal-prefix/admission
+regressions), **19 domain replay tests** and **61 application context/canonical
+cursor/backtest regression tests**: **412 passed, 0 failed, 0 skipped**. The focused
+40 were also rerun successfully against the final build. Markdown/C# formatting,
+local links, evidence inventories and `git diff --check` are verified before
+publication. No genuine TSA request was repeated during testing.

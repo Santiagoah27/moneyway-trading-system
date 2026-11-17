@@ -1,5 +1,10 @@
 using MoneyWay.Worker;
 
+if (args.Length > 0 && args[0] == "mt5-timestamp-witness")
+{
+    return await new Mt5TimestampWitnessCommand().ExecuteAsync(args, Console.Out, Console.Error);
+}
+
 if (args.Length > 0 && args[0] == "mt5-causal-availability")
 {
     return new Mt5CausalAvailabilityCommand().Execute(args, Console.Out, Console.Error);
