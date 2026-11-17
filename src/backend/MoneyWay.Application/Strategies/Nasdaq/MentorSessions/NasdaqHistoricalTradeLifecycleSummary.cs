@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Globalization;
 using MoneyWay.Application.Strategies.Nasdaq.HistoricalTrades;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 
@@ -13,6 +14,18 @@ public sealed record NasdaqHistoricalRecordedExecution(decimal Price, DateTimeOf
 public sealed record NasdaqHistoricalScenario2Stop(string ReferenceId, decimal ProtectivePrice, decimal StopPrice,
     DateTimeOffset EffectiveAtUtc, DateTimeOffset ObservedAtUtc, NasdaqHistoricalTradeSource Source,
     NasdaqHistoricalTradeSource ProtectiveSource);
+public sealed record NasdaqHistoricalScenario2Risk(NasdaqRiskExposure Exposure, decimal StopPrice,
+    decimal? RiskRatio, bool RatioExceedsDecimalRange, decimal Limit, bool IsWithinLimit,
+    DateTimeOffset EffectiveAtUtc, DateTimeOffset ObservedAtUtc, NasdaqHistoricalTradeSource Source)
+{
+    // Exact invariant strings survive JavaScript JSON numbers without reducing source decimal precision.
+    public string AccountBasisAmountText => Exposure.AccountBasisAmount.ToString(CultureInfo.InvariantCulture);
+    public string ReportedMaximumLossText => Exposure.ReportedMaximumLoss.ToString(CultureInfo.InvariantCulture);
+    public string PlannedEntryPriceText => Exposure.PlannedEntryPrice.ToString(CultureInfo.InvariantCulture);
+    public string? QuantityText => Exposure.Quantity?.ToString(CultureInfo.InvariantCulture);
+    public string StopPriceText => StopPrice.ToString(CultureInfo.InvariantCulture);
+    public string? RiskRatioText => RiskRatio?.ToString(CultureInfo.InvariantCulture);
+}
 
 /// <summary>Presentation of existing frame artifacts, never a strategy evaluator, fill simulator or PnL model.</summary>
 public sealed record NasdaqHistoricalTradeLifecycleSummary(
@@ -31,6 +44,7 @@ public sealed record NasdaqHistoricalTradeLifecycleSummary(
     public decimal? ReportedMaximumLoss { get; init; }
     public string? RiskCurrency { get; init; }
     public NasdaqHistoricalScenario2Stop? Scenario2StopLoss { get; init; }
+    public NasdaqHistoricalScenario2Risk? Scenario2RiskExposure { get; init; }
 
     public static NasdaqHistoricalTradeSource Source(string inputType, DateTimeOffset observedAtUtc, string reference) =>
         new(inputType, observedAtUtc, reference[..Math.Min(512, reference.Length)],
@@ -51,7 +65,7 @@ public sealed record NasdaqHistoricalTradeLifecycleSummary(
             Rule("PreEntry", wf2 ? "NQ-WF2-002" : "NQ-M1-003"),
             new("Entry", "MissingInput", null, null, "No coherent canonical observed-entry artifact is available in this projection; eligibility is not execution."),
             Rule("StopLoss", "NQ-SL-001"),
-            Rule("Risk", "NQ-RISK-001", wf2 ? "Risk consumes a Standard SL fact; Scenario 2 downstream ancestry is not integrated. No account basis or planned loss is inferred." : null),
+            Rule("Risk", "NQ-RISK-001"),
             Rule("TakeProfit", "NQ-TP-001", wf2 ? "TP consumes a Standard SL fact; Scenario 2 target evidence and downstream ancestry are not integrated." : null),
             new("DocumentedExit", "MissingInput", null, null, "No causally selected documented execution is available; level contact is not a fill."),
             new("EconomicOutcome", "NotImplemented", null, null, "Existing factual composition does not calculate economic outcome or establish valid_strategy_loss/rule_violation."),
@@ -73,6 +87,8 @@ public sealed record NasdaqHistoricalTradeLifecycleSummary(
             ? frame.Strategy.RuleFacts.Where(f => f.RuleId.Value == "NQ-SL-001").Select(f => f.Fact)
                 .OfType<NasdaqHumanWickfillScenario2StopLossRuleFact>().SingleOrDefault() : null;
         var stages = summary.Stages.ToArray();
+        var risk = frame.Strategy.RuleFacts.Where(f => f.RuleId.Value == "NQ-RISK-001").Select(f => f.Fact)
+            .OfType<NasdaqWickfillScenario2RiskExposureRuleFact>().SingleOrDefault();
         void Recorded(string stage, string reason)
         {
             var i = Array.FindIndex(stages, s => s.Stage == stage);
@@ -103,6 +119,11 @@ public sealed record NasdaqHistoricalTradeLifecycleSummary(
             AccountBasisAmount = snapshot?.Risk.Exposure.AccountBasisAmount,
             ReportedMaximumLoss = snapshot?.Risk.Exposure.ReportedMaximumLoss,
             RiskCurrency = snapshot?.Risk.Exposure.Currency,
+            Scenario2RiskExposure = risk is null ? null : new(risk.Exposure, risk.StopLoss.StopPrice,
+                risk.RiskRatio, risk.RatioExceedsDecimalRange, risk.Limit, risk.IsWithinLimit, risk.EffectiveAtUtc,
+                risk.Selection.SupportingObservations[0].ObservedAtUtc,
+                Source(nameof(NasdaqWickfillScenario2RiskExposureObservation), risk.Selection.SupportingObservations[0].ObservedAtUtc,
+                    risk.Selection.SupportingObservations[0].SourceReference)),
             Scenario2StopLoss = scenario2 is null ? null : new(scenario2.Selection.Fact.ProtectiveReference.ReferenceId,
                 scenario2.Selection.Fact.ProtectiveReference.Price, scenario2.StopPrice, scenario2.EffectiveAtUtc,
                 scenario2.Selection.Fact.ObservedAtUtc,

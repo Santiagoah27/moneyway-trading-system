@@ -20,10 +20,9 @@ public sealed class MoneyWayNasdaqRiskExposureEvaluator : IReplayRuleEvaluator
         var latest = context.PriorObservations.LastOrDefault(o => o.Evaluations.Any(e => e.RuleId.Value == "NQ-SL-001"));
         if (latest?.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").Result == RuleEvaluationResult.Passed
             && NasdaqFvgReplayPrerequisites.Eligible(context, "NQ-SL-001")
-            && latest.RuleFacts.Any(f => f.RuleId.Value == "NQ-SL-001" && f.Fact is NasdaqHumanWickfillScenario2StopLossRuleFact wf2 && wf2.Session.Matches(context)))
-            return new(RuleEvaluationResult.HumanValidationRequired,
-                "The prior canonical Scenario 2 SL is established. A WF2-compatible documented exposure consumer/input is still required; no account basis, planned loss, size or risk approval is inferred.",
-                latest.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").EvidenceReference);
+            && latest.RuleFacts.SingleOrDefault(f => f.RuleId.Value == "NQ-SL-001")?.Fact is NasdaqHumanWickfillScenario2StopLossRuleFact wf2
+            && wf2.Session.Matches(context))
+            return EvaluateScenario2(context, wf2);
         var stop = latest?.RuleFacts.Where(f => f.RuleId.Value == "NQ-SL-001").Select(f => f.Fact)
             .OfType<NasdaqHumanStructuralStopLossRuleFact>().SingleOrDefault();
         if (stop is null || latest!.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").Result != RuleEvaluationResult.Passed
@@ -59,5 +58,43 @@ public sealed class MoneyWayNasdaqRiskExposureEvaluator : IReplayRuleEvaluator
         return new(selection.UnavailableSourceObservations.Count > 0
                 ? RuleEvaluationResult.DataUnavailable : RuleEvaluationResult.HumanValidationRequired,
             "No usable documented risk exposure is available for the exact eligible setup and selected SL.", proof);
+    }
+
+    private static ReplayRuleEvaluationDecision EvaluateScenario2(StrategyReplayContext context, NasdaqHumanWickfillScenario2StopLossRuleFact stop)
+    {
+        var selection = new NasdaqWickfillScenario2RiskExposureObservationSelector().Select(context, stop);
+        NasdaqWickfillScenario2RiskExposureRuleFact? fact = selection.IsUnique && selection.UnavailableSourceObservations.Count == 0 ? new(selection) : null;
+        object Evidence(NasdaqWickfillScenario2RiskExposureObservation o) => new
+        {
+            o.Session,
+            o.Exposure,
+            o.EffectiveAtUtc,
+            o.ObservedAtUtc,
+            o.SourceReference,
+            StopOwnerStep = o.StopOwner.Step,
+            StopOwnerAsOfUtc = o.StopOwner.AsOfUtc,
+            o.StopLoss.StopPrice,
+            ProtectiveReference = o.StopLoss.Selection.Fact.ProtectiveReference
+        };
+        var proof = JsonSerializer.Serialize(new
+        {
+            Path = "WickfillScenario2",
+            SlFactReceived = true,
+            RiskExposureEvidence = selection.SupportingObservations.Select(Evidence),
+            UnavailableSourceEvidence = selection.UnavailableSourceObservations.Select(Evidence),
+            fact?.RiskRatio,
+            fact?.RatioExceedsDecimalRange,
+            Limit = NasdaqRiskExposureRuleFact.MaximumRiskRatio,
+            RequiredInputs = new[] { "Documented positive account amount and named basis", "Same-currency documented planned maximum loss",
+                "Native planned entry price", "Explicit cost treatment and calculation provenance", "Original assessment/availability times", "Quantity/unit only when supplied" }
+        });
+        if (selection.IsConflict) return new(RuleEvaluationResult.HumanValidationRequired, "Scenario 2 documented risk exposures conflict; no source or currency is ranked.", proof);
+        if (selection.UnavailableSourceObservations.Count > 0)
+            return new(RuleEvaluationResult.DataUnavailable, "Scenario 2 risk cannot resolve its exact current native SL sources/ancestry.", proof);
+        if (fact is null) return new(RuleEvaluationResult.HumanValidationRequired,
+            "Canonical Scenario 2 SL received; native documented account basis/currency, planned maximum loss, planned entry, cost treatment, calculation provenance and original risk availability are required. No sizing or exposure is inferred.", proof);
+        return new(fact.IsWithinLimit ? RuleEvaluationResult.Passed : RuleEvaluationResult.Failed,
+            fact.IsWithinLimit ? "Scenario 2 documented planned maximum loss is at most 1% of the documented account basis."
+                : "Scenario 2 documented planned maximum loss exceeds 1% of the documented account basis.", proof, fact);
     }
 }

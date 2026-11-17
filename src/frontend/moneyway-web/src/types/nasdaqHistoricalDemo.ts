@@ -27,6 +27,33 @@ export interface HistoricalFrame {
 }
 
 export interface HistoricalTradeLifecycle {
+    scenario2RiskExposure?: {
+        accountBasisAmountText: string;
+        reportedMaximumLossText: string;
+        plannedEntryPriceText: string;
+        quantityText: string | null;
+        stopPriceText: string;
+        riskRatioText: string | null;
+        exposure: {
+            accountBasisAmount: number;
+            currency: string;
+            accountBasis: string;
+            reportedMaximumLoss: number;
+            plannedEntryPrice: number;
+            costTreatment: string;
+            calculationSourceReference: string;
+            quantity: number | null;
+            quantityUnit: string | null;
+        };
+        stopPrice: number;
+        riskRatio: number | null;
+        ratioExceedsDecimalRange: boolean;
+        limit: number;
+        isWithinLimit: boolean;
+        effectiveAtUtc: string;
+        observedAtUtc: string;
+        source: { sourceReference: string; sourceReferenceSha256: string };
+    } | null;
     scenario2StopLoss?: {
         referenceId: string;
         protectivePrice: number;

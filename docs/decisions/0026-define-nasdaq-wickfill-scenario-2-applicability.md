@@ -499,6 +499,41 @@ runtime convergence. Native Replay #2 still lacks a complete evaluable SL input.
 No ACTIVE strategy version or metadata activation is changed; the audited
 definition remains `nasdaq-0.1.0-draft` / draft.
 
+#### Canonical risk consumption checkpoint (2026-11-17)
+
+The next scoped increment connects NQ-RISK-001 to the original
+`NasdaqHumanWickfillScenario2StopLossRuleFact`. The distinct
+`NasdaqWickfillScenario2RiskExposureObservation` carries that exact prior eligible
+canonical SL owner and the existing `NasdaqRiskExposure` financial payload. It
+requires an explicit matching native provider/symbol and original UTC assessment,
+availability and provenance. Standard risk observations cannot stand in for WF2
+ancestry; USTEC cannot silently supply US100 prices.
+
+The stateless selector revalidates the latest eligible SL, exact run Start,
+current applicability/reversal, native protective sources and current compatible
+SL assertions. No favorable older SL is revived after a current rejection.
+Missing eligible SL waits; missing exposure after valid SL requires human
+validation; conflicting exposure assertions require review; unavailable/conflicting
+underlying SL sources prevent Passed. The canonical dispatcher extends its existing
+same-frame terminal liquidity gate to risk only under actual WF2 ancestry.
+Future reviews/stop revisions are filtered at AsOfUtc and cannot change earlier
+frames. Original semantic times are not clamped to binding/evaluation times.
+
+Both Standard and WF2 call the unchanged exact inclusive 1% comparison described
+in [ADR 0025](0025-define-nasdaq-demo-human-evidence-contract.md). No risk equation,
+threshold, account-basis convention or sizing algorithm is added. The new risk
+fact preserves the source SL object, exposure, exact comparison, original times
+and all compatible supporting observations, including when comparison fails.
+Reports/API/UI can show standalone planned risk separately from executed trades;
+exact decimal display strings preserve source precision across browser JSON.
+Failed risk is an evaluated constraint, not proof that a violating trade occurred.
+
+This supersedes the earlier Standard-only risk-consumer limitation. It does not
+enable TP, observed entry, snapshots, exits, economic outcomes or execution. S14's
+historical USTEC record is preserved; authentic Replay #2 still lacks an approved
+native US100 stop/protective reference/availability and native documented account
+exposure. No active version, metadata or external adapter changes are made.
+
 ### 2.14 Human-confirmed Replay #2 initial USTEC SL price (2026-11-05, S14)
 
 **Current evidence: `confirmed`, `context_specific` historical initial price, supported by human-reviewed visual evidence (`visual_only` source support).** S14 supplements S5-S7 for the September 8, 2026 Wickfill Scenario 2 SELL operation. The reviewer explicitly identifies the displayed stop as the ORIGINAL initial protective SL before subsequent stop management. This resolves the previously untranscribed historical USTEC initial price only; earlier statements in sections 2.4/2.13 that no numerical stop was registered describe the evidence available before S14 and remain historical. No earlier source is overwritten.

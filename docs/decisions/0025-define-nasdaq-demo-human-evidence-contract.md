@@ -618,6 +618,18 @@ The Demo-P0 audit finds only a risk assessment's `PlannedEntryPrice`, not an imp
 
 #### Demo risk evaluator integration
 
+**2026-11-17 implementation extension:** the existing NQ-RISK-001 evaluator also
+accepts the distinct canonical Scenario 2 SELL SL fact under ADR 0026. Both paths
+call the same exact decimal-operand comparison in `NasdaqRiskExposureRuleFact`;
+Standard input/selector/result semantics are unchanged. This extends consumption
+of approved ancestry, not the strategy's 1% threshold or its financial contract.
+The Scenario 2 input explicitly identifies its native provider/symbol and retains
+the original prior canonical SL owner, account evidence and assessment/availability
+times. A planned entry parameter is required; an observed execution is not implied.
+Positive native SL evidence alone cannot authorize risk. No balance/equity choice,
+quantity, monetary conversion, distance-based loss formula or cost adjustment is
+derived. Missing native SL/exposure evidence keeps authentic Replay #2 incomplete.
+
 Feature 20 uses the existing typed risk selector and exact prior eligible NQ-SL-001 fact, retaining its NQ-M1-003 ancestry. NQ-TP-001 is not a prerequisite; no new workflow edge or next gate is inferred. Missing due review and conflicting risk assertions require human validation; unavailable required evidence remains data unavailable. The [rule catalog](../strategies/nasdaq/rule-catalog.md) defines calculated risk above 1% as the fail condition: complete documented exposure at or below 1% returns Passed, above it returns Failed, including zero loss as permitted by the existing input invariant. The evaluator does not own StrategyVerdict.
 
 The reported loss/account-basis ratio uses decimal arithmetic. Its decimal projection is retained for audit; exact integer representations of the supplied decimals enforce the boundary without rounding an over-limit exposure down to 1%. Ratios exceeding decimal range retain their exact monetary operands and an explicit unavailable decimal projection; they still fail the exact comparison. No quantity, entry-price or cost formula alters the source-reported planned loss. Canonical terminal eligibility and TIME-owned cutoff remain authoritative.

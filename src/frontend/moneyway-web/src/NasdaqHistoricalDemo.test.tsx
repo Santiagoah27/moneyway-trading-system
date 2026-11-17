@@ -209,6 +209,70 @@ it("shows the separate canonical WF2 stop selection while entry risk and TP rema
     expect(screen.getByText(/requisitos independientes/)).toBeTruthy();
 });
 
+it.each([true, false])(
+    "renders the canonical Scenario 2 risk comparison (%s) without inventing execution",
+    async (passed) => {
+        respond({
+            ...report,
+            selectedSessionLastFrame: {
+                ...report.selectedSessionLastFrame!,
+                tradeLifecycle: {
+                    ...tradeFixture,
+                    path: "WickfillScenario2",
+                    scenario2RiskExposure: {
+                        accountBasisAmountText: "10000",
+                        reportedMaximumLossText: passed
+                            ? "100"
+                            : "100.00000000000000000000000001",
+                        plannedEntryPriceText: "110",
+                        quantityText: null,
+                        stopPriceText: "116",
+                        riskRatioText: "0.01",
+                        exposure: {
+                            accountBasisAmount: 10000,
+                            currency: "USD",
+                            accountBasis: "synthetic:named-basis",
+                            reportedMaximumLoss: 100,
+                            plannedEntryPrice: 110,
+                            costTreatment: "synthetic:costs",
+                            calculationSourceReference: "synthetic:calculation",
+                            quantity: null,
+                            quantityUnit: null,
+                        },
+                        stopPrice: 116,
+                        riskRatio: 0.01,
+                        ratioExceedsDecimalRange: false,
+                        limit: 0.01,
+                        isWithinLimit: passed,
+                        effectiveAtUtc: "2026-06-29T13:33:00Z",
+                        observedAtUtc: "2026-06-29T13:34:00Z",
+                        source: {
+                            sourceReference: "synthetic:approved-risk",
+                            sourceReferenceSha256: "a".repeat(64),
+                        },
+                    },
+                },
+            },
+        });
+        const panel = await screen.findByRole("region", {
+            name: "Riesgo documentado Scenario 2",
+        });
+        expect(panel.textContent).toContain(passed ? "Passed" : "Failed");
+        expect(panel.textContent).toContain("10000 USD");
+        expect(panel.textContent).toContain(
+            passed ? "100 USD" : "100.00000000000000000000000001 USD",
+        );
+        expect(panel.textContent).toContain("synthetic:approved-risk");
+        expect(panel.textContent).toContain("2026-06-29T13:34:00Z");
+        expect(panel.textContent).toContain("No suministrada");
+        expect(
+            screen.getByText(
+                "Falta evidencia de entrada en el snapshot canónico",
+            ),
+        ).toBeTruthy();
+    },
+);
+
 // Synthetic transport fixtures: explicit timestamps, never an ordinal-to-time formula.
 function navigable(step = 8000): NasdaqHistoricalReport {
     const steps = [7998, 7999, 8000];

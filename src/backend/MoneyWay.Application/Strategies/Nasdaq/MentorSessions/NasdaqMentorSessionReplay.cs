@@ -86,6 +86,7 @@ public sealed class NasdaqMentorSessionReplay(NasdaqMentorSessionReplayInput inp
                 NasdaqHumanWickfillScenario2StopLossObservation o => o.Session,
                 NasdaqHumanTakeProfitObservation o => o.Session,
                 NasdaqRiskExposureObservation o => o.Session,
+                NasdaqWickfillScenario2RiskExposureObservation o => o.Session,
                 NasdaqHistoricalDocumentedExitObservation o => o.Session,
                 _ => null,
             };
@@ -99,9 +100,13 @@ public sealed class NasdaqMentorSessionReplay(NasdaqMentorSessionReplayInput inp
                 NasdaqHumanBranchApplicabilityObservation o => o.InitialTakeObservation,
                 NasdaqHumanWickfillScenario2PostSweepReversalObservation o => o.OpeningSweep.TakeObservation,
                 NasdaqHumanWickfillScenario2StopLossObservation o => o.StartOwner,
+                NasdaqWickfillScenario2RiskExposureObservation o => o.StopLoss.PreEntryEligibility.Reversal.Applicability.Fact.InitialTakeObservation,
                 _ => null,
             };
             if (setupOwner is not null && !OwnsActiveSetup(context, setupOwner))
+            { Reject(record, "ForeignCanonicalAncestry", context); continue; }
+            if (observation is NasdaqWickfillScenario2RiskExposureObservation risk
+                && !context.PriorObservations.Contains(risk.StopOwner))
             { Reject(record, "ForeignCanonicalAncestry", context); continue; }
             var required = observation switch
             {
@@ -113,6 +118,7 @@ public sealed class NasdaqMentorSessionReplay(NasdaqMentorSessionReplayInput inp
                 NasdaqHumanWickfillScenario2StopLossObservation o => [o.PreEntryEligibility],
                 NasdaqHumanTakeProfitObservation o => [o.StopLoss],
                 NasdaqRiskExposureObservation o => [o.PreEntryEligibility, o.StopLoss],
+                NasdaqWickfillScenario2RiskExposureObservation o => [o.StopLoss],
                 _ => [],
             };
             if (required.Any(f => !context.PriorObservations.SelectMany(o => o.RuleFacts).Any(r => ReferenceEquals(r.Fact, f)))

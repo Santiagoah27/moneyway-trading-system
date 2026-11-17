@@ -5,6 +5,7 @@ using MoneyWay.Application.Backtesting;
 using MoneyWay.Application.Strategies.Nasdaq.MentorSessions;
 using MoneyWay.Application.Strategies.Nasdaq.HistoricalTrades;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayLifecycle;
+using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 using MoneyWay.Application.StrategyDefinitions;
 using MoneyWay.Application.StrategyDefinitions.Nasdaq;
 using MoneyWay.Application.StrategyReplay;
@@ -12,6 +13,7 @@ using MoneyWay.Application.StrategyReplay.Workflow;
 using MoneyWay.Application.UnitTests.Strategies.Nasdaq.ReplayInputs;
 using MoneyWay.Domain.MarketData;
 using MoneyWay.Infrastructure.Strategies.Nasdaq;
+using Microsoft.AspNetCore.Hosting;
 
 namespace MoneyWay.IntegrationTests;
 
@@ -92,6 +94,7 @@ public sealed class NasdaqHistoricalTradeLifecycleTests : IDisposable
     [InlineData("invented-rule-result")]
     [InlineData("fabricated-economic-outcome")]
     [InlineData("unowned-scenario2-stop")]
+    [InlineData("unowned-scenario2-risk")]
     public async Task MalformedOrFuturePresentationEvidenceFailsClosed(string corruption)
     {
         Save(Run()); var root = JsonNode.Parse(File.ReadAllText(path))!;
@@ -112,6 +115,83 @@ public sealed class NasdaqHistoricalTradeLifecycleTests : IDisposable
             var source = NasdaqHistoricalTradeLifecycleSummary.Source("SyntheticInput", at, "synthetic:unowned");
             trade["Scenario2StopLoss"] = JsonSerializer.SerializeToNode(new NasdaqHistoricalScenario2Stop("synthetic:unowned", 115, 116, at, at, source, source));
         }
+        if (corruption == "unowned-scenario2-risk")
+        {
+            var at = frame["AsOfUtc"]!.GetValue<DateTimeOffset>();
+            trade["Scenario2RiskExposure"] = JsonSerializer.SerializeToNode(new NasdaqHistoricalScenario2Risk(
+                new NasdaqRiskExposure(10000, "USD", "synthetic:basis", 100, 110, "synthetic:costs", "synthetic:calculation"),
+                116, .01m, false, .01m, true, at, at, NasdaqHistoricalTradeLifecycleSummary.Source("SyntheticRisk", at, "synthetic:unowned")));
+        }
+        File.WriteAllText(path, root.ToJsonString());
+        using var reader = new ReadNasdaqHistoricalReport();
+        await Assert.ThrowsAsync<InvalidDataException>(() => reader.ExecuteAsync(path, null));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("100")]
+    [InlineData("101")]
+    public async Task Scenario2CanonicalRiskSurvivesWriterReaderAndApiWithNoInventedTrade(string? loss)
+    {
+        using var fixture = new NasdaqScenario2MentorSessionTests();
+        var report = fixture.SyntheticRiskReport(loss); Save(report);
+        var step = report.Frames.Single(f => f.Strategy.AsOfUtc == LiquidityFixture.At(15)).Strategy.Step;
+        using var reader = new ReadNasdaqHistoricalReport();
+        var summary = await reader.ExecuteAsync(path, null, frameStep: step);
+        var trade = summary.SelectedFrame!.TradeLifecycle!;
+        Assert.Equal("WickfillScenario2", trade.Path); Assert.NotNull(trade.Scenario2StopLoss);
+        Assert.Equal(loss is null, trade.Scenario2RiskExposure is null);
+        if (loss is not null)
+        {
+            Assert.Equal(loss == "100", trade.Scenario2RiskExposure!.IsWithinLimit);
+            Assert.Equal(10000m, trade.Scenario2RiskExposure.Exposure.AccountBasisAmount);
+            Assert.Equal("USD", trade.Scenario2RiskExposure.Exposure.Currency);
+            Assert.Equal("synthetic:approved-risk", trade.Scenario2RiskExposure.Source.SourceReference);
+        }
+        Assert.Null(trade.Entry); Assert.Null(trade.Exit); Assert.Null(trade.TakeProfitPrice); Assert.False(trade.CompleteSupervisedTrade);
+        using var app = new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+            builder.UseEnvironment("Development").UseSetting("NasdaqHistoricalDemo:ReportPath", path)
+                .UseSetting("NasdaqHistoricalDemo:ExpectedSha256", ""));
+        var response = await app.CreateClient().GetAsync("/api/nasdaq/historical-demo?frameStep=" + step);
+        response.EnsureSuccessStatusCode();
+        var json = JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
+        Assert.Equal(loss is null, json["selectedFrame"]!["tradeLifecycle"]!["scenario2RiskExposure"] is null);
+        if (loss is not null)
+        {
+            var risk = json["selectedFrame"]!["tradeLifecycle"]!["scenario2RiskExposure"]!;
+            Assert.Equal("10000", risk["accountBasisAmountText"]!.GetValue<string>());
+            Assert.Equal(loss, risk["reportedMaximumLossText"]!.GetValue<string>());
+            Assert.Equal(loss == "100", risk["isWithinLimit"]!.GetValue<bool>());
+        }
+    }
+
+    [Fact]
+    public async Task OlderScenario2SlReportRetainsItsHistoricalUnimplementedRiskProjection()
+    {
+        using var fixture = new NasdaqScenario2MentorSessionTests(); Save(fixture.SyntheticRiskReport(null));
+        var root = JsonNode.Parse(File.ReadAllText(path))!;
+        foreach (var f in root["Frames"]!.AsArray())
+            if (f!["TradeLifecycle"]!["Path"]!.GetValue<string>() == "WickfillScenario2")
+                f["TradeLifecycle"]!["Stages"]!.AsArray().Single(s => s!["Stage"]!.GetValue<string>() == "Risk")!["Status"] = "NotImplemented";
+        File.WriteAllText(path, root.ToJsonString());
+        using var reader = new ReadNasdaqHistoricalReport(); await reader.ExecuteAsync(path, null);
+    }
+
+    [Theory]
+    [InlineData("future")]
+    [InlineData("mismatch")]
+    [InlineData("limit")]
+    [InlineData("stop")]
+    public async Task Scenario2RiskProjectionCannotContradictItsPublishedOwner(string corruption)
+    {
+        using var fixture = new NasdaqScenario2MentorSessionTests(); Save(fixture.SyntheticRiskReport("100"));
+        var root = JsonNode.Parse(File.ReadAllText(path))!;
+        var frame = root["Frames"]!.AsArray().First(f => f!["TradeLifecycle"]!["Scenario2RiskExposure"] is not null)!;
+        var risk = frame["TradeLifecycle"]!["Scenario2RiskExposure"]!;
+        if (corruption == "future") risk["ObservedAtUtc"] = frame["AsOfUtc"]!.GetValue<DateTimeOffset>().AddMinutes(1);
+        if (corruption == "mismatch") risk["IsWithinLimit"] = false;
+        if (corruption == "limit") risk["Limit"] = .02m;
+        if (corruption == "stop") risk["StopPrice"] = 117;
         File.WriteAllText(path, root.ToJsonString());
         using var reader = new ReadNasdaqHistoricalReport();
         await Assert.ThrowsAsync<InvalidDataException>(() => reader.ExecuteAsync(path, null));

@@ -105,8 +105,8 @@ public sealed partial class LocalNasdaqMentorSessionTests
         {
             Schema = "moneyway.canonical-preentry-window",
             SchemaVersion = 1,
-            CanonicalRuntimeCommit = "0b328067b4d145d8c7cd8b4ae984033e7364f18b",
-            RuntimeChanges = "WF2-to-NQ-SL-001 convergence; no native SL evidence invented",
+            CanonicalRuntimeCommit = "475c01849ca958ae3a3956f1ab29066f62e1ca4e",
+            RuntimeChanges = "WF2-SL-to-NQ-RISK-001 convergence; no native SL or exposure evidence invented",
             Generator = "tests/integration/MoneyWay.IntegrationTests/Replay2CanonicalPreEntryDiagnosticTests.cs",
             Adapter = new { Path = adapterPath, SHA256 = adapterHash },
             first.Input.Session,
@@ -127,6 +127,12 @@ public sealed partial class LocalNasdaqMentorSessionTests
                 "src/backend/MoneyWay.Application/Strategies/Nasdaq/MentorSessions/NasdaqMentorSessionReplay.cs",
                 "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqLiquidityTakeRuleFact.cs",
                 "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqHumanWickfillScenario2StopLossRuleFact.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqRiskExposureRuleFact.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqWickfillScenario2RiskExposureObservation.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqWickfillScenario2RiskExposureObservationSelector.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqWickfillScenario2RiskExposureRuleFact.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/MentorSessions/NasdaqHistoricalTradeLifecycleSummary.cs",
+                "src/backend/MoneyWay.Infrastructure/Strategies/Nasdaq/ReadNasdaqHistoricalReport.cs",
                 "src/backend/MoneyWay.Application/StrategyReplay/Workflow/AdvanceStrategyReplayProgressionUseCase.cs",
                 "src/backend/MoneyWay.Application/StrategyReplay/Workflow/MoneyWayReplayWorkflowDefinitions.cs",
                 "src/backend/MoneyWay.Application/StrategyReplay/Workflow/StrategyReplayRulePrerequisite.cs",
@@ -145,7 +151,7 @@ public sealed partial class LocalNasdaqMentorSessionTests
                 f.DocumentedExit,
                 f.FactualEvaluation
             }).ToArray(),
-            Limitations = "Bounded canonical pre-entry diagnostic only; no trade, fill, SL/TP/risk/PnL or retroactive authorization of 08:32 entry. WF2-to-SL convergence implemented; adapter and CSVs unchanged."
+            Limitations = "Bounded canonical pre-entry diagnostic only; no trade, fill, SL/TP/risk/PnL or retroactive authorization of 08:32 entry. WF2-SL-risk convergence implemented; original SL and exposure evidence missing; adapter and CSVs unchanged."
         };
         var directory = @"C:\MoneyWay\session\reports\2026-09-08";
         Directory.CreateDirectory(directory);
@@ -169,6 +175,8 @@ public sealed partial class LocalNasdaqMentorSessionTests
         Assert.Equal("HumanValidationRequired", http.SelectedFrame!.Verdict);
         Assert.Equal("HumanValidationRequired", http.SelectedFrame.TradeLifecycle!.Stages.Single(s => s.Stage == "StopLoss").RuleResult);
         Assert.Null(http.SelectedFrame.TradeLifecycle.Scenario2StopLoss);
+        Assert.Null(http.SelectedFrame.TradeLifecycle.Scenario2RiskExposure);
+        Assert.Equal("Waiting", http.SelectedFrame.TradeLifecycle.Stages.Single(s => s.Stage == "Risk").RuleResult);
         output.WriteLine($"ARTIFACT: {path}\nSHA256: {FileSha256(path)}\nBytes: {new FileInfo(path).Length}");
         output.WriteLine($"PREFIX: {canonical.FirstAsOfUtc:O} through {canonical.LastAsOfUtc:O}; {canonical.FrameCount} frames. WINDOW: 13:31Z-13:36Z.");
         foreach (var f in selected)

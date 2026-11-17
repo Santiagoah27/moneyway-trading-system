@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using MoneyWay.Application.Strategies.Nasdaq.MentorSessions;
+using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 using MoneyWay.Domain.Strategies;
 
 namespace MoneyWay.Infrastructure.Strategies.Nasdaq;
@@ -183,6 +184,8 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
                 && (stage.Status == original.Status
                     || stage.Stage == "StopLoss" && stage.Status == "NotImplemented" && result.Path == "WickfillScenario2"
                         && stage.RuleResult != "Passed" && result.Scenario2StopLoss is null
+                    || stage.Stage == "Risk" && stage.Status == "NotImplemented" && result.Path == "WickfillScenario2"
+                        && stage.RuleResult != "Passed" && result.Scenario2RiskExposure is null
                     || stage.Status == "RecordedArtifact" && snapshotState == "Available"
                     && stage.Stage is "Entry" or "StopLoss" or "Risk" or "TakeProfit" or "DocumentedExit"));
         }
@@ -196,6 +199,20 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
                 && stop.Source is not null && stop.ProtectiveSource is not null
                 && stop.Source.ObservedAtUtc == stop.ObservedAtUtc && stop.ProtectiveSource.ObservedAtUtc <= stop.ObservedAtUtc);
             sources = sources.Concat([stop.Source!, stop.ProtectiveSource!]);
+        }
+        if (result.Scenario2RiskExposure is { } risk)
+        {
+            // Validate the published projection against its recorded rule, without running an evaluator on read.
+            var riskResult = rules.SingleOrDefault(r => r.RuleId == "NQ-RISK-001")?.Result;
+            Require(result.Path == "WickfillScenario2" && result.Scenario2StopLoss is { } selectedStop
+                && risk.StopPrice == selectedStop.StopPrice && riskResult is "Passed" or "Failed"
+                && risk.IsWithinLimit == (riskResult == "Passed") && risk.Limit == NasdaqRiskExposureRuleFact.MaximumRiskRatio
+                && risk.Exposure is not null && risk.EffectiveAtUtc.Offset == TimeSpan.Zero
+                && risk.ObservedAtUtc.Offset == TimeSpan.Zero && risk.EffectiveAtUtc >= selectedStop.EffectiveAtUtc
+                && risk.EffectiveAtUtc >= selectedStop.ObservedAtUtc && risk.EffectiveAtUtc <= risk.ObservedAtUtc
+                && risk.ObservedAtUtc <= at && risk.Source is not null && risk.Source.ObservedAtUtc == risk.ObservedAtUtc
+                && risk.RatioExceedsDecimalRange == (risk.RiskRatio is null) && risk.RiskRatio is null or >= 0);
+            sources = sources.Append(risk.Source!);
         }
         foreach (var source in sources)
             Require(source is not null && source.ObservedAtUtc.Offset == TimeSpan.Zero && source.ObservedAtUtc <= at

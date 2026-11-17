@@ -10,6 +10,7 @@ import type {
 } from "./types/nasdaqHistoricalDemo";
 
 function TradeLifecycle({ trade }: { trade: HistoricalTradeLifecycle }) {
+    const risk = trade.scenario2RiskExposure;
     const labels: Record<string, string> = {
         PreEntry: "Preentrada",
         Entry: "Entrada observada",
@@ -91,6 +92,42 @@ function TradeLifecycle({ trade }: { trade: HistoricalTradeLifecycle }) {
                     </p>
                 </div>
             )}
+            {risk && (
+                <section aria-label="Riesgo documentado Scenario 2">
+                    <h4>NQ-RISK-001 · Scenario 2</h4>
+                    <p>SL canónico recibido: {risk.stopPriceText}.</p>
+                    <p>
+                        Base documentada ({risk.exposure.accountBasis}):{" "}
+                        {risk.accountBasisAmountText} {risk.exposure.currency}.
+                        Pérdida máxima planificada:{" "}
+                        {risk.reportedMaximumLossText} {risk.exposure.currency}.
+                    </p>
+                    <p>
+                        Comparación canónica:{" "}
+                        {risk.isWithinLimit ? "Passed" : "Failed"} · Límite
+                        inclusivo: {risk.limit}. Proporción:{" "}
+                        {risk.riskRatioText ?? "Fuera del rango decimal"}.
+                    </p>
+                    <p>
+                        Entrada planificada: {risk.plannedEntryPriceText} ·
+                        Costes: {risk.exposure.costTreatment}. Cantidad
+                        documentada: {risk.quantityText ?? "No suministrada"}{" "}
+                        {risk.exposure.quantityUnit ?? ""}.
+                    </p>
+                    <p>
+                        Evaluación efectiva: {risk.effectiveAtUtc} · Disponible:{" "}
+                        {risk.observedAtUtc}.
+                    </p>
+                    <p>
+                        Fuente: {risk.source.sourceReference} · Cálculo:{" "}
+                        {risk.exposure.calculationSourceReference}.
+                    </p>
+                    <p>
+                        La exposición planificada no acredita una ejecución ni
+                        un resultado económico.
+                    </p>
+                </section>
+            )}
             <dl>
                 <dt>Entrada documentada</dt>
                 <dd>
@@ -105,13 +142,13 @@ function TradeLifecycle({ trade }: { trade: HistoricalTradeLifecycle }) {
                 <dd>{trade.stopPrice ?? "No disponible"}</dd>
                 <dt>TP documentado</dt>
                 <dd>{trade.takeProfitPrice ?? "No disponible"}</dd>
-                <dt>Base / pérdida máxima documentadas</dt>
+                <dt>Base / pérdida máxima del snapshot histórico</dt>
                 <dd>
                     {trade.accountBasisAmount ?? "No disponible"} /{" "}
                     {trade.reportedMaximumLoss ?? "No disponible"}{" "}
                     {trade.riskCurrency ?? ""}
                 </dd>
-                <dt>Proporción de riesgo documentada</dt>
+                <dt>Proporción de riesgo del snapshot histórico</dt>
                 <dd>{trade.riskRatio ?? "No disponible"}</dd>
                 <dt>Salida documentada</dt>
                 <dd>

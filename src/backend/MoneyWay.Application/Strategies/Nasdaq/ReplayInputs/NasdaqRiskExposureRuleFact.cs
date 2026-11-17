@@ -11,13 +11,18 @@ public sealed record NasdaqRiskExposureRuleFact : IReplayRuleFact
     internal NasdaqRiskExposureRuleFact(NasdaqRiskExposureSelection.Unique selection)
     {
         Selection = selection;
+        (RiskRatio, IsWithinLimit) = Compare(selection.Fact.Exposure);
+    }
+
+    internal static (decimal? Ratio, bool WithinLimit) Compare(NasdaqRiskExposure exposure)
+    {
         // Decimal division is an audit projection. Compare exact supplied decimals without rounding the boundary.
-        var exposure = selection.Fact.Exposure;
-        try { RiskRatio = exposure.ReportedMaximumLoss / exposure.AccountBasisAmount; }
-        catch (OverflowException) { RiskRatio = null; }
+        decimal? ratio;
+        try { ratio = exposure.ReportedMaximumLoss / exposure.AccountBasisAmount; }
+        catch (OverflowException) { ratio = null; }
         var (loss, lossScale) = Exact(exposure.ReportedMaximumLoss);
         var (basis, basisScale) = Exact(exposure.AccountBasisAmount);
-        IsWithinLimit = loss * 100 * BigInteger.Pow(10, basisScale) <= basis * BigInteger.Pow(10, lossScale);
+        return (ratio, loss * 100 * BigInteger.Pow(10, basisScale) <= basis * BigInteger.Pow(10, lossScale));
     }
 
     public NasdaqRiskExposureSelection.Unique Selection { get; }

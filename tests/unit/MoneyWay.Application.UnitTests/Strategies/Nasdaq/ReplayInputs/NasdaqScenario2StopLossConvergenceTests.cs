@@ -122,8 +122,14 @@ public sealed partial class NasdaqHumanWickfillScenario2StopLossTests
             [Workflow(new StrategyReplayRulePrerequisite(SlRule, [], alternativePrerequisiteRuleId: new("unknown")))]));
     }
 
-    [Fact]
-    public void CanonicalMultiTimeframeBinderEmitsSlAndHistoricalSummaryWithIndependentDownstreamGates()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("100")]
+    [InlineData("101")]
+    public void CanonicalMultiTimeframeBinderEmitsSlAndHistoricalSummaryWithIndependentDownstreamGates(string? loss) =>
+        BuildSyntheticScenario2RiskReport(loss);
+
+    public static NasdaqMentorSessionReplayReport BuildSyntheticScenario2RiskReport(string? loss)
     {
         var baseFixture = F.Build(); var records = baseFixture.Inputs.Select((o, i) =>
             new NasdaqMentorSessionEvidenceRecord("synthetic:input-" + i, o.ObservedAtUtc, (_, _) => o)).ToList();
@@ -146,6 +152,14 @@ public sealed partial class NasdaqHumanWickfillScenario2StopLossTests
                 && o.WorkflowProgression?.RuleEligibility.Single(e => e.RuleId.Value == "NQ-WF2-002").EstablishesProgression == true);
             return owner is null ? null : new NasdaqHumanWickfillScenario2StopLossObservation(owner, Reference(), 116, At(13, 31), At(13, 31), "synthetic:review-stop");
         }));
+        if (loss is not null) records.Add(new("synthetic:risk", At(13, 34), (c, _) =>
+        {
+            var owner = c.PriorObservations.LastOrDefault(o => o.RuleFacts.Any(f => f.Fact is NasdaqHumanWickfillScenario2StopLossRuleFact)
+                && o.WorkflowProgression?.RuleEligibility.Single(e => e.RuleId.Value == "NQ-SL-001").EstablishesProgression == true);
+            return owner is null ? null : new NasdaqWickfillScenario2RiskExposureObservation(owner, LiquidityFixture.Provider,
+                LiquidityFixture.Symbol, Exposure(loss: decimal.Parse(loss, System.Globalization.CultureInfo.InvariantCulture)),
+                At(13, 33), At(13, 34), "synthetic:approved-risk");
+        }));
         var input = new NasdaqMentorSessionReplayInput("synthetic-WF2-native-SL", LiquidityFixture.Session(At(13)), new Dictionary<Timeframe, string>(), records);
         var link = new NasdaqMentorSessionReplay(input);
         var sourceContext = FrameAfter14(BuildStopSetup());
@@ -167,7 +181,19 @@ public sealed partial class NasdaqHumanWickfillScenario2StopLossTests
         Assert.All(link.Frames.Where(f => f.Strategy.AsOfUtc <= At(13, 33)), f => Assert.DoesNotContain(f.Inputs, o => o is NasdaqHumanWickfillScenario2StopLossObservation));
         Assert.Equal(report.OutcomeRun.StrategyRun.StrategyObservations.Last(), last.Strategy);
         Assert.Contains(link.Diagnostics, d => d.RecordId == "synthetic:stop" && d.Code == "Bound");
-        Assert.Equal(RuleEvaluationResult.HumanValidationRequired, last.Strategy.Evaluations.Single(e => e.RuleId.Value == "NQ-RISK-001").Result);
+        Assert.Equal(loss is null ? RuleEvaluationResult.HumanValidationRequired : loss == "100" ? RuleEvaluationResult.Passed : RuleEvaluationResult.Failed,
+            last.Strategy.Evaluations.Single(e => e.RuleId.Value == "NQ-RISK-001").Result);
+        Assert.Equal(summary.Scenario2RiskExposure, persisted.Scenario2RiskExposure);
+        if (loss is not null)
+        {
+            Assert.Equal(decimal.Parse(loss, System.Globalization.CultureInfo.InvariantCulture), summary.Scenario2RiskExposure!.Exposure.ReportedMaximumLoss);
+            Assert.Equal(10000, summary.Scenario2RiskExposure.Exposure.AccountBasisAmount);
+            Assert.Equal(At(13, 33), summary.Scenario2RiskExposure.EffectiveAtUtc);
+            Assert.Equal(At(13, 34), summary.Scenario2RiskExposure.ObservedAtUtc);
+            Assert.Contains(link.Diagnostics, d => d.RecordId == "synthetic:risk" && d.Code == "Bound");
+            Assert.All(link.Frames.Where(f => f.Strategy.AsOfUtc < At(13, 34)), f => Assert.DoesNotContain(f.Inputs, o => o is NasdaqWickfillScenario2RiskExposureObservation));
+        }
         Assert.Equal(RuleEvaluationResult.HumanValidationRequired, last.Strategy.Evaluations.Single(e => e.RuleId.Value == "NQ-TP-001").Result);
+        return new(input, [], [], report, link.Frames, link.Diagnostics);
     }
 }

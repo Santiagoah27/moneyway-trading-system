@@ -1,5 +1,108 @@
 # Nasdaq historical report in the supervised local demo
 
+## WF2-SL-to-NQ-RISK-001 functional convergence (2026-11-17)
+
+This increment supersedes only the older Standard-only risk-consumer limitation
+below. Initial checkpoint: clean synchronized `main` at
+`475c01849ca958ae3a3956f1ab29066f62e1ca4e`. The strategy remains
+`nasdaq-0.1.0-draft`; no definition, activation or workflow edge changes.
+
+### A. Functional delivery and audited 1% semantics
+
+The existing risk evaluator accepts the original prior eligible Scenario 2 SELL
+SL fact through `NasdaqWickfillScenario2RiskExposureObservation` and its stateless
+selector. The mentor binder checks exact session, actual Start and prior SL owner.
+The selector revalidates current applicability/reversal/SL sources; it cannot
+revive a superseded or foreign stop. Original assessment and availability times
+remain separate from canonical emission time. The original native provider and
+instrument must match; no USTEC/US100 substitution or conversion is permitted.
+
+The audited contract in [ADR 0025](../decisions/0025-define-nasdaq-demo-human-evidence-contract.md)
+and [rule catalog](../strategies/nasdaq/rule-catalog.md) means:
+
+- Maximum **planned risk per trade**, not a confirmed daily limit or realized PnL.
+- Compare source-reported maximum loss / source-documented positive account basis
+  **<= 0.01**, inclusive. Both money amounts use the one explicit currency.
+- Required human/account inputs: actual amount, named basis, reported planned
+  loss, native planned entry parameter, exact selected SL, cost treatment,
+  calculation provenance and original assessment/availability. Quantity is
+  optional documented input with an explicit unit, never calculated position size.
+- The engine chooses neither balance nor equity. Unsupported basis/calculation
+  or missing evidence cannot pass. No leverage, tick value, distance formula,
+  currency exchange or implicit costs are introduced. Zero loss is permitted by
+  the existing invariant; positive basis and nonnegative loss are validated.
+- Both paths use the same existing decimal-to-integer exact comparison. A decimal
+  ratio is an audit projection; overflow yields null with an explicit flag while
+  exact operands still decide the result. There is no rounding tolerance.
+- The rule catalog applies to both directions and contains no Scenario 2
+  exemption; this task extends the existing owner consumer, not strategy semantics.
+  Standard's input, selector, statuses and comparison results remain unchanged.
+
+After an eligible SL, missing exposure returns HumanValidationRequired, conflicting
+financial assertions require review, unavailable current SL sources return
+DataUnavailable, and complete compatible exposure returns Passed/Failed from
+the exact comparison. Missing eligible SL remains Waiting. Canonical same-frame
+terminal liquidity invalidation also blocks WF2 risk. No successful risk result
+approves TP or creates an observed fill, trade, exit or economic result.
+
+The lifecycle Risk row now reflects the recorded rule instead of saying WF2 risk
+is unimplemented. Optional `Scenario2RiskExposure` retains operands, currency,
+named basis, planned entry, cost treatment, supplied quantity/unit, exact SL,
+ratio/overflow/limit/result, original times and source. The API preserves exact
+decimal strings for browser display without client-side risk calculation. The
+reader validates the published projection against recorded ownership/status and
+temporal bounds; it does not rerun a strategy. Legacy reports retain their
+historical NotImplemented risk rows. Complete supervised trade remains false.
+
+### B. Synthetic evaluable path
+
+Explicitly synthetic canonical binder/coordinator/report/API tests cover missing
+exposure, loss 100 / basis 10000 => Passed and loss 101 / basis 10000 => Failed.
+The direct native path additionally checks below/exact/above boundaries at full
+decimal precision, tiny operands, ratio overflow, zero loss, identity/units,
+provenance, unavailable sources, foreign owners, conflicts, same-frame ancestry,
+terminal gates and future human/candle/stop revisions. No observed execution,
+TP, exit or economic result is produced. UI tests show the server decision and
+exact source amount even beyond JavaScript numeric precision.
+
+### C. Authentic Replay #2
+
+The existing opt-in command below regenerates a unique canonical report from the
+unchanged reviewed adapter/CSVs and independently verifies the common
+7,596/7,597-frame prefixes. No acquisition or normalization is rerun.
+At 13:36Z, WF2-001/002 remain Passed, SL HumanValidationRequired, risk/TP Waiting
+and the canonical verdict HumanValidationRequired. Authentic exposure is absent;
+no native initial stop, entry, target, execution, PnL or risk approval is invented.
+S14's USTEC evidence is retained separately and does not authorize US100 inputs.
+
+Regenerated artifact: `C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-d0b29e8617c9498298b4420ab854cae0.json`.
+SHA256: `4fec5c8d3f409dc0b763ac009a2ba91a350e7bf0643b65b2905f24ca93bcd0a7`.
+Size: 4,430,954 bytes. The independent prefixes have identical common historical
+rule/evidence and diagnostic fingerprints; the selected six frames span
+13:31Z-13:36Z after the complete 7,596-frame prefix beginning August 31 22:01Z.
+The runtime manifest records base commit `475c01849ca958ae3a3956f1ab29066f62e1ca4e`
+plus exact working-tree code hashes; the base is not falsely claimed to contain
+this increment. The adapter, four CSVs and both protected prior reports retain
+their seven verified hashes. Existing report configuration can select this new
+file/hash; no old report was overwritten and no source adapter was edited.
+
+Validation: 2,021 Application Nasdaq/workflow/canonical cases, 117 Nasdaq API/
+integration cases, 19 domain replay cases, one regenerated authentic canonical/API
+case and one legacy authentic API case: **2,159 .NET passed, zero failed/skipped**.
+The focused 105-case risk/SL selection overlaps those totals. All 32 frontend
+tests passed. Complete .NET/frontend builds, ESLint, scoped formatting, local
+documentation links and `git diff --check` passed. No manual browser test was
+performed; API integration and rendered-component tests exercise the delivery.
+
+Remaining original evidence: one complete native SL record (uniquely reviewed
+protective reference, exact original StopPrice, native applicability and authentic
+availability), then source-documented account basis/currency/planned loss,
+planned-entry/cost/calculation evidence and original risk times. TP selection,
+observed entry/exit and economic composition remain independent blockers.
+The next smallest functional feature is scoped WF2-to-NQ-TP-001 consumption of
+human-selected native target evidence, preserving the existing target contract;
+it must not select a target automatically or claim authentic inputs are present.
+
 ## WF2-to-NQ-SL-001 canonical convergence (2026-11-17)
 
 This functional increment supersedes the earlier delivery's **NotImplemented

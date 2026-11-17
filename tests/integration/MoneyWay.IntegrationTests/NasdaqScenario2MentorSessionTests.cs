@@ -112,6 +112,30 @@ public sealed class NasdaqScenario2MentorSessionTests : IDisposable
     }
 
     private static NasdaqMentorSessionReplayReport Run(NasdaqMentorSessionReplayInput input) => new RunLocalNasdaqMentorSessionUseCase().Execute(input);
+    internal NasdaqMentorSessionReplayReport SyntheticRiskReport(string? loss)
+    {
+        var records = new List<NasdaqMentorSessionEvidenceRecord>
+        {
+            new("synthetic:stop", At(13, 33), (c, _) =>
+            {
+                var owner = c.PriorObservations.LastOrDefault(o => o.RuleFacts.Any(f => f.Fact is NasdaqWickfillScenario2PreEntryEligibilityRuleFact)
+                    && o.WorkflowProgression?.RuleEligibility.Single(e => e.RuleId.Value == "NQ-WF2-002").EstablishesProgression == true);
+                return owner is null ? null : new NasdaqHumanWickfillScenario2StopLossObservation(owner,
+                    new(LiquidityFixture.Provider, LiquidityFixture.Symbol, "synthetic:peak", 115, At(13, 33), "synthetic:peak-source"),
+                    116, At(13, 33), At(13, 33), "synthetic:stop-source");
+            })
+        };
+        if (loss is not null) records.Add(new("synthetic:risk", At(13, 34), (c, _) =>
+        {
+            var owner = c.PriorObservations.LastOrDefault(o => o.RuleFacts.Any(f => f.Fact is NasdaqHumanWickfillScenario2StopLossRuleFact)
+                && o.WorkflowProgression?.RuleEligibility.Single(e => e.RuleId.Value == "NQ-SL-001").EstablishesProgression == true);
+            return owner is null ? null : new NasdaqWickfillScenario2RiskExposureObservation(owner, LiquidityFixture.Provider,
+                LiquidityFixture.Symbol, new(10000, "USD", "synthetic:source-named-basis",
+                    decimal.Parse(loss, System.Globalization.CultureInfo.InvariantCulture), 110, "synthetic:costs", "synthetic:calculation"),
+                At(13, 33), At(13, 34), "synthetic:approved-risk");
+        }));
+        return Run(Input(extra: records));
+    }
     private static RuleEvaluationResult Result(NasdaqMentorSessionFrame f, string id) => f.Strategy.Evaluations.Single(e => e.RuleId.Value == id).Result;
     private static void NoTrade(NasdaqMentorSessionReplayReport report)
     {
