@@ -1868,3 +1868,125 @@ Receipt order alone supplies neither required UTC field.
 `mt5_native_utc_authenticated=false`, `canonical_utc_conversion_authorized=false`,
 `utc_conversion_authenticated=false` and `canonical_ready=false`. The verified
 Linux NTS packet authentication remains preserved within its original scope.
+
+## MT5 temporal evidence admission contract
+
+This implementation starts at clean, synchronized `main`,
+`3d9ad0ff217ca459b109fefe780f3a9ad52bb45c`. It adds a pure requirements
+assessment, not UTC conversion, clock instrumentation or canonical integration.
+See the [authentic prefix assessment](mt5-local-dotnet-receipt-adapter.md#temporal-admission-of-a-specific-prefix-observation).
+
+### Distinct coordinates and guarantees
+
+| Evidence                                             | Establishes                                            | Does not establish                                                    |
+| ---------------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------- |
+| Native bar opening coordinate                        | Source-native candle identity                          | UTC opening, availability or closure                                  |
+| Run/poll/publication sequence                        | Scoped collector order                                 | Wall-clock time                                                       |
+| Record/probe hashes and predecessor chain            | Local byte identity and lineage                        | Trusted issuer or UTC authenticity                                    |
+| Later host receipt/inspection                        | Evidence inspected at that operation                   | Earlier historical availability                                       |
+| Independently verified UTC witness interval          | A bounded witness operation, within its verified scope | Publication order unless causally linked                              |
+| Verified publication/acquisition before that witness | Potential conservative availability upper bound        | Earliest actual availability, broker publication time or finalization |
+
+The official [MqlRates](https://www.mql5.com/en/docs/constants/structures/mqlrates)
+contract defines `time` as period start. The
+[MqlTick](https://www.mql5.com/en/docs/constants/structures/mqltick) contract
+defines `time_msc` as a price-update coordinate. Neither substitutes for the
+publication or historical availability of captured OHLC.
+
+### Minimum independently verifiable proof
+
+[`Mt5TemporalEvidenceAdmission`](../../src/backend/MoneyWay.Application/MarketData/Receipt/Mt5TemporalEvidenceAdmission.cs)
+requires an existing `ValidatedMt5ReceiptPrefix` and an explicit
+`Mt5TemporalObservationKey`: record filename, native timeframe and raw candle
+opening coordinate. It resolves that exact snapshot, never the latest value in
+a full ledger. Its derived identity includes directory scope, terminal boundary
+and hash, prefix manifest, source, run/poll/receipt identity, probe identity/hash,
+period, source position and exact native OHLC. Source validation is reused from
+the prefix reader, not reimplemented.
+
+A future trusted admission boundary must independently validate all of:
+
+1. Exact observation identity/coverage and adequate acquisition quality.
+2. Attestation bytes, issuer, provenance and verification method; a locally
+   matching hash is insufficient to authenticate the issuer or payload meaning.
+3. UTC reference authenticity and applicable clock domain/epoch.
+4. An uncertainty budget and continuity evidence covering the complete relevant
+   interval, including any clock-domain transfer.
+5. A source-to-witness causal link proving the captured bytes were published or
+   acquired before the bounded witness operation, with contemporaneous coverage.
+6. UTC lower/upper bounds, their evidential justification and explicit limitations.
+
+An independently justified interval `[EarliestPossibleUtc, LatestPossibleUtc]`
+could support disclosure only when `AsOfUtc >= LatestPossibleUtc`, with equality
+allowed. This is a latest-by guarantee, not an earliest-availability claim.
+An interval for a host clock reading alone cannot establish source publication
+order. A later retrospective assertion requires independently verified
+contemporaneous evidence; it cannot backdate the observation by declaration.
+
+### Implemented fail-closed boundary
+
+No trusted attestation verifier currently exists. All production paths therefore
+return `TemporalAdmissionSupported = false` and
+`ConservativeAvailableByUtc = null`. There is no caller-settable authenticated
+flag, verifier callback, trusted-fixture API or public positive admission path.
+The assessment has no public constructor and is not accepted by canonical replay.
+
+`Mt5TemporalEvidenceClaim` and `Mt5TemporalEvidenceProvenance` represent only
+**untrusted submissions**. The evaluator checks exact identity matching,
+missing proof references, raw payload/hash consistency, UTC offsets and interval
+ordering. It cannot authenticate signatures, issuer identity, payload semantics,
+reference authenticity, uncertainty, continuity or coverage. Method names such as
+`verified` and recomputed hashes cannot bypass this limitation.
+
+The diagnostic `Status` reuses `Mt5ReceiptStatus` vocabulary without modifying the
+receipt's own status: mismatches/hash conflicts are `Conflict`, malformed bounds
+or digest syntax are `Invalid`, missing observations/proofs or incomplete
+acquisitions are `DataUnavailable`, and structurally consistent but unverifiable
+claims remain `Unresolved`. Conflict takes precedence over invalid, then missing,
+then unresolved evidence. Diagnostics retain each directly observed reason; a
+missing attestation is not guessed to have a particular cryptographic defect.
+
+`ClaimedUpperBoundReached` is nullable arithmetic on supplied, **unverified**
+bounds, not permission to disclose. Synthetic tests check one tick before, equal
+to and after the upper bound; even a true comparison never produces admission.
+Missing/reversed/non-UTC bounds yield no comparison and no native-time fallback.
+The policy reads no clock, filesystem or network, generates no timestamps and
+consults only its frozen prefix and explicit arguments.
+
+### Separate canonical prerequisites
+
+The existing `Candle` contract describes a closed UTC interval and enforces UTC
+offsets and ordered open/close coordinates; it does not cryptographically verify
+provider finalization. `CandleSeries` enforces homogeneous, immutable chronological
+inputs. `ReplayFrame` exposes only candles closing at/before `AsOfUtc`, which equals
+its current candle close. `StrategyReplayContext` bounds input observations to
+`ObservedAtUtc <= AsOfUtc`. The synchronized cursor merges closed-candle and optional
+UTC observation boundaries under [ADR 0004](../decisions/0004-support-observable-market-data-resolution-in-canonical-replay.md).
+Those guards assume normalized, supported input timestamps; they cannot turn a
+native ordinal or an unverified UTC claim into such evidence.
+
+Temporal eligibility alone does not finalize a candle. Position zero remains
+potentially incomplete; historical position and absence of sampled revisions
+do not prove provider-finalized OHLC. A shared probe does not establish atomic
+multi-timeframe acquisition. No revision/finality guarantee is added here.
+
+A future independently timestamped hash witness might establish availability
+without converting the native candle coordinate. That still would not establish
+the candle's UTC opening/closing coordinates: provider-specific historical
+timezone/DST applicability remains separately required for that conversion.
+No server offset or DST transition is selected by this contract.
+
+`selection_interval_propagation = unresolved`, `overall_utc_uncertainty = unresolved`,
+`windows_clock_authenticated = false`, `mt5_native_utc_authenticated = false`,
+`canonical_utc_conversion_authorized = false`, `utc_conversion_authenticated = false`
+and `canonical_ready = false`. Historical UTC availability, provider closure and
+multi-timeframe atomicity remain `unresolved`. The existing
+`BLOCKED_CLOCK_CONTINUITY_UNPROVABLE` finding and verified Linux NTS packet
+authentication remain unchanged.
+
+The next action is to obtain **one independently verifiable UTC witness of an
+exact published receipt/probe hash**, with issuer evidence, interval/uncertainty
+and a retained causal link from publication to witness. A new witness bounds
+availability at that new operation; it cannot authenticate earlier historical
+availability retrospectively. Obtain that evidence before designing a production
+verifier; do not repeat Chrony endpoint sampling to infer missing continuity.

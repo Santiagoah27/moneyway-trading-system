@@ -562,3 +562,88 @@ negative tests. Until independent evidence satisfies that contract, conversion
 must remain unavailable. Provider closure and freshness/warmup policy also need
 their own supported evidence before canonical ingestion; later native bars alone
 cannot supply those guarantees.
+
+## Temporal admission of a specific prefix observation
+
+The [temporal evidence admission contract](mt5-server-time-policy-audit.md#mt5-temporal-evidence-admission-contract)
+is implemented in
+[`Mt5TemporalEvidenceAdmission`](../../src/backend/MoneyWay.Application/MarketData/Receipt/Mt5TemporalEvidenceAdmission.cs)
+at the Application receipt boundary. It consumes an already validated immutable
+prefix and an exact record/timeframe/native-coordinate query. It does not add a
+new reader, Worker command, background service or canonical adapter.
+
+Each assessment binds a particular receipt's exact OHLC and position, not a
+candle's most recent value across later receipts. Submitted claims must match
+source, directory, terminal boundary/hash, manifest, run/poll/receipt,
+probe/hash and the native candle snapshot. Missing/future receipts cannot
+contribute to the selected prefix. A later OHLC revision cannot change the
+earlier assessment. The original reader/lifecycle projection and canonical
+future-data guards remain unchanged.
+
+Native acquisition completeness is checked independently from temporal evidence.
+Incomplete/unstable captures remain unavailable, and valid diagnostic receipts
+without samples cannot become candles. Historical position is not closure;
+position zero remains potentially incomplete. The policy exposes neither a
+converted native timestamp nor a conservative UTC availability value while the
+trusted attestation verifier is absent. Fully populated untrusted claims,
+plausible issuer labels and matching local hashes remain insufficient.
+
+### Authentic denial and preservation
+
+A standalone external .NET validation harness reused `ReadPrefix`,
+`ValidatedMt5ReceiptPrefix`, `Mt5CausalAvailabilityAudit` and the new policy against
+the authentic source directory. It pinned the same sequence 643 and SHA256
+`984a8a26ca1f93182eec60e3a643e432494294b08a3a4b7319c2305608917f26`;
+it did not extend the boundary when later files were present.
+
+Results: **643 validated receipts, 642 probes, two runs, 1,061 native coordinates**
+(M1 739, M5 229, H1 64, H4 29). Each coordinate was queried at its last observed
+receipt within that prefix. **All 1,061 assessments were `DataUnavailable`, with
+zero admissions and no conservative UTC bound**: no independent attestation was
+supplied and no trusted verifier exists. Forty-three queried latest snapshots
+also carried incomplete/unstable-acquisition diagnostics. This is a different
+count from the 34 additional coordinate identities in diagnostic frames above:
+the policy checks completeness of the entire queried acquisition, including
+snapshots of coordinates also seen in earlier usable acquisitions.
+
+The seven valid unavailable-without-sample receipts were queried separately and
+produced no candle identities. Existing nine source-unavailable events and
+quality diagnostics remain represented; receipt validity is not equated with
+market-data availability. Provider closure, historical UTC availability,
+native UTC mapping and multi-timeframe atomicity remain `unresolved`.
+
+The explicitly supplied diagnostic cutoff was `2026-11-17T00:00:00Z`; it was not a
+host-clock reading, authenticated event time or native timestamp conversion.
+No assertion is made that any native observation was historically available by
+that cutoff. The missing-attestation denial is independent of this chosen cutoff.
+
+External artifacts:
+`%LOCALAPPDATA%/MoneyWay/audits/mt5-temporal-admission-a8d7f85512e849b2b4434812460c0d3e/`.
+The retained `authentic-admission-643.json` report has SHA256
+`803bdf18ed45d272f222e10a962f1176ce3c12e28b46003e0af345766b3a8995`.
+Its prefix manifest remains
+`7360bd85d817b673ed98a7023139e4c9392f056d741731f1ee80dbda06eb05f0`.
+All **1,286** selected original record/probe/checkpoint files matched their
+before/after SHA256 pins. No acknowledgment, collector/clock changes or source
+mutation occurred. Harness/report/preservation artifacts remain outside Git.
+
+### Validation and remaining evidence
+
+The [focused synthetic suite](../../tests/integration/MoneyWay.IntegrationTests/Mt5TemporalEvidenceAdmissionTests.cs)
+tests exact source/probe/receipt/boundary/candle matching, missing proofs, payload
+tampering, recomputed-hash forgery, inclusive interval arithmetic, future receipts,
+revisions/runs, retrospective claims, incomplete/diagnostic acquisitions,
+independent timeframes, DST/closure/atomicity limitations, determinism and
+source/checkpoint preservation. Synthetic references are not authentic attestations;
+there is no positive production admission path. See the temporal contract for the
+single next evidence-acquisition action and the unchanged UTC/readiness flags.
+
+Final validation passed: full .NET build with **0 warnings/errors**; **292 MT5
+integration cases**, including **36 new admission cases** and the existing
+receipt/lifecycle/causal-prefix regressions; **19 domain replay** cases; and
+**61 application context/canonical cursor/backtest prerequisite/high-resolution
+regression cases**. Total across non-overlapping selections: **372 passed,
+0 failed, 0 skipped**. C# whitespace verification, Markdown formatting, local links
+and `git diff --check` are verified before publication. Repeating the authentic
+assessment with the final build produced `authentic-admission-643-final.json`
+with the same report SHA256 and another successful 1,286-file preservation check.
