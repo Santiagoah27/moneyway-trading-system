@@ -2125,3 +2125,153 @@ Do not infer it from HTTP duration or local clocks, and do not send another
 timestamp request solely to hope for a different field. Even resolving that bound
 would leave the independent source-publication linkage and candle-finalization
 requirements separate.
+
+## DigiCert UTC accuracy policy applicability audit
+
+Initial checkpoint: clean, synchronized `main`,
+`9f8d39bf9b392d948aa0447ed2f33a72068de778`. This is one bounded documentary
+clarification with no runtime/admission changes or new timestamp request.
+
+**Decision: `BLOCKED_TSA_UTC_ACCURACY_UNSPECIFIED`.** No applicable numeric
+maximum error for this token's returned `genTime` was established in the reviewed
+official corpus. This is not a claim that no private agreement or unpublished
+guarantee could exist. A provider clarification is required, rather than another
+clock experiment or broader search of unrelated TSAs.
+
+### Original evidence and policy linkage
+
+The original retained `response.tsr` was reopened structurally; its SHA256 remains
+`ec66c7d6eaac6df70e54f71617ee7f366f75f6fc6fd8b2864dc08d7cdb5c3f56`.
+It contains policy `2.16.840.1.114412.7.1`, signed `genTime`
+`2026-11-17T14:30:26Z`, serial `0x55ACFEDC1230DD440B0307196A80301F`,
+whole-second encoding and no `accuracy` field. This was a structural read, not
+a replacement signature verifier or new timestamp issuance.
+
+The original verification report SHA256 is unchanged:
+`f9809dc0f9d85d8cacb0171ef58b96f95dcfa4820e3874d3c3563b9a77abdb19`.
+Its existing signature/ESS/EKU/pinned-chain/archived-revocation findings remain
+valid within their recorded scope. Original capture and final bundle inventories
+were checked against their retained artifacts.
+
+The actual signer certificate was also reopened. Its subject is
+`DigiCert SHA256 RSA4096 Timestamp Responder 2026 1`; issuer is
+`DigiCert Trusted G4 TimeStamping RSA4096 SHA256 2025 CA1`, leading to
+`DigiCert Trusted Root G4`. Its certificate policies include **both**
+`2.16.840.1.114412.7.1` and **`2.23.140.1.4.2`**. The latter is the CA/Browser
+Forum reserved timestamp-certificate compliance identifier. This supports the
+documentary service/policy relationship; it is not proof of a numerical clock
+guarantee or perfect compliance with every operating control.
+
+### Official sources and dates
+
+| Source                                                                                                                 | Version/date and applicability                                                                                 | Finding relevant to accuracy                                                                                       |
+| ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| [DigiCert legal repository](https://www.digicert.com/legal-repository)                                                 | Unversioned current index lists CP/CPS 7.10                                                                    | Identifies the current public document; not a historical publication timestamp                                     |
+| [Public Trust CP/CPS](https://www.digicert.com/content/dam/digicert/pdfs/legal/digicert-public-trust-cp-cps-v7-10.pdf) | 7.10, cover/revision date **2026-11-13**; sections 1.1, 1.2.1, 1.5.4 and 6.8                                   | Public TSA scope, policy updates and operating controls; no maximum returned-`genTime` UTC error                   |
+| [Code Signing Baseline Requirements](https://cabforum.org/working-groups/code-signing/requirements/)                   | 3.11.0, document date **2026-06-16**; revision 3.11 effective **2026-09-15**; sections 1.1, 1.2, 1.2.1 and 6.8 | Associated TSA scope and reserved OID; synchronization/audit requirements, no numeric `genTime` bound              |
+| [DigiCert official OIDs](https://github.com/digicert/digicert_official_oids)                                           | List v2.3, updated **2025-02-04**                                                                              | Registers trusted timestamping policy identity, not an accuracy value                                              |
+| [Timestamping guidance](https://knowledge.digicert.com/solution/troubleshooting-timestamping-problems)                 | Unversioned official guidance                                                                                  | Identifies the endpoint; supplies no UTC error promise                                                             |
+| [RFC 3161](https://www.rfc-editor.org/rfc/rfc3161.html)                                                                | August 2001, section 2.4.2                                                                                     | Accuracy is optional and may be supplied through policy; absence has no default numerical value                    |
+| [Historical DigiCert CPS](https://www.digicert.com/content/dam/digicert/pdfs/legal/DigiCert-CPS-V.5.6.pdf)             | 5.6, **2021-04-12**, section 6.8                                                                               | Internal NTP clock statement of one second or less, with token-accuracy qualification; 2026 applicability unproven |
+| [Historical DigiCert CPS](https://www.digicert.com/content/dam/digicert/pdfs/legal/digicert-cps-v4.06-2014.pdf)        | 4.06, **2014-05-14**, section 6.8                                                                              | Similar internal-clock statement/per-request clock query; not a demonstrated guarantee for the 2026 signer/output  |
+
+Document dates, effective requirement dates, inspection and authenticated
+publication instants are different. No independently attested first-publication
+instant was established for CP/CPS 7.10. Its stated scope is relevant general
+public-trust/TSA context; the token does not pin a numbered CPS edition or numeric
+accuracy agreement. Section 1.5.4 describes policy supersession, which does not
+justify importing old clock language into a new token's guarantee.
+
+The signer certificate starts on **2026-08-05**, before the BR revision's September
+15 effective date. Its actual reserved OID is evidence of its assertion, not
+grounds to apply later certificate-issuance provisions retroactively. For the
+November 17 service-policy audit, the current BR context is relevant; its section
+6.8 still supplies no numeric error bound.
+
+### Applicability matrix and rejected inferences
+
+| Category                                 | Evidence actually supported                                                           | Admission consequence                                         |
+| ---------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| A — Internal reference clock             | Historical internal NTP statement                                                     | Not a proved 2026 full-generation `genTime` guarantee         |
+| B — Synchronization frequency            | Current CPS/BR rule: synchronize at least every 24 hours                              | No maximum intervening UTC deviation follows                  |
+| C — Adjustment audit threshold           | Current CPS/BR rule: adjustments of one second or greater are auditable               | A logging threshold is not a bound on error                   |
+| D — Encoded precision                    | Original `genTime` has second resolution                                              | Rounding/truncation and its error contribution remain unknown |
+| E — Signed RFC accuracy                  | Absent in this original token                                                         | Neither zero error nor a one-second default                   |
+| F — Policy-backed output error guarantee | Not established for the exact service/OID/signer/date and complete generation process | Numeric bound and UTC interval remain null                    |
+| G — Explicit DigiCert binding statement  | Not obtained; inquiry prepared and unsent                                             | Requires provider confirmation                                |
+
+The old documents describe a reference clock and refer token users to token
+accuracy when present. They do not establish a binding to this signer, the
+November 2026 issuance period or complete output/encoding error. No old one-second
+claim is inherited. A valid certificate and signature authenticate the issuer's
+statement, not an omitted quantitative precision term.
+
+No units/sign/symmetry, complete-process coverage, whole-second rounding rule,
+issuance-period guarantee or applicable exceptions were established for a current
+numeric bound. No interval arithmetic was performed; neither a half-second nor
+one-second padding is authorized. Even a future verified TSA bound would not
+prove original collector/broker availability, native DST mapping, provider closure,
+Windows clock authentication, atomicity or complete replay eligibility.
+
+### Offline decision, provenance and inquiry
+
+The version-1 assessment is external:
+`%LOCALAPPDATA%/MoneyWay/audits/digicert-accuracy-policy-52aea500955746cea0479d53417ac47d/accuracy-policy-assessment-v1.json`,
+SHA256 `21a1c60c4e8b4d8a0b05584532a017da830d469abcc0fb3ac1ad7fc5992090c0`.
+It records original token/report identities, source versions/dates/URLs, scope
+decisions, missing information, null bounds and preserved restrictions.
+The external `artifacts.json` inventory SHA256 is
+`d7c9dc6d4b271ed0e9e26618d5883db5cafcbc08f1f98367934bfbf97fd53163`.
+
+Official BR HTML and RFC text were archived and content/version markers checked;
+prior official OID/endpoint copies were retained. The direct CP/CPS 7.10 download
+returned an empty body despite a successful client exit. A bounded redirect check
+then reached DigiCert's `/system/probes/health` endpoint and returned 27 bytes of
+JSON, not the policy. Both responses are explicitly marked **not a validated
+PDF**; no original-PDF SHA256 is claimed. Official current and
+historical PDFs were readable through the web tool. Review notes and URLs are
+retained, but complete offline issuer-PDF provenance is not established. This
+limitation cannot authorize a positive bound.
+
+The English draft below is also retained externally as
+`digicert-support-inquiry-draft.txt`, SHA256
+`5d0311f5f28d86e971b9caa89a969c92e50bfd298eedd735432d0f8df5c51ac1`.
+**It has not been sent.** The single next step is operator authorization to send
+this focused inquiry, then obtain the applicable official policy/confirmation.
+No original MT5 records, account information or credentials should be attached.
+The following is a condensed review copy of the retained draft:
+
+```text
+Subject: UTC accuracy guarantee for DigiCert RFC 3161 policy 2.16.840.1.114412.7.1
+
+Please clarify the maximum guaranteed absolute deviation of the returned genTime
+from UTC for http://timestamp.digicert.com/, policy 2.16.840.1.114412.7.1, signer
+DigiCert SHA256 RSA4096 Timestamp Responder 2026 1, DigiCert Trusted Root G4 hierarchy.
+
+Token: genTime 2026-11-17T14:30:26Z; serial 0x55ACFEDC1230DD440B0307196A80301F;
+whole-second encoding; no RFC 3161 accuracy field. Response DER SHA256:
+ec66c7d6eaac6df70e54f71617ee7f366f75f6fc6fd8b2864dc08d7cdb5c3f56.
+
+Which official document, version, section and effective period establish a numeric
+guarantee for this service/signer and issuance date? Is it guaranteed, conditional
+(with which exclusions), or only a typical target? Does it cover the complete
+generation process and whole-second encoding, including rounding/truncation?
+Please state units and symmetry. If no applicable maximum is defined, please
+confirm this explicitly.
+
+No market-data files, account information or credentials are attached.
+DRAFT ONLY — NOT SENT.
+```
+
+The existing authentic 643-prefix admission report remains unchanged (SHA256
+`803bdf18ed45d272f222e10a962f1176ce3c12e28b46003e0af345766b3a8995`):
+**1,061 observations denied, zero admissions**. No new TSA POST, NTS capture,
+MT5/session/service startup or clock modification occurred. Runtime behavior and
+all existing flags remain unchanged, including the verified Linux NTS scope.
+
+Validation: **117** existing RFC/admission/causal-prefix integration tests,
+**19** domain replay tests and **61** application canonical/context/backtest tests
+passed: **197 passed, 0 failed, 0 skipped**. Full .NET build passed with zero
+warnings/errors. Original token/report/inventory hashes, artifact preservation,
+assessment restrictions, Markdown/local links and `git diff --check` are checked
+before publication. No new evaluator or test implementation was added.
