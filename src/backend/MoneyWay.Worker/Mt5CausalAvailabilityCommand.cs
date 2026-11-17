@@ -12,7 +12,7 @@ public sealed class Mt5CausalAvailabilityCommand
 {
     private const string Usage = "mt5-causal-availability --source <absolute-directory> --through-sequence <0..999999999999> "
         + "[--through-sha256 <required-for-nonempty-prefix>] [--report <new-absolute-file-outside-git-and-source>] "
-        + "[--details <0..128>] [--timeframe <M1|M5|H1|H4> --native-open <positive-native-raw>]";
+        + "[--view <observations|first-historical>] [--details <0..128>] [--timeframe <M1|M5|H1|H4> --native-open <positive-native-raw>]";
     private static readonly JsonSerializerOptions Json = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
@@ -29,7 +29,7 @@ public sealed class Mt5CausalAvailabilityCommand
             for (var i = 1; i < args.Count; i += 2)
             {
                 if (i + 1 == args.Count || args[i] is not ("--source" or "--through-sequence" or "--through-sha256"
-                    or "--report" or "--details" or "--timeframe" or "--native-open") || !options.TryAdd(args[i], args[i + 1]))
+                    or "--report" or "--details" or "--timeframe" or "--native-open" or "--view") || !options.TryAdd(args[i], args[i + 1]))
                     throw new ArgumentException();
             }
             if (!options.TryGetValue("--source", out var source) || !Path.IsPathFullyQualified(source)
@@ -38,6 +38,8 @@ public sealed class Mt5CausalAvailabilityCommand
             var boundary = new Mt5ReceiptPrefixBoundary(long.Parse(sequence, CultureInfo.InvariantCulture), options.GetValueOrDefault("--through-sha256"));
             var details = options.TryGetValue("--details", out var d) ? int.Parse(d, CultureInfo.InvariantCulture) : 16;
             var timeframe = options.GetValueOrDefault("--timeframe");
+            var view = options.GetValueOrDefault("--view") ?? "observations";
+            if (view is not ("observations" or "first-historical")) throw new ArgumentException();
             long? native = options.TryGetValue("--native-open", out var n) ? long.Parse(n, CultureInfo.InvariantCulture) : null;
             if (details is < 0 or > 128 || (timeframe is null) != (native is null) || native is <= 0
                 || timeframe is not null && timeframe is not ("M1" or "M5" or "H1" or "H4")) throw new ArgumentException();
@@ -57,29 +59,30 @@ public sealed class Mt5CausalAvailabilityCommand
             var batch = new LocalMt5CollectorReceiptReader().ReadPrefix(source, boundary);
             var selection = ValidatedMt5ReceiptPrefix.Select(batch, boundary);
             var projection = selection.Prefix is { } prefix ? new Mt5CausalAvailabilityAudit().Project(prefix, details) : null;
-            object report = projection?.Report(details, timeframe, native) ?? new
-            {
-                Schema = "moneyway.mt5-causal-receipt-prefix-availability",
-                Version = 1,
-                batch.DirectoryScope,
-                Boundary = boundary,
-                ProjectionIntegrityStatus = selection.Status,
-                selection.InspectedRecords,
-                selection.Diagnostics,
-                ReceiptDiagnostics = batch.Records.SelectMany(r => r.Diagnostics).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray(),
-                SourceObservationCausality = "unresolved",
-                SourceObservationsAvailable = false,
-                HistoricalUtcAvailability = "unresolved",
-                ProviderClosure = "unresolved",
-                AtomicMultiTimeframeSnapshot = "unresolved",
-                SelectionIntervalPropagation = "unresolved",
-                OverallUtcUncertainty = "unresolved",
-                WindowsClockAuthenticated = false,
-                Mt5NativeUtcAuthenticated = false,
-                CanonicalUtcConversionAuthorized = false,
-                UtcConversionAuthenticated = false,
-                CanonicalReady = false
-            };
+            object report = (view == "first-historical" ? projection?.HistoricalFreezeReport(details, timeframe, native)
+                : projection?.Report(details, timeframe, native)) ?? new
+                {
+                    Schema = view == "first-historical" ? "moneyway.mt5-first-historical-observation-freeze" : "moneyway.mt5-causal-receipt-prefix-availability",
+                    Version = 1,
+                    batch.DirectoryScope,
+                    Boundary = boundary,
+                    ProjectionIntegrityStatus = selection.Status,
+                    selection.InspectedRecords,
+                    selection.Diagnostics,
+                    ReceiptDiagnostics = batch.Records.SelectMany(r => r.Diagnostics).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray(),
+                    SourceObservationCausality = "unresolved",
+                    SourceObservationsAvailable = false,
+                    HistoricalUtcAvailability = "unresolved",
+                    ProviderClosure = "unresolved",
+                    AtomicMultiTimeframeSnapshot = "unresolved",
+                    SelectionIntervalPropagation = "unresolved",
+                    OverallUtcUncertainty = "unresolved",
+                    WindowsClockAuthenticated = false,
+                    Mt5NativeUtcAuthenticated = false,
+                    CanonicalUtcConversionAuthorized = false,
+                    UtcConversionAuthenticated = false,
+                    CanonicalReady = false
+                };
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             using (var file = new FileStream(path + ".pending", FileMode.CreateNew, FileAccess.Write, FileShare.None))
             {

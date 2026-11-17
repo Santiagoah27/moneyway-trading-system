@@ -8,6 +8,22 @@ namespace MoneyWay.Infrastructure.MarketData.Mt5;
 public sealed record Mt5LifecycleReference(string RecordFile, string RecordSha256, long Sequence,
     string RunId, long PollSequence, string Event, string? ProbeFile, string? ProbeSha256);
 public sealed record Mt5LifecycleValues(string Open, string High, string Low, string Close);
+public sealed record Mt5HistoricalObservation(Mt5LifecycleReference Receipt, int SourcePosition,
+    Mt5LifecycleValues Values, Mt5ReceiptStatus ReceiptStatus, bool CompleteNativeSampleObserved,
+    bool UsableFrame, bool OhlcValid)
+{
+    public bool Usable => CompleteNativeSampleObserved && UsableFrame && OhlcValid;
+}
+public sealed record Mt5HistoricalFreeze(Mt5HistoricalObservation? FirstActive,
+    Mt5HistoricalObservation? FirstHistorical, Mt5HistoricalObservation? FirstUsableHistorical,
+    int HistoricalObservations, int UsableObservations, int LimitedQualityObservations, int LaterHistoricalRevisions)
+{
+    public string Classification => FirstUsableHistorical is not null
+        ? FirstHistorical!.Receipt.Sequence < (FirstActive?.Receipt.Sequence ?? long.MaxValue)
+            ? "directly_historical_first" : "active_then_historical"
+        : FirstHistorical is null && UsableObservations > 0 ? "active_only" : "no_usable_historical_observation";
+    public string Status => FirstUsableHistorical is null ? "data_unavailable" : "context_specific";
+}
 public sealed record Mt5LifecycleRevision(Mt5LifecycleReference Before, Mt5LifecycleReference After,
     int BeforePosition, int AfterPosition, Mt5LifecycleValues BeforeValues, Mt5LifecycleValues AfterValues,
     bool AcrossInterruption);
@@ -62,10 +78,12 @@ public sealed class Mt5NativeLifecycleAudit
     public Mt5LifecycleReport Analyze(Mt5ReceiptBatch batch, long? throughSequence = null, int detailLimit = 16)
         => AnalyzeCore(batch, throughSequence, detailLimit, false);
 
-    internal Mt5LifecycleReport AnalyzePrefix(ValidatedMt5ReceiptPrefix prefix, int detailLimit)
-        => AnalyzeCore(prefix.ToBatch(), null, detailLimit, true);
+    internal Mt5LifecycleReport AnalyzePrefix(ValidatedMt5ReceiptPrefix prefix, int detailLimit,
+        IDictionary<(string Frame, long Raw), Mt5HistoricalFreeze> freezes)
+        => AnalyzeCore(prefix.ToBatch(), null, detailLimit, true, freezes);
 
-    private static Mt5LifecycleReport AnalyzeCore(Mt5ReceiptBatch batch, long? throughSequence, int detailLimit, bool causalProjection)
+    private static Mt5LifecycleReport AnalyzeCore(Mt5ReceiptBatch batch, long? throughSequence, int detailLimit, bool causalProjection,
+        IDictionary<(string Frame, long Raw), Mt5HistoricalFreeze>? freezes = null)
     {
         ArgumentNullException.ThrowIfNull(batch);
         if (throughSequence is <= 0 || detailLimit is < 0 or > 128) throw new ArgumentOutOfRangeException(nameof(detailLimit));
@@ -134,14 +152,18 @@ public sealed class Mt5NativeLifecycleAudit
                 {
                     if (bar.NewerThanNextSeconds is { } delta && delta != frame.PeriodSeconds) stats.NonPeriodDeltas++;
                     var key = (frame.Timeframe, bar.OpenTimeNative.Raw);
-                    if (!bars.TryGetValue(key, out var state)) bars.Add(key, new(bar, reference!, segment));
-                    else state.Add(bar, reference!, segment);
+                    var observation = new Mt5HistoricalObservation(reference!, bar.SeriesPosition, Values(bar), receipt.Status,
+                        receipt.CompleteNativeSampleObserved, usable, bar.OhlcValid);
+                    if (!bars.TryGetValue(key, out var state)) bars.Add(key, new(bar, reference!, segment, observation));
+                    else state.Add(bar, reference!, segment, observation);
                 }
                 // A partial sample can describe bars, but cannot join the next sample as continuous coverage.
                 if (!receipt.CompleteNativeSampleObserved || !usable) heads.Remove(frame.Timeframe);
             }
             if (!receipt.CompleteNativeSampleObserved) segment++;
         }
+        if (freezes is not null)
+            foreach (var pair in bars) freezes.Add(pair.Key, pair.Value.Freeze());
         var all = bars.OrderBy(p => p.Key.Frame, StringComparer.Ordinal).ThenBy(p => p.Key.Raw)
             .Select(p => p.Value.Result(p.Key.Frame, detailLimit)).ToArray();
         var summaries = frames.Select(pair =>
@@ -183,7 +205,7 @@ public sealed class Mt5NativeLifecycleAudit
     private static bool Same(Mt5LifecycleValues a, Mt5LifecycleValues b) => Mt5WireContract.SamePrice(a.Open, b.Open)
         && Mt5WireContract.SamePrice(a.High, b.High) && Mt5WireContract.SamePrice(a.Low, b.Low) && Mt5WireContract.SamePrice(a.Close, b.Close);
     private sealed class FrameState { internal int Advancements, Regressions, NonPeriodAdvancements, NonPeriodDeltas, Skipped; }
-    private sealed class State(Mt5NativeBar first, Mt5LifecycleReference reference, int firstSegment)
+    private sealed class State(Mt5NativeBar first, Mt5LifecycleReference reference, int firstSegment, Mt5HistoricalObservation observation)
     {
         private readonly List<Mt5LifecycleRevision> revisions = [];
         private readonly Mt5NativeBar initial = first;
@@ -192,9 +214,32 @@ public sealed class Mt5NativeLifecycleAudit
         private Mt5LifecycleReference lastReference = reference;
         private int segment = firstSegment, snapshots = 1, identical;
         private bool active = first.IsPositionZero, historical = !first.IsPositionZero, activeThenHistorical, interrupted;
-        internal void Add(Mt5NativeBar bar, Mt5LifecycleReference next, int nextSegment)
+        private Mt5HistoricalObservation? firstActive = first.IsPositionZero ? observation : null;
+        private Mt5HistoricalObservation? firstHistorical = first.IsPositionZero ? null : observation;
+        private Mt5HistoricalObservation? firstUsableHistorical = !first.IsPositionZero && observation.Usable ? observation : null;
+        private Mt5LifecycleValues? lastHistoricalValues = first.IsPositionZero ? null : observation.Values;
+        private int historicalObservations = first.IsPositionZero ? 0 : 1;
+        private int usableObservations = observation.Usable ? 1 : 0;
+        private int limitedQualityObservations = observation.Usable ? 0 : 1;
+        private int laterHistoricalRevisions;
+        internal Mt5HistoricalFreeze Freeze() => new(firstActive, firstHistorical, firstUsableHistorical,
+            historicalObservations, usableObservations, limitedQualityObservations, laterHistoricalRevisions);
+        internal void Add(Mt5NativeBar bar, Mt5LifecycleReference next, int nextSegment, Mt5HistoricalObservation point)
         {
             var before = Values(last); var after = Values(bar);
+            if (!bar.IsPositionZero)
+            {
+                historicalObservations++;
+                // A run can revisit position zero. Compare historical versions to historical versions,
+                // rather than misclassifying active-head evolution after a frozen point as history revision.
+                if (firstUsableHistorical is not null && lastHistoricalValues is not null && !Same(lastHistoricalValues, after)) laterHistoricalRevisions++;
+                lastHistoricalValues = after;
+                firstHistorical ??= point;
+                if (point.Usable) firstUsableHistorical ??= point;
+            }
+            else firstActive ??= point;
+            if (point.Usable) usableObservations++;
+            if (!point.Usable) limitedQualityObservations++;
             if (Same(before, after)) identical++;
             else revisions.Add(new(lastReference, next, last.SeriesPosition, bar.SeriesPosition, before, after, segment != nextSegment));
             activeThenHistorical |= active && !bar.IsPositionZero;

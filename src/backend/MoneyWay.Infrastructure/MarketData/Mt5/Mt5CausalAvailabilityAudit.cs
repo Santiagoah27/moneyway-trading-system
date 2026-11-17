@@ -30,8 +30,87 @@ public sealed class Mt5CausalAvailabilityProjection
     public Mt5LifecycleReport Lifecycle { get; }
     public IReadOnlyList<Mt5CausalAcquisition> Acquisitions { get; }
     public IReadOnlyList<Mt5CausalBarObservation> Bars { get; }
+    internal IReadOnlyDictionary<(string Frame, long Raw), Mt5HistoricalFreeze> Freezes { get; init; } =
+        new Dictionary<(string Frame, long Raw), Mt5HistoricalFreeze>();
+    public Mt5HistoricalFreeze? FindHistoricalFreeze(string timeframe, long nativeOpen) =>
+        Freezes.GetValueOrDefault((timeframe, nativeOpen));
     public Mt5CausalBarObservation? Find(string timeframe, long nativeOpen) =>
         Bars.SingleOrDefault(b => b.Bar.Timeframe == timeframe && b.Bar.OpenTimeNative.Raw == nativeOpen);
+
+    public object HistoricalFreezeReport(int detailLimit = 16, string? timeframe = null, long? nativeOpen = null)
+    {
+        if (detailLimit is < 0 or > 128 || (timeframe is null) != (nativeOpen is null)) throw new ArgumentException("Invalid query or detail limit.");
+        object Detail(Mt5CausalBarObservation b) => new
+        {
+            b.Bar.Timeframe,
+            b.Bar.OpenTimeNative,
+            Freeze = FindHistoricalFreeze(b.Bar.Timeframe, b.Bar.OpenTimeNative.Raw),
+            b.Bar.LastObserved,
+            b.Bar.LastPosition,
+            b.Bar.LastValues,
+            b.Bar.Snapshots,
+            b.Bar.SpansInterruption,
+            b.Bar.HistoricalToHistoricalRevisions,
+            b.Bar.Revisions,
+            b.Bar.OmittedRevisions
+        };
+        var selected = Bars.GroupBy(b => b.Bar.Timeframe, StringComparer.Ordinal).Select(g => g.First())
+            .Concat(Bars).DistinctBy(b => (b.Bar.Timeframe, b.Bar.OpenTimeNative.Raw)).Take(detailLimit).ToArray();
+        var requested = timeframe is null ? null : Find(timeframe, nativeOpen!.Value);
+        var observationReceipts = selected.Concat(requested is null ? [] : new[] { requested })
+            .Select(b => FindHistoricalFreeze(b.Bar.Timeframe, b.Bar.OpenTimeNative.Raw)!)
+            .SelectMany(f => new[] { f.FirstActive, f.FirstHistorical, f.FirstUsableHistorical })
+            .Where(p => p is not null).Select(p => p!.Receipt.RecordFile).ToHashSet(StringComparer.Ordinal);
+        return new
+        {
+            Schema = "moneyway.mt5-first-historical-observation-freeze",
+            Version = 1,
+            Source = new { Lifecycle.Company, Lifecycle.Server, Lifecycle.NativeSymbol, Lifecycle.Demo, IdentityValidated = Prefix.Records.Count > 0 },
+            Prefix.DirectoryScope,
+            Prefix.Boundary,
+            Prefix.FinalReceipt,
+            Prefix.EvidenceManifestSha256,
+            ProjectionIntegrityStatus = Mt5ReceiptStatus.Validated,
+            ValidatedRecords = Prefix.Records.Count,
+            DistinctObservedCandles = Bars.Count,
+            Lifecycle.Events,
+            Lifecycle.EvidenceKinds,
+            Lifecycle.Diagnostics,
+            Lifecycle.RunBoundaries,
+            Timeframes = Bars.GroupBy(b => b.Bar.Timeframe, StringComparer.Ordinal).Select(g => new
+            {
+                Timeframe = g.Key,
+                ObservedCandles = g.Count(),
+                FrozenCandidates = g.Count(b => FindHistoricalFreeze(g.Key, b.Bar.OpenTimeNative.Raw)!.FirstUsableHistorical is not null),
+                Classifications = g.GroupBy(b => FindHistoricalFreeze(g.Key, b.Bar.OpenTimeNative.Raw)!.Classification)
+                    .OrderBy(c => c.Key, StringComparer.Ordinal).ToDictionary(c => c.Key, c => c.Count()),
+                LimitedQualityCoordinates = g.Count(b => FindHistoricalFreeze(g.Key, b.Bar.OpenTimeNative.Raw)!.LimitedQualityObservations > 0),
+                UnusableFirstHistorical = g.Count(b => FindHistoricalFreeze(g.Key, b.Bar.OpenTimeNative.Raw)!.FirstHistorical is { Usable: false }),
+                LaterFirstUsableHistorical = g.Count(b => FindHistoricalFreeze(g.Key, b.Bar.OpenTimeNative.Raw) is
+                { FirstHistorical.Usable: false, FirstUsableHistorical: not null }),
+                LaterHistoricalRevisions = g.Sum(b => FindHistoricalFreeze(g.Key, b.Bar.OpenTimeNative.Raw)!.LaterHistoricalRevisions),
+                HistoricalToHistoricalRevisions = g.Sum(b => b.Bar.HistoricalToHistoricalRevisions)
+            }).ToArray(),
+            SelectedBars = selected.Select(Detail).ToArray(),
+            OmittedBars = Bars.Count - selected.Length,
+            ObservationAcquisitions = Acquisitions.Where(a => observationReceipts.Contains(a.Receipt.RecordFile)).ToArray(),
+            RequestedObservation = requested is null ? null : Detail(requested),
+            ConflictingIdentityPolicy = "reject_entire_unverifiable_prefix_before_fold",
+            QualityPolicy = "complete_native_sample_and_existing_usable_frame_and_valid_ohlc",
+            HistoricalUtcAvailability = "unresolved",
+            ProviderFinalization = "unresolved",
+            AtomicMultiTimeframeSnapshot = "unresolved",
+            HistoricalDst = "unresolved",
+            VolumeEvidence = "data_unavailable",
+            SelectionIntervalPropagation = "unresolved",
+            OverallUtcUncertainty = "unresolved",
+            WindowsClockAuthenticated = false,
+            Mt5NativeUtcAuthenticated = false,
+            CanonicalUtcConversionAuthorized = false,
+            UtcConversionAuthenticated = false,
+            CanonicalReady = false
+        };
+    }
 
     public object Report(int detailLimit = 16, string? timeframe = null, long? nativeOpen = null)
     {
@@ -99,7 +178,8 @@ public sealed class Mt5CausalAvailabilityAudit
     public Mt5CausalAvailabilityProjection Project(ValidatedMt5ReceiptPrefix prefix, int revisionDetailLimit = 16)
     {
         ArgumentNullException.ThrowIfNull(prefix);
-        var lifecycle = new Mt5NativeLifecycleAudit().AnalyzePrefix(prefix, revisionDetailLimit);
+        var freezes = new Dictionary<(string Frame, long Raw), Mt5HistoricalFreeze>();
+        var lifecycle = new Mt5NativeLifecycleAudit().AnalyzePrefix(prefix, revisionDetailLimit, freezes);
         var acquisitions = prefix.Records.Select(r =>
         {
             var a = r.Observation!;
@@ -118,7 +198,10 @@ public sealed class Mt5CausalAvailabilityAudit
             Values(b.FirstObserved.RecordFile, b.Timeframe, b.OpenTimeNative.Raw),
             Valid(b.FirstObserved.RecordFile, b.Timeframe, b.OpenTimeNative.Raw),
             Valid(b.LastObserved.RecordFile, b.Timeframe, b.OpenTimeNative.Raw))).ToArray();
-        return new(prefix, lifecycle, Array.AsReadOnly(acquisitions), Array.AsReadOnly(bars));
+        return new(prefix, lifecycle, Array.AsReadOnly(acquisitions), Array.AsReadOnly(bars))
+        {
+            Freezes = new System.Collections.ObjectModel.ReadOnlyDictionary<(string Frame, long Raw), Mt5HistoricalFreeze>(freezes)
+        };
 
         bool Valid(string record, string frame, long raw) => sourceByRecord[record].Timeframes
             .Single(f => f.Timeframe == frame).Bars.Single(b => b.OpenTimeNative.Raw == raw).OhlcValid;

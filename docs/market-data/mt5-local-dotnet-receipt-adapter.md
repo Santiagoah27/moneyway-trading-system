@@ -807,3 +807,198 @@ cursor/backtest regression tests**: **412 passed, 0 failed, 0 skipped**. The foc
 40 were also rerun successfully against the final build. Markdown/C# formatting,
 local links, evidence inventories and `git diff --check` are verified before
 publication. No genuine TSA request was repeated during testing.
+
+## First-historical observation freeze within a pinned prefix
+
+The existing [causal projection](../../src/backend/MoneyWay.Infrastructure/MarketData/Mt5/Mt5CausalAvailabilityAudit.cs)
+now exposes `FindHistoricalFreeze(timeframe, nativeOpen)` and an optional
+`--view first-historical` on the existing `mt5-causal-availability` command.
+The default `observations` view and retrospective lifecycle report retain their
+contracts. There is no second reader or independent lifecycle reconstruction:
+the existing [lifecycle fold](../../src/backend/MoneyWay.Infrastructure/MarketData/Mt5/Mt5NativeLifecycleAudit.cs)
+accumulates the additional immutable observation points during its prefix-only
+traversal. This is a diagnostic native candidate, not canonical `CandleSeries`.
+
+### Identity, ordering and quality
+
+The report envelope binds every candidate to source identity, directory scope,
+terminal sequence/hash and prefix evidence manifest. Within that validated
+scope/source, the existing identity is `(timeframe, native opening coordinate)`.
+It is not globally unique. Runs are local acquisition provenance, not a new
+instrument identity: the existing fold can join the same coordinate across runs
+only within this single validated source/scope and complete predecessor chain.
+Each observation retains its own run, publication/poll sequence, original series
+position, receipt/probe names and SHA256 values. Run changes, source interruptions
+and publication gaps remain visible; no intervening bars or continuous coverage
+are fabricated. Conflicting source, duplicate acquisition, ambiguous coordinates,
+missing probes and unverifiable chains reject the whole prefix before folding.
+An invalid prefix has no candidates, rather than an arbitrarily selected winner.
+
+`Mt5HistoricalFreeze` distinguishes:
+
+- `FirstActive`: earliest captured position-zero point, if present.
+- `FirstHistorical`: earliest raw historical-position point, including its
+  original insufficient quality when applicable.
+- `FirstUsableHistorical`: earliest historical-position point meeting existing
+  capture quality; its exact original OHLC literals and provenance are frozen.
+  It may equal `FirstHistorical`, be later, or remain absent.
+- `HistoricalObservations`, `UsableObservations` and
+  `LimitedQualityObservations`: counts over captured points, not interpolated bars.
+- `LaterHistoricalRevisions`: exact OHLC changes between successive historical
+  versions after a candidate was frozen. An intervening revisit to position zero
+  is not itself a historical correction. The existing bounded revision list and
+  adjacent historical-to-historical count remain separate lifecycle diagnostics.
+
+Usability requires the existing `CompleteNativeSampleObserved` contract **and**
+the existing usable-frame predicate **and** valid OHLC. This includes validated
+capture status, complete/stable acquisition, M1 usability, passed probe gate,
+connectivity before/after, consistent frame head, zero copy error, synchronized
+series and valid frame OHLC. The point retains receipt status, completeness,
+frame usability and OHLC validity. `ObservationAcquisitions` supplies the existing
+acquisition metadata for the displayed first points, including per-frame copy
+intervals and diagnostics. This conservatively reuses existing quality contracts;
+it does not weaken temporal admission or redefine the older retrospective audit's
+usable-frame-only filtering.
+
+A later improvement cannot change the earlier point's quality or provenance.
+An unusable first historical point stays unusable; a later usable point freezes
+at its own actual receipt. Later historical revisions, even insufficient-quality
+ones, remain diagnostic changes and cannot overwrite frozen OHLC. Price equality
+uses the existing exact numeric comparison; original literals remain intact.
+There is no tolerance, rounded replacement, grace period or synthetic volume.
+
+Classifications are `directly_historical_first`, `active_then_historical`,
+`active_only` and `no_usable_historical_observation`. Direct historical-first
+does not require an earlier active point. `active_only` requires no historical
+point and at least one usable active observation. Other coordinates without a
+usable historical point return `data_unavailable`, including raw active-only
+coordinates of insufficient quality. A frozen candidate is `context_specific`;
+this status does not certify finalization. Unverifiable identity fails closed
+at prefix selection, before these source-observation classifications exist.
+
+### Unsupported guarantees and future-data boundary
+
+[CopyRates](https://www.mql5.com/en/docs/series/copyrates) identifies position zero
+as the current bar. A greater position proves the terminal's observed series
+state, not provider-certified finalization.
+[SERIES_SYNCHRONIZED](https://www.mql5.com/en/docs/constants/tradingconstants/enum_series_info_integer)
+describes current symbol/period synchronization, not immutable OHLC.
+[Timeseries access](https://www.mql5.com/en/docs/series/timeseries_access) depends
+on terminal/server history construction and synchronization; later source history
+must still be allowed to differ. [OnTimer](https://www.mql5.com/en/docs/event_handlers/ontimer)
+can omit a new timer event when one is queued or processing. Thus source silence
+does not prove market closure or complete sampling.
+
+The existing `ReadPrefix` excludes future receipts before validation and folding.
+The same pinned prefix yields the same report after appends, later runs, revisions
+or quality improvements, provided its original evidence remains unchanged.
+Different prefixes can expose additional facts without rewriting old points.
+There is no attestation input to this projection and no reassignment of `AsOfUtc`
+from publication ordering. A later timestamp witness cannot backdate a point.
+
+Provider finalization, historical UTC availability, historical DST and atomic
+multi-timeframe snapshots remain `unresolved`; volume is `data_unavailable`.
+`selection_interval_propagation = unresolved`,
+`overall_utc_uncertainty = unresolved`, `windows_clock_authenticated = false`,
+`mt5_native_utc_authenticated = false`,
+`canonical_utc_conversion_authorized = false`,
+`utc_conversion_authenticated = false` and `canonical_ready = false`.
+Nothing is admitted into canonical replay or evaluated as strategy data.
+
+### Authentic pinned-643 validation
+
+Rechecked against the original 643 receipts / 642 probes, terminal receipt SHA256
+`984a8a26ca1f93182eec60e3a643e432494294b08a3a4b7319c2305608917f26`,
+probe SHA256 `483b32c975860b8a743f7e98c877c794d24b5830bf7b338a309a35e06b3c95fc`,
+and unchanged prefix manifest
+`7360bd85d817b673ed98a7023139e4c9392f056d741731f1ee80dbda06eb05f0`.
+
+| Frame | Raw coordinates | Frozen | Direct historical-first | Active then historical | Active-only usable | No usable historical | Ever limited quality |
+| ----- | --------------: | -----: | ----------------------: | ---------------------: | -----------------: | -------------------: | -------------------: |
+| M1    |             739 |    717 |                      94 |                    623 |                  6 |                   16 |                   32 |
+| M5    |             229 |    209 |                      83 |                    126 |                  4 |                   16 |                   32 |
+| H1    |              64 |     60 |                      47 |                     13 |                  1 |                    3 |                   32 |
+| H4    |              29 |     28 |                      22 |                      6 |                  1 |                    0 |                   23 |
+| Total |           1,061 |  1,014 |                     246 |                    768 |                 12 |                   35 |                  119 |
+
+Both historical revision counts are **zero** on every timeframe. These findings
+do not assert that real OANDA history is immutable. Synthetic revisions test the
+separate diagnostic behavior. There are 33 unusable first historical points and
+zero later first-usable recoveries in this authentic prefix.
+
+The raw coordinate counts match the previous causal availability report. The
+default observation view reproduced that earlier report byte for byte with the
+same eight-detail limit: SHA256
+`1ba8a1bab9ee476403f43e9a833a964f322fe63752840fbca77e8d29ff9ceea2`.
+The older retrospective usable-frame audit still sees 1,027 coordinates (M1 723,
+M5 213, H1 62, H4 29). Its 34 excluded coordinates remain unfrozen. The additional
+H1 coordinate without a usable historical point is native `2026.11.12 22:00:00`
+(`1794520800`): first active in receipt 91, but historical only at position 15 in
+receipt 489 with insufficient capture quality. Its earlier active quality cannot
+authorize freezing that later point. Together with 12 active-only coordinates,
+this explains `1,061 - 34 - 1 - 12 = 1,014` frozen candidates.
+
+The 119 coordinates with **any** insufficient-quality point are a different
+metric from 34 coordinates excluded by the retrospective frame filter and from
+the earlier admission audit's latest-point quality metric. Existing valid frozen
+points are preserved even when a later sample is limited; no limited point is
+silently upgraded. Source-unavailable events remain nine, including seven
+diagnostic receipts without candle samples. Two runs remain distinct in
+provenance (`run-000000000001`, receipts 1–216; `run-000000000217`, 217–643).
+
+Artifacts are outside Git under
+`%LOCALAPPDATA%/MoneyWay/audits/mt5-first-historical-20ca0365f4614279b963ed9e1b2b610b/`.
+`authentic-643-published.json` uses eight selected bar details; its SHA256 is
+`5afb6a8e7f8659f5c688fc8f2fc69a0eca2b2e70cf31dfd7e16596297c0fec5b`.
+`independent-api-check.json` records the full in-memory classification and repeats
+all **1,061** temporal assessments: **DataUnavailable**, zero admitted.
+
+Two byte-copy append experiments retained identical bounded reports:
+
+- Prefix 100 before/after appending through 217: SHA256
+  `8a07bceb6b997443f9f5a769e7f2fe4fa54c8d2434ababd48f0d5c2f8a6ca8cf`.
+- Prefix 217 before/after appending through 643, including the second run: SHA256
+  `fce705c378889cade18adf6147ca54b186b771c29cf4aa0a24f6e72045dbfc5c`.
+
+`validation-published.json` retains the comparisons and preservation result.
+All 1,286 original receipt/probe/checkpoint pins retained their original hashes.
+The copies are diagnostic fixtures outside Git; no originals or checkpoint were
+written, acknowledged, or migrated. Earlier exploratory reports are retained
+separately and are not the published result.
+
+Git Bash, from repository root, with an unused report path:
+
+```bash
+dotnet ./src/backend/MoneyWay.Worker/bin/Debug/net10.0/MoneyWay.Worker.dll mt5-causal-availability \
+  --source "$(cygpath -m "$APPDATA")/MetaQuotes/Terminal/Common/Files/MoneyWayAutomaticReadOnly" \
+  --through-sequence 643 \
+  --through-sha256 984a8a26ca1f93182eec60e3a643e432494294b08a3a4b7319c2305608917f26 \
+  --view first-historical --details 8 \
+  --report "$(cygpath -m "$LOCALAPPDATA")/MoneyWay/audits/mt5-first-historical-$RANDOM-$RANDOM.json"
+```
+
+The same safe paths, create-only report publication, pinned-prefix requirements,
+exit codes and optional single-coordinate query apply. Details are bounded to
+0–128; a query adds at most one coordinate. Counts use the complete prefix, not
+just the displayed rows. The default observation view remains available without
+`--view`.
+
+The [freeze tests](../../tests/integration/MoneyWay.IntegrationTests/Mt5HistoricalFreezeTests.cs)
+cover exact values, direct historical-first, transitions, quality recovery,
+invalid later history, cross-run active revisits, identity rejection, native gaps,
+append immutability, bounded CLI output and unchanged evidence/checkpoints.
+The full .NET build passed with zero warnings/errors. The final non-overlapping
+test selections passed **355 MT5 integration tests** (including **23 freeze
+tests** and the existing receipt/lifecycle/causal-prefix/temporal admission
+regressions), **19 domain replay tests**, and **61 application canonical
+context/cursor/backtest tests**: **435 passed, zero failed, zero skipped**.
+C#/Markdown formatting, local links and `git diff --check` are checked
+before publication. The external API verification harness encountered NuGet
+vulnerability-feed availability warnings; its actual execution completed and
+the repository's required build/tests passed independently.
+
+The single next evidence feature is to establish and verify the missing numerical
+UTC accuracy applicable to the existing receipt witness, following the existing
+[temporal contract](mt5-server-time-policy-audit.md#independent-rfc-3161-digest-witness).
+This freeze does not resolve that blocker or authorize temporal admission; no new
+TSA request, provider switch or canonical ingestion is implied.
