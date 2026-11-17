@@ -1,5 +1,128 @@
 # Nasdaq historical report in the supervised local demo
 
+## WF2-to-NQ-TP-001 canonical convergence (2026-11-17)
+
+Initial checkpoint: clean synchronized `main` at
+`713a88747a6f502fa6ad5bdf747b6eaa3ff406c2`. This increment supersedes the older
+Standard-only TP limitation below. No active version, definition, dependency
+edge, Required flag or Sequence changes; the definition remains
+`nasdaq-0.1.0-draft`.
+
+### Audited contract and functional behavior
+
+NQ-TP-001 establishes a human-selected target: BUY High, SELL Low, native exact
+`TakeProfitPrice == TargetReferencePrice`. Existing types are
+`NasdaqHumanTakeProfitTarget` / `NasdaqLiquidityTakeReference` with SessionLevel
+or Structural provenance. Selection of importance/relevance is human evidence,
+not the mere presence of a session endpoint or a general structural detector.
+Existing session validity/fallback restrictions are not replaced with a nearest
+low, timeframe priority, offset, buffer or reward/risk formula. See
+[ADR 0025](../decisions/0025-define-nasdaq-demo-human-evidence-contract.md) and
+[ADR 0026](../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md).
+
+The existing `MoneyWayNasdaqHumanTakeProfitEvaluator` now routes actual WF2 SELL
+SL ancestry to `NasdaqWickfillScenario2TakeProfitObservationSelector`. It consumes
+`NasdaqWickfillScenario2TakeProfitObservation` with the original prior canonical
+SL owner and the existing immutable target. Unique usable evidence publishes
+`NasdaqWickfillScenario2TakeProfitRuleFact`, retaining that original SL object,
+exact concrete target reference and all compatible supporting observations.
+Standard's observation, selector, fact and evaluation branch remain unchanged.
+The unchanged SL-owner check is shared from the SL fact rather than coupling TP
+to the risk input. The exact existing 1% comparison is untouched.
+
+The workflow already requires prior eligible NQ-SL-001, not risk or observed
+entry; display order does not add dependencies. No same-frame positive SL is
+consumed. The mentor binder validates session, actual active Start, exact prior
+SL owner and its original fact. Current SL applicability/reversal/protective
+sources and target sources must remain compatible and observable. Original
+target-selection time follows target-source availability; assertion availability
+follows selection and source SL availability. Target selection can precede SL
+emission. Binding/evaluation times never replace those original semantic times.
+
+Missing eligible SL stays Waiting. Missing valid original target/important-low
+selection after eligible SL requires HumanValidationRequired; conflicting human
+targets require review. Relevant unavailable exact sources prevent Passed.
+Wrong native provider/symbol (including USTEC), wrong side, foreign runs, future
+selection/availability and subsequent revisions cannot authorize an earlier
+frame. The existing canonical terminal liquidity gate and TIME cutoff retain
+precedence. Passed establishes a selected target, not a target hit or execution.
+
+The lifecycle TP stage now shows the recorded rule status. Optional
+`Scenario2TakeProfit` presents the native provider/symbol, SELL, reference family
+and description, SHA256 identity of the full concrete reference, exact decimal
+price strings, original selection/availability and both level/selection sources.
+Full original reference/support remain in canonical evidence; the digest does
+not authenticate a source. Native price coordinates do not claim monetary
+units or conversion. The reader validates published ownership/status, native
+identity, equality and temporal bounds without rerunning a strategy. Old full
+reports retain historical NotImplemented TP stages. The UI separates this
+standalone fact from TP in a complete Standard-owned snapshot; entry, risk,
+exit and economic outcome are independently represented.
+
+### Synthetic verification versus authentic Replay #2
+
+Synthetic canonical binder/report/API tests demonstrate human-selected session
+and important structural lows, including full decimal precision, with risk still
+HumanValidationRequired and without entry, exit, PnL or complete trade. Direct
+tests cover exact owners/metadata, missing SL/selection/price/reference, source
+identity, direction, conflicts/duplicates, unavailable sources, terminal gates,
+future targets/stop revisions and an added future candle tail. Standard TP and
+WF2/SL/risk regressions remain separate checks of the existing behavior.
+
+The existing opt-in exporter below regenerates a unique authentic report from
+the unchanged adapter/four CSVs, independently evaluating 7,596/7,597-frame
+prefixes and comparing every common historical rule/evidence and diagnostic
+fingerprint. At 13:36Z, WF2-001/002 remain Passed, SL HumanValidationRequired,
+risk/TP Waiting and verdict HumanValidationRequired. No authentic native target
+selection, stop, exposure, fill, exit or economic result has been supplied by this
+feature. S14's historical USTEC record remains distinct from US100.
+
+Generated artifact: `C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-a1d8dc2b3c7149ada452e3e106648ee2.json`.
+SHA256: `605b994f5e3b1f98e32d970950b80f86449a0a39c6b8fe307b41a40ba55df66d`.
+Size: 4,431,521 bytes. The manifest records base commit
+`713a88747a6f502fa6ad5bdf747b6eaa3ff406c2` plus 20 exact runtime code hashes;
+the pre-feature base is not claimed to contain this increment. All 7,596 common
+frames match the independent longer prefix; the exported six frames cover
+13:31Z-13:36Z after the full prefix beginning August 31 22:01Z. No acquisition or
+normalization is rerun, and prior reports are not overwritten. Adapter, CSVs
+and protected prior reports retain their verified original hashes.
+
+Validation: 2,036 Application Nasdaq/workflow/canonical cases, 124 Nasdaq
+integration cases, 19 domain replay cases, one regenerated authentic canonical/
+API case and one legacy authentic API case: **2,181 .NET passed, zero failed or
+skipped**. The earlier focused 158-case risk/SL/TP run overlaps these totals;
+the added terminal-TP regression is included in the final 2,036 cases. All 33
+frontend tests, full .NET/frontend builds, ESLint, scoped formatting, local
+documentation links and `git diff --check` passed. No manual browser test was
+performed; API integration and rendered-component tests cover the feature.
+
+### Nasdaq Demo v0 critical path
+
+| Area                                                                   | Actual state                     | Evidence and remaining requirement                                                                                                                                                                       |
+| ---------------------------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| WF2 applicability, reversal, pre-entry, SL, risk and TP rule consumers | Implemented                      | Canonical selectors/evaluators, prior owner binding and synthetic integration tests; positive SL/TP still need human inputs.                                                                             |
+| Native original Replay #2 SL and TP decisions                          | HumanOnly                        | Exact US100 initial StopPrice, native protective reference and original availability; source-backed important Low, exact TP/reference price and original selection/availability. S14 USTEC is not US100. |
+| Original exposure                                                      | HumanOnly                        | Documented positive named account basis/currency, same-currency planned maximum loss, planned entry, costs/calculation provenance and original assessment/availability; optional supplied quantity/unit. |
+| WF2 observed entry and coherent historical snapshot                    | NotImplemented                   | `NasdaqHistoricalObservedEntry` and `NasdaqHistoricalTradeSnapshot` accept Standard eligibility/facts only. A planned entry or TP Passed is not a recorded execution.                                    |
+| Authentic entry chronology/native identity                             | HumanOnly                        | Reviewed execution ID/price/time, native applicability and authentic availability; recorded 08:32 entry cannot be retroactively authorized by later canonical WF2 recognition.                           |
+| WF2 supervised order/fill state                                        | NotImplemented                   | No WF2 order sender, accepted-order/fill state or broker execution is delivered by these replay facts.                                                                                                   |
+| WF2 exit and factual composition                                       | NotImplemented                   | Existing documented-exit/contact/factual infrastructure is Standard-snapshot-owned; requires original execution/management records and causal ordering before reuse.                                     |
+| Economic result and definitive loss/violation classification           | BlockedByUnresolvedSpecification | Factual price contact is not a fill. Execution/management policy, quantity/units/valuation/costs and outcome classification must be supported; summary remains inconclusive.                             |
+| Trade count, session completion and no-reentry                         | BlockedByUnresolvedSpecification | NQ-RISK-003/NQ-REENTRY-001 remain unresolved. Existing terminal/cutoff guards work; no universal one-trade or reentry rule is invented.                                                                  |
+| Persisted diagnostics API and historical UI                            | Implemented                      | Read-only frame navigation, risk/SL/TP evidence and explicit gaps; no automatic trading or complete-session claim.                                                                                       |
+| Autonomous importance/ranking                                          | BlockedByUnresolvedSpecification | Human-reviewed targets are supported; no general target-choice algorithm is approved.                                                                                                                    |
+
+**One next functional feature:** WF2 human-observed historical entry evidence and
+causal selector/report integration, reusing existing execution fields and the
+actual WF2 eligibility owner without a fill simulator. Preserve the existing
+constraint that execution cannot precede eligibility; expose unsupported earlier
+execution as unresolved evidence rather than silently backdating eligibility or
+changing strategy rules. Authentic entry/native chronology must be resolved
+before it can produce a coherent original Replay #2 snapshot. After that remain
+WF2 snapshot/exit/outcome composition and unresolved session controls. The
+current delivery supports supervised historical analysis, not complete supervised
+operation or autonomous order sending.
+
 ## WF2-SL-to-NQ-RISK-001 functional convergence (2026-11-17)
 
 This increment supersedes only the older Standard-only risk-consumer limitation

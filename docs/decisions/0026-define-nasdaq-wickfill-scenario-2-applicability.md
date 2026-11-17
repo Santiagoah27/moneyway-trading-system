@@ -534,6 +534,46 @@ historical USTEC record is preserved; authentic Replay #2 still lacks an approve
 native US100 stop/protective reference/availability and native documented account
 exposure. No active version, metadata or external adapter changes are made.
 
+#### Canonical TP consumption checkpoint (2026-11-17)
+
+`MoneyWayNasdaqHumanTakeProfitEvaluator` now consumes a prior eligible canonical
+WF2 SELL SL through `NasdaqWickfillScenario2TakeProfitObservation`, its stateless
+selector and `NasdaqWickfillScenario2TakeProfitRuleFact`. The original native SL
+object, actual run Start, target reference and compatible supporting observations
+are retained. The existing `NasdaqHumanTakeProfitTarget` requires exact
+`TakeProfitPrice == TargetReferencePrice`; the selected reference must belong to
+the exact native session and have Low side. Both supported target families
+(human-selected Asia/London endpoints and reviewed structural references) retain
+their existing source contracts. Existence of a level never selects it as TP.
+
+The existing draft workflow already declares NQ-TP-001 after prior NQ-SL-001.
+Risk, its 1% comparison and an observed entry are not TP prerequisites. No metadata,
+ordering, terminal predicate, active version or canonical architecture changes.
+The SL-owner check moves mechanically from the WF2 risk input to the SL fact so
+both consumers share canonical validation without TP depending on risk.
+
+Selection time follows target-source availability, and assertion availability
+follows selection and SL source availability, exactly as in Standard. Selection
+may predate SL emission; no timestamp is clamped to the binding/evaluation frame.
+Only actual prior eligible SL ancestry can authorize current target evaluation.
+Current SL applicability/reversal/protective sources and exact target sources are
+revalidated. Missing/competing human targets, unavailable references, wrong native
+instrument/direction, foreign owners and future reviews cannot approve TP.
+Current canonical terminal invalidation retains precedence.
+
+The lifecycle report/API/UI expose an optional standalone Scenario 2 TP with
+native provider/symbol, SELL, target family/description, digest of the complete
+concrete reference, exact decimal price strings, original selection/availability
+and both selection/level provenance. The complete reference and support remain
+in canonical evidence. The digest identifies evidence; it does not authenticate
+external human testimony or market availability. Native quoted-price coordinates
+do not establish monetary units or exchange conversion.
+
+This supersedes earlier Standard-only TP-consumer limitations, not historical
+source records. Standard is unchanged. Authentic Replay #2 still has no approved
+US100 SL/exposure/target; S14 USTEC values remain separate. A synthetic established
+target is not execution, an exit, profit, strategy compliance or a complete trade.
+
 ### 2.14 Human-confirmed Replay #2 initial USTEC SL price (2026-11-05, S14)
 
 **Current evidence: `confirmed`, `context_specific` historical initial price, supported by human-reviewed visual evidence (`visual_only` source support).** S14 supplements S5-S7 for the September 8, 2026 Wickfill Scenario 2 SELL operation. The reviewer explicitly identifies the displayed stop as the ORIGINAL initial protective SL before subsequent stop management. This resolves the previously untranscribed historical USTEC initial price only; earlier statements in sections 2.4/2.13 that no numerical stop was registered describe the evidence available before S14 and remain historical. No earlier source is overwritten.

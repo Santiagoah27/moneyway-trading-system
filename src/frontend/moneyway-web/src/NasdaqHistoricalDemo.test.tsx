@@ -273,6 +273,55 @@ it.each([true, false])(
     },
 );
 
+it("renders exact human Scenario 2 target identity and original availability without a completed trade", async () => {
+    respond({
+        ...report,
+        selectedSessionLastFrame: {
+            ...report.selectedSessionLastFrame!,
+            tradeLifecycle: {
+                ...tradeFixture,
+                path: "WickfillScenario2",
+                scenario2TakeProfit: {
+                    providerId: "synthetic-native",
+                    symbol: "US100",
+                    direction: "Sell",
+                    referenceKind: "Structural",
+                    referenceDescription: "HumanEstablishedExtreme/LowerLow/1H",
+                    referenceSha256: "c".repeat(64),
+                    targetReferencePriceText: "77.123456789012345678901234567",
+                    takeProfitPriceText: "77.123456789012345678901234567",
+                    priceUnit: "NativeInstrumentPrice",
+                    effectiveAtUtc: "2026-06-29T13:15:00Z",
+                    observedAtUtc: "2026-06-29T13:34:00Z",
+                    source: {
+                        sourceReference: "synthetic:human-selected-TP",
+                        sourceReferenceSha256: "a".repeat(64),
+                    },
+                    referenceSource: {
+                        sourceReference: "synthetic:reviewed-LL",
+                        sourceReferenceSha256: "b".repeat(64),
+                    },
+                },
+            },
+        },
+    });
+    const panel = await screen.findByRole("region", {
+        name: "TP documentado Scenario 2",
+    });
+    expect(panel.textContent).toContain("NQ-TP-001");
+    expect(panel.textContent).toContain("Passed");
+    expect(panel.textContent).toContain("synthetic-native / US100");
+    expect(panel.textContent).toContain("77.123456789012345678901234567");
+    expect(panel.textContent).toContain("synthetic:human-selected-TP");
+    expect(panel.textContent).toContain("2026-06-29T13:34:00Z");
+    expect(
+        screen.getByText("Falta evidencia de entrada en el snapshot canónico"),
+    ).toBeTruthy();
+    expect(
+        screen.getByText(/sesión supervisada completa sigue pendiente/),
+    ).toBeTruthy();
+});
+
 // Synthetic transport fixtures: explicit timestamps, never an ordinal-to-time formula.
 function navigable(step = 8000): NasdaqHistoricalReport {
     const steps = [7998, 7999, 8000];

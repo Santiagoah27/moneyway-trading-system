@@ -606,6 +606,19 @@ The price relationship is strategy source truth, not MoneyWay execution function
 
 #### Feature 22 human-assisted TP evaluator integration
 
+**2026-11-17 WF2 consumption extension:** the same NQ-TP-001 evaluator now accepts
+the distinct prior eligible Scenario 2 SELL SL owner. It reuses
+`NasdaqHumanTakeProfitTarget` and `NasdaqLiquidityTakeReference` without changing
+their native session/source identity, Low side, exact price equality or original
+selection/availability contract. The new observation/selector/fact retain actual
+WF2 ancestry instead of manufacturing Standard M1/5M facts. The shared SL-owner
+validation previously housed in the WF2 risk input moves unchanged to the SL
+fact; TP neither consumes risk nor introduces a risk prerequisite. Standard
+target handling and all strategy metadata are unchanged. Missing human selection
+requires review, missing eligible SL waits, conflicting targets require review,
+and competing unavailable sources block Passed. The scope is target establishment;
+importance/ranking, NQ-TP-002 automation, fills, exit intent and PnL remain separate.
+
 `MoneyWayNasdaqHumanTakeProfitEvaluator` consumes the existing selector and the latest prior eligible Passed `NasdaqHumanStructuralStopLossRuleFact`, preserving its exact pre-entry/FVG ancestry. No current-frame positive prerequisite bypass is introduced. Missing selection and Conflict require human validation; relevant unavailable sources return DataUnavailable. Unique establishes only the selected target, with all compatible support and exact `TakeProfitPrice == TargetReferencePrice`; an unavailable incompatible alternative blocks that pass. Unrelated setup evidence cannot block it. Target-selection `EffectiveAtUtc` remains distinct from canonical evaluation `AsOfUtc`.
 
 `NasdaqHumanTakeProfitRuleFact` transports the exact canonical SL and immutable selection. The existing terminal gate also blocks NQ-TP-001 in current-frame canonical fact transport; retained terminal history and TIME-owned cutoff remain authoritative. Their existing Failed decisions are inherited safety gates, not a new TP absence/conflict/hit failure rule. The catalog's target-touch/final-exit negative condition is outside this bounded target-establishment evaluator.

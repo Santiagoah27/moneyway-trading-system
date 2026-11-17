@@ -13,7 +13,7 @@ public sealed class NasdaqWickfillScenario2RiskExposureObservation : IStrategyRe
         DateTimeOffset effectiveAtUtc, DateTimeOffset observedAtUtc, string sourceReference)
     {
         StopOwner = stopOwner ?? throw new ArgumentNullException(nameof(stopOwner));
-        StopLoss = RequireStop(stopOwner);
+        StopLoss = NasdaqHumanWickfillScenario2StopLossRuleFact.RequireOwner(stopOwner);
         Exposure = exposure ?? throw new ArgumentNullException(nameof(exposure));
         if (exposureProviderId != Session.ProviderId || exposureSymbol != Session.Symbol)
             throw new ArgumentException("Risk prices must belong to the exact native SL feed/instrument; USTEC is not US100.");
@@ -37,19 +37,6 @@ public sealed class NasdaqWickfillScenario2RiskExposureObservation : IStrategyRe
     public StrategyVersion StrategyVersion => Session.StrategyVersion;
     public MarketDataProviderId ProviderId => Session.ProviderId;
     public MarketSymbol Symbol => Session.Symbol;
-    internal static NasdaqHumanWickfillScenario2StopLossRuleFact RequireStop(StrategyReplayContextObservation owner)
-    {
-        var fact = owner.RuleFacts.Where(f => f.RuleId.Value == "NQ-SL-001").Select(f => f.Fact)
-            .OfType<NasdaqHumanWickfillScenario2StopLossRuleFact>().SingleOrDefault();
-        if (fact is null || fact.Direction != NasdaqHumanH4PermittedDirection.Sell
-            || fact.Session.StrategyId != owner.StrategyId || fact.Session.StrategyVersion != owner.StrategyVersion
-            || fact.Session.ProviderId != owner.ProviderId || fact.Session.Symbol != owner.Symbol
-            || owner.Evaluations.SingleOrDefault(e => e.RuleId.Value == "NQ-SL-001")?.Result != RuleEvaluationResult.Passed
-            || owner.WorkflowProgression?.RuleEligibility.SingleOrDefault(e => e.RuleId.Value == "NQ-SL-001")?.EstablishesProgression != true
-            || owner.LifecycleProgression?.ActiveInstance?.StartedAtUtc != fact.PreEntryEligibility.Reversal.Applicability.Fact.InitialTakeObservation.AsOfUtc)
-            throw new ArgumentException("An actual established Scenario 2 SELL canonical SL owner is required.", nameof(owner));
-        return fact;
-    }
     internal bool SameFact(NasdaqWickfillScenario2RiskExposureObservation other) =>
         ReferenceEquals(StopLoss.PreEntryEligibility.Reversal.Applicability.Fact.InitialTakeObservation,
             other.StopLoss.PreEntryEligibility.Reversal.Applicability.Fact.InitialTakeObservation)

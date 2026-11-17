@@ -112,7 +112,7 @@ public sealed class NasdaqScenario2MentorSessionTests : IDisposable
     }
 
     private static NasdaqMentorSessionReplayReport Run(NasdaqMentorSessionReplayInput input) => new RunLocalNasdaqMentorSessionUseCase().Execute(input);
-    internal NasdaqMentorSessionReplayReport SyntheticRiskReport(string? loss)
+    internal NasdaqMentorSessionReplayReport SyntheticRiskReport(string? loss, bool target = false, DateTimeOffset? targetObserved = null, decimal? structuralTarget = null)
     {
         var records = new List<NasdaqMentorSessionEvidenceRecord>
         {
@@ -133,6 +133,26 @@ public sealed class NasdaqScenario2MentorSessionTests : IDisposable
                 LiquidityFixture.Symbol, new(10000, "USD", "synthetic:source-named-basis",
                     decimal.Parse(loss, System.Globalization.CultureInfo.InvariantCulture), 110, "synthetic:costs", "synthetic:calculation"),
                 At(13, 33), At(13, 34), "synthetic:approved-risk");
+        }));
+        if (target) records.Add(new("synthetic:tp", targetObserved ?? At(13, 34), (c, _) =>
+        {
+            var owner = c.PriorObservations.LastOrDefault(o => o.RuleFacts.Any(f => f.Fact is NasdaqHumanWickfillScenario2StopLossRuleFact)
+                && o.WorkflowProgression?.RuleEligibility.Single(e => e.RuleId.Value == "NQ-SL-001").EstablishesProgression == true);
+            var upstream = Upstream();
+            var reference = new NasdaqLiquidityTakeReference.SessionLevel(upstream, new NasdaqSessionLiquidityCalculator().Calculate(upstream),
+                NasdaqLiquidityTakeReference.SessionEndpoint.AsiaLow, upstream.AsOfUtc, "synthetic:human-selected-low");
+            var selected = new NasdaqHumanTakeProfitTarget(reference, reference.ReferencePrice);
+            if (structuralTarget.HasValue)
+            {
+                var member = NasdaqStructuralLiquidityReference.HumanEstablishedExtreme(NasdaqHumanH4StructuralRole.LowerLow,
+                    [LiquidityFixture.Candle(8)], structuralTarget.Value, "synthetic:human-important-structural-low");
+                var evidence = new NasdaqHumanStructuralLiquidityObservation(LiquidityFixture.Session(At(13)), [member], At(12), At(13), "synthetic:reviewed-structural-set");
+                var selection = Assert.IsType<NasdaqHumanStructuralLiquiditySelection.Unique>(new NasdaqHumanStructuralLiquidityObservationSelector()
+                    .Select(Upstream(inputs: [evidence]), evidence.Session));
+                selected = new(new NasdaqLiquidityTakeReference.Structural(selection, member), structuralTarget.Value);
+            }
+            return owner is null ? null : new NasdaqWickfillScenario2TakeProfitObservation(owner, selected,
+                At(13, 15), targetObserved ?? At(13, 34), "synthetic:reviewed-tp");
         }));
         return Run(Input(extra: records));
     }

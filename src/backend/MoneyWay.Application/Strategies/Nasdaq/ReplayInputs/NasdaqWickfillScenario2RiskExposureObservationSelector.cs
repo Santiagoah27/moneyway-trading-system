@@ -10,7 +10,7 @@ public sealed class NasdaqWickfillScenario2RiskExposureObservationSelector
         ArgumentNullException.ThrowIfNull(context); ArgumentNullException.ThrowIfNull(stop);
         var latest = context.PriorObservations.LastOrDefault(o => o.Evaluations.Any(e => e.RuleId.Value == "NQ-SL-001"));
         if (latest is null || latest.AsOfUtc >= context.AsOfUtc || !stop.Session.Matches(context)) return new([], []);
-        try { if (!ReferenceEquals(NasdaqWickfillScenario2RiskExposureObservation.RequireStop(latest), stop)) return new([], []); }
+        try { if (!ReferenceEquals(NasdaqHumanWickfillScenario2StopLossRuleFact.RequireOwner(latest), stop)) return new([], []); }
         catch (ArgumentException) { return new([], []); }
         var candidates = context.InputObservations.OfType<NasdaqWickfillScenario2RiskExposureObservation>()
             .Where(o => o.Session == stop.Session && o.EffectiveAtUtc <= context.AsOfUtc && o.ObservedAtUtc <= context.AsOfUtc

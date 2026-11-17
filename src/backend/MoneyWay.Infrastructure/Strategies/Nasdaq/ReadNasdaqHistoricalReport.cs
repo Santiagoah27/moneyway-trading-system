@@ -55,7 +55,7 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
                     Require(step == ++frames && at.Offset == TimeSpan.Zero && (previous is null || at > previous));
                     first ??= at;
                     previous = at;
-                    var projection = Frame(frame, step, at);
+                    var projection = Frame(frame, step, at, Id(session, "ProviderId"), Id(session, "Symbol"));
                     Require((projection.Verdict is not null) == hasCanonical);
                     lastVerdict = projection.Verdict;
                     if (DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(at, TimeZoneInfo.FindSystemTimeZoneById("America/Bogota")).DateTime) == day)
@@ -116,7 +116,7 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
             new(firstSessionStep, lastSessionStep, selected?.Step, previousSelectedStep, nextSelectedStep, sessionFrameCount));
     }
 
-    private static NasdaqHistoricalFrameSummary Frame(JsonElement frame, long step, DateTimeOffset at)
+    private static NasdaqHistoricalFrameSummary Frame(JsonElement frame, long step, DateTimeOffset at, string providerId, string symbol)
     {
         var rules = new List<NasdaqHistoricalRuleSummary>();
         var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -150,11 +150,11 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
             hasDiagnostic ? diagnostic.GetProperty("HasCompleteRequiredCoverage").GetBoolean() : null, missing,
             snapshotState, OptionalText(frame, "SnapshotDiagnostic"), factualState,
             factual.ValueKind == JsonValueKind.Object && factual.TryGetProperty("RequiresHumanValidation", out var human) ? human.GetBoolean() : null, rules,
-            TradeLifecycle(frame, rules, at, snapshotState));
+            TradeLifecycle(frame, rules, at, snapshotState, providerId, symbol));
     }
 
     private static NasdaqHistoricalTradeLifecycleSummary TradeLifecycle(JsonElement frame,
-        IReadOnlyList<NasdaqHistoricalRuleSummary> rules, DateTimeOffset at, string? snapshotState)
+        IReadOnlyList<NasdaqHistoricalRuleSummary> rules, DateTimeOffset at, string? snapshotState, string providerId, string symbol)
     {
         if (!frame.TryGetProperty("TradeLifecycle", out var element))
         {
@@ -186,6 +186,8 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
                         && stage.RuleResult != "Passed" && result.Scenario2StopLoss is null
                     || stage.Stage == "Risk" && stage.Status == "NotImplemented" && result.Path == "WickfillScenario2"
                         && stage.RuleResult != "Passed" && result.Scenario2RiskExposure is null
+                    || stage.Stage == "TakeProfit" && stage.Status == "NotImplemented" && result.Path == "WickfillScenario2"
+                        && stage.RuleResult != "Passed" && result.Scenario2TakeProfit is null
                     || stage.Status == "RecordedArtifact" && snapshotState == "Available"
                     && stage.Stage is "Entry" or "StopLoss" or "Risk" or "TakeProfit" or "DocumentedExit"));
         }
@@ -213,6 +215,20 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
                 && risk.ObservedAtUtc <= at && risk.Source is not null && risk.Source.ObservedAtUtc == risk.ObservedAtUtc
                 && risk.RatioExceedsDecimalRange == (risk.RiskRatio is null) && risk.RiskRatio is null or >= 0);
             sources = sources.Append(risk.Source!);
+        }
+        if (result.Scenario2TakeProfit is { } target)
+        {
+            Require(result.Path == "WickfillScenario2" && result.Scenario2StopLoss is { } selectedStop
+                && target.StopPrice == selectedStop.StopPrice && rules.SingleOrDefault(r => r.RuleId == "NQ-TP-001")?.Result == "Passed"
+                && target.ProviderId == providerId && target.Symbol == symbol && target.Direction == "Sell"
+                && target.TargetReferencePrice == target.TakeProfitPrice && target.ReferenceKind is "SessionLevel" or "Structural"
+                && !string.IsNullOrWhiteSpace(target.ReferenceDescription) && target.ReferenceDescription.Length <= 4096
+                && target.ReferenceSha256 is { Length: 64 } && target.ReferenceSha256.All(char.IsAsciiHexDigit)
+                && target.EffectiveAtUtc.Offset == TimeSpan.Zero && target.ObservedAtUtc.Offset == TimeSpan.Zero
+                && target.EffectiveAtUtc <= target.ObservedAtUtc && selectedStop.ObservedAtUtc <= target.ObservedAtUtc
+                && target.ObservedAtUtc <= at && target.Source is not null && target.ReferenceSource is not null
+                && target.Source.ObservedAtUtc == target.ObservedAtUtc && target.ReferenceSource.ObservedAtUtc <= target.EffectiveAtUtc);
+            sources = sources.Concat([target.Source!, target.ReferenceSource!]);
         }
         foreach (var source in sources)
             Require(source is not null && source.ObservedAtUtc.Offset == TimeSpan.Zero && source.ObservedAtUtc <= at

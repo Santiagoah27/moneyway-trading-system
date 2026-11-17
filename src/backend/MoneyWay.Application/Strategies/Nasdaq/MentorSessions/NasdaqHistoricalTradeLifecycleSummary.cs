@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Globalization;
+using System.Text.Json;
 using MoneyWay.Application.Strategies.Nasdaq.HistoricalTrades;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 
@@ -26,6 +27,30 @@ public sealed record NasdaqHistoricalScenario2Risk(NasdaqRiskExposure Exposure, 
     public string StopPriceText => StopPrice.ToString(CultureInfo.InvariantCulture);
     public string? RiskRatioText => RiskRatio?.ToString(CultureInfo.InvariantCulture);
 }
+public sealed record NasdaqHistoricalScenario2Target(string ProviderId, string Symbol, string Direction,
+    string ReferenceKind, string ReferenceDescription, string ReferenceSha256, decimal TargetReferencePrice,
+    decimal TakeProfitPrice, decimal StopPrice, DateTimeOffset EffectiveAtUtc, DateTimeOffset ObservedAtUtc,
+    NasdaqHistoricalTradeSource Source, NasdaqHistoricalTradeSource ReferenceSource)
+{
+    public string PriceUnit => "NativeInstrumentPrice";
+    public string TargetReferencePriceText => TargetReferencePrice.ToString(CultureInfo.InvariantCulture);
+    public string TakeProfitPriceText => TakeProfitPrice.ToString(CultureInfo.InvariantCulture);
+    internal static NasdaqHistoricalScenario2Target From(NasdaqWickfillScenario2TakeProfitRuleFact fact)
+    {
+        var o = fact.Selection.SupportingObservations[0]; var reference = fact.Target.Reference;
+        var json = JsonSerializer.Serialize(reference, reference.GetType());
+        var description = reference is NasdaqLiquidityTakeReference.SessionLevel session ? session.Endpoint.ToString()
+            : reference is NasdaqLiquidityTakeReference.Structural structural
+                ? $"{structural.Member.Model}/{structural.Member.Role}/{structural.Member.Timeframe}" : throw new InvalidOperationException();
+        var provenance = reference is NasdaqLiquidityTakeReference.SessionLevel level ? level.SourceReference
+            : ((NasdaqLiquidityTakeReference.Structural)reference).Member.SourceReference;
+        return new(fact.Session.ProviderId.Value, fact.Session.Symbol.Value, fact.Direction.ToString(),
+            reference.GetType().Name, description, Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(json))),
+            fact.TargetReferencePrice, fact.TakeProfitPrice, fact.StopLoss.StopPrice, fact.EffectiveAtUtc, o.ObservedAtUtc,
+            NasdaqHistoricalTradeLifecycleSummary.Source(nameof(NasdaqWickfillScenario2TakeProfitObservation), o.ObservedAtUtc, o.SourceReference),
+            NasdaqHistoricalTradeLifecycleSummary.Source(reference.GetType().Name, reference.AvailableAtUtc, provenance));
+    }
+}
 
 /// <summary>Presentation of existing frame artifacts, never a strategy evaluator, fill simulator or PnL model.</summary>
 public sealed record NasdaqHistoricalTradeLifecycleSummary(
@@ -45,6 +70,7 @@ public sealed record NasdaqHistoricalTradeLifecycleSummary(
     public string? RiskCurrency { get; init; }
     public NasdaqHistoricalScenario2Stop? Scenario2StopLoss { get; init; }
     public NasdaqHistoricalScenario2Risk? Scenario2RiskExposure { get; init; }
+    public NasdaqHistoricalScenario2Target? Scenario2TakeProfit { get; init; }
 
     public static NasdaqHistoricalTradeSource Source(string inputType, DateTimeOffset observedAtUtc, string reference) =>
         new(inputType, observedAtUtc, reference[..Math.Min(512, reference.Length)],
@@ -66,7 +92,7 @@ public sealed record NasdaqHistoricalTradeLifecycleSummary(
             new("Entry", "MissingInput", null, null, "No coherent canonical observed-entry artifact is available in this projection; eligibility is not execution."),
             Rule("StopLoss", "NQ-SL-001"),
             Rule("Risk", "NQ-RISK-001"),
-            Rule("TakeProfit", "NQ-TP-001", wf2 ? "TP consumes a Standard SL fact; Scenario 2 target evidence and downstream ancestry are not integrated." : null),
+            Rule("TakeProfit", "NQ-TP-001"),
             new("DocumentedExit", "MissingInput", null, null, "No causally selected documented execution is available; level contact is not a fill."),
             new("EconomicOutcome", "NotImplemented", null, null, "Existing factual composition does not calculate economic outcome or establish valid_strategy_loss/rule_violation."),
             new("SessionAttempts", "BlockedByUnresolvedSpecification", "NQ-REENTRY-001", rules.SingleOrDefault(r => r.RuleId == "NQ-REENTRY-001")?.Result,
@@ -87,6 +113,8 @@ public sealed record NasdaqHistoricalTradeLifecycleSummary(
             ? frame.Strategy.RuleFacts.Where(f => f.RuleId.Value == "NQ-SL-001").Select(f => f.Fact)
                 .OfType<NasdaqHumanWickfillScenario2StopLossRuleFact>().SingleOrDefault() : null;
         var stages = summary.Stages.ToArray();
+        var target = frame.Strategy.RuleFacts.Where(f => f.RuleId.Value == "NQ-TP-001").Select(f => f.Fact)
+            .OfType<NasdaqWickfillScenario2TakeProfitRuleFact>().SingleOrDefault();
         var risk = frame.Strategy.RuleFacts.Where(f => f.RuleId.Value == "NQ-RISK-001").Select(f => f.Fact)
             .OfType<NasdaqWickfillScenario2RiskExposureRuleFact>().SingleOrDefault();
         void Recorded(string stage, string reason)
@@ -119,6 +147,7 @@ public sealed record NasdaqHistoricalTradeLifecycleSummary(
             AccountBasisAmount = snapshot?.Risk.Exposure.AccountBasisAmount,
             ReportedMaximumLoss = snapshot?.Risk.Exposure.ReportedMaximumLoss,
             RiskCurrency = snapshot?.Risk.Exposure.Currency,
+            Scenario2TakeProfit = target is null ? null : NasdaqHistoricalScenario2Target.From(target),
             Scenario2RiskExposure = risk is null ? null : new(risk.Exposure, risk.StopLoss.StopPrice,
                 risk.RiskRatio, risk.RatioExceedsDecimalRange, risk.Limit, risk.IsWithinLimit, risk.EffectiveAtUtc,
                 risk.Selection.SupportingObservations[0].ObservedAtUtc,

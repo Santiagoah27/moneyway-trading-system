@@ -11,6 +11,7 @@ import type {
 
 function TradeLifecycle({ trade }: { trade: HistoricalTradeLifecycle }) {
     const risk = trade.scenario2RiskExposure;
+    const target = trade.scenario2TakeProfit;
     const labels: Record<string, string> = {
         PreEntry: "Preentrada",
         Entry: "Entrada observada",
@@ -128,6 +129,42 @@ function TradeLifecycle({ trade }: { trade: HistoricalTradeLifecycle }) {
                     </p>
                 </section>
             )}
+            {target && (
+                <section aria-label="TP documentado Scenario 2">
+                    <h4>NQ-TP-001 · Scenario 2 SELL · Passed</h4>
+                    <p>
+                        Instrumento: {target.providerId} / {target.symbol} ·
+                        Dirección: {target.direction}.
+                    </p>
+                    <p>
+                        Referencia humana: {target.referenceKind} /{" "}
+                        {target.referenceDescription}. Precio de referencia:{" "}
+                        {target.targetReferencePriceText} · TP exacto:{" "}
+                        {target.takeProfitPriceText}.
+                    </p>
+                    <p>
+                        Unidad: {target.priceUnit}; precio nativo, unidad
+                        monetaria no documentada.
+                    </p>
+                    <p>
+                        Selección efectiva: {target.effectiveAtUtc} ·
+                        Disponible: {target.observedAtUtc}.
+                    </p>
+                    <p>
+                        Fuente de selección: {target.source.sourceReference} ·
+                        Fuente del nivel:{" "}
+                        {target.referenceSource.sourceReference}.
+                    </p>
+                    <p>
+                        Identidad del nivel (SHA256): {target.referenceSha256}.
+                    </p>
+                    <p>
+                        La selección humana conserva el nivel original. Entrada,
+                        riesgo, ejecución, salida y resultado mantienen sus
+                        requisitos independientes.
+                    </p>
+                </section>
+            )}
             <dl>
                 <dt>Entrada documentada</dt>
                 <dd>
@@ -140,7 +177,7 @@ function TradeLifecycle({ trade }: { trade: HistoricalTradeLifecycle }) {
                 </dd>
                 <dt>SL del snapshot histórico</dt>
                 <dd>{trade.stopPrice ?? "No disponible"}</dd>
-                <dt>TP documentado</dt>
+                <dt>TP del snapshot histórico</dt>
                 <dd>{trade.takeProfitPrice ?? "No disponible"}</dd>
                 <dt>Base / pérdida máxima del snapshot histórico</dt>
                 <dd>

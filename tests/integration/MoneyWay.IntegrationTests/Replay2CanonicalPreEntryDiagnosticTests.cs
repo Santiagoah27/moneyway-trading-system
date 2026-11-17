@@ -25,6 +25,9 @@ public sealed partial class LocalNasdaqMentorSessionTests
         const string original = @"C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-d0d69f182a0b456ba4662896192dc242.json";
         const string originalHash = "41b35b81c05ebd3705b530322034567376b4d21d29cd43cf2e18468d7f587df2";
         Assert.Equal(originalHash, FileSha256(original));
+        const string previous = @"C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-d0b29e8617c9498298b4420ab854cae0.json";
+        const string previousHash = "4fec5c8d3f409dc0b763ac009a2ba91a350e7bf0643b65b2905f24ca93bcd0a7";
+        Assert.Equal(previousHash, FileSha256(previous));
         var first = RunS11Prefix(36);
         var longer = RunS11Prefix(37);
         var definition = MoneyWayNasdaqStrategyDefinition.Instance;
@@ -105,8 +108,8 @@ public sealed partial class LocalNasdaqMentorSessionTests
         {
             Schema = "moneyway.canonical-preentry-window",
             SchemaVersion = 1,
-            CanonicalRuntimeCommit = "475c01849ca958ae3a3956f1ab29066f62e1ca4e",
-            RuntimeChanges = "WF2-SL-to-NQ-RISK-001 convergence; no native SL or exposure evidence invented",
+            CanonicalRuntimeCommit = "713a88747a6f502fa6ad5bdf747b6eaa3ff406c2",
+            RuntimeChanges = "WF2-SL-to-NQ-TP-001 convergence; no native SL, exposure or TP evidence invented",
             Generator = "tests/integration/MoneyWay.IntegrationTests/Replay2CanonicalPreEntryDiagnosticTests.cs",
             Adapter = new { Path = adapterPath, SHA256 = adapterHash },
             first.Input.Session,
@@ -131,6 +134,9 @@ public sealed partial class LocalNasdaqMentorSessionTests
                 "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqWickfillScenario2RiskExposureObservation.cs",
                 "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqWickfillScenario2RiskExposureObservationSelector.cs",
                 "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqWickfillScenario2RiskExposureRuleFact.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqWickfillScenario2TakeProfitObservation.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqWickfillScenario2TakeProfitObservationSelector.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqWickfillScenario2TakeProfitRuleFact.cs",
                 "src/backend/MoneyWay.Application/Strategies/Nasdaq/MentorSessions/NasdaqHistoricalTradeLifecycleSummary.cs",
                 "src/backend/MoneyWay.Infrastructure/Strategies/Nasdaq/ReadNasdaqHistoricalReport.cs",
                 "src/backend/MoneyWay.Application/StrategyReplay/Workflow/AdvanceStrategyReplayProgressionUseCase.cs",
@@ -151,7 +157,7 @@ public sealed partial class LocalNasdaqMentorSessionTests
                 f.DocumentedExit,
                 f.FactualEvaluation
             }).ToArray(),
-            Limitations = "Bounded canonical pre-entry diagnostic only; no trade, fill, SL/TP/risk/PnL or retroactive authorization of 08:32 entry. WF2-SL-risk convergence implemented; original SL and exposure evidence missing; adapter and CSVs unchanged."
+            Limitations = "Bounded canonical pre-entry diagnostic only; no trade, fill, SL/TP/risk/PnL or retroactive authorization of 08:32 entry. WF2-SL-risk-TP rule consumers implemented; original native SL, exposure and TP evidence missing; adapter and CSVs unchanged."
         };
         var directory = @"C:\MoneyWay\session\reports\2026-09-08";
         Directory.CreateDirectory(directory);
@@ -162,6 +168,7 @@ public sealed partial class LocalNasdaqMentorSessionTests
         Assert.Equal(6, parsed.RootElement.GetProperty("Frames").GetArrayLength());
         Assert.Equal(adapterHash, FileSha256(adapterPath));
         Assert.Equal(originalHash, FileSha256(original));
+        Assert.Equal(previousHash, FileSha256(previous));
         using var reader = new MoneyWay.Infrastructure.Strategies.Nasdaq.ReadNasdaqHistoricalReport();
         var view = reader.ExecuteAsync(path, FileSha256(path)).GetAwaiter().GetResult();
         Assert.Equal("HumanValidationRequired", view.SelectedFrame!.Verdict);
@@ -177,6 +184,8 @@ public sealed partial class LocalNasdaqMentorSessionTests
         Assert.Null(http.SelectedFrame.TradeLifecycle.Scenario2StopLoss);
         Assert.Null(http.SelectedFrame.TradeLifecycle.Scenario2RiskExposure);
         Assert.Equal("Waiting", http.SelectedFrame.TradeLifecycle.Stages.Single(s => s.Stage == "Risk").RuleResult);
+        Assert.Equal("Waiting", http.SelectedFrame.TradeLifecycle.Stages.Single(s => s.Stage == "TakeProfit").RuleResult);
+        Assert.Null(http.SelectedFrame.TradeLifecycle.Scenario2TakeProfit);
         output.WriteLine($"ARTIFACT: {path}\nSHA256: {FileSha256(path)}\nBytes: {new FileInfo(path).Length}");
         output.WriteLine($"PREFIX: {canonical.FirstAsOfUtc:O} through {canonical.LastAsOfUtc:O}; {canonical.FrameCount} frames. WINDOW: 13:31Z-13:36Z.");
         foreach (var f in selected)

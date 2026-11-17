@@ -1,4 +1,5 @@
 using MoneyWay.Application.StrategyReplay;
+using MoneyWay.Domain.Strategies;
 
 namespace MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 
@@ -14,6 +15,19 @@ public sealed record NasdaqHumanWickfillScenario2StopLossRuleFact : IReplayRuleF
     public NasdaqHumanH4PermittedDirection Direction => PreEntryEligibility.Direction;
     public decimal StopPrice => Selection.Fact.StopPrice;
     public DateTimeOffset EffectiveAtUtc => Selection.Fact.EffectiveAtUtc;
+    internal static NasdaqHumanWickfillScenario2StopLossRuleFact RequireOwner(StrategyReplayContextObservation owner)
+    {
+        var fact = owner.RuleFacts.Where(f => f.RuleId.Value == "NQ-SL-001").Select(f => f.Fact)
+            .OfType<NasdaqHumanWickfillScenario2StopLossRuleFact>().SingleOrDefault();
+        if (fact is null || fact.Direction != NasdaqHumanH4PermittedDirection.Sell
+            || fact.Session.StrategyId != owner.StrategyId || fact.Session.StrategyVersion != owner.StrategyVersion
+            || fact.Session.ProviderId != owner.ProviderId || fact.Session.Symbol != owner.Symbol
+            || owner.Evaluations.SingleOrDefault(e => e.RuleId.Value == "NQ-SL-001")?.Result != RuleEvaluationResult.Passed
+            || owner.WorkflowProgression?.RuleEligibility.SingleOrDefault(e => e.RuleId.Value == "NQ-SL-001")?.EstablishesProgression != true
+            || owner.LifecycleProgression?.ActiveInstance?.StartedAtUtc != fact.PreEntryEligibility.Reversal.Applicability.Fact.InitialTakeObservation.AsOfUtc)
+            throw new ArgumentException("An actual established Scenario 2 SELL canonical SL owner is required.", nameof(owner));
+        return fact;
+    }
     internal static bool HasScenario2Ancestry(StrategyReplayContext context)
     {
         var active = context.PriorObservations.LastOrDefault(o => o.LifecycleProgression is not null)?.LifecycleProgression?.ActiveInstance;

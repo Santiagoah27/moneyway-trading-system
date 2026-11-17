@@ -165,14 +165,66 @@ public sealed class NasdaqHistoricalTradeLifecycleTests : IDisposable
         }
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Scenario2TpSurvivesCanonicalBinderReportReaderAndApiWhileRiskAndExecutionStayIndependent(bool structural)
+    {
+        var precise = decimal.Parse("77.123456789012345678901234567", System.Globalization.CultureInfo.InvariantCulture);
+        using var fixture = new NasdaqScenario2MentorSessionTests(); var report = fixture.SyntheticRiskReport(null, target: true, structuralTarget: structural ? precise : null); Save(report);
+        var frame = report.Frames.Single(f => f.Strategy.AsOfUtc == LiquidityFixture.At(15));
+        Assert.Contains(report.BindingDiagnostics, d => d.RecordId == "synthetic:tp" && d.Code == "Bound");
+        Assert.All(report.Frames.Where(f => f.Strategy.AsOfUtc <= LiquidityFixture.At(14)),
+            f => Assert.DoesNotContain(f.Strategy.RuleFacts, r => r.Fact is NasdaqWickfillScenario2TakeProfitRuleFact));
+        using var reader = new ReadNasdaqHistoricalReport(); var view = await reader.ExecuteAsync(path, null, frameStep: frame.Strategy.Step);
+        var trade = view.SelectedFrame!.TradeLifecycle!; var target = Assert.IsType<NasdaqHistoricalScenario2Target>(trade.Scenario2TakeProfit);
+        Assert.Equal("WickfillScenario2", trade.Path); Assert.Equal("Sell", target.Direction);
+        if (structural) { Assert.Equal(precise, target.TakeProfitPrice); Assert.Contains("HumanEstablishedExtreme", target.ReferenceDescription); }
+        else Assert.Equal("AsiaLow", target.ReferenceDescription);
+        Assert.Equal(target.TargetReferencePrice, target.TakeProfitPrice); Assert.Equal("NativeInstrumentPrice", target.PriceUnit);
+        Assert.Equal("synthetic:reviewed-tp", target.Source.SourceReference); Assert.Equal(LiquidityFixture.At(13).AddMinutes(15), target.EffectiveAtUtc);
+        Assert.Equal("HumanValidationRequired", trade.Stages.Single(s => s.Stage == "Risk").RuleResult);
+        Assert.Equal("Passed", trade.Stages.Single(s => s.Stage == "TakeProfit").RuleResult);
+        Assert.Null(trade.Entry); Assert.Null(trade.Exit); Assert.Null(trade.TakeProfitPrice); Assert.False(trade.CompleteSupervisedTrade);
+        using var app = new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory<Program>().WithWebHostBuilder(b =>
+            b.UseEnvironment("Development").UseSetting("NasdaqHistoricalDemo:ReportPath", path).UseSetting("NasdaqHistoricalDemo:ExpectedSha256", ""));
+        var response = await app.CreateClient().GetAsync("/api/nasdaq/historical-demo?frameStep=" + frame.Strategy.Step);
+        response.EnsureSuccessStatusCode(); var json = JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
+        Assert.Equal(target.TakeProfitPriceText, json["selectedFrame"]!["tradeLifecycle"]!["scenario2TakeProfit"]!["takeProfitPriceText"]!.GetValue<string>());
+        var future = fixture.SyntheticRiskReport(null, target: true, targetObserved: LiquidityFixture.At(17));
+        Assert.All(future.Frames, f => Assert.DoesNotContain(f.Strategy.RuleFacts, r => r.Fact is NasdaqWickfillScenario2TakeProfitRuleFact));
+    }
+
+    [Theory]
+    [InlineData("price")]
+    [InlineData("future")]
+    [InlineData("USTEC")]
+    [InlineData("direction")]
+    [InlineData("owner")]
+    public async Task CorruptedScenario2TpProjectionFailsClosed(string corruption)
+    {
+        using var fixture = new NasdaqScenario2MentorSessionTests(); Save(fixture.SyntheticRiskReport(null, target: true));
+        var root = JsonNode.Parse(File.ReadAllText(path))!;
+        var frame = root["Frames"]!.AsArray().First(f => f!["TradeLifecycle"]!["Scenario2TakeProfit"] is not null)!;
+        var target = frame["TradeLifecycle"]!["Scenario2TakeProfit"]!;
+        if (corruption == "price") target["TakeProfitPrice"] = target["TargetReferencePrice"]!.GetValue<decimal>() + .01m;
+        if (corruption == "future") target["ObservedAtUtc"] = frame["AsOfUtc"]!.GetValue<DateTimeOffset>().AddMinutes(1);
+        if (corruption == "USTEC") target["Symbol"] = "USTEC";
+        if (corruption == "direction") target["Direction"] = "Buy";
+        if (corruption == "owner") frame["TradeLifecycle"]!["Scenario2StopLoss"] = null;
+        File.WriteAllText(path, root.ToJsonString()); using var reader = new ReadNasdaqHistoricalReport();
+        await Assert.ThrowsAsync<InvalidDataException>(() => reader.ExecuteAsync(path, null));
+    }
+
     [Fact]
-    public async Task OlderScenario2SlReportRetainsItsHistoricalUnimplementedRiskProjection()
+    public async Task OlderScenario2SlReportRetainsItsHistoricalUnimplementedRiskAndTpProjection()
     {
         using var fixture = new NasdaqScenario2MentorSessionTests(); Save(fixture.SyntheticRiskReport(null));
         var root = JsonNode.Parse(File.ReadAllText(path))!;
         foreach (var f in root["Frames"]!.AsArray())
             if (f!["TradeLifecycle"]!["Path"]!.GetValue<string>() == "WickfillScenario2")
-                f["TradeLifecycle"]!["Stages"]!.AsArray().Single(s => s!["Stage"]!.GetValue<string>() == "Risk")!["Status"] = "NotImplemented";
+                foreach (var stage in f["TradeLifecycle"]!["Stages"]!.AsArray().Where(s => s!["Stage"]!.GetValue<string>() is "Risk" or "TakeProfit"))
+                    stage!["Status"] = "NotImplemented";
         File.WriteAllText(path, root.ToJsonString());
         using var reader = new ReadNasdaqHistoricalReport(); await reader.ExecuteAsync(path, null);
     }

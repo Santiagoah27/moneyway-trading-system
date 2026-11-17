@@ -27,6 +27,24 @@ export interface HistoricalFrame {
 }
 
 export interface HistoricalTradeLifecycle {
+    scenario2TakeProfit?: {
+        providerId: string;
+        symbol: string;
+        direction: string;
+        referenceKind: string;
+        referenceDescription: string;
+        referenceSha256: string;
+        targetReferencePriceText: string;
+        takeProfitPriceText: string;
+        priceUnit: string;
+        effectiveAtUtc: string;
+        observedAtUtc: string;
+        source: { sourceReference: string; sourceReferenceSha256: string };
+        referenceSource: {
+            sourceReference: string;
+            sourceReferenceSha256: string;
+        };
+    } | null;
     scenario2RiskExposure?: {
         accountBasisAmountText: string;
         reportedMaximumLossText: string;

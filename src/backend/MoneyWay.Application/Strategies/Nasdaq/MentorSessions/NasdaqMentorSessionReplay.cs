@@ -87,6 +87,7 @@ public sealed class NasdaqMentorSessionReplay(NasdaqMentorSessionReplayInput inp
                 NasdaqHumanTakeProfitObservation o => o.Session,
                 NasdaqRiskExposureObservation o => o.Session,
                 NasdaqWickfillScenario2RiskExposureObservation o => o.Session,
+                NasdaqWickfillScenario2TakeProfitObservation o => o.Session,
                 NasdaqHistoricalDocumentedExitObservation o => o.Session,
                 _ => null,
             };
@@ -101,12 +102,16 @@ public sealed class NasdaqMentorSessionReplay(NasdaqMentorSessionReplayInput inp
                 NasdaqHumanWickfillScenario2PostSweepReversalObservation o => o.OpeningSweep.TakeObservation,
                 NasdaqHumanWickfillScenario2StopLossObservation o => o.StartOwner,
                 NasdaqWickfillScenario2RiskExposureObservation o => o.StopLoss.PreEntryEligibility.Reversal.Applicability.Fact.InitialTakeObservation,
+                NasdaqWickfillScenario2TakeProfitObservation o => o.StopLoss.PreEntryEligibility.Reversal.Applicability.Fact.InitialTakeObservation,
                 _ => null,
             };
             if (setupOwner is not null && !OwnsActiveSetup(context, setupOwner))
             { Reject(record, "ForeignCanonicalAncestry", context); continue; }
             if (observation is NasdaqWickfillScenario2RiskExposureObservation risk
                 && !context.PriorObservations.Contains(risk.StopOwner))
+            { Reject(record, "ForeignCanonicalAncestry", context); continue; }
+            if (observation is NasdaqWickfillScenario2TakeProfitObservation target
+                && !context.PriorObservations.Contains(target.StopOwner))
             { Reject(record, "ForeignCanonicalAncestry", context); continue; }
             var required = observation switch
             {
@@ -119,6 +124,7 @@ public sealed class NasdaqMentorSessionReplay(NasdaqMentorSessionReplayInput inp
                 NasdaqHumanTakeProfitObservation o => [o.StopLoss],
                 NasdaqRiskExposureObservation o => [o.PreEntryEligibility, o.StopLoss],
                 NasdaqWickfillScenario2RiskExposureObservation o => [o.StopLoss],
+                NasdaqWickfillScenario2TakeProfitObservation o => [o.StopLoss],
                 _ => [],
             };
             if (required.Any(f => !context.PriorObservations.SelectMany(o => o.RuleFacts).Any(r => ReferenceEquals(r.Fact, f)))

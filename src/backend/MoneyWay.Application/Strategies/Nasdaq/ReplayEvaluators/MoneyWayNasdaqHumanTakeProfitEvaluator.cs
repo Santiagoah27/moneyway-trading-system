@@ -21,10 +21,9 @@ public sealed class MoneyWayNasdaqHumanTakeProfitEvaluator : IReplayRuleEvaluato
         var latest = context.PriorObservations.LastOrDefault(o => o.Evaluations.Any(e => e.RuleId.Value == "NQ-SL-001"));
         if (latest?.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").Result == RuleEvaluationResult.Passed
             && NasdaqFvgReplayPrerequisites.Eligible(context, "NQ-SL-001")
-            && latest.RuleFacts.Any(f => f.RuleId.Value == "NQ-SL-001" && f.Fact is NasdaqHumanWickfillScenario2StopLossRuleFact wf2 && wf2.Session.Matches(context)))
-            return new(RuleEvaluationResult.HumanValidationRequired,
-                "The prior canonical Scenario 2 SL is established. A WF2-compatible human target consumer/input is still required; no target or Take Profit is inferred.",
-                latest.Evaluations.Single(e => e.RuleId.Value == "NQ-SL-001").EvidenceReference);
+            && latest.RuleFacts.SingleOrDefault(f => f.RuleId.Value == "NQ-SL-001")?.Fact is NasdaqHumanWickfillScenario2StopLossRuleFact wf2
+            && wf2.Session.Matches(context))
+            return EvaluateScenario2(context, wf2);
         var stop = latest?.RuleFacts.Where(f => f.RuleId.Value == "NQ-SL-001").Select(f => f.Fact)
             .OfType<NasdaqHumanStructuralStopLossRuleFact>().SingleOrDefault();
         if (stop is null || !stop.Session.Matches(context)
@@ -60,6 +59,40 @@ public sealed class MoneyWayNasdaqHumanTakeProfitEvaluator : IReplayRuleEvaluato
         return new(selection.UnavailableSourceObservations.Count > 0
                 ? RuleEvaluationResult.DataUnavailable : RuleEvaluationResult.HumanValidationRequired,
             "No usable human Take Profit selection is available for the exact eligible setup and selected SL.", proof);
+    }
+
+    private static ReplayRuleEvaluationDecision EvaluateScenario2(StrategyReplayContext context, NasdaqHumanWickfillScenario2StopLossRuleFact stop)
+    {
+        var selection = new NasdaqWickfillScenario2TakeProfitObservationSelector().Select(context, stop);
+        object Evidence(NasdaqWickfillScenario2TakeProfitObservation o) => new
+        {
+            o.Session,
+            o.Direction,
+            o.Target.TargetReferencePrice,
+            o.Target.TakeProfitPrice,
+            o.EffectiveAtUtc,
+            o.ObservedAtUtc,
+            o.SourceReference,
+            StopOwnerStep = o.StopOwner.Step,
+            StopOwnerAsOfUtc = o.StopOwner.AsOfUtc,
+            TargetSource = JsonSerializer.SerializeToElement(o.Target.Reference, o.Target.Reference.GetType())
+        };
+        var proof = JsonSerializer.Serialize(new
+        {
+            Path = "WickfillScenario2",
+            SlFactReceived = true,
+            stop.StopPrice,
+            TakeProfitEvidence = selection.SupportingObservations.Select(Evidence),
+            UnavailableSourceEvidence = selection.UnavailableSourceObservations.Select(Evidence)
+        });
+        if (selection.IsConflict) return new(RuleEvaluationResult.HumanValidationRequired,
+            "Scenario 2 human targets conflict; no importance, target or source ranking is defined.", proof);
+        if (selection.IsUnique && !selection.UnavailableSourceObservations.Any(o => !o.SameFact(selection.SupportingObservations[0])))
+            return new(RuleEvaluationResult.Passed,
+                "Human-selected Scenario 2 SELL Low establishes the exact native TP for the prior canonical SL; no execution or outcome.",
+                proof, new NasdaqWickfillScenario2TakeProfitRuleFact(selection));
+        return new(selection.UnavailableSourceObservations.Count > 0 ? RuleEvaluationResult.DataUnavailable : RuleEvaluationResult.HumanValidationRequired,
+            "Canonical Scenario 2 SL received; a source-backed human-selected native important Low, exact TP/reference price equality and original selection/availability are required. No target is inferred.", proof);
     }
 
     private static object Evidence(NasdaqHumanTakeProfitObservation observation) => new
