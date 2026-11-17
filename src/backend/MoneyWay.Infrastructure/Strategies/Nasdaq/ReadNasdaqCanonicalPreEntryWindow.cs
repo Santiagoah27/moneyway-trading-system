@@ -110,12 +110,23 @@ internal sealed class ReadNasdaqCanonicalPreEntryWindow
             var factual = Property(frame, "FactualEvaluation");
             Require(snapshot.ValueKind is JsonValueKind.Object or JsonValueKind.Null && factual.ValueKind is JsonValueKind.Object or JsonValueKind.Null);
             var snapshotDiagnostic = Property(frame, "SnapshotDiagnostic");
+            var sources = frame.TryGetProperty("Inputs", out var inputs) && inputs.ValueKind != JsonValueKind.Null
+                ? Values(inputs).Select(input => NasdaqHistoricalTradeLifecycleSummary.Source(
+                    "PersistedInput", Time(Property(input, "ObservedAtUtc")), Text(Property(input, "SourceReference")))).ToArray()
+                : [];
+            Require(sources.All(s => s.ObservedAtUtc <= at));
             projections.Add(new(step, at, EnumValue<StrategyVerdict>(Property(diagnostic, "Verdict"), allowNull: true),
                 Text(Property(diagnostic, "Reason")), blockId, blockResult, Property(diagnostic, "HasCompleteRequiredCoverage").GetBoolean(), missing,
                 snapshot.ValueKind == JsonValueKind.Null ? "Unavailable" : "Available",
                 snapshotDiagnostic.ValueKind == JsonValueKind.String ? Text(snapshotDiagnostic) : null,
                 factual.ValueKind == JsonValueKind.Null ? "Unavailable" : "Available",
-                factual.ValueKind == JsonValueKind.Object && factual.TryGetProperty("RequiresHumanValidation", out var human) ? human.GetBoolean() : null, rules));
+                factual.ValueKind == JsonValueKind.Object && factual.TryGetProperty("RequiresHumanValidation", out var human) ? human.GetBoolean() : null, rules,
+                NasdaqHistoricalTradeLifecycleSummary.FromRules(rules) with
+                {
+                    Sources = sources.Take(16).ToArray(),
+                    OmittedSources = Math.Max(0, sources.Length - 16),
+                    EvidenceScope = "RecordedRuleEvaluationsAndInputs"
+                }));
         }
         Require(projections[0].AsOfUtc == start && projections[^1].AsOfUtc == end);
         var selected = requested is null ? projections[^1] : projections.SingleOrDefault(f => f.Step == requested);

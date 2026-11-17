@@ -30,32 +30,66 @@ public sealed class NasdaqCanonicalPreEntryWindowEndpointTests : IDisposable
                 var result = i == 0 && minute >= 34 || i == 1 && minute >= 35 ? RuleEvaluationResult.Passed : RuleEvaluationResult.Waiting;
                 var ruleId = minute == 31 ? new JsonObject { ["$id"] = "rule" + i, ["Value"] = RuleIds[i] }
                     : new JsonObject { ["$ref"] = "rule" + i };
-                evaluations.Add(new JsonObject { ["RuleId"] = ruleId, ["DefinitionStatus"] = (int)RuleDefinitionStatus.Confirmed,
-                    ["Result"] = (int)result, ["Sequence"] = 90 + i * 10, ["IsRequired"] = true,
-                    ["Reason"] = $"synthetic rule {step}", ["EvaluatedAtUtc"] = At(minute),
-                    ["EvidenceReference"] = @"C:\private\source-reference-not-an-EvidenceId" });
+                evaluations.Add(new JsonObject
+                {
+                    ["RuleId"] = ruleId,
+                    ["DefinitionStatus"] = (int)RuleDefinitionStatus.Confirmed,
+                    ["Result"] = (int)result,
+                    ["Sequence"] = 90 + i * 10,
+                    ["IsRequired"] = true,
+                    ["Reason"] = $"synthetic rule {step}",
+                    ["EvaluatedAtUtc"] = At(minute),
+                    ["EvidenceReference"] = @"C:\private\source-reference-not-an-EvidenceId"
+                });
             }
             var blocking = minute < 34 ? 0 : minute == 34 ? 1 : 2;
             frames.Add(new JsonObject
             {
-                ["CanonicalDiagnostic"] = new JsonObject { ["Step"] = step, ["AsOfUtc"] = At(minute),
-                    ["Verdict"] = (int)StrategyVerdict.Wait, ["Reason"] = $"synthetic canonical {step}",
-                    ["BlockingRuleId"] = Id(RuleIds[blocking]), ["BlockingResult"] = (int)RuleEvaluationResult.Waiting,
-                    ["HasCompleteRequiredCoverage"] = true, ["MissingRequiredRuleIds"] = new JsonArray() },
-                ["StrategyObservation"] = new JsonObject { ["StrategyId"] = new JsonObject { ["$ref"] = "strategy" },
-                    ["StrategyVersion"] = Id("nasdaq-0.1.0-draft"), ["ProviderId"] = Id("synthetic-provider"), ["Symbol"] = Id("US100"),
-                    ["Step"] = step, ["AsOfUtc"] = At(minute), ["EvaluationCount"] = 4, ["Evaluations"] = evaluations },
-                ["SnapshotDiagnostic"] = "CanonicalEligibilityUnavailable", ["Snapshot"] = null, ["FactualEvaluation"] = null
+                ["CanonicalDiagnostic"] = new JsonObject
+                {
+                    ["Step"] = step,
+                    ["AsOfUtc"] = At(minute),
+                    ["Verdict"] = (int)StrategyVerdict.Wait,
+                    ["Reason"] = $"synthetic canonical {step}",
+                    ["BlockingRuleId"] = Id(RuleIds[blocking]),
+                    ["BlockingResult"] = (int)RuleEvaluationResult.Waiting,
+                    ["HasCompleteRequiredCoverage"] = true,
+                    ["MissingRequiredRuleIds"] = new JsonArray()
+                },
+                ["StrategyObservation"] = new JsonObject
+                {
+                    ["StrategyId"] = new JsonObject { ["$ref"] = "strategy" },
+                    ["StrategyVersion"] = Id("nasdaq-0.1.0-draft"),
+                    ["ProviderId"] = Id("synthetic-provider"),
+                    ["Symbol"] = Id("US100"),
+                    ["Step"] = step,
+                    ["AsOfUtc"] = At(minute),
+                    ["EvaluationCount"] = 4,
+                    ["Evaluations"] = evaluations
+                },
+                ["SnapshotDiagnostic"] = "CanonicalEligibilityUnavailable",
+                ["Snapshot"] = null,
+                ["FactualEvaluation"] = null
             });
         }
         return new JsonObject
         {
-            ["Schema"] = "moneyway.canonical-preentry-window", ["SchemaVersion"] = 1,
-            ["Session"] = new JsonObject { ["StrategyId"] = new JsonObject { ["$id"] = "strategy", ["Value"] = "moneyway-nasdaq" },
-                ["StrategyVersion"] = Id("nasdaq-0.1.0-draft"), ["ProviderId"] = Id("synthetic-provider"), ["Symbol"] = Id("US100"),
-                ["TradingDay"] = "2026-09-08" },
-            ["EvaluatedPrefixStartUtc"] = "2026-08-31T22:01:00Z", ["EvaluatedPrefixEndUtc"] = At(36), ["EvaluatedPrefixFrameCount"] = 7596,
-            ["DiagnosticWindowStartUtc"] = At(31), ["DiagnosticWindowEndUtc"] = At(36), ["CanonicalRuntimeCommit"] = "synthetic:runtime",
+            ["Schema"] = "moneyway.canonical-preentry-window",
+            ["SchemaVersion"] = 1,
+            ["Session"] = new JsonObject
+            {
+                ["StrategyId"] = new JsonObject { ["$id"] = "strategy", ["Value"] = "moneyway-nasdaq" },
+                ["StrategyVersion"] = Id("nasdaq-0.1.0-draft"),
+                ["ProviderId"] = Id("synthetic-provider"),
+                ["Symbol"] = Id("US100"),
+                ["TradingDay"] = "2026-09-08"
+            },
+            ["EvaluatedPrefixStartUtc"] = "2026-08-31T22:01:00Z",
+            ["EvaluatedPrefixEndUtc"] = At(36),
+            ["EvaluatedPrefixFrameCount"] = 7596,
+            ["DiagnosticWindowStartUtc"] = At(31),
+            ["DiagnosticWindowEndUtc"] = At(36),
+            ["CanonicalRuntimeCommit"] = "synthetic:runtime",
             ["BindingDiagnostics"] = new JsonArray(
                 new JsonObject { ["RecordId"] = "early-source", ["Code"] = "Bound", ["AsOfUtc"] = At(31) },
                 new JsonObject { ["RecordId"] = "later-reversal", ["Code"] = "Bound", ["AsOfUtc"] = At(34) }),
@@ -99,6 +133,12 @@ public sealed class NasdaqCanonicalPreEntryWindowEndpointTests : IDisposable
         Assert.All(frame.Rules, r => Assert.Null(r.EvidenceId));
         Assert.Equal("Unavailable", frame.SnapshotState);
         Assert.Equal("Unavailable", frame.FactualEvaluationState);
+        Assert.NotNull(frame.TradeLifecycle);
+        Assert.Null(frame.TradeLifecycle.Entry);
+        Assert.Null(frame.TradeLifecycle.Exit);
+        Assert.Equal("inconclusive", frame.TradeLifecycle.FailureClassification);
+        Assert.Equal(eligibility == "Passed" ? "NotImplemented" : "MissingOrBlocked",
+            frame.TradeLifecycle.Stages.Single(s => s.Stage == "StopLoss").Status);
         Assert.Equal(7591, result.Navigation!.FirstStep);
         Assert.Equal(7596, result.Navigation.LastStep);
         Assert.Equal(step > 7591 ? step - 1 : (long?)null, result.Navigation.PreviousStep);

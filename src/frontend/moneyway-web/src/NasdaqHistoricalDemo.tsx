@@ -5,8 +5,135 @@ import {
 } from "./api/nasdaqHistoricalDemoApi";
 import type {
     HistoricalRule,
+    HistoricalTradeLifecycle,
     NasdaqHistoricalReport,
 } from "./types/nasdaqHistoricalDemo";
+
+function TradeLifecycle({ trade }: { trade: HistoricalTradeLifecycle }) {
+    const labels: Record<string, string> = {
+        PreEntry: "Preentrada",
+        Entry: "Entrada observada",
+        StopLoss: "Stop Loss",
+        Risk: "Riesgo",
+        TakeProfit: "Take Profit",
+        DocumentedExit: "Salida documentada",
+        EconomicOutcome: "Resultado económico",
+        SessionAttempts: "Intentos y reentradas",
+    };
+    return (
+        <section aria-label="Ciclo de la operación histórica">
+            <h3>Ciclo de la operación histórica</h3>
+            <p>
+                Rama: {trade.path} · Alcance: {trade.evidenceScope}
+            </p>
+            <p>
+                La sesión supervisada completa sigue pendiente. Clasificación:{" "}
+                {trade.failureClassification}.
+            </p>
+            <div className="rules-table-wrapper">
+                <table>
+                    <caption>
+                        Evidencia y dependencias de la operación en este frame
+                    </caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Etapa</th>
+                            <th scope="col">Disponibilidad</th>
+                            <th scope="col">Regla canónica</th>
+                            <th scope="col">Detalle</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {trade.stages.map((stage) => (
+                            <tr key={stage.stage}>
+                                <th scope="row">
+                                    {labels[stage.stage] ?? stage.stage}
+                                </th>
+                                <td>{stage.status}</td>
+                                <td>
+                                    {stage.ruleId ?? "Sin regla de ejecución"} ·{" "}
+                                    {stage.ruleResult ?? "Sin evaluación"}
+                                </td>
+                                <td>{stage.reason}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            <dl>
+                <dt>Entrada documentada</dt>
+                <dd>
+                    {trade.entry
+                        ? `${trade.entry.price} · ${trade.entry.effectiveAtUtc}`
+                        : trade.evidenceScope ===
+                            "PublishedArtifactsWithoutDetails"
+                          ? "Registrada en el informe original; detalle pendiente de proyección"
+                          : "Falta evidencia de entrada en el snapshot canónico"}
+                </dd>
+                <dt>SL documentado</dt>
+                <dd>{trade.stopPrice ?? "No disponible"}</dd>
+                <dt>TP documentado</dt>
+                <dd>{trade.takeProfitPrice ?? "No disponible"}</dd>
+                <dt>Base / pérdida máxima documentadas</dt>
+                <dd>
+                    {trade.accountBasisAmount ?? "No disponible"} /{" "}
+                    {trade.reportedMaximumLoss ?? "No disponible"}{" "}
+                    {trade.riskCurrency ?? ""}
+                </dd>
+                <dt>Proporción de riesgo documentada</dt>
+                <dd>{trade.riskRatio ?? "No disponible"}</dd>
+                <dt>Salida documentada</dt>
+                <dd>
+                    {trade.exit
+                        ? `${trade.exit.price} · ${trade.exit.effectiveAtUtc} · ${trade.exitScope ?? "Alcance no documentado"}`
+                        : trade.evidenceScope ===
+                            "PublishedArtifactsWithoutDetails"
+                          ? "Consulte la evidencia de salida en el informe original"
+                          : "Falta ejecución de salida causalmente documentada"}
+                </dd>
+            </dl>
+            {trade.documentedExitReason && (
+                <p>Motivo literal de salida: {trade.documentedExitReason}</p>
+            )}
+            <p>
+                Evaluaciones Failed:{" "}
+                {trade.failedRuleIds.join(", ") ||
+                    "Ninguna registrada en este frame"}
+                . La clasificación de incumplimiento o pérdida válida requiere
+                evidencia de ejecución y cumplimiento.
+            </p>
+            <details>
+                <summary>
+                    Validaciones humanas y procedencia visible (
+                    {trade.sources.length})
+                </summary>
+                <ul>
+                    {trade.sources.map((source, i) => (
+                        <li key={`${source.sourceReferenceSha256}-${i}`}>
+                            {source.inputType} · {source.observedAtUtc}
+                            <p>
+                                {source.sourceReference}
+                                {source.truncated
+                                    ? "… (texto completo en el informe original)"
+                                    : ""}
+                            </p>
+                            <small>
+                                SHA256 de la referencia:{" "}
+                                {source.sourceReferenceSha256}
+                            </small>
+                        </li>
+                    ))}
+                </ul>
+                {trade.omittedSources > 0 && (
+                    <p>
+                        {trade.omittedSources} referencias adicionales
+                        conservadas en el informe original.
+                    </p>
+                )}
+            </details>
+        </section>
+    );
+}
 
 function verdict(value: string | null | undefined) {
     return value === "NoTrade"
@@ -388,6 +515,9 @@ function HistoricalDemoContent({ apiBaseUrl }: { apiBaseUrl: string }) {
                             )}
                             {frame.snapshotDiagnostic && (
                                 <p>{frame.snapshotDiagnostic}</p>
+                            )}
+                            {frame.tradeLifecycle && (
+                                <TradeLifecycle trade={frame.tradeLifecycle} />
                             )}
                             <p>
                                 Cobertura de reglas obligatorias:{" "}

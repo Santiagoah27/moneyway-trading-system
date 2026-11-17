@@ -148,7 +148,55 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
             hasDiagnostic ? EnumValue<RuleEvaluationResult>(diagnostic.GetProperty("BlockingResult")) : null,
             hasDiagnostic ? diagnostic.GetProperty("HasCompleteRequiredCoverage").GetBoolean() : null, missing,
             snapshotState, OptionalText(frame, "SnapshotDiagnostic"), factualState,
-            factual.ValueKind == JsonValueKind.Object && factual.TryGetProperty("RequiresHumanValidation", out var human) ? human.GetBoolean() : null, rules);
+            factual.ValueKind == JsonValueKind.Object && factual.TryGetProperty("RequiresHumanValidation", out var human) ? human.GetBoolean() : null, rules,
+            TradeLifecycle(frame, rules, at, snapshotState));
+    }
+
+    private static NasdaqHistoricalTradeLifecycleSummary TradeLifecycle(JsonElement frame,
+        IReadOnlyList<NasdaqHistoricalRuleSummary> rules, DateTimeOffset at, string? snapshotState)
+    {
+        if (!frame.TryGetProperty("TradeLifecycle", out var element))
+        {
+            var legacy = NasdaqHistoricalTradeLifecycleSummary.FromRules(rules);
+            if (snapshotState != "Available") return legacy;
+            return legacy with
+            {
+                EvidenceScope = "PublishedArtifactsWithoutDetails",
+                Stages = legacy.Stages.Select(s => s.Stage is "Entry" or "StopLoss" or "Risk" or "TakeProfit"
+                    ? s with { Status = "RecordedArtifactWithoutDetails", Reason = "An existing snapshot is recorded; regenerate the report with the trade projection to expose its values. No missing-input claim is made." }
+                    : s.Stage == "DocumentedExit" ? s with { Status = "NotProjected", Reason = "Legacy factual execution details are not projected; inspect the original report or regenerate it." } : s).ToArray()
+            };
+        }
+        var result = JsonSerializer.Deserialize<NasdaqHistoricalTradeLifecycleSummary>(element) ?? throw new InvalidDataException("Missing trade lifecycle.");
+        var fallback = NasdaqHistoricalTradeLifecycleSummary.FromRules(rules);
+        Require(result.Path == (snapshotState == "Available" ? "Standard" : fallback.Path)
+            && result.EvidenceScope == "CanonicalFrameArtifacts" && result.FailureClassification == "inconclusive"
+            && element.GetProperty("CompleteSupervisedTrade").ValueKind == JsonValueKind.False
+            && result.Stages is { Count: 8 } && result.Stages.All(s => s is not null) && result.Stages.Select(s => s.Stage).SequenceEqual(fallback.Stages.Select(s => s.Stage))
+            && result.Sources is { Count: <= 16 } && result.OmittedSources >= 0
+            && result.FailedRuleIds is not null && result.FailedRuleIds.SequenceEqual(fallback.FailedRuleIds));
+        foreach (var stage in result.Stages)
+        {
+            var original = fallback.Stages.Single(s => s.Stage == stage.Stage);
+            Require(!string.IsNullOrWhiteSpace(stage.Reason) && stage.Reason.Length <= 4096
+                && stage.RuleId == original.RuleId && stage.RuleResult == original.RuleResult
+                && (stage.Status == original.Status || stage.Status == "RecordedArtifact" && snapshotState == "Available"
+                    && stage.Stage is "Entry" or "StopLoss" or "Risk" or "TakeProfit" or "DocumentedExit"));
+        }
+        foreach (var source in result.Sources)
+            Require(source is not null && source.ObservedAtUtc.Offset == TimeSpan.Zero && source.ObservedAtUtc <= at
+                && !string.IsNullOrWhiteSpace(source.SourceReference) && source.SourceReference.Length <= 512
+                && !string.IsNullOrWhiteSpace(source.InputType) && source.InputType.Length <= 256
+                && source.SourceReferenceSha256 is { Length: 64 } && source.SourceReferenceSha256.All(char.IsAsciiHexDigit));
+        Require(result.Entry is null || snapshotState == "Available" && result.Entry.EffectiveAtUtc.Offset == TimeSpan.Zero && result.Entry.EffectiveAtUtc <= at);
+        Require(result.Exit is null || result.Entry is not null && result.Exit.EffectiveAtUtc.Offset == TimeSpan.Zero
+            && result.Exit.EffectiveAtUtc >= result.Entry.EffectiveAtUtc && result.Exit.EffectiveAtUtc <= at);
+        Require((result.Stages.Single(s => s.Stage == "Entry").Status == "RecordedArtifact") == (result.Entry is not null)
+            && (result.Stages.Single(s => s.Stage == "DocumentedExit").Status == "RecordedArtifact") == (result.Exit is not null)
+            && result.ExitScope is null or "Full" or "Partial" && result.Direction is null or "Buy" or "Sell");
+        Require(snapshotState == "Available" || result.StopPrice is null && result.TakeProfitPrice is null && result.RiskRatio is null
+            && result.Direction is null && result.AccountBasisAmount is null && result.ReportedMaximumLoss is null && result.RiskCurrency is null);
+        return result;
     }
 
     private static string? OptionalState(JsonElement element, string name) => OptionalText(element, name) is "Available" or "Unavailable" ? OptionalText(element, name) : null;

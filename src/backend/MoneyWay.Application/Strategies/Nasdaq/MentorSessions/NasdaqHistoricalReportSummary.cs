@@ -24,7 +24,8 @@ public sealed record NasdaqHistoricalFrameSummary(
     string? BlockingRuleId, string? BlockingResult, bool? HasCompleteRequiredCoverage,
     IReadOnlyList<string> MissingRequiredRuleIds,
     string? SnapshotState, string? SnapshotDiagnostic, string? FactualEvaluationState,
-    bool? FactualRequiresHumanValidation, IReadOnlyList<NasdaqHistoricalRuleSummary> Rules);
+    bool? FactualRequiresHumanValidation, IReadOnlyList<NasdaqHistoricalRuleSummary> Rules,
+    NasdaqHistoricalTradeLifecycleSummary? TradeLifecycle = null);
 
 public sealed record NasdaqHistoricalRuleSummary(
     string RuleId, string DefinitionStatus, string Result, int Sequence, bool IsRequired,

@@ -54,6 +54,9 @@ public sealed class NasdaqHistoricalDemoEndpointTests : IDisposable
         var selected = Assert.IsType<NasdaqHistoricalFrameSummary>(summary.SelectedFrame);
         var nav = Assert.IsType<NasdaqHistoricalFrameNavigation>(summary.Navigation);
         Assert.Equal(step, selected.Step);
+        Assert.NotNull(selected.TradeLifecycle);
+        Assert.False(selected.TradeLifecycle.CompleteSupervisedTrade);
+        Assert.All(selected.TradeLifecycle.Sources, s => Assert.True(s.ObservedAtUtc <= selected.AsOfUtc));
         Assert.Equal(expected.GetProperty("AsOfUtc").GetDateTimeOffset(), selected.AsOfUtc);
         Assert.Equal(frames[0].GetProperty("Step").GetInt64(), nav.FirstStep);
         Assert.Equal(frames[^1].GetProperty("Step").GetInt64(), nav.LastStep);

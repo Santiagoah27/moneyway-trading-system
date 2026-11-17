@@ -23,6 +23,41 @@ export interface HistoricalFrame {
     factualEvaluationState: string | null;
     factualRequiresHumanValidation: boolean | null;
     rules: HistoricalRule[];
+    tradeLifecycle?: HistoricalTradeLifecycle | null;
+}
+
+export interface HistoricalTradeLifecycle {
+    path: string;
+    stages: {
+        stage: string;
+        status: string;
+        ruleId: string | null;
+        ruleResult: string | null;
+        reason: string;
+    }[];
+    entry: { price: number; effectiveAtUtc: string } | null;
+    stopPrice: number | null;
+    takeProfitPrice: number | null;
+    riskRatio: number | null;
+    exit: { price: number; effectiveAtUtc: string } | null;
+    exitScope: string | null;
+    documentedExitReason: string | null;
+    direction?: string | null;
+    accountBasisAmount?: number | null;
+    reportedMaximumLoss?: number | null;
+    riskCurrency?: string | null;
+    failureClassification: string;
+    failedRuleIds: string[];
+    sources: {
+        inputType: string;
+        observedAtUtc: string;
+        sourceReference: string;
+        sourceReferenceSha256: string;
+        truncated: boolean;
+    }[];
+    omittedSources: number;
+    evidenceScope: string;
+    completeSupervisedTrade: boolean;
 }
 
 export interface NasdaqHistoricalReport {

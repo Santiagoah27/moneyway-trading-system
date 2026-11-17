@@ -65,6 +65,105 @@ function respond(body: unknown = report, status = 200) {
 
 afterEach(() => vi.unstubAllGlobals());
 
+const tradeFixture = {
+    path: "WickfillScenario2",
+    evidenceScope: "RecordedRuleEvaluationsAndInputs",
+    stages: [
+        {
+            stage: "StopLoss",
+            status: "NotImplemented",
+            ruleId: "NQ-SL-001",
+            ruleResult: "Waiting",
+            reason: "Scenario 2 native SL ancestry is not integrated.",
+        },
+        {
+            stage: "SessionAttempts",
+            status: "BlockedByUnresolvedSpecification",
+            ruleId: "NQ-REENTRY-001",
+            ruleResult: "HumanValidationRequired",
+            reason: "Reentry specification remains unresolved.",
+        },
+    ],
+    entry: null,
+    stopPrice: null,
+    takeProfitPrice: null,
+    riskRatio: null,
+    exit: null,
+    exitScope: null,
+    documentedExitReason: null,
+    failureClassification: "inconclusive",
+    failedRuleIds: [],
+    sources: [
+        {
+            inputType: "PersistedInput",
+            observedAtUtc: "2026-06-29T13:27:42Z",
+            sourceReference: "human:S9",
+            sourceReferenceSha256: "a".repeat(64),
+            truncated: false,
+        },
+    ],
+    omittedSources: 0,
+    completeSupervisedTrade: false,
+};
+
+it("shows the incomplete trade lifecycle and human provenance without invented prices", async () => {
+    respond({
+        ...report,
+        selectedSessionLastFrame: {
+            ...report.selectedSessionLastFrame,
+            tradeLifecycle: tradeFixture,
+        },
+    });
+    await screen.findByRole("region", {
+        name: "Ciclo de la operación histórica",
+    });
+    expect(
+        screen.getByText("Scenario 2 native SL ancestry is not integrated."),
+    ).toBeTruthy();
+    expect(
+        screen.getByText("Falta evidencia de entrada en el snapshot canónico"),
+    ).toBeTruthy();
+    expect(screen.getByText("human:S9")).toBeTruthy();
+    expect(screen.queryByText("29604")).toBeNull();
+    expect(screen.queryByText("29662.25")).toBeNull();
+    expect(screen.getByText(/Clasificación: inconclusive/)).toBeTruthy();
+});
+
+it("shows a source-documented close without claiming profit or a valid strategy loss", async () => {
+    respond({
+        ...report,
+        selectedSessionLastFrame: {
+            ...report.selectedSessionLastFrame,
+            snapshotState: "Available",
+            factualEvaluationState: "Available",
+            tradeLifecycle: {
+                ...tradeFixture,
+                entry: {
+                    price: 101.25,
+                    effectiveAtUtc: "2026-06-29T14:00:00Z",
+                },
+                stopPrice: 99,
+                takeProfitPrice: 104,
+                exit: { price: 103.5, effectiveAtUtc: "2026-06-29T14:30:00Z" },
+                exitScope: "Partial",
+                documentedExitReason: "Synthetic documented close",
+            },
+        },
+    });
+    await screen.findByText("101.25 · 2026-06-29T14:00:00Z");
+    expect(
+        screen.getByText("103.5 · 2026-06-29T14:30:00Z · Partial"),
+    ).toBeTruthy();
+    expect(
+        screen.getByText(
+            "Motivo literal de salida: Synthetic documented close",
+        ),
+    ).toBeTruthy();
+    expect(
+        screen.getByText(/sesión supervisada completa sigue pendiente/),
+    ).toBeTruthy();
+});
+
 // Synthetic transport fixtures: explicit timestamps, never an ordinal-to-time formula.
 function navigable(step = 8000): NasdaqHistoricalReport {
     const steps = [7998, 7999, 8000];

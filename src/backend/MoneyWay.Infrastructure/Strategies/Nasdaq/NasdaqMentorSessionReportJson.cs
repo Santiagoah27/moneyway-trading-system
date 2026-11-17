@@ -144,6 +144,9 @@ public static class NasdaqMentorSessionReportJson
             Property("DocumentedExit", frame.DocumentedExit);
             Property("FactualEvaluationState", frame.FactualEvaluation?.GetType().Name ?? "Unavailable");
             Property("FactualEvaluation", frame.FactualEvaluation);
+            // Flat presentation contract: no reference metadata or engine graph reconstruction by the UI.
+            writer.WritePropertyName("TradeLifecycle");
+            JsonSerializer.Serialize(writer, NasdaqHistoricalTradeLifecycleSummary.FromFrame(frame));
             writer.WriteEndObject();
             writer.Flush();
         }
