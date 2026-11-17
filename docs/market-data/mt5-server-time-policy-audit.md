@@ -1681,3 +1681,190 @@ null. `windows_clock_authenticated=false`, `mt5_native_utc_authenticated=false`,
 `canonical_utc_conversion_authorized=false`, `utc_conversion_authenticated=false`
 and `canonical_ready=false`. Linux NTS packet authentication retains its original
 verified scope.
+
+## Selection epoch and clock continuity contract (2026-11-17)
+
+Contract version 1. Initial checkpoint was clean `main` at
+`c61fe9877734e97b5b01128493ba50b78a7ccc94`, synchronized with `origin/main`.
+The observability gate concluded **B, supported contract insufficient**, before
+any capture extension. Final decision is
+**`BLOCKED_CLOCK_CONTINUITY_UNPROVABLE`** for the reviewed workflow.
+This independently useful specification records observable bounds, prerequisites
+for propagation and the stopping condition for further NTS instrumentation.
+
+### Verified internal epoch and interface limits
+
+Sources were accessed on **2026-11-17**. `SRC_SelectSource` obtains `now` through
+`SCH_GetLastEventTime`. `SST_GetSelectionData` evaluates the source interval using
+that cached cooked clock coordinate. The scheduler stores `last_select_ts` as
+a `struct timespec`, including nanoseconds, after reading guest realtime and
+applying the local clock driver's correction. `mark_source` logs its whole-second
+component. The internally represented subsecond coordinate therefore exists.
+Its whole-second label is externally observable. The original selection epoch's
+nanoseconds have no dedicated field in the reviewed selection interfaces.
+[Selection](https://raw.githubusercontent.com/mlichvar/chrony/4.5/sources.c),
+[scheduler](https://raw.githubusercontent.com/mlichvar/chrony/4.5/sched.c),
+[local clock](https://raw.githubusercontent.com/mlichvar/chrony/4.5/local.c),
+[statistics](https://raw.githubusercontent.com/mlichvar/chrony/4.5/sourcestats.c).
+
+The retained Ubuntu source audit and official binary matches from the preceding
+section were reverified. Four additional files, `reports.h`, `candm.h`, `cmdmon.c`
+and `client.c`, were extracted from the pinned Ubuntu original source archive
+and compared byte for byte with upstream 4.5. The package's two quilt patches
+affect examples. Thus the following field audit covers the published package
+paths. Historical libc/fenv and reproducible-build limitations retain the scope
+already recorded.
+
+`RPT_SelectReport` and wire `RPY_SelectData` contain source identity, state,
+authentication, options, leap, integer sample age, score and endpoints.
+`handle_select_data` copies these fields into the reply. The original scheduler
+epoch is absent. The age is a source-sample age, with whole-second precision in
+this reply. CSV output cannot add an absent protocol field.
+[Report structure](https://raw.githubusercontent.com/mlichvar/chrony/4.5/reports.h),
+[wire structure](https://raw.githubusercontent.com/mlichvar/chrony/4.5/candm.h),
+[handler](https://raw.githubusercontent.com/mlichvar/chrony/4.5/cmdmon.c).
+
+| Mechanism                                                  | Observability classification                                          | Supported meaning and remaining gap                                                                                |
+| ---------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `selection.log`                                            | Directly observable through a supported interface                     | Source/state/model endpoints and cached clock second. Subsecond coordinate and counter pairing remain absent       |
+| `chronyc selectdata`, including CSV                        | Directly observable source state, selection epoch absent              | State, authentication setting, sample age and interval. The reply supplies no original selection timestamp         |
+| `sources`, `sourcestats`, `ntpdata`, `tracking`            | Directly observable reports, original selection epoch absent          | Samples/statistics, remote reference time or tracking reference state. PrintOnce bypasses normal reference updates |
+| Measurement/statistics/tracking logs                       | Directly observable logs, original selection epoch absent             | Their own sample/reference events and printed timestamps require their own interpretation                          |
+| Existing query start, wait completion and private protocol | Indirectly bounded through observable ordering                        | Coarse process/event enclosure in the Linux counter domain. Cached clock epoch lacks a paired counter observation  |
+| Log watcher or file polling                                | Indirectly bounded publication observation                            | Successful observation occurs after publication. Observer latency and cached epoch association remain unbounded    |
+| File modification timestamp                                | File metadata directly observable, event-time association conditional | Filesystem update semantics and clock association must be justified separately                                     |
+| Internal tracing or modified event logging                 | Only through instrumentation outside this contract                    | Access to internal fields requires an additional implementation/provenance contract                                |
+
+Chrony also supports source-history dumps. `SST_SaveToFile` writes subsecond
+sample timestamps. `MAI_CleanupAndExit` dumps sources after cancellation of
+offset correction and before source finalization. A same-session dump plus the
+formatted newest-sample age from the selected log row is a **candidate indirect
+reconstruction** of the cached epoch. It requires exact association to that row's
+latest sample and accounting for corrections, steps or state changes before the
+dump. The authentic capture has no dump. This candidate does not supply the
+missing clock-continuity guarantees. It is recorded without extending capture.
+[Sample serialization](https://raw.githubusercontent.com/mlichvar/chrony/4.5/sourcestats.c),
+[exit ordering](https://raw.githubusercontent.com/mlichvar/chrony/4.5/main.c),
+[supported dump command](https://chrony-project.org/doc/4.5/chronyc.html).
+
+### Existing event bounds and continuity observations
+
+Session `f645b4fd27968d7265deec9f69ab63dde8191ab552347bbcb0f245541e4111e2`
+and its original report, log and manifest hashes validate. The log hash is
+`30eb24c0ced88baecd17afae11003ecb90a8ee6f66d3fd50eedc48dcdf6b8b46`.
+The state sequence remains `M → M → * → S`, with same-session NTS authentication
+and the original selection event preserved.
+
+The printed `23:12:55` gives the cached cooked-coordinate bin
+`[2026-11-16 23:12:55.000000000, 2026-11-16 23:12:56.000000000)`.
+It identifies a component of the internal model epoch. The actual callback
+execution and independently authenticated UTC are unresolved. Trusted process
+ordering and the 0.01 s truncated query markers give the coarse selection-code
+execution enclosure `[16.87, 23.31)` in guest BOOTTIME coordinates. The epoch's
+missing counter pairing prevents combining these into an authenticated instant.
+Process launch, WSL startup, process exit, polling time and unrelated wall reads
+remain observations of their respective operations.
+
+| Retained observation                       | Actual result                   | Evidential scope                                         |
+| ------------------------------------------ | ------------------------------- | -------------------------------------------------------- |
+| Linux BOOTTIME sample order                | Nondecreasing                   | Same guest counter coordinates                           |
+| Windows Stopwatch sample order             | Nondecreasing                   | Same host counter coordinates                            |
+| Linux realtime elapsed, BEFORE to AFTER    | `6.463677457 s`                 | Recorded realtime endpoints                              |
+| Guest BOOTTIME elapsed bracket             | `[6.45, 6.48] s`                | Includes truncated endpoints and nonatomic read ordering |
+| Realtime minus BOOTTIME elapsed bracket    | `[-0.016322543, 0.013677457] s` | Local endpoint-coordinate comparison                     |
+| Realtime reversal at sampled endpoints     | None observed                   | Recorded samples only                                    |
+| Entire-span absence of steps               | `unresolved`                    | Intermediate jumps remain possible                       |
+| Rate bound for local-minus-reference error | `unresolved`                    | No calibrated bound supplied                             |
+| Hyper-V synchronization events             | Unobserved in retained evidence | No cumulative step/rate guarantee                        |
+
+Endpoint consistency is compatible with several clock histories, including
+unobserved intervening changes. Chrony's scheduler includes heuristic step
+detection, and its documentation states that automatic jump detection is not
+completely reliable. A retained record without a jump message cannot certify
+the entire interval. Further endpoint sampling has the same guarantee limitation.
+[Scheduler checks](https://raw.githubusercontent.com/mlichvar/chrony/4.5/sched.c),
+[jump detection documentation](https://chrony-project.org/doc/4.5/chronyc.html).
+
+Linux `CLOCK_REALTIME` admits discontinuous and gradual adjustments.
+`CLOCK_MONOTONIC` avoids realtime discontinuities while remaining subject to
+frequency adjustments. BOOTTIME adds suspend time, and `MONOTONIC_RAW` changes
+the adjustment/suspend contract. None supplies the missing local-versus-reference
+rate guarantee for this record. Windows Stopwatch uses QPC with an independent
+external-reference relationship. Cross-domain counter subtraction is prohibited.
+[Linux clock semantics](https://man7.org/linux/man-pages/man3/clock_gettime.3.html),
+[Windows timing](https://learn.microsoft.com/en-us/windows/win32/sysinfo/acquiring-high-resolution-time-stamps).
+
+### Minimum propagation contract and stop decision
+
+Propagation requires all of the following evidence together.
+
+1. The original model epoch or a defensible set of possible epochs, associated
+   with the exact selected source, row and authenticated session.
+2. Explicit clock domains and a validated relationship to the target reading,
+   including acquisition order, nonatomic read bounds and elapsed uncertainty.
+3. A justified bound on evolution of local-minus-reference error throughout
+   every permitted source-to-target span, including reference evolution.
+4. A cumulative discontinuity bound accounting for Hyper-V and other clock
+   adjustments, with observation completeness adequate to support that bound.
+5. Source-model applicability/reference assumptions, formatting uncertainty and
+   all additional measurement/domain-mapping uncertainty.
+
+For a conditional mathematical statement, let `theta` be local minus reference
+and let its source-epoch interval be `[a,b]`. If independent evidence bounds
+`theta(target) - theta(source)` by `[d_lower,d_upper]` for every allowed pair of
+epochs, the target interval is `[a + d_lower, b + d_upper]`. A rate model would
+need an entire-span rate bound, signed elapsed bounds and cumulative step bounds.
+No numerical evolution bound is provided by the retained capture.
+
+`selection_interval_propagation=unresolved` and
+`interval_propagation_permitted=false`. The coarse epoch bounds and candidate
+dump reconstruction leave the continuity prerequisite unmet. The final blocker
+is therefore **`BLOCKED_CLOCK_CONTINUITY_UNPROVABLE`** within the reviewed
+non-adjusting workflow. This decision does not claim that all indirect epoch
+bounds are impossible. Further Chrony-only instrumentation is unjustified for
+closing this propagation contract, and the task ends at the specification gate.
+Authentic NTS captures performed by this feature total **zero**.
+
+The version-1 external contract is retained at
+`%LOCALAPPDATA%\MoneyWay\Evidence\NtsEpochContinuity\audit-3157c36e69824fbbb93a23539728dff7\epoch-continuity-contract-d39f5bd4a6db4e3cbd2d683b99823340.json`,
+SHA256 `f2c68e23dadd0b21e3f83b9ce85663b6439f2b9ae62b776cf106a284d9e49482`.
+It contains source/session pins, reviewed interface file hashes, observable
+bounds, the candidate dump approach, continuity limitations, propagation
+prerequisites, the decision and next action. It is a specification and
+existing-evidence audit, with no new runtime status mapping.
+
+### Validation and next feature
+
+Only this documentation file changes in Git. The existing eight PowerShell
+suites passed **33 + 42 + 48 + 40 + 33 + 28 + 56 + 33**, totalling
+**313 passed, 0 failed, 0 skipped**. These are existing regressions, including
+their AST checks. POSIX shell syntax and full .NET build pass, with zero build
+warnings/errors. No new evaluator or synthetic propagation implementation was
+added. Documentation formatting/local links, evidence hashes and
+`git diff --check` are verified before publication.
+
+Twelve selected preservation pins cover the selection capture/log/manifest/
+method/safety record, earlier correlation/reassessment/uncertainty/semantics
+reports, receipt checkpoint, record 643 and probe 643. All match. Source review
+and evidence evaluation ran on Windows with no WSL launch or new measurement.
+
+The next smallest feature is a **causal market-data availability contract for
+the existing MT5 acquisition/receipt evidence**. Scope it to source/probe hashes,
+predecessor-chain publication order, run identity and run-local acquisition
+counter bounds. Specify what source acquisition, publication and later reader
+receipt establish, including restarts and missing/conflicting records. Preserve
+the distinction between receipt integrity and sample completeness. Cross-run
+elapsed comparisons and canonical authorization require their own evidence.
+[Existing receipt model](../../src/backend/MoneyWay.Application/MarketData/Receipt/Mt5ReceiptModels.cs),
+[receipt semantics](mt5-diagnostic-event-receipts.md).
+
+UTC conversion, provider closure and historical availability remain unresolved
+for that proposed contract. Canonical future-data boundaries still require
+candles closed at or before `AsOfUtc` and input observations available by that
+boundary under [ADR 0004](../decisions/0004-support-observable-market-data-resolution-in-canonical-replay.md).
+Receipt order alone supplies neither required UTC field.
+
+`overall_utc_uncertainty=unresolved`, `windows_clock_authenticated=false`,
+`mt5_native_utc_authenticated=false`, `canonical_utc_conversion_authorized=false`,
+`utc_conversion_authenticated=false` and `canonical_ready=false`. The verified
+Linux NTS packet authentication remains preserved within its original scope.
