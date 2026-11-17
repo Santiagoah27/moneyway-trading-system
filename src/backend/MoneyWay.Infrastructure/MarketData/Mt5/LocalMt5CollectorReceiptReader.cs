@@ -7,7 +7,7 @@ using MoneyWay.Application.MarketData.Receipt;
 namespace MoneyWay.Infrastructure.MarketData.Mt5;
 
 /// <summary>Bounded, synchronous, read-only directory snapshot. No service registration or hidden receipt state.</summary>
-public sealed class LocalMt5CollectorReceiptReader : IMt5CollectorReceiptReader
+public sealed class LocalMt5CollectorReceiptReader : IMt5CollectorReceiptReader, IMt5ReceiptPrefixReader
 {
     public const int MaxRecords = 1024;
     public const int MaxDirectoryEntries = 8192;
@@ -16,6 +16,26 @@ public sealed class LocalMt5CollectorReceiptReader : IMt5CollectorReceiptReader
 
     public Mt5ReceiptBatch Read(string sourceDirectory, Mt5ReceiptCheckpoint? checkpoint = null,
         IReadOnlyDictionary<string, string>? expectedRecordHashes = null)
+        => ReadCore(sourceDirectory, checkpoint, expectedRecordHashes, null);
+
+    public Mt5ReceiptBatch ReadPrefix(string sourceDirectory, Mt5ReceiptPrefixBoundary boundary,
+        IReadOnlyDictionary<string, string>? expectedRecordHashes = null)
+    {
+        ArgumentNullException.ThrowIfNull(boundary);
+        var pins = new Dictionary<string, string>(expectedRecordHashes ?? new Dictionary<string, string>(), StringComparer.Ordinal);
+        if (boundary.RecordFile is { } name)
+        {
+            if (pins.TryGetValue(name, out var pin) && !string.Equals(pin, boundary.RecordSha256, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("Conflicting boundary hash.", nameof(expectedRecordHashes));
+            pins[name] = boundary.RecordSha256!;
+        }
+        if (pins.Keys.Any(n => !Mt5WireContract.RecordName(n) || long.Parse(n.AsSpan(7, 12), CultureInfo.InvariantCulture) > boundary.Sequence))
+            throw new ArgumentException("Expected hashes must belong to the selected prefix.", nameof(expectedRecordHashes));
+        return ReadCore(sourceDirectory, null, pins, boundary);
+    }
+
+    private static Mt5ReceiptBatch ReadCore(string sourceDirectory, Mt5ReceiptCheckpoint? checkpoint,
+        IReadOnlyDictionary<string, string>? expectedRecordHashes, Mt5ReceiptPrefixBoundary? boundary)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceDirectory);
         string root;
@@ -45,7 +65,8 @@ public sealed class LocalMt5CollectorReceiptReader : IMt5CollectorReceiptReader
         {
             if (!Directory.Exists(root)) return Empty("source_directory_unavailable");
             GuardRoot(root);
-            var inventory = Directory.EnumerateFileSystemEntries(root).Take(MaxDirectoryEntries + 1).Select(Path.GetFileName).ToArray();
+            var inventory = (boundary is null ? Directory.EnumerateFileSystemEntries(root)
+                : PrefixEntries(root, boundary.Sequence)).Take(MaxDirectoryEntries + 1).Select(Path.GetFileName).ToArray();
             if (inventory.Length > MaxDirectoryEntries) return Empty("directory_entry_limit");
             var names = inventory.Where(x => x is not null && x.StartsWith("record-", StringComparison.OrdinalIgnoreCase)).Cast<string>().Order(StringComparer.Ordinal).ToArray();
             if (names.Length > MaxRecords) return Empty("record_count_limit");
@@ -142,6 +163,23 @@ public sealed class LocalMt5CollectorReceiptReader : IMt5CollectorReceiptReader
         catch (Exception e) when (IsSourceError(e)) { return Empty(e is Mt5WireException wire ? wire.Code : "source_directory_unavailable"); }
 
         Mt5ReceiptBatch Empty(string code) => new(scope, Array.Empty<Mt5ReceiptRecord>(), Codes([code]), new(scope, ledger.Values));
+    }
+
+    // Disjoint decimal filename ranges select only names at/before the boundary at the filesystem boundary.
+    // Future canonical record names are never opened, parsed, counted against limits or checked for aliases.
+    private static IEnumerable<string> PrefixEntries(string root, long sequence)
+    {
+        if (sequence == 0) yield break;
+        var token = sequence.ToString("D12", CultureInfo.InvariantCulture);
+        var patterns = new List<string>();
+        for (var position = 0; position < token.Length; position++)
+            for (var digit = '0'; digit < token[position]; digit++)
+                patterns.Add("record-" + token[..position] + digit + new string('?', 11 - position) + ".json");
+        patterns.Add("record-" + token + ".json");
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var pattern in patterns)
+            foreach (var entry in Directory.EnumerateFileSystemEntries(root, pattern))
+                if (seen.Add(entry)) yield return entry;
     }
 
     private static void ValidateChain(Mt5CollectorMetadata prior, Mt5CollectorMetadata current)

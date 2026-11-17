@@ -386,3 +386,179 @@ The single next smallest feature remains a separately authorized supported NTS
 client environment prerequisite, followed by a bounded authenticated-reference
 experiment. It advances the independent UTC blocker without treating observed
 bar stability as a new provider finalization rule.
+
+## Causal availability within a validated receipt prefix
+
+Implemented from clean, synchronized `main` at
+`ef9ce2d1685600643e7d269250ab78fc66514618`. This section adds a diagnostic
+precursor, not a canonical replay adapter. The earlier lifecycle findings retain
+their original usable-frame scope.
+
+### Boundary and integrity contract
+
+[`Mt5ReceiptPrefixBoundary` and `ValidatedMt5ReceiptPrefix`](../../src/backend/MoneyWay.Application/MarketData/Receipt/ValidatedMt5ReceiptPrefix.cs)
+bind an explicit directory scope to a terminal publication sequence **and its
+exact record SHA256**. The
+[`LocalMt5CollectorReceiptReader.ReadPrefix`](../../src/backend/MoneyWay.Infrastructure/MarketData/Mt5/LocalMt5CollectorReceiptReader.cs)
+reuses record/probe validation, source identity, predecessor hashes, exact native
+wire models, read handles and existing size limits. Disjoint decimal filename
+ranges exclude later canonical record names before opening, validating, counting
+against limits or checking acquisition aliases. A future corrupt file or duplicate
+poll identity therefore cannot invalidate an earlier prefix.
+
+The collector recovers its publication counter from the directory, across runs;
+`poll_sequence` restarts within each run. Its locally hash-verified lineage
+also crosses runs. This is local integrity checking, not broker authentication.
+Numeric publication gaps can result from reserved but unpublished sequences:
+they are retained as diagnostics, not reconstructed. Selection requires origin
+record 1 and a single complete predecessor chain containing every selected
+record, ending at the pinned hash. Missing dependencies, invalid receipts,
+duplicate acquisitions or competing lineage reject the entire selection.
+Sequence alone is not the evidence identity: directory scope, run, poll, record
+and probe hashes remain attached.
+
+Sequence 0 explicitly selects an empty prefix from an accessible directory,
+without claiming validated source identity. An inaccessible source and an invalid
+prefix remain separate failure results. The selected records and nested
+collections are copied into immutable memory; later source tampering cannot
+change that projection. A new read must validate the pinned evidence again.
+The evidence manifest hashes LF-joined, sequence-ordered
+`record-file:record-sha256:probe-file:probe-sha256` lines, without a final LF.
+It is an integrity digest, not an authenticated UTC reference.
+
+### Observation projection and limits
+
+[`Mt5CausalAvailabilityAudit`](../../src/backend/MoneyWay.Infrastructure/MarketData/Mt5/Mt5CausalAvailabilityAudit.cs)
+folds only the validated prefix, using the existing
+[`Mt5NativeLifecycleAudit`](../../src/backend/MoneyWay.Infrastructure/MarketData/Mt5/Mt5NativeLifecycleAudit.cs)
+state/revision logic and arbitrary-precision exact numeric comparison. First and
+latest raw OHLC literals, native coordinates, source positions, revisions, run,
+receipt/probe references and acquisition quality remain separate. Later revisions,
+historical positions, recovery and new runs cannot backfill an earlier prefix.
+Presentation ordering by native coordinate is not publication ordering.
+
+Unlike the original retrospective usable-frame view, this projection also retains
+explicitly observed raw bars from diagnostic/incomplete or unstable frames, with
+their quality flags and invalid-OHLC indication. Presence means
+`observed_in_validated_receipt_prefix`, not usable strategy evidence. Valid
+unavailable-without-sample receipts and shutdowns produce diagnostics, not candles.
+Silence establishes neither a market closure nor availability during gaps.
+
+M1, M5, H1 and H4 remain independent native observations. Copy start/end elapsed
+microseconds and frame acquisition results are preserved; a shared probe does not
+prove atomic sampling. Position 0 is current and potentially incomplete under the
+[official CopyRates contract](https://www.mql5.com/en/docs/series/copyrates).
+A subsequent historical position is another observation, not provider-finalized
+closure. Volume is absent. Capture order, local publication order, later inspection
+and actual historical UTC availability are distinct.
+
+The reusable projection contains all prefix bars; JSON defaults to 16 selected
+bars/acquisitions and bounded revision details, with explicit omitted counts.
+`--details` accepts 0–128; `--timeframe` and `--native-open` optionally request one
+exact native observation. Schema `moneyway.mt5-causal-receipt-prefix-availability`,
+version 1, distinguishes validated integrity, context-specific source-observation
+causality and unresolved temporal guarantees. These are diagnostic assessments,
+not strategy-rule or verdict conversions.
+
+### Authentic validation
+
+The authentic OANDA demo US100 directory remained accessible and had advanced
+beyond record 643. The explicit boundary stayed at 643 with SHA256
+`984a8a26ca1f93182eec60e3a643e432494294b08a3a4b7319c2305608917f26`.
+The CLI validated **643 records and 642 probe dependencies** across
+`run-000000000001` (1–216) and `run-000000000217` (217–643).
+
+| Timeframe | Raw causal observations: distinct coordinates | Original usable-frame lifecycle | Additional diagnostic coordinates |
+| --------- | --------------------------------------------: | ------------------------------: | --------------------------------: |
+| M1        |                                           739 |                             723 |                                16 |
+| M5        |                                           229 |                             213 |                                16 |
+| H1        |                                            64 |                              62 |                                 2 |
+| H4        |                                            29 |                              29 |                                 0 |
+| Total     |                                         1,061 |                           1,027 |                                34 |
+
+An independent raw JSON coordinate-set comparison reproduced both columns.
+The 34 additional coordinates are observations in frames excluded by the existing
+lifecycle quality predicate; they do not upgrade acquisition quality. There were
+2,540 active-head observations and 38,100 historical-position observations,
+**zero historical-to-historical revisions**, nine source-unavailable events,
+seven unavailable-without-sample diagnostic receipts and one shutdown. Nine
+acquisitions carried incomplete/M1-unusable diagnostics. Authentic changes remain
+distinct from deliberately injected synthetic revisions in tests.
+
+External validation artifacts are under
+`%LOCALAPPDATA%/MoneyWay/audits/mt5-causal-validation-a36f1719779845a2b16a5c2339ae54ce/`.
+`authentic-643.json` is 84,487 bytes, SHA256
+`1ba8a1bab9ee476403f43e9a833a964f322fe63752840fbca77e8d29ff9ceea2`;
+its evidence manifest is
+`7360bd85d817b673ed98a7023139e4c9392f056d741731f1ee80dbda06eb05f0`.
+Copies of authentic bytes in one external directory established two append tests:
+
+| Pinned prefix | Later records added through | Identical before/after report SHA256                               |
+| ------------: | --------------------------: | ------------------------------------------------------------------ |
+|           100 |                         217 | `4705edf60aaaae8b2fab51248c63f16a0081a8ed0af9bd0841c7ec817416635c` |
+|           217 |                         643 | `b8a930b53b3181e648b13162a24d2b5d8a223b8b27edb995f186f4b104bc05a2` |
+
+These reports used 128 details; whole-report byte hashes, including provenance
+and diagnostics, matched before and after adding future evidence. All copied
+record/probe hashes matched originals. All 1,286 initially pinned original
+record/probe/checkpoint files remained unchanged. The collector lock was neither
+read as evidence nor modified; no receipt acknowledgment or checkpoint advance
+was invoked. Existing source growth was not controlled by this command.
+
+### On-demand command and verification
+
+From repository root in Git Bash, after building, the tested invocation is:
+
+```bash
+dotnet ./src/backend/MoneyWay.Worker/bin/Debug/net10.0/MoneyWay.Worker.dll mt5-causal-availability \
+  --source "$(cygpath -m "$APPDATA")/MetaQuotes/Terminal/Common/Files/MoneyWayAutomaticReadOnly" \
+  --through-sequence 643 \
+  --through-sha256 984a8a26ca1f93182eec60e3a643e432494294b08a3a4b7319c2305608917f26 \
+  --details 8
+```
+
+The Worker exits before host construction. Default reports use a new external
+`%LOCALAPPDATA%/MoneyWay/audits/mt5-causal-availability-<id>.json`; an explicit
+`--report` must be an absolute new path outside Git and the source directory.
+Publication is create-only; existing reports are not overwritten. Exit codes:
+0 valid prefix (including explicit empty), 2 arguments/unsafe path, 3 invalid or
+unavailable prefix, 4 report I/O unavailable.
+
+The [new synthetic integration suite](../../tests/integration/MoneyWay.IntegrationTests/Mt5CausalAvailabilityTests.cs)
+passed 41 cases, including future corruption/aliases and more future files than
+the reader directory limit, sparse boundaries, exact revisions, frozen caller
+collections, quality diagnostics, independent frames, failure paths and source/
+checkpoint preservation. The broader MT5 integration selection passed **256**
+cases including these 41. Existing domain replay tests passed **19**, and
+application strategy-context tests passed **44**: **319 passed, 0 failed,
+0 skipped** across these non-overlapping selections. Full .NET build passed with
+zero warnings/errors. C# whitespace, Markdown formatting, local links and
+`git diff --check` are checked before publication.
+
+### Remaining bridge to canonical replay
+
+No `CandleSeries`, `AsOfUtc`, `StrategyReplayContext`, strategy verdict or order
+is produced. Source-observation causality supplies no authenticated UTC coordinate.
+Historical UTC availability, provider candle closure and multi-timeframe atomicity
+remain `unresolved`. The Windows/WSL clock continuity blocker remains
+`BLOCKED_CLOCK_CONTINUITY_UNPROVABLE`; already verified Linux NTS authentication
+is unchanged. Preserve:
+
+```text
+selection_interval_propagation = unresolved
+overall_utc_uncertainty = unresolved
+windows_clock_authenticated = false
+mt5_native_utc_authenticated = false
+canonical_utc_conversion_authorized = false
+utc_conversion_authenticated = false
+canonical_ready = false
+```
+
+The smallest next feature is a separately scoped, fail-closed contract for the
+evidence required to map a native source observation into canonical UTC
+availability: provider identity, native timestamp semantics/DST validity,
+authenticated observation-time bounds and clock continuity, with provenance and
+negative tests. Until independent evidence satisfies that contract, conversion
+must remain unavailable. Provider closure and freshness/warmup policy also need
+their own supported evidence before canonical ingestion; later native bars alone
+cannot supply those guarantees.

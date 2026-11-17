@@ -60,6 +60,12 @@ public sealed record Mt5LifecycleReport(string DirectoryScope, long? ThroughSequ
 public sealed class Mt5NativeLifecycleAudit
 {
     public Mt5LifecycleReport Analyze(Mt5ReceiptBatch batch, long? throughSequence = null, int detailLimit = 16)
+        => AnalyzeCore(batch, throughSequence, detailLimit, false);
+
+    internal Mt5LifecycleReport AnalyzePrefix(ValidatedMt5ReceiptPrefix prefix, int detailLimit)
+        => AnalyzeCore(prefix.ToBatch(), null, detailLimit, true);
+
+    private static Mt5LifecycleReport AnalyzeCore(Mt5ReceiptBatch batch, long? throughSequence, int detailLimit, bool causalProjection)
     {
         ArgumentNullException.ThrowIfNull(batch);
         if (throughSequence is <= 0 || detailLimit is < 0 or > 128) throw new ArgumentOutOfRangeException(nameof(detailLimit));
@@ -100,21 +106,30 @@ public sealed class Mt5NativeLifecycleAudit
             foreach (var frame in acquisition.Timeframes)
             {
                 if (!frames.TryGetValue(frame.Timeframe, out var stats)) frames.Add(frame.Timeframe, stats = new());
-                if (!meta.SourceStable || acquisition.ProbeGate != "passed" || acquisition.ConnectedBefore != true
-                    || acquisition.ConnectedAfter != true || frame.HeadConsistent != true || frame.CopyErrorCode != 0
-                    || frame.SynchronizedAfter?.Value != 1 || frame.Bars.Count == 0 || frame.Bars.Any(b => !b.OhlcValid))
-                { stats.Skipped++; heads.Remove(frame.Timeframe); continue; }
-                var head = frame.Bars[0].OpenTimeNative.Raw;
-                if (heads.TryGetValue(frame.Timeframe, out var previous))
+                var usable = meta.SourceStable && acquisition.ProbeGate == "passed" && acquisition.ConnectedBefore == true
+                    && acquisition.ConnectedAfter == true && frame.HeadConsistent == true && frame.CopyErrorCode == 0
+                    && frame.SynchronizedAfter?.Value == 1 && frame.Bars.Count > 0 && frame.Bars.All(b => b.OhlcValid);
+                if (!usable)
                 {
-                    if (head > previous)
+                    stats.Skipped++;
+                    heads.Remove(frame.Timeframe);
+                    if (!causalProjection) continue;
+                    segment++;
+                }
+                if (frame.Bars.Count == 0) continue;
+                /* The causal projection retains explicitly diagnostic raw observations and their quality flags.
+                   The existing retrospective audit keeps its original usable-frame filtering. */
+                if (usable && heads.TryGetValue(frame.Timeframe, out var previous))
+                {
+                    var current = frame.Bars[0].OpenTimeNative.Raw;
+                    if (current > previous)
                     {
                         stats.Advancements++;
-                        if (head - previous != frame.PeriodSeconds) stats.NonPeriodAdvancements++;
+                        if (current - previous != frame.PeriodSeconds) stats.NonPeriodAdvancements++;
                     }
-                    if (head < previous) { stats.Regressions++; segment++; }
+                    if (current < previous) { stats.Regressions++; segment++; }
                 }
-                heads[frame.Timeframe] = head;
+                if (usable) heads[frame.Timeframe] = frame.Bars[0].OpenTimeNative.Raw;
                 foreach (var bar in frame.Bars)
                 {
                     if (bar.NewerThanNextSeconds is { } delta && delta != frame.PeriodSeconds) stats.NonPeriodDeltas++;
@@ -123,7 +138,7 @@ public sealed class Mt5NativeLifecycleAudit
                     else state.Add(bar, reference!, segment);
                 }
                 // A partial sample can describe bars, but cannot join the next sample as continuous coverage.
-                if (!receipt.CompleteNativeSampleObserved) heads.Remove(frame.Timeframe);
+                if (!receipt.CompleteNativeSampleObserved || !usable) heads.Remove(frame.Timeframe);
             }
             if (!receipt.CompleteNativeSampleObserved) segment++;
         }
@@ -145,7 +160,7 @@ public sealed class Mt5NativeLifecycleAudit
         var rankedBars = all.OrderByDescending(b => b.RevisionCount).ThenBy(b => b.Timeframe, StringComparer.Ordinal)
             .ThenBy(b => b.OpenTimeNative.Raw).ToArray();
         // Prefer a representative of each supported frame before filling remaining detail slots.
-        var selectedBars = rankedBars.DistinctBy(b => b.Timeframe).Concat(rankedBars)
+        var selectedBars = causalProjection ? all : rankedBars.DistinctBy(b => b.Timeframe).Concat(rankedBars)
             .DistinctBy(b => (b.Timeframe, b.OpenTimeNative.Raw)).Take(detailLimit).ToArray();
         var runs = events.Where(e => e.Reference is not null).Select(e => e.Reference!).GroupBy(r => r.RunId)
             .Select(g => new Mt5LifecycleRun(g.Key, g.First(), g.Last(), g.Count())).ToArray();
@@ -154,7 +169,7 @@ public sealed class Mt5NativeLifecycleAudit
             Counts(events.Select(e => e.Reference?.Event ?? "blocked")), Counts(events.Select(e => e.EvidenceKind ?? "blocked")),
             Counts(diagnostics), Array.AsReadOnly(runs),
             Array.AsReadOnly(summaries), Array.AsReadOnly(selectedEvents), events.Count - selectedEvents.Length,
-            Array.AsReadOnly(selectedBars), Math.Max(0, all.Length - detailLimit));
+            Array.AsReadOnly(selectedBars), all.Length - selectedBars.Length);
     }
 
     private static long Sequence(Mt5ReceiptRecord r) => r.Observation?.Metadata.Sequence
