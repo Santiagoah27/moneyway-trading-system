@@ -1,5 +1,127 @@
 # Nasdaq historical report in the supervised local demo
 
+## WF2 historical entry evidence and causal diagnostic (2026-11-17)
+
+Initial clean synchronized checkpoint: `main` at
+`c4c220a581e81b73f2fa0863f09afa80edb96cc5`. The functional increment adds
+documentary entry assessment to the existing canonical historical report/API/UI.
+It introduces no strategy RuleId, evaluator, active metadata, price mapping,
+clock admission, broker endpoint, exit or PnL.
+
+### Source and behavior
+
+The existing `NasdaqHistoricalObservedEntry` is an exact Standard-eligibility-bound
+execution representation and requires execution at/after that eligibility. It
+is preserved. S14 cannot be forced into it. Instead, immutable diagnostic
+`NasdaqHistoricalEntryEvidence` records travel as optional bounded metadata in
+`NasdaqMentorSessionReplayInput` / its report. The binder never transports them
+to strategy evaluators. The writer/reader associate them with frozen completed
+canonical frames; they do not rerun a market cursor or strategy.
+
+The causal selector retains original platform/provider/symbol, event kind, human
+review ID/validation source, original clock text, explicit UTC mapping provenance,
+time precision/bounds, original optional price/units/deal reference, documented
+review date and historical availability. Missing values remain null. Known
+future evidence is excluded. Unknown historical availability is explicitly
+RetrospectiveOnly/NotAdmitted and cannot change causal selection. An approximate
+interval is not an exact broker fill; no nearest/later frame is substituted for
+an absent original boundary. All required and optional rule states, coverage,
+Step/AsOfUtc and verdict from the actual original exact frame remain frozen.
+
+`HistoricalEntry` in the lifecycle view is separate from `Entry` in the existing
+coherent trade snapshot. The panel displays original instrument/price/time and
+provenance, native-record gaps, original canonical rules, current SL/risk/TP
+statuses and explicit mismatch codes. EntryAuthorization always remains
+NotGrantedByDiagnostic; classification stays inconclusive. NativeRecordDocumented
+describes a complete supplied documentary record, not independent verification:
+NativeExecutionIndependentlyVerified stays false. An observed order, position or
+execution does not change StrategyVerdict or authorize an order.
+
+The v2 incremental reader retains at most sixteen exact entry-frame projections
+for the bounded reviews and checks the persisted assessment against actual
+frozen source frames. The bounded canonical-window reader applies the same
+diagnostic validation. Neither trusts a serialized Approved/native-verification
+claim or later WF2 state. Reports without entry metadata remain compatible.
+
+### Authentic S14 and the original chronology
+
+The reviewed source is [ADR 0026 S14](../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#214-human-confirmed-replay-2-initial-ustec-sl-price-2026-11-05-s14),
+the human-reviewed MT5 position row from the original Replay #2 mentor material.
+The original external screenshot bytes are unavailable here; no image path or
+hash is invented. Source instrument is **USTEC**, SELL. S14 confirms source entry
+price **29604.00** and position-opening field **2026.09.08 16:32:00 server**.
+Its documented September-8-only mapping gives **13:32Z / 08:32 America/Bogota**
+for that field. This is not an independently verified US100 native execution.
+Provider/deal identity, monetary units and authentic historical assertion
+availability remain unknown. The review is documented on 2026-11-05; no exact
+review-creation or historical availability instant is synthesized.
+
+The exporter adds S14 as a clearly retrospective annotation after canonical
+evaluation and preserves the adapter/CSV evidence. At 13:32Z current WF2 evidence
+is incomplete. WF2-001 is established at 13:34Z and WF2-002 at 13:35Z; at 13:36Z
+SL requires human validation, risk/TP wait and verdict is HumanValidationRequired.
+The original 13:32 rule snapshot is not replaced by those later passes. Current
+M5/M1 belong to the separately classified Standard branch; old timing claims
+about Standard M5 passing around 13:35 are not authoritative current WF2 results.
+The artifact records the actual statuses instead. The timing discrepancy is
+explicit; its cause and strategy-violation classification are not established.
+
+| UTC frame                   | WF2-001                 | WF2-002 | M5/M1 Standard | SL                      | Risk/TP | Verdict                 |
+| --------------------------- | ----------------------- | ------- | -------------- | ----------------------- | ------- | ----------------------- |
+| 13:32 original S14 field    | HumanValidationRequired | Waiting | NotApplicable  | Waiting                 | Waiting | HumanValidationRequired |
+| 13:35 later canonical frame | Passed                  | Passed  | NotApplicable  | Waiting                 | Waiting | Wait                    |
+| 13:36 later canonical frame | Passed                  | Passed  | NotApplicable  | HumanValidationRequired | Waiting | HumanValidationRequired |
+
+Primary artifact: `C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-dfb31f824fbe4357a0d96d9683a7b3e1.json`.
+Independent repeated emission: `C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-972cdd8f2c484a8e9a69e89e99b67e4d.json`.
+Both are 4,469,993 bytes and have SHA256
+`193fd37ac52f433a501f3dca673865bb459d5489e2dcf3e6a64028ec073d7244`.
+The full prefix contains 7,596 frames from August 31 22:01Z; an independent
+7,597-frame prefix preserves common rule/evidence, canonical diagnostic and
+entry-assessment fingerprints. The exported six frames cover 13:31Z-13:36Z.
+The extra 13:37 frame tests prefix stability, not an exit/fill interpretation.
+The manifest retains base commit `c4c220a581e81b73f2fa0863f09afa80edb96cc5`,
+26 actual runtime code hashes and the S14 repository-document version hash.
+Adapter, four CSVs and four protected prior reports retain their nine original
+hashes. No prior artifact is overwritten and no market acquisition is rerun.
+
+Validation: 2,050 Application Nasdaq/workflow/canonical cases, 131 Nasdaq
+integration cases, 19 domain replay cases, one regenerated authentic canonical/
+API case and one legacy authentic API case: **2,202 .NET passed, zero failed or
+skipped**. Focused 14-unit and 35-integration selections overlap those totals.
+All 35 frontend tests passed. Full .NET/frontend builds, ESLint, scoped
+formatting, local documentation links and `git diff --check` passed. No manual
+browser test or independent original-video/screenshot/deal verification was
+performed; source facts are the existing human-reviewed repository evidence.
+
+### Remaining critical path
+
+| Capability                                           | State and exact limit                                                                                                                                                                                        |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Historical human entry observation/causal diagnostic | Implemented, independently of missing SL; includes original source precision, original frame, retrospective/unavailable evidence and native mismatch.                                                        |
+| Entry authorization                                  | Not granted by this diagnostic. Canonical original eligibility/readiness remains authoritative; later passes do not backdate an entry.                                                                       |
+| Native execution evidence                            | HumanOnly: original matching US100 deal ID, price/unit, event kind, source-qualified time/mapping and authentic availability; S14 USTEC is not that record.                                                  |
+| Native initial SL, risk and TP                       | HumanOnly: exact native protective reference/initial stop and times, account basis/currency/loss/calculation evidence, and original selected important Low/TP. Existing consumers are implemented.           |
+| WF2 supervised execution snapshot                    | NotImplemented: compose compatible native entry/SL/risk/TP records without deriving fills or authorizing broker orders. Missing native SL prevents a complete authentic snapshot.                            |
+| WF2 exit evidence and economic outcome               | NotImplemented/BlockedByUnresolvedSpecification: original stop-management/exit execution, causal ordering, valuation/quantity/costs and outcome policy remain separate; none is inferred from price contact. |
+| Session completion and no-reentry                    | BlockedByUnresolvedSpecification: unresolved NQ-RISK-003/NQ-REENTRY-001 are not replaced with a universal one-trade policy. Existing terminal/cutoff guards remain implemented.                              |
+
+Without the missing historical SL, the entry diagnostic, source reconciliation,
+API/UI and synthetic contract tests can be completed. A complete original trade
+snapshot, compliant execution assessment, exit/outcome and completed supervised
+session require their actual source evidence and applicable approved contracts.
+
+**One next smallest functional feature:** WF2 supervised historical snapshot
+assembly from compatible documentary native entry and existing SL/risk/TP facts,
+with explicit unavailable/incompatible diagnostics and no broker execution.
+It must not turn this retrospective USTEC observation into an authorized US100 fill.
+
+**Critical human source question:** is there an original US100 execution/deal
+record for this same operation, with deal identity, original price/units,
+source-qualified time and evidence of when it became observable? If it only
+exists as USTEC testimony, retain that limitation. The entry-versus-S13 chronology
+also needs original source evidence before choosing any causal explanation.
+
 ## WF2-to-NQ-TP-001 canonical convergence (2026-11-17)
 
 Initial checkpoint: clean synchronized `main` at

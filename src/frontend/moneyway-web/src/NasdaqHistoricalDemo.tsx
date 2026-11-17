@@ -12,6 +12,7 @@ import type {
 function TradeLifecycle({ trade }: { trade: HistoricalTradeLifecycle }) {
     const risk = trade.scenario2RiskExposure;
     const target = trade.scenario2TakeProfit;
+    const humanEntry = trade.historicalEntry;
     const labels: Record<string, string> = {
         PreEntry: "Preentrada",
         Entry: "Entrada observada",
@@ -62,6 +63,126 @@ function TradeLifecycle({ trade }: { trade: HistoricalTradeLifecycle }) {
                     </tbody>
                 </table>
             </div>
+            {humanEntry && (
+                <section aria-label="Evidencia histórica de entrada humana">
+                    <h4>
+                        Entrada humana observada · {humanEntry.selectionStatus}
+                    </h4>
+                    <p>
+                        Una ejecución histórica observada no equivale a una
+                        entrada autorizada por la estrategia. Autorización:{" "}
+                        {humanEntry.entryAuthorization}. Clasificación:{" "}
+                        {humanEntry.failureClassification}.
+                    </p>
+                    <p>
+                        Verificación nativa independiente:{" "}
+                        {humanEntry.nativeExecutionIndependentlyVerified
+                            ? "Sí"
+                            : "No"}
+                        .
+                    </p>
+                    {humanEntry.observations.map((item) => (
+                        <article key={item.evidence.reviewId}>
+                            <p>
+                                {item.evidence.reviewId} ·{" "}
+                                {item.evidence.eventKind} ·{" "}
+                                {item.nativeExecutionStatus}.
+                            </p>
+                            <p>
+                                Instrumento original:{" "}
+                                {item.evidence.sourcePlatform} /{" "}
+                                {item.evidence.sourceProviderId ??
+                                    "Proveedor desconocido"}{" "}
+                                /{" "}
+                                {item.evidence.sourceSymbol ??
+                                    "Símbolo desconocido"}
+                                .
+                            </p>
+                            <p>
+                                Hora original:{" "}
+                                {item.evidence.originalTime ?? "No documentada"}{" "}
+                                · Precisión: {item.evidence.timePrecision}.
+                            </p>
+                            <p>
+                                Intervalo UTC documentado:{" "}
+                                {item.evidence.earliestEventUtc ??
+                                    "Sin conversión acreditada"}{" "}
+                                —{" "}
+                                {item.evidence.latestEventUtc ?? "Desconocido"}.
+                            </p>
+                            <p>
+                                Fuente temporal:{" "}
+                                {item.evidence.timeMappingReference ??
+                                    "No acreditada"}
+                                .
+                            </p>
+                            <p>
+                                Precio del instrumento original:{" "}
+                                {item.evidence.sourceEntryPriceText ??
+                                    "No documentado"}{" "}
+                                {item.evidence.sourcePriceUnit ??
+                                    "Unidad no documentada"}
+                                .
+                            </p>
+                            <p>
+                                Referencia de ejecución:{" "}
+                                {item.evidence.executionReference ??
+                                    "Falta registro nativo de ejecución"}
+                                .
+                            </p>
+                            <p>
+                                Disponibilidad histórica:{" "}
+                                {item.evidence.historicalAvailableAtUtc ??
+                                    "Desconocida; revisión retrospectiva no admitida en el replay"}{" "}
+                                · {item.availability}.
+                            </p>
+                            <p>
+                                Revisión documentada:{" "}
+                                {item.evidence.reviewCreatedOn ??
+                                    "Fecha no documentada"}{" "}
+                                · Validación humana:{" "}
+                                {item.evidence.humanValidationIdentity}.
+                            </p>
+                            <p>Fuente: {item.evidence.sourceReference}.</p>
+                            {item.canonicalAtEntry ? (
+                                <div>
+                                    <p>
+                                        Estado canónico original: frame{" "}
+                                        {item.canonicalAtEntry.step} ·{" "}
+                                        {item.canonicalAtEntry.asOfUtc} ·{" "}
+                                        {item.canonicalAtEntry.verdict ??
+                                            "Sin veredicto"}
+                                        .
+                                    </p>
+                                    <ul>
+                                        {item.canonicalAtEntry.rules.map(
+                                            (r) => (
+                                                <li key={r.ruleId}>
+                                                    {r.ruleId}: {r.result}
+                                                    {r.isRequired
+                                                        ? " · Required"
+                                                        : ""}
+                                                </li>
+                                            ),
+                                        )}
+                                    </ul>
+                                </div>
+                            ) : (
+                                <p>
+                                    No hay un frame exacto acreditado para la
+                                    hora de entrada; no se elige otro.
+                                </p>
+                            )}
+                            <p>Limitaciones: {item.issues.join(", ")}.</p>
+                        </article>
+                    ))}
+                    <p>
+                        Los estados actuales de SL, riesgo y TP aparecen en la
+                        tabla. Una confirmación posterior no retroautoriza la
+                        entrada original.
+                    </p>
+                </section>
+            )}
             {trade.scenario2StopLoss && (
                 <div>
                     <p>

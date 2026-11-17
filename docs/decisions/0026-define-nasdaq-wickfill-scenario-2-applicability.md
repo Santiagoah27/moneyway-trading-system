@@ -574,6 +574,42 @@ source records. Standard is unchanged. Authentic Replay #2 still has no approved
 US100 SL/exposure/target; S14 USTEC values remain separate. A synthetic established
 target is not execution, an exit, profit, strategy compliance or a complete trade.
 
+#### Historical entry assessment checkpoint (2026-11-17)
+
+The new `NasdaqHistoricalEntryEvidence` and `NasdaqHistoricalEntryCausalSelector`
+represent documentary human execution separately from canonical eligibility.
+The existing Standard-only `NasdaqHistoricalObservedEntry` requires exact prior
+eligibility and cannot carry S14's earlier opening as an authorized execution.
+That contract is not relaxed or replaced. The new record is diagnostic report
+metadata, never an evaluator input, strategy fact, RuleId, order or fill simulator.
+
+S14 below remains the source for USTEC/SELL, original MT5 position-opening field
+`2026.09.08 16:32:00`, source-reported entry price `29604.00`, and the documented
+session-specific conversion to `13:32Z`. This is source-field precision, not a
+verified US100 deal timestamp. Original broker/provider, deal identity, monetary
+price unit and authentic historical assertion availability are unknown. The
+record uses the documented S14 review date 2026-11-05 without inventing an exact
+review-creation instant. Original screenshot bytes/hash/path are not supplied;
+provenance remains the retained human-review record. A repository document hash
+identifies the version consumed by the exporter, not the external screenshot.
+
+Unknown historical availability is visibly retrospective/NotAdmitted. It cannot
+justify an earlier rule pass. Known future claims are excluded from earlier
+diagnostics; retrospective alternatives cannot change causal selection. Original
+exact entry-frame rules/coverage/verdict are frozen independently from current
+rules. Later WF2 recognition and Passed cannot overwrite the entry at 13:32Z,
+replace its original rule states or validate cross-feed prices. No explanation
+(different interpretation, incomplete data, unresolved specification or source
+chronology) is selected without evidence; failure classification is inconclusive.
+
+Current Replay #2 runs the explicit WF2 branch. Old Standard-path claims about
+M5 confirmation at 13:35 or mandatory M1 cannot be treated as current WF2 truth.
+The regenerated artifact reports actual M5/M1 statuses at each original frame;
+it does not manufacture Standard progression or change the baseline strategy.
+SL/risk/TP, observed entry in a coherent trade snapshot, native deal admission,
+exit and economic outcome remain independent. The read-only API/UI can display
+the historical human evidence and timing discrepancy without granting a trade.
+
 ### 2.14 Human-confirmed Replay #2 initial USTEC SL price (2026-11-05, S14)
 
 **Current evidence: `confirmed`, `context_specific` historical initial price, supported by human-reviewed visual evidence (`visual_only` source support).** S14 supplements S5-S7 for the September 8, 2026 Wickfill Scenario 2 SELL operation. The reviewer explicitly identifies the displayed stop as the ORIGINAL initial protective SL before subsequent stop management. This resolves the previously untranscribed historical USTEC initial price only; earlier statements in sections 2.4/2.13 that no numerical stop was registered describe the evidence available before S14 and remain historical. No earlier source is overwritten.

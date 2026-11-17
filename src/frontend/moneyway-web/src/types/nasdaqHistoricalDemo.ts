@@ -27,6 +27,46 @@ export interface HistoricalFrame {
 }
 
 export interface HistoricalTradeLifecycle {
+    historicalEntry?: {
+        asOfUtc: string;
+        selectionStatus: string;
+        scope: string;
+        entryAuthorization: string;
+        nativeExecutionIndependentlyVerified: boolean;
+        failureClassification: string;
+        observations: {
+            availability: string;
+            nativeExecutionStatus: string;
+            evidence: {
+                reviewId: string;
+                sourceReference: string;
+                humanValidationIdentity: string;
+                origin: string;
+                eventKind: string;
+                sourcePlatform: string;
+                sourceProviderId: string | null;
+                sourceSymbol: string | null;
+                originalTime: string | null;
+                timePrecision: string;
+                earliestEventUtc: string | null;
+                latestEventUtc: string | null;
+                timeMappingReference: string | null;
+                historicalAvailableAtUtc: string | null;
+                reviewCreatedOn: string | null;
+                sourceEntryPriceText: string | null;
+                sourcePriceUnit: string | null;
+                executionReference: string | null;
+            };
+            canonicalAtEntry: {
+                step: number;
+                asOfUtc: string;
+                verdict: string | null;
+                hasCompleteRequiredCoverage: boolean | null;
+                rules: HistoricalRule[];
+            } | null;
+            issues: string[];
+        }[];
+    } | null;
     scenario2TakeProfit?: {
         providerId: string;
         symbol: string;

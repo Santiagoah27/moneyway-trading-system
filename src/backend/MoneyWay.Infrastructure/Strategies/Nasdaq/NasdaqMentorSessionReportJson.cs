@@ -48,6 +48,8 @@ public static class NasdaqMentorSessionReportJson
         Property("EvidenceEncoding", "gzip-base64-utf8; Id = SHA256 of exact uncompressed UTF-8 bytes");
         Property("SessionId", report.SessionId);
         Property("Session", report.Session);
+        writer.WritePropertyName("HistoricalEntryEvidence");
+        JsonSerializer.Serialize(writer, report.HistoricalEntryEvidence);
         Property("SuppliedCsvFiles", report.SuppliedCsvFiles.Select(f => new { Timeframe = f.Key, Path = f.Value }));
         Property("Imports", report.Imports);
         Property("InputDiagnostics", report.InputDiagnostics);
@@ -72,6 +74,7 @@ public static class NasdaqMentorSessionReportJson
             canonical.CompleteCoverageDataUnavailableCount,
         } : null);
         writer.WriteStartArray("Frames");
+        var entryFrames = new List<NasdaqHistoricalEntryFrame>();
         for (var index = 0; index < report.Frames.Count; index++)
         {
             var frame = report.Frames[index];
@@ -146,7 +149,14 @@ public static class NasdaqMentorSessionReportJson
             Property("FactualEvaluation", frame.FactualEvaluation);
             // Flat presentation contract: no reference metadata or engine graph reconstruction by the UI.
             writer.WritePropertyName("TradeLifecycle");
-            JsonSerializer.Serialize(writer, NasdaqHistoricalTradeLifecycleSummary.FromFrame(frame));
+            if (report.HistoricalEntryEvidence.Any(e => e.EarliestEventUtc == observation.AsOfUtc && e.LatestEventUtc == observation.AsOfUtc))
+                entryFrames.Add(NasdaqHistoricalEntryCausalSelector.Frame(frame, report.Canonical?.Frames[index].Verdict.ToString(),
+                    report.Canonical?.Frames[index].HasCompleteRequiredCoverage));
+            JsonSerializer.Serialize(writer, NasdaqHistoricalTradeLifecycleSummary.FromFrame(frame) with
+            {
+                HistoricalEntry = new NasdaqHistoricalEntryCausalSelector().Select(report.Session, observation.AsOfUtc,
+                    report.HistoricalEntryEvidence, entryFrames)
+            });
             writer.WriteEndObject();
             writer.Flush();
         }

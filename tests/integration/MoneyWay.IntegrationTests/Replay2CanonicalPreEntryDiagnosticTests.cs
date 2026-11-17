@@ -28,6 +28,9 @@ public sealed partial class LocalNasdaqMentorSessionTests
         const string previous = @"C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-d0b29e8617c9498298b4420ab854cae0.json";
         const string previousHash = "4fec5c8d3f409dc0b763ac009a2ba91a350e7bf0643b65b2905f24ca93bcd0a7";
         Assert.Equal(previousHash, FileSha256(previous));
+        const string priorTp = @"C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-a1d8dc2b3c7149ada452e3e106648ee2.json";
+        const string priorTpHash = "605b994f5e3b1f98e32d970950b80f86449a0a39c6b8fe307b41a40ba55df66d";
+        Assert.Equal(priorTpHash, FileSha256(priorTp));
         var first = RunS11Prefix(36);
         var longer = RunS11Prefix(37);
         var definition = MoneyWayNasdaqStrategyDefinition.Instance;
@@ -104,15 +107,37 @@ public sealed partial class LocalNasdaqMentorSessionTests
         // Export native completed diagnostic/observation objects, never a recalculated verdict or status summary.
         // The envelope is test-local provenance; it is not the production mentor-report schema.
         var options = new JsonSerializerOptions { ReferenceHandler = ReferenceHandler.Preserve };
+        var reviews = new[] { new NasdaqHistoricalEntryEvidence(first.Input.Session, "WickfillScenario2", "Sell", "S14-position-opening",
+            "docs/decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md section 2.14/S14; human-reviewed MT5 position row; external screenshot bytes not supplied",
+            "S14 human reviewer documented in ADR 0026", "HumanReview", "PositionOpeningField", "MetaTrader 5", null, "USTEC",
+            "2026.09.08 16:32:00 MT5 server", "SourceReportedSecond", S9Time(32), S9Time(32),
+            "ADR 0026 S14: September-8 position-opening field only; server = America/Bogota + 8h", null, new DateOnly(2026, 11, 5),
+            29604.00m, null, null) };
+        NasdaqHistoricalEntryAssessment? EntryAudit(NasdaqMentorSessionFrame frame,
+            IReadOnlyList<NasdaqMentorSessionFrame> history, MoneyWay.Application.Backtesting.Diagnostics.MultiTimeframeStrategyBacktestDiagnosticsReport diagnostics) =>
+            new NasdaqHistoricalEntryCausalSelector().Select(first.Input.Session, frame.Strategy.AsOfUtc, reviews,
+                history.Where(f => f.Strategy.AsOfUtc == S9Time(32)).Select(f =>
+                { var d = diagnostics.Frames.Single(d => d.Step == f.Strategy.Step); return NasdaqHistoricalEntryCausalSelector.Frame(f, d.Verdict.ToString(), d.HasCompleteRequiredCoverage); }));
+        foreach (var frame in selected)
+            Assert.Equal(JsonSerializer.Serialize(EntryAudit(frame, first.Link.Frames, canonical)),
+                JsonSerializer.Serialize(EntryAudit(frame, longer.Link.Frames, longer.Canonical)));
         var artifact = new
         {
             Schema = "moneyway.canonical-preentry-window",
             SchemaVersion = 1,
-            CanonicalRuntimeCommit = "713a88747a6f502fa6ad5bdf747b6eaa3ff406c2",
-            RuntimeChanges = "WF2-SL-to-NQ-TP-001 convergence; no native SL, exposure or TP evidence invented",
+            CanonicalRuntimeCommit = "c4c220a581e81b73f2fa0863f09afa80edb96cc5",
+            RuntimeChanges = "WF2 historical-entry diagnostic only; S14 retrospective USTEC position field is not US100 execution or entry authorization",
             Generator = "tests/integration/MoneyWay.IntegrationTests/Replay2CanonicalPreEntryDiagnosticTests.cs",
             Adapter = new { Path = adapterPath, SHA256 = adapterHash },
             first.Input.Session,
+            HistoricalEntryEvidence = JsonSerializer.SerializeToElement(reviews),
+            HistoricalEntrySource = new
+            {
+                Document = "docs/decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md",
+                SHA256 = FileSha256(Path.Combine(FindRepositoryRoot(), "docs/decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md")),
+                ReviewSection = "2.14/S14",
+                ScreenshotBytesAvailable = false
+            },
             Inputs = first.Input.CsvFiles.Select(p => new { Timeframe = p.Key, Path = p.Value, SHA256 = FileSha256(p.Value) }).ToArray(),
             EvaluatedPrefixStartUtc = canonical.FirstAsOfUtc,
             EvaluatedPrefixEndUtc = canonical.LastAsOfUtc,
@@ -139,6 +164,12 @@ public sealed partial class LocalNasdaqMentorSessionTests
                 "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqWickfillScenario2TakeProfitRuleFact.cs",
                 "src/backend/MoneyWay.Application/Strategies/Nasdaq/MentorSessions/NasdaqHistoricalTradeLifecycleSummary.cs",
                 "src/backend/MoneyWay.Infrastructure/Strategies/Nasdaq/ReadNasdaqHistoricalReport.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/MentorSessions/NasdaqHistoricalEntryAssessment.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/MentorSessions/NasdaqMentorSessionReplayInput.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/MentorSessions/NasdaqMentorSessionReplayReport.cs",
+                "src/backend/MoneyWay.Infrastructure/Strategies/Nasdaq/NasdaqMentorSessionReportJson.cs",
+                "src/backend/MoneyWay.Infrastructure/Strategies/Nasdaq/NasdaqHistoricalEntryReportProjection.cs",
+                "src/backend/MoneyWay.Infrastructure/Strategies/Nasdaq/ReadNasdaqCanonicalPreEntryWindow.cs",
                 "src/backend/MoneyWay.Application/StrategyReplay/Workflow/AdvanceStrategyReplayProgressionUseCase.cs",
                 "src/backend/MoneyWay.Application/StrategyReplay/Workflow/MoneyWayReplayWorkflowDefinitions.cs",
                 "src/backend/MoneyWay.Application/StrategyReplay/Workflow/StrategyReplayRulePrerequisite.cs",
@@ -155,20 +186,25 @@ public sealed partial class LocalNasdaqMentorSessionTests
                 f.Snapshot,
                 f.ContactResolution,
                 f.DocumentedExit,
-                f.FactualEvaluation
+                f.FactualEvaluation,
+                HistoricalEntryAssessment = JsonSerializer.SerializeToElement(EntryAudit(f, first.Link.Frames, canonical))
             }).ToArray(),
-            Limitations = "Bounded canonical pre-entry diagnostic only; no trade, fill, SL/TP/risk/PnL or retroactive authorization of 08:32 entry. WF2-SL-risk-TP rule consumers implemented; original native SL, exposure and TP evidence missing; adapter and CSVs unchanged."
+            Limitations = "Retrospective S14 source-reported USTEC opening field/price only; historical availability, native deal and US100 correspondence unverified. Original frozen entry-frame rules cannot be replaced by later WF2 Passed. No entry authorization, native fill, SL/TP/risk/PnL. Adapter/CSVs unchanged."
         };
         var directory = @"C:\MoneyWay\session\reports\2026-09-08";
         Directory.CreateDirectory(directory);
         var path = Path.Combine(directory, $"canonical-preentry-{Guid.NewGuid():N}.json");
         using (var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write)) JsonSerializer.Serialize(stream, artifact, options);
+        var repeated = Path.Combine(directory, $"canonical-preentry-{Guid.NewGuid():N}.json");
+        using (var stream = new FileStream(repeated, FileMode.CreateNew, FileAccess.Write)) JsonSerializer.Serialize(stream, artifact, options);
+        Assert.Equal(FileSha256(path), FileSha256(repeated));
         using var parsed = JsonDocument.Parse(File.ReadAllText(path));
         Assert.Equal("moneyway.canonical-preentry-window", parsed.RootElement.GetProperty("Schema").GetString());
         Assert.Equal(6, parsed.RootElement.GetProperty("Frames").GetArrayLength());
         Assert.Equal(adapterHash, FileSha256(adapterPath));
         Assert.Equal(originalHash, FileSha256(original));
         Assert.Equal(previousHash, FileSha256(previous));
+        Assert.Equal(priorTpHash, FileSha256(priorTp));
         using var reader = new MoneyWay.Infrastructure.Strategies.Nasdaq.ReadNasdaqHistoricalReport();
         var view = reader.ExecuteAsync(path, FileSha256(path)).GetAwaiter().GetResult();
         Assert.Equal("HumanValidationRequired", view.SelectedFrame!.Verdict);
@@ -186,6 +222,16 @@ public sealed partial class LocalNasdaqMentorSessionTests
         Assert.Equal("Waiting", http.SelectedFrame.TradeLifecycle.Stages.Single(s => s.Stage == "Risk").RuleResult);
         Assert.Equal("Waiting", http.SelectedFrame.TradeLifecycle.Stages.Single(s => s.Stage == "TakeProfit").RuleResult);
         Assert.Null(http.SelectedFrame.TradeLifecycle.Scenario2TakeProfit);
+        var entry = Assert.Single(http.SelectedFrame.TradeLifecycle.HistoricalEntry!.Observations);
+        Assert.Equal("RetrospectiveOnly", http.SelectedFrame.TradeLifecycle.HistoricalEntry.SelectionStatus);
+        Assert.Equal("USTEC", entry.Evidence.SourceSymbol); Assert.Equal(S9Time(32), entry.Evidence.EarliestEventUtc);
+        Assert.Equal(29604.00m, entry.Evidence.SourceEntryPrice); Assert.Null(entry.Evidence.HistoricalAvailableAtUtc);
+        Assert.Contains("Wf2NotPassedAtOriginalEntry", entry.Issues);
+        Assert.Contains("OriginalInstrumentMismatch_NoMapping", entry.Issues);
+        Assert.Equal(S9Time(32), entry.CanonicalAtEntry!.AsOfUtc);
+        output.WriteLine($"REPEATED ARTIFACT: {repeated}; SHA256: {FileSha256(repeated)}");
+        foreach (var rule in entry.CanonicalAtEntry.Rules.Where(r => r.RuleId is "NQ-WF2-001" or "NQ-WF2-002" or "NQ-M5-001" or "NQ-M1-001"))
+            output.WriteLine($"ORIGINAL ENTRY FRAME {entry.CanonicalAtEntry.AsOfUtc:O}: {rule.RuleId}={rule.Result}; no retroauthorization.");
         output.WriteLine($"ARTIFACT: {path}\nSHA256: {FileSha256(path)}\nBytes: {new FileInfo(path).Length}");
         output.WriteLine($"PREFIX: {canonical.FirstAsOfUtc:O} through {canonical.LastAsOfUtc:O}; {canonical.FrameCount} frames. WINDOW: 13:31Z-13:36Z.");
         foreach (var f in selected)

@@ -45,6 +45,11 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
                 var session = headers["Session"];
                 Require(Id(session, "StrategyId") == "moneyway-nasdaq");
                 var day = DateOnly.ParseExact(Text(session.GetProperty("TradingDay")), "yyyy-MM-dd", CultureInfo.InvariantCulture);
+                var reviewSession = new NasdaqDemoSessionIdentity(new(Id(session, "StrategyId")), new(Id(session, "StrategyVersion")),
+                    new(Id(session, "ProviderId")), new(Id(session, "Symbol")), day);
+                var reviews = headers.TryGetValue("HistoricalEntryEvidence", out var reviewJson)
+                    ? NasdaqHistoricalEntryReportProjection.Evidence(reviewJson, reviewSession) : [];
+                var entryFrames = new List<NasdaqHistoricalEntryFrame>();
                 json.Token(JsonTokenType.StartArray);
                 while (json.Peek() != JsonTokenType.EndArray)
                 {
@@ -56,6 +61,14 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
                     first ??= at;
                     previous = at;
                     var projection = Frame(frame, step, at, Id(session, "ProviderId"), Id(session, "Symbol"));
+                    if (reviews.Any(e => e.EarliestEventUtc == at && e.LatestEventUtc == at))
+                        entryFrames.Add(NasdaqHistoricalEntryCausalSelector.Frame(projection));
+                    var entryAssessment = new NasdaqHistoricalEntryCausalSelector().Select(reviewSession, at, reviews, entryFrames);
+                    JsonElement? storedEntry = frame.TryGetProperty("TradeLifecycle", out var trade)
+                        && trade.TryGetProperty("HistoricalEntry", out var entry) ? entry : null;
+                    NasdaqHistoricalEntryReportProjection.Validate(storedEntry, entryAssessment);
+                    if (projection.TradeLifecycle is { } lifecycle)
+                        projection = projection with { TradeLifecycle = lifecycle with { HistoricalEntry = entryAssessment } };
                     Require((projection.Verdict is not null) == hasCanonical);
                     lastVerdict = projection.Verdict;
                     if (DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(at, TimeZoneInfo.FindSystemTimeZoneById("America/Bogota")).DateTime) == day)
@@ -90,7 +103,7 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
                     hasCanonical = document.RootElement.ValueKind == JsonValueKind.Object;
                 }
                 if (name is "SchemaVersion" or "SessionId" or "Session" or "FrameCount" or "FinalVerdict"
-                    or "ReplayStartUtc" or "ReplayEndUtc" or "InputDiagnostics" or "BindingDiagnostics")
+                    or "ReplayStartUtc" or "ReplayEndUtc" or "InputDiagnostics" or "BindingDiagnostics" or "HistoricalEntryEvidence")
                     headers.Add(name, document.RootElement.Clone());
             }
         }

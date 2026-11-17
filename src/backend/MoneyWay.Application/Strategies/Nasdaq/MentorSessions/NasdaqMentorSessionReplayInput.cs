@@ -34,7 +34,8 @@ public sealed class NasdaqMentorSessionReplayInput
         { new(4, TimeframeUnit.Hour), new(1, TimeframeUnit.Hour), new(5, TimeframeUnit.Minute), new(1, TimeframeUnit.Minute) });
 
     public NasdaqMentorSessionReplayInput(string sessionId, NasdaqDemoSessionIdentity session,
-        IReadOnlyDictionary<Timeframe, string> csvFiles, IEnumerable<NasdaqMentorSessionEvidenceRecord> evidence)
+        IReadOnlyDictionary<Timeframe, string> csvFiles, IEnumerable<NasdaqMentorSessionEvidenceRecord> evidence,
+        IEnumerable<NasdaqHistoricalEntryEvidence>? historicalEntryEvidence = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId); ArgumentNullException.ThrowIfNull(csvFiles);
         ArgumentNullException.ThrowIfNull(evidence);
@@ -45,9 +46,17 @@ public sealed class NasdaqMentorSessionReplayInput
         if (records.Any(r => r is null) || records.Select(r => r.RecordId).Distinct(StringComparer.Ordinal).Count() != records.Length)
             throw new ArgumentException("Evidence record identities must be non-null and unique.", nameof(evidence));
         Evidence = Array.AsReadOnly(records);
+        var reviews = (historicalEntryEvidence ?? []).ToArray();
+        if (reviews.Length > 16 || reviews.Any(r => r is null || r.Session != Session)
+            || reviews.Select(r => r.ReviewId).Distinct(StringComparer.Ordinal).Count() != reviews.Length)
+            throw new ArgumentException("Entry reviews must be bounded, uniquely identified and associated with this session.");
+        foreach (var review in reviews) review.Validate();
+        HistoricalEntryEvidence = Array.AsReadOnly(reviews);
     }
     public string SessionId { get; }
     public NasdaqDemoSessionIdentity Session { get; }
     public IReadOnlyDictionary<Timeframe, string> CsvFiles { get; }
     public IReadOnlyList<NasdaqMentorSessionEvidenceRecord> Evidence { get; }
+    // Diagnostic-only metadata. The binder never transports these records to strategy evaluators.
+    public IReadOnlyList<NasdaqHistoricalEntryEvidence> HistoricalEntryEvidence { get; }
 }

@@ -659,6 +659,28 @@ The source-backed BE concept is favorable first encountered distinct Asia/London
 
 ### Retrospective annotation and conceptual session aggregate
 
+**2026-11-17 historical-entry diagnostic boundary:** documentary observations that
+cannot satisfy `NasdaqHistoricalObservedEntry`'s exact Standard eligibility and
+execution constraints are retained as `NasdaqHistoricalEntryEvidence` report
+metadata, not strategy replay inputs or RuleIds. The source platform/instrument,
+original event kind, native clock text, explicit UTC bounds/precision and mapping
+provenance, optional original price/units/deal reference, human validation identity,
+documented review date and authentic historical availability remain separate.
+Unknown fields stay null. An order-placement or position-opening field never
+becomes an independently verified native fill.
+
+The causal diagnostic consumes known availability only at/before the selected
+frame. Unknown availability is labeled RetrospectiveOnly/NotAdmitted, and known
+future records are excluded entirely. Retrospective claims cannot change causal
+selection or StrategyVerdict. Exact source-reported time permits comparison to
+an actually recorded original frame, not a later eligible frame. Approximate
+bounds or an absent exact boundary remain unresolved; no timestamp or boundary
+is synthesized. Complete documentary native records are labeled
+NativeRecordDocumented, while independent broker-record verification remains
+explicitly not performed. This projection never grants entry authorization or
+classifies a discrepancy as a violation/loss. Existing Standard execution,
+snapshot, strategy rules, clocks/admission and execution owners are unchanged.
+
 `NasdaqDemoSessionInput` is a conceptual aggregate, not a new C# type or API DTO. It contains:
 
 1. Exact session/strategy/instrument/provider identity, replay interval and real historical 4H/1H/5M/1M `CandleSeries`; optional canonical higher-resolution price observations and their authoritative order where available. Include session liquidity coverage and sufficient post-entry data; never synthesize missing candles.

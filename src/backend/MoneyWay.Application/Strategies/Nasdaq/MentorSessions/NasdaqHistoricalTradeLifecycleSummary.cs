@@ -71,6 +71,7 @@ public sealed record NasdaqHistoricalTradeLifecycleSummary(
     public NasdaqHistoricalScenario2Stop? Scenario2StopLoss { get; init; }
     public NasdaqHistoricalScenario2Risk? Scenario2RiskExposure { get; init; }
     public NasdaqHistoricalScenario2Target? Scenario2TakeProfit { get; init; }
+    public NasdaqHistoricalEntryAssessment? HistoricalEntry { get; init; }
 
     public static NasdaqHistoricalTradeSource Source(string inputType, DateTimeOffset observedAtUtc, string reference) =>
         new(inputType, observedAtUtc, reference[..Math.Min(512, reference.Length)],

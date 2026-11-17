@@ -322,6 +322,105 @@ it("renders exact human Scenario 2 target identity and original availability wit
     ).toBeTruthy();
 });
 
+it.each([false, true])(
+    "shows documentary human entry with honest precision, native gaps and original rules (%s)",
+    async (approximate) => {
+        respond({
+            ...report,
+            selectedSessionLastFrame: {
+                ...report.selectedSessionLastFrame!,
+                tradeLifecycle: {
+                    ...tradeFixture,
+                    historicalEntry: {
+                        asOfUtc: "2026-06-29T13:36:00Z",
+                        selectionStatus: "RetrospectiveOnly",
+                        scope: "HistoricalEvidenceAuditNotStrategyInput",
+                        entryAuthorization: "NotGrantedByDiagnostic",
+                        nativeExecutionIndependentlyVerified: false,
+                        failureClassification: "inconclusive",
+                        observations: [
+                            {
+                                availability: "RetrospectiveOnly",
+                                nativeExecutionStatus:
+                                    "NativeExecutionUnverified",
+                                evidence: {
+                                    reviewId: "synthetic:entry",
+                                    sourceReference: "synthetic:source-entry",
+                                    humanValidationIdentity:
+                                        "synthetic:human-reviewer",
+                                    origin: "HumanReview",
+                                    eventKind: "PositionOpeningField",
+                                    sourcePlatform: "MT5",
+                                    sourceProviderId: null,
+                                    sourceSymbol: "USTEC",
+                                    originalTime: "synthetic:16:32 server",
+                                    timePrecision: approximate
+                                        ? "Approximate"
+                                        : "SourceReportedSecond",
+                                    earliestEventUtc: "2026-06-29T13:32:00Z",
+                                    latestEventUtc: approximate
+                                        ? "2026-06-29T13:33:00Z"
+                                        : "2026-06-29T13:32:00Z",
+                                    timeMappingReference:
+                                        "synthetic:explicit-source-mapping",
+                                    historicalAvailableAtUtc: null,
+                                    reviewCreatedOn: "2026-11-05",
+                                    sourceEntryPriceText: null,
+                                    sourcePriceUnit: null,
+                                    executionReference: null,
+                                },
+                                canonicalAtEntry: approximate
+                                    ? null
+                                    : {
+                                          step: 32,
+                                          asOfUtc: "2026-06-29T13:32:00Z",
+                                          verdict: "HumanValidationRequired",
+                                          hasCompleteRequiredCoverage: true,
+                                          rules: [
+                                              {
+                                                  ...report
+                                                      .selectedSessionLastFrame!
+                                                      .rules[0],
+                                                  ruleId: "NQ-WF2-002",
+                                                  result: "Waiting",
+                                              },
+                                          ],
+                                      },
+                                issues: [
+                                    "HistoricalAvailabilityUnknown_NotAdmitted",
+                                    "OriginalInstrumentMismatch_NoMapping",
+                                    "Wf2NotPassedAtOriginalEntry",
+                                ],
+                            },
+                        ],
+                    },
+                },
+            },
+        });
+        const panel = await screen.findByRole("region", {
+            name: "Evidencia histórica de entrada humana",
+        });
+        expect(panel.textContent).toContain("NotGrantedByDiagnostic");
+        expect(panel.textContent).toContain(
+            "Verificación nativa independiente: No",
+        );
+        expect(panel.textContent).toContain("USTEC");
+        expect(panel.textContent).toContain("synthetic:source-entry");
+        expect(panel.textContent).toContain(
+            "revisión retrospectiva no admitida",
+        );
+        expect(panel.textContent).toContain(
+            "Falta registro nativo de ejecución",
+        );
+        expect(panel.textContent).toContain("No documentado");
+        if (approximate)
+            expect(panel.textContent).toContain(
+                "No hay un frame exacto acreditado",
+            );
+        else expect(panel.textContent).toContain("NQ-WF2-002: Waiting");
+    },
+);
+
 // Synthetic transport fixtures: explicit timestamps, never an ordinal-to-time formula.
 function navigable(step = 8000): NasdaqHistoricalReport {
     const steps = [7998, 7999, 8000];

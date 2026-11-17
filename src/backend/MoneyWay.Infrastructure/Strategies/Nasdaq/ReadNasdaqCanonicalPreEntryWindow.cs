@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text.Json;
 using MoneyWay.Application.Strategies.Nasdaq.MentorSessions;
+using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 using MoneyWay.Domain.Strategies;
 
 namespace MoneyWay.Infrastructure.Strategies.Nasdaq;
@@ -75,6 +76,11 @@ internal sealed class ReadNasdaqCanonicalPreEntryWindow
         var frames = Values(Property(root, "Frames"));
         Require(frames.Length is > 0 and <= 128 && frames.Length <= prefixCount);
         var projections = new List<NasdaqHistoricalFrameSummary>();
+        var reviewSession = new NasdaqDemoSessionIdentity(new(Id(session, "StrategyId")), new(Id(session, "StrategyVersion")),
+            new(Id(session, "ProviderId")), new(Id(session, "Symbol")), day);
+        var reviews = root.TryGetProperty("HistoricalEntryEvidence", out var reviewJson)
+            ? NasdaqHistoricalEntryReportProjection.Evidence(reviewJson, reviewSession) : [];
+        var entryFrames = new List<NasdaqHistoricalEntryFrame>();
         foreach (var frame in frames)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -127,6 +133,12 @@ internal sealed class ReadNasdaqCanonicalPreEntryWindow
                     OmittedSources = Math.Max(0, sources.Length - 16),
                     EvidenceScope = "RecordedRuleEvaluationsAndInputs"
                 }));
+            var current = projections[^1];
+            if (reviews.Any(e => e.EarliestEventUtc == at && e.LatestEventUtc == at))
+                entryFrames.Add(NasdaqHistoricalEntryCausalSelector.Frame(current));
+            var assessment = new NasdaqHistoricalEntryCausalSelector().Select(reviewSession, at, reviews, entryFrames);
+            NasdaqHistoricalEntryReportProjection.Validate(frame.TryGetProperty("HistoricalEntryAssessment", out var storedEntry) ? storedEntry : null, assessment);
+            projections[^1] = current with { TradeLifecycle = current.TradeLifecycle! with { HistoricalEntry = assessment } };
         }
         Require(projections[0].AsOfUtc == start && projections[^1].AsOfUtc == end);
         var selected = requested is null ? projections[^1] : projections.SingleOrDefault(f => f.Step == requested);
