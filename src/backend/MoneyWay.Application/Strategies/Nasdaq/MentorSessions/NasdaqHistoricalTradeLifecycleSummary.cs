@@ -14,11 +14,25 @@ public sealed record NasdaqHistoricalTradeSource(string InputType, DateTimeOffse
 public sealed record NasdaqHistoricalRecordedExecution(decimal Price, DateTimeOffset EffectiveAtUtc);
 public sealed record NasdaqHistoricalScenario2Stop(string ReferenceId, decimal ProtectivePrice, decimal StopPrice,
     DateTimeOffset EffectiveAtUtc, DateTimeOffset ObservedAtUtc, NasdaqHistoricalTradeSource Source,
-    NasdaqHistoricalTradeSource ProtectiveSource);
+    NasdaqHistoricalTradeSource ProtectiveSource)
+{
+    public NasdaqHistoricalScenario2Binding? Binding { get; init; }
+    public string StopPriceText => StopPrice.ToString(CultureInfo.InvariantCulture);
+    public string ProtectivePriceText => ProtectivePrice.ToString(CultureInfo.InvariantCulture);
+}
+public sealed record NasdaqHistoricalScenario2Binding(NasdaqDemoSessionIdentity Session, long StartStep, DateTimeOffset StartAsOfUtc)
+{
+    internal static NasdaqHistoricalScenario2Binding From(NasdaqHumanWickfillScenario2StopLossRuleFact fact)
+    {
+        var start = fact.PreEntryEligibility.Reversal.Applicability.Fact.InitialTakeObservation;
+        return new(fact.Session, start.Step, start.AsOfUtc);
+    }
+}
 public sealed record NasdaqHistoricalScenario2Risk(NasdaqRiskExposure Exposure, decimal StopPrice,
     decimal? RiskRatio, bool RatioExceedsDecimalRange, decimal Limit, bool IsWithinLimit,
     DateTimeOffset EffectiveAtUtc, DateTimeOffset ObservedAtUtc, NasdaqHistoricalTradeSource Source)
 {
+    public NasdaqHistoricalScenario2Binding? Binding { get; init; }
     // Exact invariant strings survive JavaScript JSON numbers without reducing source decimal precision.
     public string AccountBasisAmountText => Exposure.AccountBasisAmount.ToString(CultureInfo.InvariantCulture);
     public string ReportedMaximumLossText => Exposure.ReportedMaximumLoss.ToString(CultureInfo.InvariantCulture);
@@ -32,6 +46,7 @@ public sealed record NasdaqHistoricalScenario2Target(string ProviderId, string S
     decimal TakeProfitPrice, decimal StopPrice, DateTimeOffset EffectiveAtUtc, DateTimeOffset ObservedAtUtc,
     NasdaqHistoricalTradeSource Source, NasdaqHistoricalTradeSource ReferenceSource)
 {
+    public NasdaqHistoricalScenario2Binding? Binding { get; init; }
     public string PriceUnit => "NativeInstrumentPrice";
     public string TargetReferencePriceText => TargetReferencePrice.ToString(CultureInfo.InvariantCulture);
     public string TakeProfitPriceText => TakeProfitPrice.ToString(CultureInfo.InvariantCulture);
@@ -48,7 +63,8 @@ public sealed record NasdaqHistoricalScenario2Target(string ProviderId, string S
             reference.GetType().Name, description, Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(json))),
             fact.TargetReferencePrice, fact.TakeProfitPrice, fact.StopLoss.StopPrice, fact.EffectiveAtUtc, o.ObservedAtUtc,
             NasdaqHistoricalTradeLifecycleSummary.Source(nameof(NasdaqWickfillScenario2TakeProfitObservation), o.ObservedAtUtc, o.SourceReference),
-            NasdaqHistoricalTradeLifecycleSummary.Source(reference.GetType().Name, reference.AvailableAtUtc, provenance));
+            NasdaqHistoricalTradeLifecycleSummary.Source(reference.GetType().Name, reference.AvailableAtUtc, provenance))
+        { Binding = NasdaqHistoricalScenario2Binding.From(fact.StopLoss) };
     }
 }
 
@@ -72,6 +88,7 @@ public sealed record NasdaqHistoricalTradeLifecycleSummary(
     public NasdaqHistoricalScenario2Risk? Scenario2RiskExposure { get; init; }
     public NasdaqHistoricalScenario2Target? Scenario2TakeProfit { get; init; }
     public NasdaqHistoricalEntryAssessment? HistoricalEntry { get; init; }
+    public NasdaqSupervisedHistoricalTradeSnapshot? SupervisedSnapshot { get; init; }
 
     public static NasdaqHistoricalTradeSource Source(string inputType, DateTimeOffset observedAtUtc, string reference) =>
         new(inputType, observedAtUtc, reference[..Math.Min(512, reference.Length)],
@@ -153,12 +170,14 @@ public sealed record NasdaqHistoricalTradeLifecycleSummary(
                 risk.RiskRatio, risk.RatioExceedsDecimalRange, risk.Limit, risk.IsWithinLimit, risk.EffectiveAtUtc,
                 risk.Selection.SupportingObservations[0].ObservedAtUtc,
                 Source(nameof(NasdaqWickfillScenario2RiskExposureObservation), risk.Selection.SupportingObservations[0].ObservedAtUtc,
-                    risk.Selection.SupportingObservations[0].SourceReference)),
+                    risk.Selection.SupportingObservations[0].SourceReference))
+            { Binding = NasdaqHistoricalScenario2Binding.From(risk.StopLoss) },
             Scenario2StopLoss = scenario2 is null ? null : new(scenario2.Selection.Fact.ProtectiveReference.ReferenceId,
                 scenario2.Selection.Fact.ProtectiveReference.Price, scenario2.StopPrice, scenario2.EffectiveAtUtc,
                 scenario2.Selection.Fact.ObservedAtUtc,
                 Source(nameof(NasdaqHumanWickfillScenario2StopLossObservation), scenario2.Selection.Fact.ObservedAtUtc, scenario2.Selection.Fact.SourceReference),
-                Source(nameof(NasdaqHumanWickfillScenario2StopLossReference), scenario2.Selection.Fact.ProtectiveReference.ObservedAtUtc, scenario2.Selection.Fact.ProtectiveReference.SourceReference)),
+                Source(nameof(NasdaqHumanWickfillScenario2StopLossReference), scenario2.Selection.Fact.ProtectiveReference.ObservedAtUtc, scenario2.Selection.Fact.ProtectiveReference.SourceReference))
+            { Binding = NasdaqHistoricalScenario2Binding.From(scenario2) },
             StopPrice = snapshot?.StopPrice,
             TakeProfitPrice = snapshot?.TakeProfitPrice,
             RiskRatio = snapshot?.Risk.RiskRatio,

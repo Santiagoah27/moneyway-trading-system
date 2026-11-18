@@ -2,7 +2,10 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NasdaqHistoricalDemo } from "./NasdaqHistoricalDemo";
-import type { NasdaqHistoricalReport } from "./types/nasdaqHistoricalDemo";
+import type {
+    NasdaqHistoricalReport,
+    SupervisedHistoricalTradeSnapshot,
+} from "./types/nasdaqHistoricalDemo";
 
 const report: NasdaqHistoricalReport = {
     sessionId: "synthetic-no-trade-ui-only",
@@ -418,6 +421,271 @@ it.each([false, true])(
                 "No hay un frame exacto acreditado",
             );
         else expect(panel.textContent).toContain("NQ-WF2-002: Waiting");
+    },
+);
+
+it.each([false, true])(
+    "renders a supervised WF2 snapshot with independent documentary completeness (%s)",
+    async (parameters) => {
+        const source = {
+            sourceReference: "synthetic:native-source",
+            sourceReferenceSha256: "a".repeat(64),
+        };
+        const snapshot: SupervisedHistoricalTradeSnapshot = {
+            session: {
+                providerId: { value: "synthetic-native" },
+                symbol: { value: "US100" },
+                tradingDay: "2026-06-29",
+            },
+            frameStep: 36,
+            asOfUtc: "2026-06-29T13:36:00Z",
+            canonicalVerdict: "HumanValidationRequired",
+            components: [
+                {
+                    stage: "Entry",
+                    status: "RecordedArtifact",
+                    ruleId: null,
+                    ruleResult: null,
+                    reason: "Documentary source, not authorization.",
+                },
+                {
+                    stage: "StopLoss",
+                    status: parameters
+                        ? "RecordedArtifact"
+                        : "MissingOrBlocked",
+                    ruleId: "NQ-SL-001",
+                    ruleResult: parameters
+                        ? "Passed"
+                        : "HumanValidationRequired",
+                    reason: "Original native reference and human validation required.",
+                },
+                {
+                    stage: "Risk",
+                    status: parameters
+                        ? "RecordedArtifact"
+                        : "MissingOrBlocked",
+                    ruleId: "NQ-RISK-001",
+                    ruleResult: parameters ? "Passed" : "Waiting",
+                    reason: "No size inferred.",
+                },
+                {
+                    stage: "TakeProfit",
+                    status: parameters
+                        ? "RecordedArtifact"
+                        : "MissingOrBlocked",
+                    ruleId: "NQ-TP-001",
+                    ruleResult: parameters ? "Passed" : "Waiting",
+                    reason: "Original selected Low only.",
+                },
+                {
+                    stage: "Execution",
+                    status: parameters ? "RecordedArtifact" : "MissingInput",
+                    ruleId: null,
+                    ruleResult: null,
+                    reason: "No independent broker verification.",
+                },
+                {
+                    stage: "DocumentedExit",
+                    status: "NotImplemented",
+                    ruleId: null,
+                    ruleResult: null,
+                    reason: "No WF2 exit.",
+                },
+                {
+                    stage: "EconomicOutcome",
+                    status: "NotImplemented",
+                    ruleId: null,
+                    ruleResult: null,
+                    reason: "No economic result.",
+                },
+            ],
+            missingEvidence: [
+                "IndependentNativeExecutionVerificationNotPerformed",
+                "Wf2DocumentedExitNotIntegrated",
+                "EconomicOutcomeNotImplemented",
+            ],
+            instrumentCorrespondence: parameters
+                ? "native_identity_matches"
+                : "unresolved",
+            historicalEntryObserved: true,
+            canonicalEligibilityRecordedAtEntry: parameters,
+            stopLossSupported: parameters,
+            riskExposureSupported: parameters,
+            takeProfitSupported: parameters,
+            nativeExecutionDocumented: parameters,
+            canonicalBindingsConsistent: parameters,
+            documentedParameterSetAvailable: parameters,
+            documentaryEntry: {
+                asOfUtc: "2026-06-29T13:36:00Z",
+                selectionStatus: parameters ? "Unique" : "RetrospectiveOnly",
+                scope: "HistoricalEvidenceAuditNotStrategyInput",
+                entryAuthorization: "NotGrantedByDiagnostic",
+                nativeExecutionIndependentlyVerified: false,
+                failureClassification: "inconclusive",
+                observations: [
+                    {
+                        availability: parameters
+                            ? "AvailableAtSelectedFrame"
+                            : "RetrospectiveOnly",
+                        nativeExecutionStatus: parameters
+                            ? "NativeRecordDocumented"
+                            : "NativeExecutionUnverified",
+                        evidence: {
+                            reviewId: "synthetic:entry",
+                            sourceReference: "synthetic:original-entry",
+                            humanValidationIdentity: "synthetic:human",
+                            origin: parameters
+                                ? "NativeExecutionRecord"
+                                : "HumanReview",
+                            eventKind: "ReportedExecution",
+                            sourcePlatform: "synthetic:platform",
+                            sourceProviderId: parameters
+                                ? "synthetic-native"
+                                : null,
+                            sourceSymbol: parameters ? "US100" : "USTEC",
+                            originalTime: "synthetic:13:32Z",
+                            timePrecision: parameters
+                                ? "ExactNativeRecord"
+                                : "SourceReportedSecond",
+                            earliestEventUtc: "2026-06-29T13:32:00Z",
+                            latestEventUtc: "2026-06-29T13:32:00Z",
+                            timeMappingReference: "synthetic:explicit-mapping",
+                            historicalAvailableAtUtc: parameters
+                                ? "2026-06-29T13:32:00Z"
+                                : null,
+                            reviewCreatedOn: null,
+                            sourceEntryPriceText: parameters
+                                ? "110"
+                                : "29604.00",
+                            sourcePriceUnit: "NativeInstrumentPrice",
+                            executionReference: parameters
+                                ? "synthetic:deal-123"
+                                : null,
+                        },
+                        canonicalAtEntry: parameters
+                            ? {
+                                  step: 32,
+                                  asOfUtc: "2026-06-29T13:32:00Z",
+                                  verdict: "Ready",
+                                  hasCompleteRequiredCoverage: true,
+                                  rules: [
+                                      {
+                                          ...report.selectedSessionLastFrame!
+                                              .rules[0],
+                                          ruleId: "NQ-WF2-002",
+                                          result: "Passed",
+                                          evaluatedAtUtc:
+                                              "2026-06-29T13:32:00Z",
+                                      },
+                                  ],
+                              }
+                            : null,
+                        issues: [],
+                    },
+                ],
+            },
+            stopLoss: parameters
+                ? {
+                      referenceId: "synthetic:peak",
+                      protectivePrice: 115,
+                      stopPrice: 116,
+                      stopPriceText: "116.00000000000000000000000001",
+                      effectiveAtUtc: "2026-06-29T13:31:00Z",
+                      observedAtUtc: "2026-06-29T13:31:00Z",
+                      source,
+                      protectiveSource: source,
+                  }
+                : null,
+            risk: parameters
+                ? {
+                      exposure: {
+                          accountBasisAmount: 10000,
+                          reportedMaximumLoss: 100,
+                          currency: "USD",
+                          accountBasis: "synthetic:basis",
+                          plannedEntryPrice: 110,
+                          costTreatment: "synthetic:costs",
+                          calculationSourceReference: "synthetic:calculation",
+                          quantity: null,
+                          quantityUnit: null,
+                      },
+                      accountBasisAmountText: "10000",
+                      reportedMaximumLossText: "100",
+                      plannedEntryPriceText: "110",
+                      quantityText: null,
+                      stopPriceText: "116.00000000000000000000000001",
+                      riskRatioText: "0.01",
+                      stopPrice: 116,
+                      riskRatio: 0.01,
+                      ratioExceedsDecimalRange: false,
+                      limit: 0.01,
+                      isWithinLimit: true,
+                      effectiveAtUtc: "2026-06-29T13:31:00Z",
+                      observedAtUtc: "2026-06-29T13:31:00Z",
+                      source,
+                  }
+                : null,
+            takeProfit: parameters
+                ? {
+                      providerId: "synthetic-native",
+                      symbol: "US100",
+                      direction: "Sell",
+                      referenceKind: "SessionLevel",
+                      referenceDescription: "AsiaLow",
+                      referenceSha256: "b".repeat(64),
+                      targetReferencePriceText: "90",
+                      takeProfitPriceText: "90",
+                      priceUnit: "NativeInstrumentPrice",
+                      effectiveAtUtc: "2026-06-29T13:31:00Z",
+                      observedAtUtc: "2026-06-29T13:31:00Z",
+                      source,
+                      referenceSource: source,
+                  }
+                : null,
+            scope: "SupervisedHistoricalEvidenceSnapshot",
+            scenario: "WickfillScenario2",
+            direction: "Sell",
+            entryAuthorization: "NotGrantedBySnapshot",
+            nativeExecutionIndependentlyVerified: false,
+            exitSupported: false,
+            exit: null,
+            economicOutcomeSupported: false,
+            economicOutcome: null,
+            completeSupervisedTrade: false,
+            failureClassification: "inconclusive",
+        };
+        respond({
+            ...report,
+            selectedSessionLastFrame: {
+                ...report.selectedSessionLastFrame!,
+                tradeLifecycle: {
+                    ...tradeFixture,
+                    supervisedSnapshot: snapshot,
+                },
+            },
+        });
+        const panel = await screen.findByRole("region", {
+            name: "Snapshot histórico supervisado WF2",
+        });
+        expect(panel.textContent).toContain("Incompleto");
+        expect(panel.textContent).toContain("NotGrantedBySnapshot");
+        expect(panel.textContent).toContain(
+            "Verificación nativa independiente: No",
+        );
+        expect(panel.textContent).toContain("NotImplemented");
+        expect(panel.textContent).toContain("synthetic:original-entry");
+        if (parameters) {
+            expect(panel.textContent).toContain(
+                "116.00000000000000000000000001",
+            );
+            expect(panel.textContent).toContain("100 / 10000 USD");
+            expect(panel.textContent).toContain("synthetic:deal-123");
+        } else {
+            expect(panel.textContent).toContain("USTEC: 29604.00");
+            expect(panel.textContent).toContain("unresolved");
+            expect(panel.textContent).toContain("Falta SL nativo");
+            expect(panel.textContent).toContain("Falta deal nativo");
+        }
     },
 );
 

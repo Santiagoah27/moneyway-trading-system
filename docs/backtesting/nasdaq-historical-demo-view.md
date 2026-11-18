@@ -1,5 +1,137 @@
 # Nasdaq historical report in the supervised local demo
 
+## WF2 supervised historical trade snapshot (2026-11-17)
+
+Initial checkpoint: clean synchronized `main` at
+`86a477284779c26d35a4807b3573b89ac43125b4`. The new
+`NasdaqSupervisedHistoricalTradeSnapshotAssembler` consumes the existing
+`NasdaqHistoricalTradeLifecycleSummary` after canonical evaluation and entry
+causal assessment. It produces a grouped supervised evidence view, not another
+strategy verdict engine or broker trade. The existing Standard-owned
+`NasdaqHistoricalTradeSnapshot` and its exit/factual consumers remain unchanged.
+No evaluators, active versions, workflow, collector/admission or database changes.
+
+### Model, support and completeness
+
+The snapshot retains existing documentary entry, native SL, risk and TP DTO
+objects and their original values/provenance. New optional binding metadata on
+the existing native projections records the exact strategy/version/provider/
+symbol/day and initiating canonical Start Step/AsOfUtc from their actual facts.
+Matching source identity, original Start and selected stop are checked before
+describing a compatible parameter set. The exact original documentary entry
+frame must also belong at/after that Start; an earlier execution cannot borrow
+parameters from a later setup. Older reports without binding metadata
+remain readable, with native compatibility explicitly unresolved. The report
+readers validate a persisted snapshot against the recorded lifecycle projection;
+they do not run a trading rule. Legacy reports can expose the new grouped view
+without changing their original evaluations or importing missing evidence.
+
+Independent components are entry, original-time WF2 eligibility, SL, risk, TP,
+native documentary execution, exit and economic outcome. They use the existing
+artifact/evaluation/missing/not-implemented presentation statuses and literal
+runtime rule results. Recorded WF2 eligibility at source entry time is not
+execution authorization. A human observed entry can remain retrospective and
+unmapped. Current/later Passed never replaces its original frame.
+
+Risk preserves exact source loss/base/currency/units and the inclusive existing
+1% decision. Failed risk still documents exposure and remains Failed. No size
+or price-distance calculation is introduced. TP preserves the exact selected
+native Low/reference/price equality; no target ranking, offset or reward/risk
+is derived. Native price strings preserve decimals in browser JSON.
+
+DocumentedParameterSetAvailable means a complete supplied native documentary
+entry plus compatible canonical SL/risk/TP parameter evidence. It is an evidence
+availability flag, not a trading permission or completeness percentage. It
+does not claim planned entry equals actual fill or independent sizing proof.
+It can coexist with Failed risk. EntryAuthorization is NotGrantedBySnapshot;
+independent native execution verification remains false. WF2 exit composition
+and economic outcome are not implemented here, so CompleteSupervisedTrade
+remains false even with all documentary parameters present. Missing evidence
+and inconclusive classification are explicit.
+
+Instrument correspondence remains `unresolved` for S14 USTEC versus US100, any
+unknown/foreign source, incompatible canonical binding or absent component.
+`native_identity_matches` only describes matching supplied identities and
+canonical parameter bindings; it is not an inferred cross-provider mapping or
+authenticated native execution. The USTEC source price never fills a US100 entry.
+
+### Product behavior and authentic Replay #2
+
+The existing API `/api/nasdaq/historical-demo` and
+`http://localhost:5173/#nasdaq-historical-demo` expose the grouped snapshot through
+`TradeLifecycle.SupervisedSnapshot`. Configure the existing ReportPath/expected
+SHA256 with the generated file below. Users can inspect status, exact values,
+sources and missing requirements for each component in one compact table,
+alongside the existing detailed panels. Current canonical verdict and original
+entry-time evidence remain distinct. No synthetic value is registered as real
+Replay #2 input. API/component tests cover this delivery; a manual browser
+smoke check is useful for visual acceptance but is not needed to establish the
+deterministic assembly. It has not been performed in this task.
+
+The verified prior artifact (SHA256
+`193fd37ac52f433a501f3dca673865bb459d5489e2dcf3e6a64028ec073d7244`)
+contains S14 USTEC/29604.00, source-reported server opening field 16:32 and its
+documented session-only 13:32Z conversion, unknown historical availability and
+no native deal verification. The new snapshot keeps these as retrospective
+documentary evidence. At 13:32Z WF2-001 is HumanValidationRequired and WF2-002
+Waiting; M5/M1 are NotApplicable. At 13:35Z WF2-001/002 are Passed with SL Waiting.
+At 13:36Z SL is HumanValidationRequired, risk/TP Waiting and canonical verdict
+HumanValidationRequired. Snapshot remains incomplete: native entry execution,
+initial SL/reference, exposure, target, WF2 exit and outcome are missing. Neither
+the chronology discrepancy's cause nor an executed violation/loss is inferred.
+
+Controlled synthetic integration uses the real canonical WF2/SL/risk/TP
+evaluators and the real assembler, with a supplied native documentary execution
+record. Entry, original recorded eligibility, native SL, exact exposure/1%
+comparison, human-selected TP and execution-record identity all populate.
+DocumentedParameterSetAvailable is true, while independent verification, exit,
+economic outcome and CompleteSupervisedTrade remain false. These are explicitly
+synthetic tests, not production broker confirmations or authentic Replay #2 fills.
+
+### Reproducible authentic validation artifact
+
+Generated without changing the external adapter, normalized CSVs or prior reports:
+
+- Report: `C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-aff9ef78df6244f7b74348f9d649fa08.json`.
+- Repeated serialization: `C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-a5a6e5edeca047e7824991afc3158804.json`.
+- Both: 4,522,793 bytes, SHA256 `7993e57947624ac4aff1e4ff88aabbed9b2e9f15a1108a07ab8426cf1128ef2a`.
+- Canonical prefix: 7,596 frames, August 31 22:01Z through September 8 13:36Z.
+  Six diagnostic frames cover 13:31Z–13:36Z. Independent replay through 13:37Z
+  preserves their canonical observations, documentary entry and supervised snapshots.
+- All 27 runtime source pins, four input CSV hashes, adapter hash and S14 ADR
+  source hash were independently rechecked after generation. The original S14
+  report retains SHA256 `193fd37ac52f433a501f3dca673865bb459d5489e2dcf3e6a64028ec073d7244`.
+- Final authentic snapshot: historical entry observed; original eligibility,
+  native execution, SL/risk/TP, exit and outcome unsupported; instrument
+  correspondence unresolved; complete supervised trade false. Final canonical
+  verdict remains HumanValidationRequired.
+
+Validation passed: 2,066 relevant Application tests, 139 Nasdaq integration
+regressions, 19 domain replay tests, one authentic regeneration/API test and one
+legacy authentic report/API test (2,226 .NET tests; zero failed or skipped).
+All 37 frontend tests, full backend/frontend builds, ESLint, scoped C#/Prettier
+checks, 67 local documentation links and git diff whitespace checks passed.
+The synthetic actual-evaluator integration covers supplied native parameters
+without claiming verified execution, an exit, economic outcome or trade completion.
+
+### Remaining supervised Demo v0 critical path
+
+| Capability                      | State / next source requirement                                                                                                                                                                                            |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Grouped WF2 snapshot/API/UI     | Implemented: deterministic, read-only, independently supported or missing components; no trade approval.                                                                                                                   |
+| Authentic native execution      | HumanOnly: original US100 deal/identity, price/unit, source-qualified event time and authentic availability; independent verification remains unavailable.                                                                 |
+| Authentic SL/risk/TP            | HumanOnly: original native protective reference/initial stop and times, documented financial exposure, original important-Low/TP selection; their canonical consumers are implemented.                                     |
+| WF2 exit event/management       | NotImplemented integration: existing Standard-owned documented exit is not a compatible WF2 artifact. Source-backed human-confirmed exit/stop-amendment data can be supported without weakening rules or simulating fills. |
+| Economic outcome/classification | NotImplemented / BlockedByUnresolvedSpecification: execution and management causality, quantities/valuation/units/costs and approved classification must be supported before computing a result.                           |
+| Session completion/no-reentry   | BlockedByUnresolvedSpecification: NQ-RISK-003 and NQ-REENTRY-001 remain unresolved; no universal one-trade or no-reentry policy is invented. Existing cutoff/terminal protections remain authoritative.                    |
+| Current supervised readiness    | Historical analysis and source review are functional. A complete supervised session, native execution verification and complete original trade are not delivered.                                                          |
+
+**One smallest next functional feature:** WF2 human-documented exit evidence
+and causal linkage to the supplied original execution identity, reusing the
+existing exit evidence fields and ordering constraints. Preserve retrospective,
+unmapped or missing availability as diagnostics; do not synthesize a close from
+price contact or implement PnL as part of that feature.
+
 ## WF2 historical entry evidence and causal diagnostic (2026-11-17)
 
 Initial clean synchronized checkpoint: `main` at

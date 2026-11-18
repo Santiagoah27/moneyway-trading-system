@@ -31,6 +31,9 @@ public sealed partial class LocalNasdaqMentorSessionTests
         const string priorTp = @"C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-a1d8dc2b3c7149ada452e3e106648ee2.json";
         const string priorTpHash = "605b994f5e3b1f98e32d970950b80f86449a0a39c6b8fe307b41a40ba55df66d";
         Assert.Equal(priorTpHash, FileSha256(priorTp));
+        const string priorEntry = @"C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-dfb31f824fbe4357a0d96d9683a7b3e1.json";
+        const string priorEntryHash = "193fd37ac52f433a501f3dca673865bb459d5489e2dcf3e6a64028ec073d7244";
+        Assert.Equal(priorEntryHash, FileSha256(priorEntry));
         var first = RunS11Prefix(36);
         var longer = RunS11Prefix(37);
         var definition = MoneyWayNasdaqStrategyDefinition.Instance;
@@ -121,12 +124,25 @@ public sealed partial class LocalNasdaqMentorSessionTests
         foreach (var frame in selected)
             Assert.Equal(JsonSerializer.Serialize(EntryAudit(frame, first.Link.Frames, canonical)),
                 JsonSerializer.Serialize(EntryAudit(frame, longer.Link.Frames, longer.Canonical)));
+        NasdaqSupervisedHistoricalTradeSnapshot? SnapshotAudit(NasdaqMentorSessionFrame frame,
+            IReadOnlyList<NasdaqMentorSessionFrame> history, MoneyWay.Application.Backtesting.Diagnostics.MultiTimeframeStrategyBacktestDiagnosticsReport diagnostics)
+        {
+            var d = diagnostics.Frames.Single(d => d.Step == frame.Strategy.Step);
+            var rules = frame.Strategy.Evaluations.Select(r => new NasdaqHistoricalRuleSummary(r.RuleId.Value,
+                r.DefinitionStatus.ToString(), r.Result.ToString(), r.Sequence, r.IsRequired, r.Reason, r.EvaluatedAtUtc, null)).ToArray();
+            var lifecycle = NasdaqHistoricalTradeLifecycleSummary.FromFrame(frame) with { HistoricalEntry = EntryAudit(frame, history, diagnostics) };
+            return new NasdaqSupervisedHistoricalTradeSnapshotAssembler().Project(first.Input.Session, frame.Strategy.Step, frame.Strategy.AsOfUtc,
+                d.Verdict.ToString(), rules, lifecycle).SupervisedSnapshot;
+        }
+        foreach (var frame in selected)
+            Assert.Equal(JsonSerializer.Serialize(SnapshotAudit(frame, first.Link.Frames, canonical)),
+                JsonSerializer.Serialize(SnapshotAudit(frame, longer.Link.Frames, longer.Canonical)));
         var artifact = new
         {
             Schema = "moneyway.canonical-preentry-window",
             SchemaVersion = 1,
-            CanonicalRuntimeCommit = "c4c220a581e81b73f2fa0863f09afa80edb96cc5",
-            RuntimeChanges = "WF2 historical-entry diagnostic only; S14 retrospective USTEC position field is not US100 execution or entry authorization",
+            CanonicalRuntimeCommit = "86a477284779c26d35a4807b3573b89ac43125b4",
+            RuntimeChanges = "WF2 supervised historical snapshot over canonical lifecycle evidence; S14 stays retrospective USTEC; no native execution, exit, PnL or entry authorization invented",
             Generator = "tests/integration/MoneyWay.IntegrationTests/Replay2CanonicalPreEntryDiagnosticTests.cs",
             Adapter = new { Path = adapterPath, SHA256 = adapterHash },
             first.Input.Session,
@@ -165,6 +181,7 @@ public sealed partial class LocalNasdaqMentorSessionTests
                 "src/backend/MoneyWay.Application/Strategies/Nasdaq/MentorSessions/NasdaqHistoricalTradeLifecycleSummary.cs",
                 "src/backend/MoneyWay.Infrastructure/Strategies/Nasdaq/ReadNasdaqHistoricalReport.cs",
                 "src/backend/MoneyWay.Application/Strategies/Nasdaq/MentorSessions/NasdaqHistoricalEntryAssessment.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/MentorSessions/NasdaqSupervisedHistoricalTradeSnapshot.cs",
                 "src/backend/MoneyWay.Application/Strategies/Nasdaq/MentorSessions/NasdaqMentorSessionReplayInput.cs",
                 "src/backend/MoneyWay.Application/Strategies/Nasdaq/MentorSessions/NasdaqMentorSessionReplayReport.cs",
                 "src/backend/MoneyWay.Infrastructure/Strategies/Nasdaq/NasdaqMentorSessionReportJson.cs",
@@ -187,9 +204,10 @@ public sealed partial class LocalNasdaqMentorSessionTests
                 f.ContactResolution,
                 f.DocumentedExit,
                 f.FactualEvaluation,
-                HistoricalEntryAssessment = JsonSerializer.SerializeToElement(EntryAudit(f, first.Link.Frames, canonical))
+                HistoricalEntryAssessment = JsonSerializer.SerializeToElement(EntryAudit(f, first.Link.Frames, canonical)),
+                SupervisedSnapshot = JsonSerializer.SerializeToElement(SnapshotAudit(f, first.Link.Frames, canonical))
             }).ToArray(),
-            Limitations = "Retrospective S14 source-reported USTEC opening field/price only; historical availability, native deal and US100 correspondence unverified. Original frozen entry-frame rules cannot be replaced by later WF2 Passed. No entry authorization, native fill, SL/TP/risk/PnL. Adapter/CSVs unchanged."
+            Limitations = "Incomplete supervised WF2 snapshot: original S14 USTEC entry separate from US100 context; no original entry eligibility, native SL/exposure/TP, verified execution, compatible WF2 exit or economic outcome. Original entry frame is never backdated. No orders or strategy changes. Adapter/CSVs unchanged."
         };
         var directory = @"C:\MoneyWay\session\reports\2026-09-08";
         Directory.CreateDirectory(directory);
@@ -205,6 +223,7 @@ public sealed partial class LocalNasdaqMentorSessionTests
         Assert.Equal(originalHash, FileSha256(original));
         Assert.Equal(previousHash, FileSha256(previous));
         Assert.Equal(priorTpHash, FileSha256(priorTp));
+        Assert.Equal(priorEntryHash, FileSha256(priorEntry));
         using var reader = new MoneyWay.Infrastructure.Strategies.Nasdaq.ReadNasdaqHistoricalReport();
         var view = reader.ExecuteAsync(path, FileSha256(path)).GetAwaiter().GetResult();
         Assert.Equal("HumanValidationRequired", view.SelectedFrame!.Verdict);
@@ -229,6 +248,16 @@ public sealed partial class LocalNasdaqMentorSessionTests
         Assert.Contains("Wf2NotPassedAtOriginalEntry", entry.Issues);
         Assert.Contains("OriginalInstrumentMismatch_NoMapping", entry.Issues);
         Assert.Equal(S9Time(32), entry.CanonicalAtEntry!.AsOfUtc);
+        var supervised = Assert.IsType<NasdaqSupervisedHistoricalTradeSnapshot>(http.SelectedFrame.TradeLifecycle.SupervisedSnapshot);
+        Assert.True(supervised.HistoricalEntryObserved); Assert.False(supervised.CanonicalEligibilityRecordedAtEntry);
+        Assert.False(supervised.StopLossSupported); Assert.False(supervised.RiskExposureSupported); Assert.False(supervised.TakeProfitSupported);
+        Assert.False(supervised.NativeExecutionDocumented); Assert.False(supervised.NativeExecutionIndependentlyVerified);
+        Assert.False(supervised.ExitSupported); Assert.False(supervised.EconomicOutcomeSupported); Assert.False(supervised.CompleteSupervisedTrade);
+        Assert.Equal("unresolved", supervised.InstrumentCorrespondence); Assert.Equal("NotGrantedBySnapshot", supervised.EntryAuthorization);
+        Assert.Null(supervised.StopLoss); Assert.Null(supervised.Risk); Assert.Null(supervised.TakeProfit); Assert.Null(supervised.Exit); Assert.Null(supervised.EconomicOutcome);
+        Assert.Equal("USTEC", supervised.DocumentaryEntry!.Observations.Single().Evidence.SourceSymbol);
+        Assert.Equal(29604.00m, supervised.DocumentaryEntry.Observations.Single().Evidence.SourceEntryPrice);
+        output.WriteLine($"SUPERVISED SNAPSHOT: Complete={supervised.CompleteSupervisedTrade}; InstrumentCorrespondence={supervised.InstrumentCorrespondence}; Missing={string.Join(',', supervised.MissingEvidence)}");
         output.WriteLine($"REPEATED ARTIFACT: {repeated}; SHA256: {FileSha256(repeated)}");
         foreach (var rule in entry.CanonicalAtEntry.Rules.Where(r => r.RuleId is "NQ-WF2-001" or "NQ-WF2-002" or "NQ-M5-001" or "NQ-M1-001"))
             output.WriteLine($"ORIGINAL ENTRY FRAME {entry.CanonicalAtEntry.AsOfUtc:O}: {rule.RuleId}={rule.Result}; no retroauthorization.");

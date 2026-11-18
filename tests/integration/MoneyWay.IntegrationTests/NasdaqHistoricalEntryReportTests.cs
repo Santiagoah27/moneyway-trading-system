@@ -77,6 +77,76 @@ public sealed class NasdaqHistoricalEntryReportTests : IDisposable
     }
 
     [Fact]
+    public async Task ActualCanonicalWf2EvaluatorsPopulateSupervisedDocumentaryParametersWithoutExitOrEconomicCompletion()
+    {
+        using var fixture = new NasdaqScenario2MentorSessionTests(); var report = fixture.SyntheticRiskReport("100", true);
+        var instant = LiquidityFixture.At(15); var frame = report.Frames.Single(f => f.Strategy.AsOfUtc == instant);
+        var native = Review(report) with
+        {
+            Origin = "NativeExecutionRecord",
+            EventKind = "ReportedExecution",
+            SourceSymbol = report.Session.Symbol.Value,
+            SourceProviderId = report.Session.ProviderId.Value,
+            SourceEntryPrice = 110,
+            SourcePriceUnit = "NativeInstrumentPrice",
+            ExecutionReference = "synthetic:deal-123",
+            OriginalTime = "synthetic:15:00Z",
+            EarliestEventUtc = instant,
+            LatestEventUtc = instant,
+            TimePrecision = "ExactNativeRecord",
+            HistoricalAvailableAtUtc = instant
+        };
+        Save(report, native); var hash = System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path));
+        Save(report, native); Assert.Equal(hash, System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path)));
+        using var reader = new ReadNasdaqHistoricalReport();
+        var view = await reader.ExecuteAsync(path, null, frameStep: frame.Strategy.Step);
+        var trade = view.SelectedFrame!.TradeLifecycle!; var snapshot = Assert.IsType<NasdaqSupervisedHistoricalTradeSnapshot>(trade.SupervisedSnapshot);
+        Assert.True(snapshot.HistoricalEntryObserved); Assert.True(snapshot.CanonicalEligibilityRecordedAtEntry);
+        Assert.True(snapshot.StopLossSupported); Assert.True(snapshot.RiskExposureSupported); Assert.True(snapshot.TakeProfitSupported);
+        Assert.True(snapshot.NativeExecutionDocumented); Assert.True(snapshot.CanonicalBindingsConsistent); Assert.True(snapshot.DocumentedParameterSetAvailable);
+        Assert.Equal("native_identity_matches", snapshot.InstrumentCorrespondence);
+        Assert.Equal("Ready", snapshot.DocumentaryEntry!.Observations.Single().CanonicalAtEntry!.Verdict);
+        Assert.Equal(report.Canonical!.Frames.Single(f => f.Step == frame.Strategy.Step).Verdict.ToString(), snapshot.CanonicalVerdict);
+        Assert.Same(trade.Scenario2StopLoss, snapshot.StopLoss); Assert.Same(trade.Scenario2RiskExposure, snapshot.Risk); Assert.Same(trade.Scenario2TakeProfit, snapshot.TakeProfit);
+        Assert.Equal(116, snapshot.StopLoss!.StopPrice); Assert.Equal(100, snapshot.Risk!.Exposure.ReportedMaximumLoss);
+        Assert.Equal(snapshot.TakeProfit!.TargetReferencePrice, snapshot.TakeProfit.TakeProfitPrice);
+        Assert.Equal(110, snapshot.DocumentaryEntry.Observations.Single().Evidence.SourceEntryPrice);
+        Assert.False(snapshot.CompleteSupervisedTrade); Assert.False(snapshot.NativeExecutionIndependentlyVerified);
+        Assert.False(snapshot.ExitSupported); Assert.False(snapshot.EconomicOutcomeSupported); Assert.Null(snapshot.Exit); Assert.Null(snapshot.EconomicOutcome);
+        Assert.Null(snapshot.Risk.Exposure.Quantity); Assert.Null(snapshot.Risk.Exposure.QuantityUnit); Assert.Equal("NotGrantedBySnapshot", snapshot.EntryAuthorization);
+        using var app = App(); var http = await app.CreateClient().GetFromJsonAsync<NasdaqHistoricalReportSummary>("/api/nasdaq/historical-demo?frameStep=" + frame.Strategy.Step);
+        Assert.True(http!.SelectedFrame!.TradeLifecycle!.SupervisedSnapshot!.DocumentedParameterSetAvailable);
+        var earlier = await reader.ExecuteAsync(path, null, frameStep: report.Frames.Single(f => f.Strategy.AsOfUtc == At(32)).Strategy.Step);
+        Assert.Null(earlier.SelectedFrame!.TradeLifecycle!.HistoricalEntry);
+        Assert.False(earlier.SelectedFrame.TradeLifecycle.SupervisedSnapshot!.HistoricalEntryObserved);
+        Assert.Null(earlier.SelectedFrame.TradeLifecycle.SupervisedSnapshot.StopLoss);
+    }
+
+    [Theory]
+    [InlineData("complete")]
+    [InlineData("authorization")]
+    [InlineData("verification")]
+    [InlineData("exit")]
+    [InlineData("outcome")]
+    [InlineData("instrument")]
+    [InlineData("price")]
+    public async Task SupervisedSnapshotCannotClaimUnsupportedCompletionOrMergeSourcePrices(string corruption)
+    {
+        using var fixture = new NasdaqScenario2MentorSessionTests(); var report = fixture.SyntheticRiskReport(null, true); Save(report, Review(report));
+        var root = JsonNode.Parse(File.ReadAllText(path))!;
+        var snapshot = root["Frames"]!.AsArray().Last(f => f!["TradeLifecycle"]!["SupervisedSnapshot"]?["StopLoss"] is not null)!["TradeLifecycle"]!["SupervisedSnapshot"]!;
+        if (corruption == "complete") snapshot["CompleteSupervisedTrade"] = true;
+        if (corruption == "authorization") snapshot["EntryAuthorization"] = "Approved";
+        if (corruption == "verification") snapshot["NativeExecutionIndependentlyVerified"] = true;
+        if (corruption == "exit") snapshot["Exit"] = new JsonObject { ["Price"] = 100, ["EffectiveAtUtc"] = At(37) };
+        if (corruption == "outcome") snapshot["EconomicOutcome"] = "Profitable";
+        if (corruption == "instrument") snapshot["InstrumentCorrespondence"] = "native_identity_matches";
+        if (corruption == "price") snapshot["StopLoss"]!["StopPrice"] = 999;
+        File.WriteAllText(path, root.ToJsonString()); using var app = App();
+        var response = await app.CreateClient().GetAsync("/api/nasdaq/historical-demo"); Assert.NotEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
     public async Task KnownFutureReviewCannotAlterAnEarlierReportAndSerializationIsDeterministic()
     {
         using var fixture = new NasdaqScenario2MentorSessionTests(); var report = fixture.SyntheticRiskReport(null); var first = Review(report) with { HistoricalAvailableAtUtc = At(32) };

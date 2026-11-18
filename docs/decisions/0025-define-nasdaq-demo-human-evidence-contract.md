@@ -659,6 +659,27 @@ The source-backed BE concept is favorable first encountered distinct Asia/London
 
 ### Retrospective annotation and conceptual session aggregate
 
+**2026-11-17 supervised WF2 snapshot composition:**
+`NasdaqSupervisedHistoricalTradeSnapshotAssembler` groups the existing lifecycle
+projection and documentary entry assessment without evaluating a rule or changing
+StrategyVerdict. It reuses the original SL/risk/TP DTO objects. Their optional
+`NasdaqHistoricalScenario2Binding` records the actual canonical session and
+initiating Start Step/time from the existing typed fact. Source-native identity,
+source availability, matching Start and selected stop are checked separately
+from the owning rule's literal result. A Failed risk fact can document exposure
+without passing the risk gate. No sizing, loss formula or TP adjustment is added.
+
+DocumentedParameterSetAvailable describes a supplied native documentary entry
+plus compatible canonical parameter evidence only. It does not require or grant
+entry authorization, independently verify a broker fill or complete a trade.
+Original entry-frame WF2 eligibility is read from the frozen historical result;
+later passes cannot replace it. Independent native execution verification,
+WF2 exit composition and economic outcome are not implemented by this view.
+CompleteSupervisedTrade remains false, missing components are explicit and
+failure classification remains inconclusive. Standard snapshot/exit contracts
+are unchanged; no new strategy rule, version, workflow edge or execution service
+is introduced.
+
 **2026-11-17 historical-entry diagnostic boundary:** documentary observations that
 cannot satisfy `NasdaqHistoricalObservedEntry`'s exact Standard eligibility and
 execution constraints are retained as `NasdaqHistoricalEntryEvidence` report

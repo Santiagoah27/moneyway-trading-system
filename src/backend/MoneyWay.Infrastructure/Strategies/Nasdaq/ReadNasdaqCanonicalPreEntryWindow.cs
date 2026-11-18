@@ -138,7 +138,10 @@ internal sealed class ReadNasdaqCanonicalPreEntryWindow
                 entryFrames.Add(NasdaqHistoricalEntryCausalSelector.Frame(current));
             var assessment = new NasdaqHistoricalEntryCausalSelector().Select(reviewSession, at, reviews, entryFrames);
             NasdaqHistoricalEntryReportProjection.Validate(frame.TryGetProperty("HistoricalEntryAssessment", out var storedEntry) ? storedEntry : null, assessment);
-            projections[^1] = current with { TradeLifecycle = current.TradeLifecycle! with { HistoricalEntry = assessment } };
+            var lifecycle = new NasdaqSupervisedHistoricalTradeSnapshotAssembler().Project(reviewSession, step, at, current.Verdict,
+                current.Rules, current.TradeLifecycle! with { HistoricalEntry = assessment });
+            NasdaqHistoricalEntryReportProjection.ValidateSnapshot(frame.TryGetProperty("SupervisedSnapshot", out var storedSnapshot) ? storedSnapshot : null, lifecycle.SupervisedSnapshot);
+            projections[^1] = current with { TradeLifecycle = lifecycle };
         }
         Require(projections[0].AsOfUtc == start && projections[^1].AsOfUtc == end);
         var selected = requested is null ? projections[^1] : projections.SingleOrDefault(f => f.Step == requested);

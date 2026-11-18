@@ -152,11 +152,15 @@ public static class NasdaqMentorSessionReportJson
             if (report.HistoricalEntryEvidence.Any(e => e.EarliestEventUtc == observation.AsOfUtc && e.LatestEventUtc == observation.AsOfUtc))
                 entryFrames.Add(NasdaqHistoricalEntryCausalSelector.Frame(frame, report.Canonical?.Frames[index].Verdict.ToString(),
                     report.Canonical?.Frames[index].HasCompleteRequiredCoverage));
-            JsonSerializer.Serialize(writer, NasdaqHistoricalTradeLifecycleSummary.FromFrame(frame) with
+            var lifecycle = NasdaqHistoricalTradeLifecycleSummary.FromFrame(frame) with
             {
                 HistoricalEntry = new NasdaqHistoricalEntryCausalSelector().Select(report.Session, observation.AsOfUtc,
                     report.HistoricalEntryEvidence, entryFrames)
-            });
+            };
+            JsonSerializer.Serialize(writer, new NasdaqSupervisedHistoricalTradeSnapshotAssembler().Project(report.Session, observation.Step, observation.AsOfUtc,
+                report.Canonical?.Frames[index].Verdict.ToString(), frame.Strategy.Evaluations.Select(r =>
+                    new NasdaqHistoricalRuleSummary(r.RuleId.Value, r.DefinitionStatus.ToString(), r.Result.ToString(), r.Sequence, r.IsRequired,
+                        r.Reason, r.EvaluatedAtUtc, null)).ToArray(), lifecycle));
             writer.WriteEndObject();
             writer.Flush();
         }

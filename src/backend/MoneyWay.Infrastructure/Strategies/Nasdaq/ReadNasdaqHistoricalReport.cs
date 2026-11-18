@@ -68,7 +68,13 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
                         && trade.TryGetProperty("HistoricalEntry", out var entry) ? entry : null;
                     NasdaqHistoricalEntryReportProjection.Validate(storedEntry, entryAssessment);
                     if (projection.TradeLifecycle is { } lifecycle)
-                        projection = projection with { TradeLifecycle = lifecycle with { HistoricalEntry = entryAssessment } };
+                    {
+                        lifecycle = new NasdaqSupervisedHistoricalTradeSnapshotAssembler().Project(reviewSession, step, at, projection.Verdict,
+                            projection.Rules, lifecycle with { HistoricalEntry = entryAssessment, SupervisedSnapshot = null });
+                        NasdaqHistoricalEntryReportProjection.ValidateSnapshot(trade.ValueKind == JsonValueKind.Object
+                            && trade.TryGetProperty("SupervisedSnapshot", out var storedSnapshot) ? storedSnapshot : null, lifecycle.SupervisedSnapshot);
+                        projection = projection with { TradeLifecycle = lifecycle };
+                    }
                     Require((projection.Verdict is not null) == hasCanonical);
                     lastVerdict = projection.Verdict;
                     if (DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(at, TimeZoneInfo.FindSystemTimeZoneById("America/Bogota")).DateTime) == day)

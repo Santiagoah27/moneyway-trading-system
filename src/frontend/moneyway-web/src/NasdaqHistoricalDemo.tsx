@@ -7,7 +7,165 @@ import type {
     HistoricalRule,
     HistoricalTradeLifecycle,
     NasdaqHistoricalReport,
+    SupervisedHistoricalTradeSnapshot,
 } from "./types/nasdaqHistoricalDemo";
+
+function SupervisedSnapshot({
+    snapshot,
+}: {
+    snapshot: SupervisedHistoricalTradeSnapshot;
+}) {
+    const entries = snapshot.documentaryEntry?.observations ?? [];
+    const labels: Record<string, string> = {
+        Entry: "Entrada observada",
+        EntryEligibility: "Elegibilidad en la hora original",
+        StopLoss: "Stop Loss",
+        Risk: "Riesgo",
+        TakeProfit: "Take Profit",
+        Execution: "Ejecución",
+        DocumentedExit: "Salida",
+        EconomicOutcome: "Resultado",
+    };
+    function value(stage: string) {
+        switch (stage) {
+            case "Entry":
+                return (
+                    entries
+                        .map(
+                            (o) =>
+                                `${o.evidence.sourceSymbol ?? "Símbolo desconocido"}: ${o.evidence.sourceEntryPriceText ?? "Precio desconocido"} · ${o.evidence.originalTime ?? "Hora desconocida"} · ${o.evidence.timePrecision}`,
+                        )
+                        .join("; ") || "Sin entrada documentada"
+                );
+            case "EntryEligibility":
+                return (
+                    entries
+                        .map((o) =>
+                            o.canonicalAtEntry
+                                ? `${o.canonicalAtEntry.asOfUtc} · ${o.canonicalAtEntry.verdict ?? "Sin veredicto"}`
+                                : "Sin frame original exacto",
+                        )
+                        .join("; ") || "No establecida"
+                );
+            case "StopLoss":
+                return snapshot.stopLoss
+                    ? `${snapshot.stopLoss.stopPriceText ?? snapshot.stopLoss.stopPrice} · ${snapshot.stopLoss.referenceId} · ${snapshot.stopLoss.protectivePriceText ?? snapshot.stopLoss.protectivePrice}`
+                    : "Falta SL nativo";
+            case "Risk":
+                return snapshot.risk
+                    ? `${snapshot.risk.reportedMaximumLossText} / ${snapshot.risk.accountBasisAmountText} ${snapshot.risk.exposure.currency} · Proporción: ${snapshot.risk.riskRatioText ?? "Fuera del rango decimal"}`
+                    : "Falta exposición documentada";
+            case "TakeProfit":
+                return snapshot.takeProfit
+                    ? `${snapshot.takeProfit.takeProfitPriceText} · ${snapshot.takeProfit.referenceDescription} · ${snapshot.takeProfit.symbol}`
+                    : "Falta selección humana de TP";
+            case "Execution":
+                return (
+                    entries
+                        .map(
+                            (o) =>
+                                `${o.nativeExecutionStatus} · ${o.evidence.executionReference ?? "Falta deal nativo"}`,
+                        )
+                        .join("; ") || "Sin registro nativo"
+                );
+            case "DocumentedExit":
+                return "Sin salida WF2 integrada";
+            case "EconomicOutcome":
+                return "No implementado";
+            default:
+                return "No disponible";
+        }
+    }
+    function source(stage: string) {
+        switch (stage) {
+            case "StopLoss":
+                return snapshot.stopLoss
+                    ? `${snapshot.stopLoss.source.sourceReference}; ${snapshot.stopLoss.protectiveSource.sourceReference}`
+                    : "Sin fuente nativa";
+            case "Risk":
+                return snapshot.risk
+                    ? `${snapshot.risk.source.sourceReference}; ${snapshot.risk.exposure.calculationSourceReference}`
+                    : "Sin fuente de exposición";
+            case "TakeProfit":
+                return snapshot.takeProfit
+                    ? `${snapshot.takeProfit.source.sourceReference}; ${snapshot.takeProfit.referenceSource.sourceReference}`
+                    : "Sin fuente de TP";
+            case "Entry":
+            case "EntryEligibility":
+            case "Execution":
+                return (
+                    entries.map((o) => o.evidence.sourceReference).join("; ") ||
+                    "Sin fuente de entrada"
+                );
+            default:
+                return "Pendiente de implementación y evidencia compatible";
+        }
+    }
+    return (
+        <section aria-label="Snapshot histórico supervisado WF2">
+            <h4>Snapshot histórico supervisado · WF2 SELL · Incompleto</h4>
+            <p>
+                Contexto nativo: {snapshot.session.providerId.value} /{" "}
+                {snapshot.session.symbol.value} · Frame {snapshot.frameStep} ·{" "}
+                {snapshot.asOfUtc} · Veredicto canónico:{" "}
+                {snapshot.canonicalVerdict ?? "Sin veredicto"}.
+            </p>
+            <p>
+                Correspondencia de instrumentos:{" "}
+                {snapshot.instrumentCorrespondence}. Parámetros documentales
+                completos:{" "}
+                {snapshot.documentedParameterSetAvailable ? "Sí" : "No"}.
+            </p>
+            <p>
+                Entrada humana observada no equivale a entrada autorizada. Regla
+                Passed no equivale a operación ejecutada. Autorización:{" "}
+                {snapshot.entryAuthorization}.
+            </p>
+            <p>
+                Verificación nativa independiente:{" "}
+                {snapshot.nativeExecutionIndependentlyVerified ? "Sí" : "No"}.
+                Clasificación: {snapshot.failureClassification}.
+            </p>
+            <div className="rules-table-wrapper">
+                <table>
+                    <caption>Componentes de la operación supervisada</caption>
+                    <thead>
+                        <tr>
+                            <th>Componente</th>
+                            <th>Estado / regla</th>
+                            <th>Valores y procedencia</th>
+                            <th>Requisitos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {snapshot.components.map((c) => (
+                            <tr key={c.stage}>
+                                <th scope="row">
+                                    {labels[c.stage] ?? c.stage}
+                                </th>
+                                <td>
+                                    {c.status} ·{" "}
+                                    {c.ruleId ?? "Sin regla de ejecución"} ·{" "}
+                                    {c.ruleResult ?? "Sin evaluación"}
+                                </td>
+                                <td>
+                                    {value(c.stage)}
+                                    <p>Fuente: {source(c.stage)}</p>
+                                </td>
+                                <td>{c.reason}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            <p>
+                Evidencia pendiente: {snapshot.missingEvidence.join(", ")}. La
+                disponibilidad de parámetros no completa ejecución, salida ni
+                resultado.
+            </p>
+        </section>
+    );
+}
 
 function TradeLifecycle({ trade }: { trade: HistoricalTradeLifecycle }) {
     const risk = trade.scenario2RiskExposure;
@@ -33,6 +191,9 @@ function TradeLifecycle({ trade }: { trade: HistoricalTradeLifecycle }) {
                 La sesión supervisada completa sigue pendiente. Clasificación:{" "}
                 {trade.failureClassification}.
             </p>
+            {trade.supervisedSnapshot && (
+                <SupervisedSnapshot snapshot={trade.supervisedSnapshot} />
+            )}
             <div className="rules-table-wrapper">
                 <table>
                     <caption>

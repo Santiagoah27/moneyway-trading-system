@@ -610,6 +610,47 @@ SL/risk/TP, observed entry in a coherent trade snapshot, native deal admission,
 exit and economic outcome remain independent. The read-only API/UI can display
 the historical human evidence and timing discrepancy without granting a trade.
 
+#### Supervised historical snapshot checkpoint (2026-11-17)
+
+The deterministic `NasdaqSupervisedHistoricalTradeSnapshotAssembler` now groups
+the existing canonical lifecycle projection and separate documentary entry as
+`NasdaqSupervisedHistoricalTradeSnapshot`. It is a supervised evidence view,
+not the Standard-owned `NasdaqHistoricalTradeSnapshot`, an eligibility evaluator,
+broker position or financial ledger. Existing Standard composition and all
+WF2/SL/risk/TP strategy semantics remain unchanged.
+
+The snapshot retains the actual session, original entry assessment and its
+frozen canonical frame, exact SL/reference, documented exposure/comparison,
+human-selected TP and their sources. Optional binding metadata added to the
+existing SL/risk/TP projections identifies their original native session and
+canonical initiating Start Step/time. Missing metadata in old artifacts remains
+unresolved, not manufactured. Complete compatible parameter evidence can be
+represented even when the risk comparison Failed; that result stays Failed.
+
+Native identity and compatible canonical bindings are separate checks. Original
+entry-frame association must also be captured at/after this canonical Start;
+an execution preceding a later setup cannot borrow that setup's parameters.
+Original
+USTEC evidence alongside US100 context always leaves instrument correspondence
+unresolved. No copied USTEC entry price, guessed fill, SL/TP, quantity, reward/risk
+or currency mapping is used. Known future evidence/frames cannot participate,
+and the original source entry frame is not replaced by a later Passed state.
+
+Documentary entry, scoped pre-entry eligibility, component evidence, native
+documentary execution, independent verification, exit and economic outcome are
+assessed separately. EntryAuthorization remains NotGrantedBySnapshot. Native
+independent verification remains unavailable; existing exit/factual types are
+Standard-snapshot-owned and are not generalized in this feature. Complete
+supervised trade remains false. Missing requirements and inconclusive failure
+classification are visible in the API/UI rather than filled with invented data.
+
+Replay #2 preserves S14 below: USTEC/source price 29604.00 and the reviewed
+position-opening clock field, not a verified US100 deal. Its original 13:32Z
+WF2 eligibility remains absent, even after 13:35Z Passed. Native initial SL,
+financial exposure, TP, verified execution, compatible WF2 exit and economic
+outcome remain missing. No source chronology, strategy version or active
+metadata is changed.
+
 ### 2.14 Human-confirmed Replay #2 initial USTEC SL price (2026-11-05, S14)
 
 **Current evidence: `confirmed`, `context_specific` historical initial price, supported by human-reviewed visual evidence (`visual_only` source support).** S14 supplements S5-S7 for the September 8, 2026 Wickfill Scenario 2 SELL operation. The reviewer explicitly identifies the displayed stop as the ORIGINAL initial protective SL before subsequent stop management. This resolves the previously untranscribed historical USTEC initial price only; earlier statements in sections 2.4/2.13 that no numerical stop was registered describe the evidence available before S14 and remain historical. No earlier source is overwritten.

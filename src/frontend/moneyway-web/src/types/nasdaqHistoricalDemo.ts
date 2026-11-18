@@ -27,6 +27,7 @@ export interface HistoricalFrame {
 }
 
 export interface HistoricalTradeLifecycle {
+    supervisedSnapshot?: SupervisedHistoricalTradeSnapshot | null;
     historicalEntry?: {
         asOfUtc: string;
         selectionStatus: string;
@@ -113,6 +114,8 @@ export interface HistoricalTradeLifecycle {
         source: { sourceReference: string; sourceReferenceSha256: string };
     } | null;
     scenario2StopLoss?: {
+        stopPriceText?: string;
+        protectivePriceText?: string;
         referenceId: string;
         protectivePrice: number;
         stopPrice: number;
@@ -155,6 +158,43 @@ export interface HistoricalTradeLifecycle {
     omittedSources: number;
     evidenceScope: string;
     completeSupervisedTrade: boolean;
+}
+
+export interface SupervisedHistoricalTradeSnapshot {
+    session: {
+        providerId: { value: string };
+        symbol: { value: string };
+        tradingDay: string;
+    };
+    frameStep: number;
+    asOfUtc: string;
+    canonicalVerdict: string | null;
+    components: HistoricalTradeLifecycle["stages"];
+    missingEvidence: string[];
+    instrumentCorrespondence: string;
+    historicalEntryObserved: boolean;
+    canonicalEligibilityRecordedAtEntry: boolean;
+    stopLossSupported: boolean;
+    riskExposureSupported: boolean;
+    takeProfitSupported: boolean;
+    nativeExecutionDocumented: boolean;
+    canonicalBindingsConsistent: boolean;
+    documentedParameterSetAvailable: boolean;
+    documentaryEntry: HistoricalTradeLifecycle["historicalEntry"];
+    stopLoss: HistoricalTradeLifecycle["scenario2StopLoss"];
+    risk: HistoricalTradeLifecycle["scenario2RiskExposure"];
+    takeProfit: HistoricalTradeLifecycle["scenario2TakeProfit"];
+    scope: string;
+    scenario: string;
+    direction: string;
+    entryAuthorization: string;
+    nativeExecutionIndependentlyVerified: boolean;
+    exitSupported: boolean;
+    exit: { price: number; effectiveAtUtc: string } | null;
+    economicOutcomeSupported: boolean;
+    economicOutcome: string | null;
+    completeSupervisedTrade: boolean;
+    failureClassification: string;
 }
 
 export interface NasdaqHistoricalReport {
