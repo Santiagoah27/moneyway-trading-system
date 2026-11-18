@@ -81,13 +81,22 @@ public sealed class LocalNasdaqExecutionEvidenceStore
                 previous = item;
             }
         }
+        foreach (var value in values)
+            if (value.Record.Evidence.ReportedOutcome is { } outcome && (outcome.ExecutionRecordId != value.Record.RecordId
+                || outcome.ExecutionEvidenceRevision >= value.Record.Revision || !values.Any(anchor => anchor.Record.RecordId == outcome.ExecutionRecordId
+                    && anchor.Record.Revision == outcome.ExecutionEvidenceRevision && anchor.Sha256 == outcome.ExecutionEvidenceRevisionHash)))
+                throw new InvalidDataException("Reported outcome refers to a missing, future or foreign execution-evidence revision.");
         return values;
     }
     private static string Name(Guid id, int revision) => $"{id:N}.{revision:D3}.json";
+    private static NasdaqSupervisedExecutionEvidenceView Project(Envelope value, List<Envelope> values) =>
+        NasdaqSupervisedExecutionEvidenceProjection.View(value.Record, value.Sha256, value.Record.Evidence.ReportedOutcome is { } o
+            ? values.Single(v => v.Record.RecordId == o.ExecutionRecordId && v.Record.Revision == o.ExecutionEvidenceRevision && v.Sha256 == o.ExecutionEvidenceRevisionHash).Record : null);
     public NasdaqSupervisedExecutionEvidenceView Save(Guid submissionId, NasdaqSupervisedExecutionEvidenceDraft draft, Guid? id = null, string? expectedRevision = null)
     {
         ArgumentNullException.ThrowIfNull(draft);
         draft.Validate();
+        if (draft.ReportedOutcome is { } report) draft = draft with { ReportedOutcome = report with { Costs = report.Costs is null ? null : Array.AsReadOnly(report.Costs.ToArray()) } };
         if (submissionId == Guid.Empty || id == Guid.Empty || id.HasValue != (expectedRevision is not null)) throw new ArgumentException("Explicit submission and expected revision identities are required.");
         using var gate = Lock(); var values = ReadAll();
         var retry = values.SingleOrDefault(v => v.Record.SubmissionId == submissionId);
@@ -96,11 +105,15 @@ public sealed class LocalNasdaqExecutionEvidenceStore
             if ((id is not null && retry.Record.RecordId != id || id is null && retry.Record.Revision != 1)
                 || retry.Record.PreviousRevision != expectedRevision || JsonSerializer.Serialize(retry.Record.Evidence, Json) != JsonSerializer.Serialize(draft, Json))
                 throw new NasdaqEvidenceConflictException("SubmissionIdentityAlreadyUsedForDifferentEvidence");
-            return NasdaqSupervisedExecutionEvidenceProjection.View(retry.Record, retry.Sha256);
+            return Project(retry, values);
         }
         var previous = id is null ? null : values.Where(v => v.Record.RecordId == id).MaxBy(v => v.Record.Revision);
         if (id.HasValue && previous is null) throw new KeyNotFoundException();
         if (previous?.Sha256 != expectedRevision) throw new NasdaqEvidenceConflictException("RevisionConflict_ReloadBeforeCorrecting");
+        if (draft.ReportedOutcome is { } outcome && (id is null || outcome.ExecutionRecordId != id
+            || !values.Any(anchor => anchor.Record.RecordId == id && anchor.Record.Revision == outcome.ExecutionEvidenceRevision
+                && anchor.Sha256 == outcome.ExecutionEvidenceRevisionHash)))
+            throw new ArgumentException("A reported outcome must reference an existing revision of this exact MoneyWay record.");
         if (previous is not null && (previous.Record.Evidence.SessionId != draft.SessionId || previous.Record.Evidence.TradingDay != draft.TradingDay))
             throw new ArgumentException("A revision cannot move the record to another session; create a separate record.");
         if (values.Count >= 1000 || previous?.Record.Revision >= 100) throw new InvalidDataException("Capture/revision limit reached; no original evidence overwritten.");
@@ -108,28 +121,29 @@ public sealed class LocalNasdaqExecutionEvidenceStore
             submissionId, clock.GetUtcNow(), previous?.Sha256, draft);
         if (record.RegisteredAtUtc < previous?.Record.RegisteredAtUtc) throw new IOException("Registration clock regressed; no revision was published.");
         var envelope = new Envelope(record, Hash(record));
-        var view = NasdaqSupervisedExecutionEvidenceProjection.View(record, envelope.Sha256);
+        _ = Project(envelope, values);
         var bytes = JsonSerializer.SerializeToUtf8Bytes(envelope, Json);
         if (bytes.Length > 65536) throw new ArgumentException("Evidence record is too large.");
         var temporary = Path.Combine(root, ".pending-" + Guid.NewGuid().ToString("N"));
         using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
         { stream.Write(bytes); stream.Flush(flushToDisk: true); }
         Guard(root); File.Move(temporary, Path.Combine(root, Name(record.RecordId, record.Revision)), overwrite: false);
-        var readBack = ReadAll().Single(v => v.Record.SubmissionId == submissionId);
-        return NasdaqSupervisedExecutionEvidenceProjection.View(readBack.Record, readBack.Sha256);
+        var published = ReadAll();
+        return Project(published.Single(v => v.Record.SubmissionId == submissionId), published);
     }
     public NasdaqSupervisedExecutionEvidenceView Get(Guid id, int? revision = null)
     {
-        using var gate = Lock(); var versions = ReadAll().Where(v => v.Record.RecordId == id && (revision is null || v.Record.Revision == revision));
+        using var gate = Lock(); var all = ReadAll(); var versions = all.Where(v => v.Record.RecordId == id && (revision is null || v.Record.Revision == revision));
         var value = versions.MaxBy(v => v.Record.Revision) ?? throw new KeyNotFoundException();
-        return NasdaqSupervisedExecutionEvidenceProjection.View(value.Record, value.Sha256);
+        return Project(value, all);
     }
     public IReadOnlyList<NasdaqSupervisedExecutionEvidenceView> List(string sessionId)
     {
         if (string.IsNullOrWhiteSpace(sessionId) || sessionId.Length > 2048) throw new ArgumentException("Explicit session identity required.");
         using var gate = Lock();
-        return ReadAll().Where(v => v.Record.Evidence.SessionId == sessionId).GroupBy(v => v.Record.RecordId)
+        var all = ReadAll();
+        return all.Where(v => v.Record.Evidence.SessionId == sessionId).GroupBy(v => v.Record.RecordId)
             .Select(g => g.MaxBy(v => v.Record.Revision)!).OrderBy(v => v.Record.RegisteredAtUtc).ThenBy(v => v.Record.RecordId)
-            .Select(v => NasdaqSupervisedExecutionEvidenceProjection.View(v.Record, v.Sha256)).ToArray();
+            .Select(v => Project(v, all)).ToArray();
     }
 }

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { ReportedMonetaryOutcomeFields } from "./ReportedMonetaryOutcomeFields";
+import type { ReportedMonetaryOutcome } from "./ReportedMonetaryOutcomeFields";
 
 export interface CaptureEvent {
     sourceReference: string;
@@ -33,6 +35,7 @@ export interface CaptureDraft {
     exit: CaptureEvent | null;
     association: string;
     associationSourceReference: string | null;
+    reportedOutcome?: ReportedMonetaryOutcome | null;
 }
 interface CaptureView {
     record: {
@@ -94,6 +97,7 @@ const blank = (): CaptureDraft => ({
     exit: null,
     association: "None",
     associationSourceReference: null,
+    reportedOutcome: null,
 });
 const optional = (s: string) => s.trim() || null;
 
@@ -563,6 +567,65 @@ export function SupervisedExecutionCapture({
                             }
                         />
                     </label>
+                    <label>
+                        <input
+                            type="checkbox"
+                            disabled={!saved}
+                            checked={!!draft.reportedOutcome}
+                            onChange={(e) =>
+                                setDraft({
+                                    ...draft,
+                                    reportedOutcome:
+                                        e.target.checked && saved
+                                            ? {
+                                                  executionRecordId:
+                                                      saved.record.recordId,
+                                                  executionEvidenceRevision:
+                                                      saved.record.revision,
+                                                  executionEvidenceRevisionHash:
+                                                      saved.revisionHash,
+                                                  sourceReference: "",
+                                                  reportedBy: draft.reviewer,
+                                                  provenance: "HumanReported",
+                                                  sourceSymbol: null,
+                                                  amount: null,
+                                                  currency: null,
+                                                  amountMeaning: "Unspecified",
+                                                  basis: "Unspecified",
+                                                  originalMeaningStatement:
+                                                      null,
+                                                  narrative: null,
+                                                  sourceEventDescription: null,
+                                                  association: "RecordOnly",
+                                                  associationSourceReference:
+                                                      null,
+                                                  dealReference: null,
+                                                  positionReference: null,
+                                                  originalTime: null,
+                                                  clockDomain: null,
+                                                  timePrecision: "Unknown",
+                                                  costs: null,
+                                              }
+                                            : null,
+                                })
+                            }
+                        />
+                        Registrar resultado monetario reportado
+                    </label>
+                    {!saved && (
+                        <p>
+                            Guarda o recupera un registro antes de añadir un
+                            resultado reportado.
+                        </p>
+                    )}
+                    {draft.reportedOutcome && (
+                        <ReportedMonetaryOutcomeFields
+                            value={draft.reportedOutcome}
+                            onChange={(reportedOutcome) =>
+                                setDraft({ ...draft, reportedOutcome })
+                            }
+                        />
+                    )}
                 </fieldset>
                 <button disabled={busy} type="submit">
                     {pending
@@ -645,6 +708,106 @@ export function SupervisedExecutionCapture({
                         {saved.record.evidence.association}. Requisitos
                         pendientes: {saved.missingEvidence.join(", ")}.
                     </p>
+                    {saved.record.evidence.reportedOutcome && (
+                        <section aria-label="Resultado monetario persistido">
+                            <h5>
+                                Resultado reportado · Sin verificación
+                                independiente
+                            </h5>
+                            <p>
+                                Resultado reportado ≠ P&amp;L calculado por
+                                MoneyWay. Resultado reportado ≠ resultado
+                                verificado por el broker.
+                            </p>
+                            <p>
+                                Importe original:{" "}
+                                {saved.record.evidence.reportedOutcome.amount ??
+                                    "No reportado"}{" "}
+                                · Moneda:{" "}
+                                {saved.record.evidence.reportedOutcome
+                                    .currency ?? "Desconocida"}{" "}
+                                · Bruto/neto:{" "}
+                                {saved.record.evidence.reportedOutcome.basis} ·
+                                Significado:{" "}
+                                {
+                                    saved.record.evidence.reportedOutcome
+                                        .amountMeaning
+                                }
+                                .
+                            </p>
+                            <p>
+                                Instrumento:{" "}
+                                {saved.record.evidence.reportedOutcome
+                                    .sourceSymbol ?? "No establecido"}{" "}
+                                · Fuente:{" "}
+                                {
+                                    saved.record.evidence.reportedOutcome
+                                        .sourceReference
+                                }{" "}
+                                · Reportado por:{" "}
+                                {
+                                    saved.record.evidence.reportedOutcome
+                                        .reportedBy
+                                }{" "}
+                                ·{" "}
+                                {
+                                    saved.record.evidence.reportedOutcome
+                                        .provenance
+                                }
+                                .
+                            </p>
+                            <p>
+                                Revisión de evidencia vinculada:{" "}
+                                {
+                                    saved.record.evidence.reportedOutcome
+                                        .executionEvidenceRevision
+                                }{" "}
+                                · Asociación declarada:{" "}
+                                {
+                                    saved.record.evidence.reportedOutcome
+                                        .association
+                                }
+                                . No verifica el vínculo de ejecuciones.
+                            </p>
+                            <p>
+                                Narrativa:{" "}
+                                {saved.record.evidence.reportedOutcome
+                                    .narrative ?? "No documentada"}
+                                . Significado original:{" "}
+                                {saved.record.evidence.reportedOutcome
+                                    .originalMeaningStatement ??
+                                    "No establecido"}
+                                .
+                            </p>
+                            {(saved.record.evidence.reportedOutcome.costs ?? [])
+                                .length === 0 ? (
+                                <p>Costos desconocidos; no equivalen a cero.</p>
+                            ) : (
+                                <ul>
+                                    {saved.record.evidence.reportedOutcome.costs!.map(
+                                        (cost, i) => (
+                                            <li key={i}>
+                                                {cost.category}:{" "}
+                                                {cost.amount ??
+                                                    "Importe desconocido"}{" "}
+                                                {cost.currency ??
+                                                    "Moneda desconocida"}{" "}
+                                                · {cost.sourceReference} ·
+                                                Signo:{" "}
+                                                {cost.originalSignMeaning ??
+                                                    "No establecido"}
+                                            </li>
+                                        ),
+                                    )}
+                                </ul>
+                            )}
+                            <p>
+                                No se suman costos ni convierten monedas. No
+                                establece validez estratégica, cierre de sesión
+                                o permiso de reentrada. Operación incompleta.
+                            </p>
+                        </section>
+                    )}
                     <details>
                         <summary>
                             Valores originales y procedencia registrados

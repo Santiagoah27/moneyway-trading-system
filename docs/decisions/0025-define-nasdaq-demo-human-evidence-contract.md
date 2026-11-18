@@ -659,6 +659,25 @@ The source-backed BE concept is favorable first encountered distinct Asia/London
 
 ### Retrospective annotation and conceptual session aggregate
 
+**2026-11-18 reported monetary outcome extension:** the requested local capture
+feature accepts literal source-reported amounts, currency, declared sign meaning,
+gross/net label, optional independent cost components and narrative, bound to an
+existing immutable execution-evidence revision in the same MoneyWay record.
+These are operator/document assertions, not an audited realized-valuation formula.
+Exact decimal text/sign/scale are retained. Unsigned meaning, unknown gross/net,
+currency/identity conflicts and missing fees remain unresolved; costs are never
+defaulted to zero, combined, converted or subtracted to derive a net amount.
+The existing 1% planned-risk contract is unchanged and distinct from reported
+realized results. Old records and payload hashes remain compatible.
+
+The existing revision store, Development/localhost API and capture form are reused.
+The application view references the saved outcome without changing the historical
+snapshot, engine inputs or verdicts. Native verification, calculated PnL,
+strategy validity, completed trade, session closure and no-reentry remain separate;
+no amount automatically establishes any of them. No public trust/availability
+override or original-artifact hash is accepted. See the
+[reported outcome contract and acceptance evidence](../backtesting/nasdaq-reported-monetary-outcome.md).
+
 **2026-11-18 local supervised execution-evidence capture:** the explicitly
 requested product feature adds operator documentary records, durable local
 revisions and a Development/loopback-only API/form. It extends the existing local

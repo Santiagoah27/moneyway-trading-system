@@ -1,5 +1,7 @@
 # Nasdaq supervised execution-evidence capture
 
+The capture form also supports [reported monetary outcomes](nasdaq-reported-monetary-outcome.md) through the same immutable revision workflow, separately from calculated or broker-verified results.
+
 Implementation checkpoint: 2026-11-18. Initial clean synchronized `main`:
 `1a275c49a987eca838f4ce1b94f39415d55f6428`.
 

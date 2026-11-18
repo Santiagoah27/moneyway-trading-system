@@ -59,6 +59,143 @@ function submit() {
     );
 }
 afterEach(() => vi.unstubAllGlobals());
+it("adds a source-reported outcome to an existing revision and retrieves it without calculating or verifying PnL", async () => {
+    let stored: ReturnType<typeof view>;
+    const fetcher = vi.fn().mockImplementation(async (url: string, options) => {
+        if (options) {
+            const body = JSON.parse(options.body);
+            stored = view(body.evidence, url.endsWith("/revisions") ? 2 : 1);
+        }
+        return new Response(JSON.stringify(stored), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetcher);
+    render(<SupervisedExecutionCapture apiBaseUrl="" />);
+    fill();
+    submit();
+    await screen.findByRole("region", { name: "Evidencia persistida" });
+    fireEvent.click(
+        screen.getByLabelText("Registrar resultado monetario reportado"),
+    );
+    fireEvent.change(
+        screen.getByLabelText("Resultado: Fuente (note: o https://)"),
+        { target: { value: "note:synthetic reported statement" } },
+    );
+    fireEvent.change(
+        screen.getByLabelText(
+            "Resultado: Importe original (opcional, decimal exacto)",
+        ),
+        { target: { value: "+125.00000000000000000000001" } },
+    );
+    fireEvent.change(
+        screen.getByLabelText("Resultado: Moneda original (opcional)"),
+        { target: { value: "USD" } },
+    );
+    fireEvent.change(
+        screen.getByLabelText("Resultado: significado del importe"),
+        { target: { value: "SignedResult" } },
+    );
+    fireEvent.change(screen.getByLabelText("Resultado: bruto/neto"), {
+        target: { value: "Net" },
+    });
+    fireEvent.change(screen.getByLabelText("Motivo de registro o corrección"), {
+        target: { value: "synthetic:add reported outcome" },
+    });
+    fireEvent.click(
+        screen.getByRole("button", { name: "Añadir costo reportado" }),
+    );
+    fireEvent.change(screen.getByLabelText("Costo 1: Categoría original"), {
+        target: { value: "synthetic:fee" },
+    });
+    fireEvent.change(
+        screen.getByLabelText("Costo 1: Fuente (note: o https://)"),
+        { target: { value: "note:synthetic fee statement" } },
+    );
+    fireEvent.change(screen.getByLabelText("Costo 1: Importe original"), {
+        target: { value: "0.00" },
+    });
+    fireEvent.change(screen.getByLabelText("Costo 1: Moneda original"), {
+        target: { value: "EUR" },
+    });
+    submit();
+    const outcome = await screen.findByRole("region", {
+        name: "Resultado monetario persistido",
+    });
+    expect(outcome.textContent).toContain("+125.00000000000000000000001");
+    expect(outcome.textContent).toContain("USD");
+    expect(outcome.textContent).toContain("0.00 EUR");
+    expect(outcome.textContent).toContain("P&L calculado por MoneyWay");
+    expect(outcome.textContent).toContain("Operación incompleta");
+    const body = JSON.parse(
+        fetcher.mock.calls.find((c) => String(c[0]).endsWith("/revisions"))![1]
+            .body,
+    );
+    expect(body.evidence.reportedOutcome.executionRecordId).toBe(id);
+    expect(body.evidence.reportedOutcome.executionEvidenceRevision).toBe(1);
+    expect(body.evidence.reportedOutcome.executionEvidenceRevisionHash).toBe(
+        hash,
+    );
+    expect(body.evidence.reportedOutcome.amount).toBe(
+        "+125.00000000000000000000001",
+    );
+    expect(body.evidence.reportedOutcome.costs[0].amount).toBe("0.00");
+    fireEvent.click(screen.getByRole("button", { name: "Recuperar por ID" }));
+    await screen.findByText(/Registro persistido recuperado/);
+    expect(
+        (
+            screen.getByLabelText(
+                "Resultado: Importe original (opcional, decimal exacto)",
+            ) as HTMLInputElement
+        ).value,
+    ).toBe("+125.00000000000000000000001");
+});
+it("preserves narrative-only outcome with absent amount, currency and costs", async () => {
+    const fetcher = vi
+        .fn()
+        .mockImplementation(
+            async (_url, options) =>
+                new Response(
+                    JSON.stringify(view(JSON.parse(options.body).evidence)),
+                    { status: 200 },
+                ),
+        );
+    vi.stubGlobal("fetch", fetcher);
+    render(<SupervisedExecutionCapture apiBaseUrl="" />);
+    fill();
+    submit();
+    await screen.findByRole("region", { name: "Evidencia persistida" });
+    fireEvent.click(
+        screen.getByLabelText("Registrar resultado monetario reportado"),
+    );
+    fireEvent.change(
+        screen.getByLabelText("Resultado: Fuente (note: o https://)"),
+        { target: { value: "note:synthetic narrative" } },
+    );
+    fireEvent.change(
+        screen.getByLabelText(
+            "Resultado: Narrativa original, sin inferencia numérica",
+        ),
+        { target: { value: "synthetic:protected stop around 1:1" } },
+    );
+    fireEvent.change(screen.getByLabelText("Motivo de registro o corrección"), {
+        target: { value: "synthetic:narrative only" },
+    });
+    submit();
+    const panel = await screen.findByRole("region", {
+        name: "Resultado monetario persistido",
+    });
+    expect(panel.textContent).toContain("Importe original: No reportado");
+    expect(panel.textContent).toContain("Moneda: Desconocida");
+    expect(panel.textContent).toContain(
+        "Costos desconocidos; no equivalen a cero",
+    );
+    expect(panel.textContent).toContain("synthetic:protected stop around 1:1");
+    const d = JSON.parse(fetcher.mock.calls.at(-1)![1].body).evidence
+        .reportedOutcome;
+    expect(d.amount).toBeNull();
+    expect(d.currency).toBeNull();
+    expect(d.costs).toBeNull();
+    expect(d.basis).toBe("Unspecified");
+});
 it("captures an entry-only record without inventing identifiers, prices or trusted availability", async () => {
     const fetcher = vi
         .fn()

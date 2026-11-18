@@ -34,6 +34,7 @@ public sealed record NasdaqSupervisedExecutionEvidenceDraft(string SessionId, Da
     public NasdaqSupervisedExecutionEvent? Exit { get; init; }
     public string Association { get; init; } = "None";
     public string? AssociationSourceReference { get; init; }
+    public NasdaqReportedMonetaryOutcome? ReportedOutcome { get; init; }
 
     public void Validate()
     {
@@ -50,6 +51,7 @@ public sealed record NasdaqSupervisedExecutionEvidenceDraft(string SessionId, Da
             throw new ArgumentException("An asserted association needs both observations and its explicit source.");
         if (AssociationSourceReference is not null) Reference(AssociationSourceReference);
         Event(Entry, true); Event(Exit, false);
+        ReportedOutcome?.Validate();
     }
     private static void Event(NasdaqSupervisedExecutionEvent? e, bool entry)
     {
@@ -110,12 +112,19 @@ public sealed record NasdaqSupervisedExecutionEvidenceView(NasdaqSupervisedExecu
     public bool EntryExitRelationshipVerified => false;
     public bool CompleteSupervisedTrade => false;
     public string? EconomicOutcome => null;
+    public NasdaqReportedMonetaryOutcome? ReportedOutcome => Record.Evidence.ReportedOutcome;
+    public bool BrokerRealizedOutcomeVerified => false;
+    public string? MoneyWayCalculatedPnl => null;
+    public string? StrategyClassification => null;
+    public bool SessionClosureEstablished => false;
+    public string ReentryEligibility => "NotEvaluated_UnresolvedPolicy";
 }
 
 /// <summary>Application-level retrospective consumer; never merges manual captures into a historical report/frame.</summary>
 public static class NasdaqSupervisedExecutionEvidenceProjection
 {
-    public static NasdaqSupervisedExecutionEvidenceView View(NasdaqSupervisedExecutionEvidenceRecord record, string hash)
+    public static NasdaqSupervisedExecutionEvidenceView View(NasdaqSupervisedExecutionEvidenceRecord record, string hash,
+        NasdaqSupervisedExecutionEvidenceRecord? outcomeAnchor = null)
     {
         var d = record.Evidence; d.Validate(); var missing = new List<string>();
         if (d.SourceProviderId is null) missing.Add("OriginalProviderUnknown");
@@ -144,6 +153,13 @@ public static class NasdaqSupervisedExecutionEvidenceProjection
         }
         missing.Add(d.Association == "None" ? "EntryExitAssociationUnresolved" : d.Association + "AssociationAsserted_NotIndependentlyVerified");
         missing.AddRange(["OriginalArtifactsNotInspected", "NativeExecutionAndRelationshipUnverified", "HistoricalAvailabilityNotEstablished", "SlRiskTpNotEstablishedByCapture", "EconomicValuationNotImplemented"]);
+        if (d.ReportedOutcome is null) missing.Add("ReportedMonetaryOutcomeMissing");
+        else d.ReportedOutcome.AddIssues(d, missing);
+        if (d.ReportedOutcome is { } report)
+        {
+            if (outcomeAnchor is null) missing.Add("ReportedOutcomeExecutionAnchorNotSuppliedToProjection");
+            else report.AddAnchorIssues(outcomeAnchor.Evidence, missing);
+        }
         NasdaqHistoricalTradeLifecycleSummary? lifecycle = null;
         if (d.Scenario == "WickfillScenario2" && d.Direction == "Sell")
         {
