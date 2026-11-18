@@ -16,7 +16,10 @@ builder.Services.AddSingleton(_ => new LocalNasdaqExecutionEvidenceStore(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MoneyWay", "supervised-execution-evidence")));
 builder.Services.AddSingleton(s => new ReadNasdaqSupervisedDiagnostic(s.GetRequiredService<LocalNasdaqExecutionEvidenceStore>(),
     s.GetRequiredService<ReadNasdaqHistoricalReport>(), builder.Configuration["NasdaqHistoricalDemo:ReportPath"],
-    builder.Configuration["NasdaqHistoricalDemo:ExpectedSha256"]));
+    builder.Configuration["NasdaqHistoricalDemo:ExpectedSha256"], s.GetRequiredService<ReadNasdaqHistoricalEvidencePackages>()));
+builder.Services.AddSingleton(s => new ReadNasdaqHistoricalEvidencePackages(builder.Configuration["NasdaqHistoricalPackages:RegistryDirectory"],
+    builder.Configuration.GetSection("NasdaqHistoricalPackages:Roots").GetChildren().Where(c => c.Value is not null)
+        .ToDictionary(c => c.Key, c => c.Value!, StringComparer.Ordinal), s.GetRequiredService<ReadNasdaqHistoricalReport>()));
 
 if (builder.Environment.IsDevelopment())
 {
@@ -32,6 +35,7 @@ if (app.Environment.IsDevelopment())
     app.UseCors("DevelopmentFrontend");
     app.MapNasdaqHistoricalDemoEndpoints();
     app.MapNasdaqExecutionEvidenceEndpoints();
+    app.MapNasdaqHistoricalPackageEndpoints();
 }
 
 app.MapHealthChecks("/health");

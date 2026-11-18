@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { HistoricalEvidencePackagePanel } from "./HistoricalEvidencePackagePanel";
 import { StandardCanonicalDiagnosticPanel } from "./StandardCanonicalDiagnosticPanel";
 import type {
     CanonicalDiagnosticReference,
@@ -196,6 +197,23 @@ export function SupervisedSessionPanel({
             className="execution-capture"
         >
             <h3>Sesión Nasdaq supervisada · una operación real</h3>
+            <HistoricalEvidencePackagePanel
+                apiBaseUrl={apiBaseUrl}
+                onScope={(p) => {
+                    setScope({
+                        sessionId: p.sessionId,
+                        tradingDay: p.tradingDay,
+                        providerId: p.providerId,
+                        symbol: p.originalSymbol,
+                        path: "Standard",
+                    });
+                    setSession(null);
+                    setDiagnostic(null);
+                    setMessage(
+                        "Identidad documental seleccionada. El paquete no autoriza replay ni operación; abre o recupera la sesión mediante su acción explícita.",
+                    );
+                }}
+            />
             <p>
                 Después del cierre confirmado de la primera operación propia de
                 MoneyWay: sin reentrada, nuevo setup ni segunda operación en esa

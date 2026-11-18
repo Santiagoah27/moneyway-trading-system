@@ -1,0 +1,2 @@
+# Registered package digests cover exact bytes across checkouts.
+docs/data/nasdaq/packages/*.json text eol=lf

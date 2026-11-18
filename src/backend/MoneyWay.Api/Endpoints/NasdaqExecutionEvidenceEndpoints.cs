@@ -6,7 +6,7 @@ using MoneyWay.Infrastructure.Strategies.Nasdaq;
 
 namespace MoneyWay.Api.Endpoints;
 
-public static class NasdaqExecutionEvidenceEndpoints
+public static partial class NasdaqExecutionEvidenceEndpoints
 {
     private sealed record SaveRequest(Guid SubmissionId, NasdaqSupervisedExecutionEvidenceDraft Evidence, string? ExpectedRevision = null);
     private sealed record SessionOpenRequest(Guid SubmissionId, NasdaqSupervisedSessionOpen Session);

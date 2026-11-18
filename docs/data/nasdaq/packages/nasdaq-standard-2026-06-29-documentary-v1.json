@@ -1,0 +1,206 @@
+{
+  "packageId": "nasdaq-standard-2026-06-29-documentary",
+  "packageVersion": 1,
+  "strategyId": "moneyway-nasdaq",
+  "strategyVersion": "nasdaq-0.1.0-draft",
+  "scenario": "Standard",
+  "providerId": "oanda-global-markets-mt5-demo",
+  "originalSymbol": "US100",
+  "analysisReference": "TradingView OANDA:NAS100USD; human header review; not a native-price or feed-equivalence mapping",
+  "tradingDay": "2026-06-29",
+  "sessionId": "nasdaq-mentor-2026-06-29-videos",
+  "origin": "AuthenticHistoricalExportCandidate",
+  "candleProvenance": "Retained real MT5 demo exports with normalization/provenance; integrity independently checked, broker publication and historical availability not authenticated",
+  "originalClockDomain": "MT5 native server clock; documentary June mapping only",
+  "timeMapping": "Existing June pack: UTC = native server - 3h; close = open + timeframe; no gap filling. Not verified publication/capture/availability.",
+  "transformation": "DocumentedExternalNormalization_NotAnAvailabilityAttestation",
+  "availabilityEvidence": "No independently established provider publication, first historical observation or authenticated contemporaneous capture bounds. Candle close alone is insufficient.",
+  "artifacts": [
+    {
+      "id": "raw-1M",
+      "kind": "RawCandles",
+      "root": "session",
+      "relativePath": "raw/2026-06-29/US100_M1_202606220100_202606302359.csv",
+      "sha256": "404c6387468ad2bd6d62d5b3242020f3fabc9a293d67fcf385fb80298e634412",
+      "provenance": "Retained OANDA Global Markets MT5 demo US100 export; native server timestamps and tick volume; no broker authentication.",
+      "timeframe": "1m",
+      "expectedCandleCount": null
+    },
+    {
+      "id": "normalized-1M",
+      "kind": "NormalizedCandles",
+      "root": "session",
+      "relativePath": "normalized/2026-06-29/1M.csv",
+      "sha256": "478605ea546d54cba4e0598eb3fbb59eb191db92cd3d0a10cac64a5c6e8152db",
+      "provenance": "Existing external June-only server-minus-3h/tick-volume normalization; timestamp conversion is not historical availability.",
+      "timeframe": "1m",
+      "expectedCandleCount": 9660
+    },
+    {
+      "id": "raw-5M",
+      "kind": "RawCandles",
+      "root": "session",
+      "relativePath": "raw/2026-06-29/US100_M5_202606220100_202606302355.csv",
+      "sha256": "4f468275b5644d4298ba0c085802f04574c765f7dfa662df1ee99456eb9fcf46",
+      "provenance": "Retained OANDA Global Markets MT5 demo US100 export; native server timestamps and tick volume; no broker authentication.",
+      "timeframe": "5m",
+      "expectedCandleCount": null
+    },
+    {
+      "id": "normalized-5M",
+      "kind": "NormalizedCandles",
+      "root": "session",
+      "relativePath": "normalized/2026-06-29/5M.csv",
+      "sha256": "0133f473592a004535bac89437c96b1c369a753205792459c4e4e12c1835c21a",
+      "provenance": "Existing external June-only server-minus-3h/tick-volume normalization; timestamp conversion is not historical availability.",
+      "timeframe": "5m",
+      "expectedCandleCount": 1932
+    },
+    {
+      "id": "raw-1H",
+      "kind": "RawCandles",
+      "root": "session",
+      "relativePath": "raw/2026-06-29/US100_H1_202606220100_202606302300.csv",
+      "sha256": "01b0cacf274f0de13ad8f052442071efc677263374b77ed115c0c702cf0be541",
+      "provenance": "Retained OANDA Global Markets MT5 demo US100 export; native server timestamps and tick volume; no broker authentication.",
+      "timeframe": "1h",
+      "expectedCandleCount": null
+    },
+    {
+      "id": "normalized-1H",
+      "kind": "NormalizedCandles",
+      "root": "session",
+      "relativePath": "normalized/2026-06-29/1H.csv",
+      "sha256": "2a7437a1b57ca6eac2d2b6a7a3e24c40d5d4030f924a36d7bba791a580ba1c85",
+      "provenance": "Existing external June-only server-minus-3h/tick-volume normalization; timestamp conversion is not historical availability.",
+      "timeframe": "1h",
+      "expectedCandleCount": 161
+    },
+    {
+      "id": "raw-4H",
+      "kind": "RawCandles",
+      "root": "session",
+      "relativePath": "raw/2026-06-29/US100_H4_202606220000_202606302000.csv",
+      "sha256": "19ecbdbbab21032071cf04f6ebc42913be57449baf37fce1a8b8a7c502331dad",
+      "provenance": "Retained OANDA Global Markets MT5 demo US100 export; native server timestamps and tick volume; no broker authentication.",
+      "timeframe": "4h",
+      "expectedCandleCount": null
+    },
+    {
+      "id": "normalized-4H",
+      "kind": "NormalizedCandles",
+      "root": "session",
+      "relativePath": "normalized/2026-06-29/4H.csv",
+      "sha256": "feeabe95702d92ba464a224b40275c34f4935a8d32584835471f20859839d34d",
+      "provenance": "Existing external June-only server-minus-3h/tick-volume normalization; timestamp conversion is not historical availability.",
+      "timeframe": "4h",
+      "expectedCandleCount": 42
+    },
+    {
+      "id": "normalization",
+      "kind": "NormalizationProvenance",
+      "root": "session",
+      "relativePath": "normalized/2026-06-29/normalization-provenance.json",
+      "sha256": "302464759f00e493daa80bb45defe6f7b370e907a121f183182bdb0e7b8ac881",
+      "provenance": "Retained external normalization record; no new transformation performed.",
+      "timeframe": null,
+      "expectedCandleCount": null
+    },
+    {
+      "id": "adapter",
+      "kind": "Adapter",
+      "root": "session",
+      "relativePath": "ValidatedInput.cs",
+      "sha256": "944bd132b73ad061572a752ddcefc187582812c60a88dccf056bdc4e18806eba",
+      "provenance": "Existing June adapter supplies no human positive observations; source code is inspected as bytes, never executed by package inspection.",
+      "timeframe": null,
+      "expectedCandleCount": null
+    },
+    {
+      "id": "research-report",
+      "kind": "HistoricalReport",
+      "root": "session",
+      "relativePath": "report.json",
+      "sha256": "6978e3faf8f35e5e2eb812db785eec83ab02095b0805c76a5fdd27fa8f533bb8",
+      "provenance": "Previously generated canonical research output; not proof of current temporal admission or an executed trade.",
+      "timeframe": null,
+      "expectedCandleCount": null
+    },
+    {
+      "id": "human-C1",
+      "kind": "HumanReviewText",
+      "root": "attachments",
+      "relativePath": "5273d5c9-1cfa-449a-955f-924ca83ec599/Pasted text.txt",
+      "sha256": "5bf4a59be4ebd9fc76bdaee0d01cdff27645a0131b199d1b2902c9e91e21f4de",
+      "provenance": "Original retained user correction of invalid 2024 case; human-reviewed 2026-06-29 NO_TRADE.",
+      "timeframe": null,
+      "expectedCandleCount": null
+    },
+    {
+      "id": "human-C2",
+      "kind": "HumanReviewText",
+      "root": "attachments",
+      "relativePath": "259d60c0-e5fd-420f-a0ca-40404bc7afd9/Pasted text.txt",
+      "sha256": "a336af28ab03f599384c74b0ff93f49c498138f4795719704c90424c916df7eb",
+      "provenance": "Retained direct human header review confirms TradingView OANDA:NAS100USD, not equivalence to MT5 US100.",
+      "timeframe": null,
+      "expectedCandleCount": null
+    },
+    {
+      "id": "human-preparation",
+      "kind": "HumanReviewText",
+      "root": "attachments",
+      "relativePath": "9d08ffe9-bf37-4c74-ae6e-83b9b13fc588/Pasted text.txt",
+      "sha256": "413e8309edfe0e9483b1396192f77efcf3bda2c33d070d997bc8701920c1dcd2",
+      "provenance": "Human states preparation was retrospectively discussed on June 30 and cannot be confirmed for June 29.",
+      "timeframe": null,
+      "expectedCandleCount": null
+    }
+  ],
+  "humanReviews": [
+    {
+      "id": "C1",
+      "semanticSlot": "historical-operation",
+      "claim": "Human confirms June 29 NO_TRADE; no entry or exit",
+      "decision": "HumanObservationOnly",
+      "artifactId": "human-C1",
+      "reviewer": "User-retained direct human review; identity not independently authenticated",
+      "reviewCreatedOn": "2026-10-07",
+      "originalEventTime": "2026-06-29 session; retrospective June 30 preparation per human source, exact event/capture times not established",
+      "claimedAvailableAtUtc": null,
+      "availabilityEvidence": "Not established. Source review/receipt is later than the historical session; no backdating."
+    },
+    {
+      "id": "C2",
+      "semanticSlot": "analysis-feed",
+      "claim": "Human confirms TradingView OANDA:NAS100USD; native MT5 feed remains distinct",
+      "decision": "HumanObservationOnly",
+      "artifactId": "human-C2",
+      "reviewer": "User-retained direct human review; identity not independently authenticated",
+      "reviewCreatedOn": "2026-10-07",
+      "originalEventTime": "2026-06-29 session; retrospective June 30 preparation per human source, exact event/capture times not established",
+      "claimedAvailableAtUtc": null,
+      "availabilityEvidence": "Not established. Source review/receipt is later than the historical session; no backdating."
+    },
+    {
+      "id": "preparation",
+      "semanticSlot": "historical-preparation",
+      "claim": "June 29 timely preparation cannot be confirmed; June 30 retrospective review is not June 29 availability",
+      "decision": "HumanObservationOnly",
+      "artifactId": "human-preparation",
+      "reviewer": "User-retained direct human review; identity not independently authenticated",
+      "reviewCreatedOn": null,
+      "originalEventTime": "2026-06-29 session; retrospective June 30 preparation per human source, exact event/capture times not established",
+      "claimedAvailableAtUtc": null,
+      "availabilityEvidence": "Not established. Source review/receipt is later than the historical session; no backdating."
+    }
+  ],
+  "limitations": [
+    "No human approval of this newly assembled package or canonical admission is asserted.",
+    "Original mentor media bytes/stable video identity not established by these retained texts.",
+    "TradingView NAS100USD and MT5 US100 remain distinct; no price substitution.",
+    "Historical preparation is unconfirmed; no typed positive H4/M5/FVG/M1 evidence is admitted.",
+    "Current human 11:30 vs runtime 11:00 conflict requires separate candidate version review.",
+    "Existing report is a preserved research result, not a newly admitted canonical execution."
+  ]
+}

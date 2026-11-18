@@ -5,6 +5,40 @@ import type { StandardDiagnosticContext } from "./StandardCanonicalDiagnosticPan
 import { SupervisedExecutionCapture } from "./SupervisedExecutionCapture";
 
 afterEach(() => vi.unstubAllGlobals());
+it("does not link a registered package research report whose causal admission is blocked", async () => {
+    const onReference = vi.fn();
+    const onAssociate = vi.fn();
+    vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                ...context,
+                packageAdmission:
+                    "BlockedRegisteredPackageCausalAdmission:synthetic-package",
+            }),
+        }),
+    );
+    render(
+        <StandardCanonicalDiagnosticPanel
+            apiBaseUrl=""
+            session={context.session}
+            onReference={onReference}
+            onAssociate={onAssociate}
+        />,
+    );
+    fireEvent.click(
+        screen.getByRole("button", {
+            name: "Cargar diagnóstico de esta sesión",
+        }),
+    );
+    const button = await screen.findByRole("button", {
+        name: "Vincular frame a evidencia documental",
+    });
+    expect(button).toHaveProperty("disabled", true);
+    expect(onReference).toHaveBeenLastCalledWith(null);
+    expect(onAssociate).not.toHaveBeenCalled();
+});
 const reference = {
     sessionKey: "a".repeat(64),
     reportSha256: "b".repeat(64),

@@ -14,6 +14,7 @@ export interface StandardDiagnosticContext {
     report: NasdaqHistoricalReport;
     canonicalPath: string;
     authorization: string;
+    packageAdmission?: string;
     specificationConflict: string;
     conflictProvenance: string;
     correctionPath: string;
@@ -73,7 +74,11 @@ export function StandardCanonicalDiagnosticPanel({
                 throw new Error("DiagnosticFrameTimestampMismatch");
             setContext(value);
             setPinnedHash(value.reference.reportSha256);
-            onReference(value.reference);
+            onReference(
+                value.packageAdmission?.startsWith("Blocked")
+                    ? null
+                    : value.reference,
+            );
         } catch (e) {
             setError(e instanceof Error ? e.message : "DataUnavailable");
         } finally {
@@ -146,7 +151,10 @@ export function StandardCanonicalDiagnosticPanel({
                         .
                     </p>
                     <p>
-                        {context.authorization} · {context.sourceLimitations}
+                        {context.authorization} · {context.sourceLimitations} ·
+                        Admisión de paquete:{" "}
+                        {context.packageAdmission ??
+                            "No evaluada por registro de paquetes"}
                     </p>
                     <p>
                         {context.conflictProvenance} · {context.correctionPath}
@@ -223,7 +231,11 @@ export function StandardCanonicalDiagnosticPanel({
                     </details>
                     <button
                         type="button"
-                        disabled={busy || !onAssociate}
+                        disabled={
+                            busy ||
+                            !onAssociate ||
+                            context.packageAdmission?.startsWith("Blocked")
+                        }
                         onClick={() => onAssociate?.(context)}
                     >
                         Vincular frame a evidencia documental

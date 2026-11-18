@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "packages": [
+    {
+      "packageId": "nasdaq-standard-2026-06-29-documentary",
+      "packageVersion": 1,
+      "manifestFile": "nasdaq-standard-2026-06-29-documentary-v1.json",
+      "manifestSha256": "12684556c3a095ead00d1138b41902b9aba1844cf315383ec5ed87c966665155"
+    }
+  ]
+}

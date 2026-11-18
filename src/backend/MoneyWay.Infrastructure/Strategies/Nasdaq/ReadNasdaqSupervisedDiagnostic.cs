@@ -5,7 +5,7 @@ namespace MoneyWay.Infrastructure.Strategies.Nasdaq;
 
 /// <summary>Application-facing association over the existing bounded reader; never evaluates rules or creates eligibility.</summary>
 public sealed class ReadNasdaqSupervisedDiagnostic(LocalNasdaqExecutionEvidenceStore store, ReadNasdaqHistoricalReport reader,
-    string? configuredPath, string? configuredHash)
+    string? configuredPath, string? configuredHash, ReadNasdaqHistoricalEvidencePackages? packages = null)
 {
     public async Task<NasdaqSupervisedDiagnosticContext> ReadAsync(string sessionKey, long? step = null, string? hash = null,
         DateTimeOffset? at = null, CancellationToken cancellationToken = default)
@@ -37,7 +37,9 @@ public sealed class ReadNasdaqSupervisedDiagnostic(LocalNasdaqExecutionEvidenceS
             ?? throw new InvalidDataException("ExactVersionWorkflowUnavailable");
         var dependencies = workflow.RulePrerequisites.Select(p => new NasdaqCanonicalRuleDependency(p.DownstreamRuleId.Value,
             p.PrerequisiteRuleIds.Select(r => r.Value).ToArray(), p.AlternativePrerequisiteRuleId?.Value, p.RequiresLatestPrerequisitePass)).ToArray();
-        return new(new(session.SessionKey, report.ReportSha256, frame.Step, frame.AsOfUtc), store.Session(sessionKey), report, dependencies);
+        var registered = packages?.RegisteredReportPackages(report.ReportSha256) ?? [];
+        return new(new(session.SessionKey, report.ReportSha256, frame.Step, frame.AsOfUtc), store.Session(sessionKey), report, dependencies)
+        { PackageAdmission = registered.Count == 0 ? "NoRegisteredPackageClaim_ReferenceIsDocumentaryOnly" : "BlockedRegisteredPackageCausalAdmission:" + string.Join(',', registered) };
     }
 
     public async Task ValidateAsync(NasdaqCanonicalDiagnosticReference? reference, NasdaqSupervisedExecutionEvidenceDraft? evidence = null,
@@ -46,6 +48,7 @@ public sealed class ReadNasdaqSupervisedDiagnostic(LocalNasdaqExecutionEvidenceS
         if (reference is null) return;
         reference.Validate();
         var context = await ReadAsync(reference.SessionKey, reference.FrameStep, reference.ReportSha256, reference.AsOfUtc, cancellationToken);
+        if (context.PackageAdmission.StartsWith("Blocked", StringComparison.Ordinal)) throw new NasdaqEvidenceConflictException("RegisteredHistoricalPackageNotAdmissible_InspectionOnly_NoDiagnosticAttemptBinding");
         if (evidence is not null && (evidence.SessionId != context.Session.SessionId || evidence.TradingDay != context.Report.TradingDay
             || evidence.SourceProviderId != context.Report.ProviderId || evidence.OriginalSymbol != context.Report.Symbol || evidence.Scenario != "Standard"))
             throw new ArgumentException("Documentary diagnostic association requires the exact declared Standard session/date/provider/instrument; no inferred mapping.");

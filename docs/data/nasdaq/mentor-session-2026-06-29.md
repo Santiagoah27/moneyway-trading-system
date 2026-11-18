@@ -1,5 +1,13 @@
 # Sesión Nasdaq del mentor 2026-06-29: ejemplo NO-TRADE
 
+Actualización de inspección 2026-11-18: existen exports MT5 US100, archivos
+normalizados y un reporte previo de 9.660 frames NoTrade. El
+[paquete documental registrado](../../backtesting/nasdaq-standard-historical-package.md)
+conserva sus hashes y límites; no establece nueva admisión causal ni equivalencia
+con TradingView OANDA:NAS100USD. Los estados de adquisición de las secciones
+originales siguientes describen su checkpoint histórico. La preparación del
+29 de junio sigue sin confirmación contemporánea y no se inventa una operación.
+
 ## Estado y fuente
 
 **READY_FOR_MARKET_DATA_ACQUISITION**. SessionId: `nasdaq-mentor-2026-06-29-videos`. SessionType: **NO_TRADE historical mentor session**. La identidad OANDA / NAS100USD está confirmada por lectura humana directa del header original. No hubo retroceso correctivo 1M requerido ni entrada, según revisión humana. No se representa una ejecución ni se fabrican hechos posteriores.

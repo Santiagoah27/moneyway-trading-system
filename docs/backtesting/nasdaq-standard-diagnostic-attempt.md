@@ -1,5 +1,11 @@
 # Standard canonical diagnostic to supervised attempt
 
+2026-11-18 discovery update: the [historical package feature](nasdaq-standard-historical-package.md)
+located the authentic June 29 exports and prior 9,660-frame NoTrade research
+report. The earlier availability search below was incomplete. This candidate
+is now inspectable, but causal availability is not established and no newly
+admitted Standard replay or diagnostic-attempt authority is claimed.
+
 2026-11-18. Initial clean synchronized main:
 `a58fcb62932a681365d4fec8e45c01392d24e5e9`.
 

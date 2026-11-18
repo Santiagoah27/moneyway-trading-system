@@ -18,6 +18,7 @@ public sealed record NasdaqSupervisedDiagnosticContext(NasdaqCanonicalDiagnostic
     NasdaqSupervisedSessionState Session, NasdaqHistoricalReportSummary Report,
     IReadOnlyList<NasdaqCanonicalRuleDependency> Dependencies)
 {
+    public string PackageAdmission { get; init; } = "NoRegisteredPackageClaim_ReferenceIsDocumentaryOnly";
     public string CanonicalPath => Report.SelectedFrame!.TradeLifecycle?.Path ?? "Unresolved";
     public string Authorization => "NotGranted_DocumentaryContextOnly_SpecificationConflict";
     public string SpecificationConflict => "HumanAuditedWindowClaim_0830To1130_Bogota_ConflictsWithRepositoryRereviewAndRuntime_0830To1100_Exclusive";
