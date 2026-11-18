@@ -35,6 +35,7 @@ public sealed record NasdaqSupervisedExecutionEvidenceDraft(string SessionId, Da
     public string Association { get; init; } = "None";
     public string? AssociationSourceReference { get; init; }
     public NasdaqReportedMonetaryOutcome? ReportedOutcome { get; init; }
+    public NasdaqCanonicalDiagnosticReference? CanonicalDiagnostic { get; init; }
 
     public void Validate()
     {
@@ -52,6 +53,7 @@ public sealed record NasdaqSupervisedExecutionEvidenceDraft(string SessionId, Da
         if (AssociationSourceReference is not null) Reference(AssociationSourceReference);
         Event(Entry, true); Event(Exit, false);
         ReportedOutcome?.Validate();
+        CanonicalDiagnostic?.Validate();
     }
     private static void Event(NasdaqSupervisedExecutionEvent? e, bool entry)
     {

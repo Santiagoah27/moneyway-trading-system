@@ -6,6 +6,12 @@ Accepted. **DEMO V0 integration contract, not new mentor strategy semantics.** T
 
 **Applicability scope update (2026-10-14).** [ADR 0026](0026-define-nasdaq-wickfill-scenario-2-applicability.md) supersedes universal strategy-scope readings of this ADR's standard M5/FVG/M1 pre-entry chain for the confirmed SELL Wickfill Scenario 2 branch. Historical decisions and current typed standard contracts remain intact. Scenario 2 support is not implemented; no current Required rule is bypassed or marked Passed, and no intrabar M5 permission is implied.
 
+2026-11-18 implementation note: the [Standard diagnostic-to-attempt consumer](../backtesting/nasdaq-standard-diagnostic-attempt.md)
+binds actual report hashes/frames to local documentary records and supervised
+intent without changing canonical evaluations. Current human 08:30–11:30 conflicts
+with the earlier 11:00 re-review retained here; the consumer exposes both claims,
+preserves runtime and requires a separate approved candidate-version correction.
+
 ## Date
 
 2026-10-03.

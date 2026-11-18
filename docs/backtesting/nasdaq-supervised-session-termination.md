@@ -1,5 +1,10 @@
 # Nasdaq supervised session termination and no reentry
 
+Current extension: [Standard diagnostic-to-attempt integration](nasdaq-standard-diagnostic-attempt.md).
+The current human 11:30 instruction conflicts with the repository's earlier
+11:00 re-review/runtime. That extension exposes the conflict and preserves runtime
+behavior; the implementation-window descriptions below are not new human approval.
+
 Implementation checkpoint: 2026-11-18, initial clean synchronized `main`
 `268d39976ad9aa1918f90ff66dbab9039873cc07`.
 

@@ -99,6 +99,14 @@ public sealed partial class LocalNasdaqExecutionEvidenceStore
         if (draft.ReportedOutcome is { } report) draft = draft with { ReportedOutcome = report with { Costs = report.Costs is null ? null : Array.AsReadOnly(report.Costs.ToArray()) } };
         if (submissionId == Guid.Empty || id == Guid.Empty || id.HasValue != (expectedRevision is not null)) throw new ArgumentException("Explicit submission and expected revision identities are required.");
         using var gate = Lock(); var values = ReadAll();
+        if (draft.CanonicalDiagnostic is { } diagnostic)
+        {
+            var session = SessionState(ReadSessions(values), diagnostic.SessionKey);
+            if (session.Path != "Standard" || draft.Scenario != "Standard" || draft.SessionId != session.SessionId
+                || draft.TradingDay != session.Identity.TradingDay || draft.OriginalSymbol != session.Identity.Symbol.Value
+                || draft.SourceProviderId != session.Identity.ProviderId.Value)
+                throw new ArgumentException("A linked diagnostic record cannot move to another session/source/instrument/path.");
+        }
         var retry = values.SingleOrDefault(v => v.Record.SubmissionId == submissionId);
         if (retry is not null)
         {
@@ -110,6 +118,8 @@ public sealed partial class LocalNasdaqExecutionEvidenceStore
         var previous = id is null ? null : values.Where(v => v.Record.RecordId == id).MaxBy(v => v.Record.Revision);
         if (id.HasValue && previous is null) throw new KeyNotFoundException();
         if (previous?.Sha256 != expectedRevision) throw new NasdaqEvidenceConflictException("RevisionConflict_ReloadBeforeCorrecting");
+        if (previous?.Record.Evidence.CanonicalDiagnostic is { } pinned && pinned != draft.CanonicalDiagnostic)
+            throw new NasdaqEvidenceConflictException("CanonicalDiagnosticReferenceImmutable_CreateSeparateRecordForAnotherContext");
         if (draft.ReportedOutcome is { } outcome && (id is null || outcome.ExecutionRecordId != id
             || !values.Any(anchor => anchor.Record.RecordId == id && anchor.Record.Revision == outcome.ExecutionEvidenceRevision
                 && anchor.Sha256 == outcome.ExecutionEvidenceRevisionHash)))

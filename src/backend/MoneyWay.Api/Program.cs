@@ -14,6 +14,9 @@ builder.Services.AddSingleton<ReadNasdaqHistoricalReport>();
 builder.Services.AddSingleton(_ => new LocalNasdaqExecutionEvidenceStore(
     builder.Configuration["NasdaqExecutionEvidence:Directory"] ?? Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MoneyWay", "supervised-execution-evidence")));
+builder.Services.AddSingleton(s => new ReadNasdaqSupervisedDiagnostic(s.GetRequiredService<LocalNasdaqExecutionEvidenceStore>(),
+    s.GetRequiredService<ReadNasdaqHistoricalReport>(), builder.Configuration["NasdaqHistoricalDemo:ReportPath"],
+    builder.Configuration["NasdaqHistoricalDemo:ExpectedSha256"]));
 
 if (builder.Environment.IsDevelopment())
 {

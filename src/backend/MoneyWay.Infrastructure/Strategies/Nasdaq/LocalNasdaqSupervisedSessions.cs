@@ -62,6 +62,8 @@ public sealed partial class LocalNasdaqExecutionEvidenceStore
     private static void ValidateSessionCommand(NasdaqSupervisedSessionCommand c)
     {
         SessionText(c.Reviewer); NasdaqSupervisedExecutionEvidenceDraft.Reference(c.SourceReference);
+        c.CanonicalDiagnostic?.Validate();
+        if (c.CanonicalDiagnostic is not null && c.Action != "EntryIntent") throw new ArgumentException("A canonical frame may annotate EntryIntent only; it cannot establish execution or closure.");
         if (c.SubmissionId == Guid.Empty || c.Action is not ("Open" or "ActivateSetup" or "InvalidateSetup" or "EntryIntent" or "ConfirmExecution" or "ConfirmClosure")) throw new ArgumentException("Invalid session command.");
         if (c.Action is "ActivateSetup" or "InvalidateSetup" or "EntryIntent") SessionText(c.SetupReference);
         if (c.Action is not ("ConfirmExecution" or "ConfirmClosure") && (c.Execution is not null || c.MoneyWayOwnedExecutionConfirmed || c.MoneyWayTradeClosedConfirmed || c.ClosureKind is not null))
@@ -152,6 +154,7 @@ public sealed partial class LocalNasdaqExecutionEvidenceStore
         ArgumentNullException.ThrowIfNull(command);
         ValidateSessionCommand(command); if (command.Action == "Open") throw new ArgumentException("Use session creation to open a scope.");
         using var gate = Lock(); var captures = ReadAll(); var all = ReadSessions(captures); var current = SessionState(all, key);
+        if (command.CanonicalDiagnostic is { } diagnostic && diagnostic.SessionKey != current.SessionKey) throw new ArgumentException("Diagnostic session mismatch.");
         var retry = all.SingleOrDefault(v => v.Event.Command.SubmissionId == command.SubmissionId);
         if (retry is not null)
         {

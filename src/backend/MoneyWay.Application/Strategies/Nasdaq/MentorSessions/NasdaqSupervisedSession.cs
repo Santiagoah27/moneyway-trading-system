@@ -12,6 +12,7 @@ public sealed record NasdaqSupervisedSessionCommand(Guid SubmissionId, string Ac
     public bool MoneyWayTradeClosedConfirmed { get; init; }
     public string? ClosureKind { get; init; }
     public string? Reason { get; init; }
+    public NasdaqCanonicalDiagnosticReference? CanonicalDiagnostic { get; init; }
 }
 public sealed record NasdaqSupervisedSessionEvent(string SessionKey, NasdaqDemoSessionIdentity Identity, string SessionId,
     string Path, int Revision, string? PreviousHash, DateTimeOffset RegisteredAtUtc, NasdaqSupervisedSessionCommand Command)

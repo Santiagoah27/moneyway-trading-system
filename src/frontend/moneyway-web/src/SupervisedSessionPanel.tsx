@@ -1,4 +1,9 @@
 import { useState } from "react";
+import { StandardCanonicalDiagnosticPanel } from "./StandardCanonicalDiagnosticPanel";
+import type {
+    CanonicalDiagnosticReference,
+    StandardDiagnosticContext,
+} from "./StandardCanonicalDiagnosticPanel";
 
 interface EvidenceSelection {
     recordId: string;
@@ -9,6 +14,7 @@ interface EvidenceSelection {
     providerId: string | null;
     symbol: string;
     scenario: string | null;
+    canonicalDiagnostic?: CanonicalDiagnosticReference | null;
 }
 interface SessionEvent {
     revision: number;
@@ -49,9 +55,11 @@ export interface SupervisedSessionState {
 export function SupervisedSessionPanel({
     apiBaseUrl,
     evidence,
+    onAssociate,
 }: {
     apiBaseUrl: string;
     evidence: EvidenceSelection | null;
+    onAssociate?: (context: StandardDiagnosticContext) => void;
 }) {
     const [scope, setScope] = useState({
         sessionId: "",
@@ -68,6 +76,8 @@ export function SupervisedSessionPanel({
     const [kind, setKind] = useState("OtherEvidencedExit");
     const [reason, setReason] = useState("");
     const [session, setSession] = useState<SupervisedSessionState | null>(null);
+    const [diagnostic, setDiagnostic] =
+        useState<CanonicalDiagnosticReference | null>(null);
     const confirmationReference =
         session && evidence
             ? JSON.stringify([
@@ -148,6 +158,10 @@ export function SupervisedSessionPanel({
             action: name,
             reviewer,
             sourceReference: source,
+            ...(name === "EntryIntent" &&
+            diagnostic?.sessionKey === session.sessionKey
+                ? { canonicalDiagnostic: diagnostic }
+                : {}),
             ...(name === "ActivateSetup" ||
             name === "InvalidateSetup" ||
             name === "EntryIntent"
@@ -349,6 +363,16 @@ export function SupervisedSessionPanel({
             </ul>
             {session && (
                 <section aria-label="Estado de sesión supervisada">
+                    {session.path === "Standard" && (
+                        <StandardCanonicalDiagnosticPanel
+                            key={session.sessionKey}
+                            apiBaseUrl={apiBaseUrl}
+                            session={session}
+                            savedReference={evidence?.canonicalDiagnostic}
+                            onReference={setDiagnostic}
+                            onAssociate={onAssociate}
+                        />
+                    )}
                     <h4>
                         {session.terminal
                             ? "TERMINAL · SIN REENTRADA"
@@ -363,7 +387,10 @@ export function SupervisedSessionPanel({
                     </p>
                     <p>
                         Guardia local: {session.localGuardReason}. Ventana de
-                        entrada existente: [08:30, 11:00) Bogotá; calendario,
+                        entrada implementada y en disputa: [08:30, 11:00)
+                        Bogotá; la instrucción humana actual establece
+                        08:30–11:30. No se altera el runtime ni se verifica
+                        autorización por asumir un cutoff. Calendario,
                         preparación y demás reglas siguen siendo requisitos
                         independientes. Pasar esta guardia no equivale a Ready.
                     </p>

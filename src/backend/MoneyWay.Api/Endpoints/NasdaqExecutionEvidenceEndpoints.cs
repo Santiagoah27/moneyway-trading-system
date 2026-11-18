@@ -14,16 +14,22 @@ public static class NasdaqExecutionEvidenceEndpoints
     { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, RespectRequiredConstructorParameters = true, MaxDepth = 16 };
     public static void MapNasdaqExecutionEvidenceEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost("/api/nasdaq/execution-evidence", (HttpContext c, LocalNasdaqExecutionEvidenceStore s) => Execute(c, async () =>
+        endpoints.MapPost("/api/nasdaq/execution-evidence", (HttpContext c, LocalNasdaqExecutionEvidenceStore s, ReadNasdaqSupervisedDiagnostic diagnostics) => Execute(c, async () =>
         {
             var request = await Read<SaveRequest>(c);
+            ArgumentNullException.ThrowIfNull(request.Evidence);
             if (request.ExpectedRevision is not null) throw new ArgumentException("Creation cannot replace an existing revision.");
+            await diagnostics.ValidateAsync(request.Evidence.CanonicalDiagnostic, request.Evidence, c.RequestAborted);
             var saved = s.Save(request.SubmissionId, request.Evidence);
             return Results.Created($"/api/nasdaq/execution-evidence/{saved.Record.RecordId}", saved);
         }));
-        endpoints.MapPost("/api/nasdaq/execution-evidence/{id:guid}/revisions", (HttpContext c, Guid id, LocalNasdaqExecutionEvidenceStore s) => Execute(c, async () =>
+        endpoints.MapPost("/api/nasdaq/execution-evidence/{id:guid}/revisions", (HttpContext c, Guid id, LocalNasdaqExecutionEvidenceStore s, ReadNasdaqSupervisedDiagnostic diagnostics) => Execute(c, async () =>
         {
             var request = await Read<SaveRequest>(c);
+            ArgumentNullException.ThrowIfNull(request.Evidence);
+            // An unchanged immutable association may remain readable/correctable when its source report is no longer configured.
+            if (request.Evidence.CanonicalDiagnostic != s.Get(id).Record.Evidence.CanonicalDiagnostic)
+                await diagnostics.ValidateAsync(request.Evidence.CanonicalDiagnostic, request.Evidence, c.RequestAborted);
             return Results.Ok(s.Save(request.SubmissionId, request.Evidence, id, request.ExpectedRevision));
         }));
         endpoints.MapGet("/api/nasdaq/execution-evidence/{id:guid}", (HttpContext c, Guid id, LocalNasdaqExecutionEvidenceStore s) => Execute(c, () =>
@@ -52,8 +58,20 @@ public static class NasdaqExecutionEvidenceEndpoints
         }));
         endpoints.MapGet("/api/nasdaq/supervised-sessions/{key}", (HttpContext c, string key, LocalNasdaqExecutionEvidenceStore s) => Execute(c, () =>
             Task.FromResult<IResult>(Results.Ok(s.Session(key)))));
-        endpoints.MapPost("/api/nasdaq/supervised-sessions/{key}/actions", (HttpContext c, string key, LocalNasdaqExecutionEvidenceStore s) => Execute(c, async () =>
-            Results.Ok(s.SessionAction(key, await Read<NasdaqSupervisedSessionCommand>(c)))));
+        endpoints.MapPost("/api/nasdaq/supervised-sessions/{key}/actions", (HttpContext c, string key, LocalNasdaqExecutionEvidenceStore s, ReadNasdaqSupervisedDiagnostic diagnostics) => Execute(c, async () =>
+        {
+            var command = await Read<NasdaqSupervisedSessionCommand>(c);
+            if (s.Session(key).Terminal) return Results.Ok(s.SessionAction(key, command));
+            await diagnostics.ValidateAsync(command.CanonicalDiagnostic, cancellationToken: c.RequestAborted);
+            return Results.Ok(s.SessionAction(key, command));
+        }));
+        endpoints.MapGet("/api/nasdaq/supervised-sessions/{key}/diagnostic", (HttpContext c, string key, ReadNasdaqSupervisedDiagnostic diagnostics) => Execute(c, async () =>
+        {
+            if (c.Request.Query.Any(p => p.Key is not ("frameStep" or "reportSha256") || p.Value.Count != 1)) throw new ArgumentException("Only a configured canonical report/frame may be selected.");
+            long? step = c.Request.Query.TryGetValue("frameStep", out var value) ? long.Parse(value.ToString(), System.Globalization.CultureInfo.InvariantCulture) : null;
+            var hash = c.Request.Query.TryGetValue("reportSha256", out var digest) ? digest.ToString() : null;
+            return Results.Ok(await diagnostics.ReadAsync(key, step, hash, cancellationToken: c.RequestAborted));
+        }));
     }
     private static async Task<T> Read<T>(HttpContext c)
     {
@@ -87,7 +105,7 @@ public static class NasdaqExecutionEvidenceEndpoints
             return Problem(403, "LocalCaptureOnly", "Use the local supervised application.");
         try { return await operation(); }
         catch (NasdaqEvidenceConflictException e) { return Problem(409, "EvidenceConflict", e.Message); }
-        catch (KeyNotFoundException) { return Problem(404, "EvidenceRecordMissing", "Record/revision not found."); }
+        catch (Exception e) when (e is KeyNotFoundException or FileNotFoundException or DirectoryNotFoundException) { return Problem(404, "EvidenceOrDiagnosticMissing", "Session, record, configured report or frame unavailable; no substitution."); }
         catch (ArgumentException e)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["evidence"] = [e.Message] },

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ReportedMonetaryOutcomeFields } from "./ReportedMonetaryOutcomeFields";
 import type { ReportedMonetaryOutcome } from "./ReportedMonetaryOutcomeFields";
 import { SupervisedSessionPanel } from "./SupervisedSessionPanel";
+import type { CanonicalDiagnosticReference } from "./StandardCanonicalDiagnosticPanel";
 
 export interface CaptureEvent {
     sourceReference: string;
@@ -37,6 +38,7 @@ export interface CaptureDraft {
     association: string;
     associationSourceReference: string | null;
     reportedOutcome?: ReportedMonetaryOutcome | null;
+    canonicalDiagnostic?: CanonicalDiagnosticReference | null;
 }
 interface CaptureView {
     record: {
@@ -373,6 +375,44 @@ export function SupervisedExecutionCapture({
             <h3>Registro supervisado de evidencia de ejecución</h3>
             <SupervisedSessionPanel
                 apiBaseUrl={apiBaseUrl}
+                onAssociate={(context) => {
+                    if (busy || pending) return;
+                    if (
+                        draft.canonicalDiagnostic &&
+                        JSON.stringify(draft.canonicalDiagnostic) !==
+                            JSON.stringify(context.reference)
+                    ) {
+                        setMessage(
+                            "La referencia canónica es inmutable. Crea un registro separado para otro frame.",
+                        );
+                        return;
+                    }
+                    if (
+                        saved &&
+                        (draft.sessionId !== context.session.sessionId ||
+                            draft.originalSymbol !== context.report.symbol ||
+                            draft.sourceProviderId !==
+                                context.report.providerId ||
+                            draft.tradingDay !== context.report.tradingDay)
+                    ) {
+                        setMessage(
+                            "El registro pertenece a otro ámbito. Crea un nuevo registro documental.",
+                        );
+                        return;
+                    }
+                    setDraft({
+                        ...draft,
+                        sessionId: context.session.sessionId,
+                        tradingDay: context.report.tradingDay,
+                        sourceProviderId: context.report.providerId,
+                        originalSymbol: context.report.symbol,
+                        scenario: "Standard",
+                        canonicalDiagnostic: context.reference,
+                    });
+                    setMessage(
+                        "Frame vinculado al borrador documental; no establece autorización ni ejecución. Completa la fuente y guarda el registro.",
+                    );
+                }}
                 evidence={
                     saved
                         ? {
@@ -385,6 +425,8 @@ export function SupervisedExecutionCapture({
                                   saved.record.evidence.sourceProviderId,
                               symbol: saved.record.evidence.originalSymbol,
                               scenario: saved.record.evidence.scenario,
+                              canonicalDiagnostic:
+                                  saved.record.evidence.canonicalDiagnostic,
                           }
                         : null
                 }
@@ -408,12 +450,24 @@ export function SupervisedExecutionCapture({
                 Nuevo registro
             </button>
             <form
+                id="supervised-documentary-form"
                 onSubmit={(e) => {
                     e.preventDefault();
                     void save();
                 }}
             >
                 <fieldset disabled={busy || pending !== null}>
+                    {draft.canonicalDiagnostic && (
+                        <p>
+                            Contexto documental canónico:{" "}
+                            {draft.canonicalDiagnostic.reportSha256} · Step{" "}
+                            {draft.canonicalDiagnostic.frameStep} ·{" "}
+                            {draft.canonicalDiagnostic.asOfUtc}. Referencia
+                            conservada por revisión; no es autorización de
+                            entrada. Usa «Recuperar frame vinculado al registro»
+                            para verificar que el reporte sigue disponible.
+                        </p>
+                    )}
                     <legend>
                         {saved
                             ? `Corregir registro · revisión ${saved.record.revision}`
