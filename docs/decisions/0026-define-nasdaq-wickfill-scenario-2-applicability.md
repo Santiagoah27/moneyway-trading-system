@@ -651,6 +651,49 @@ financial exposure, TP, verified execution, compatible WF2 exit and economic
 outcome remain missing. No source chronology, strategy version or active
 metadata is changed.
 
+#### Supervised documentary exit implementation and source boundary (2026-11-17)
+
+The current user task **"WF2 SUPERVISED HISTORICAL EXIT EVIDENCE"** reports
+earlier human material describing a close around **08:37 America/Bogota**, with
+nominal **13:37Z**, and asks that the original source be checked. Retained task
+attachment: `37c12021-2046-4d90-b35c-bfcabcc1fad6`; verified text SHA256:
+`47d049968b43d9d9d563b486d986ac7082cde61ba0264c617b186c2706044b29`.
+This identifies the supplied task text only. It is not new confirmation of a
+closing screenshot, verbatim mentor statement or native execution record and
+is not promoted to a new confirmed strategy source S15.
+
+The local original S1 and S5 decision texts and the approved September
+validation registry were inspected. S5's retained text hash matches the
+registered value and supports only the reported subsequent 1:1 stop management.
+No source-resolved closing image, native deal or transcript establishing the
+reported close was found there. Opening S14 and its external screenshot do not
+prove a closing event. The original video could not be retrieved by the available
+web fetch (throttled); no independent audiovisual review is claimed.
+
+The new documentary exit projection preserves the current task's reported
+approximation as a retrospective claim requiring human validation. Its nominal
+13:37Z is not an exact execution EffectiveAtUtc, source availability or invented
+uncertainty interval. Original closing instrument, provider/platform clock,
+closing event/price/size/deal, explicit opening association, mechanism and
+historical availability remain unknown. In particular, S14's USTEC opening
+identity is not silently assigned to an unavailable closing artifact, and no
+US100 fill or correspondence is inferred. Native exit/relationship verification,
+economic outcome and complete supervised trade remain false.
+
+`NasdaqHistoricalExitCausalSelector` consumes optional diagnostic metadata after
+canonical evaluation. It does not consume candles or alter WF2/SL/risk/TP,
+original entry eligibility, StrategyVerdict, active versions or temporal
+admission. The snapshot/API/UI distinguish reported closure, documentary
+association, native documentary identity consistency and independent
+verification. S5's 1:1 protection is separately attributed, with no protected
+stop price, executed stop or realized +1R inferred. S14's original historical
+USTEC initial SL remains 29662.25; it is neither the modified stop nor US100 SL.
+
+Minimum source question: can the reviewer supply or identify the original
+closing artifact and explicitly confirm its instrument, closing-event meaning,
+time precision and association to the S14 opening? Exact price, size, deal,
+mechanism or availability must remain absent until independently supported.
+
 ### 2.14 Human-confirmed Replay #2 initial USTEC SL price (2026-11-05, S14)
 
 **Current evidence: `confirmed`, `context_specific` historical initial price, supported by human-reviewed visual evidence (`visual_only` source support).** S14 supplements S5-S7 for the September 8, 2026 Wickfill Scenario 2 SELL operation. The reviewer explicitly identifies the displayed stop as the ORIGINAL initial protective SL before subsequent stop management. This resolves the previously untranscribed historical USTEC initial price only; earlier statements in sections 2.4/2.13 that no numerical stop was registered describe the evidence available before S14 and remain historical. No earlier source is overwritten.

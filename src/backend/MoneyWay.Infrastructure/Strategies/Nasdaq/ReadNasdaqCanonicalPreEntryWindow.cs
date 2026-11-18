@@ -81,6 +81,8 @@ internal sealed class ReadNasdaqCanonicalPreEntryWindow
         var reviews = root.TryGetProperty("HistoricalEntryEvidence", out var reviewJson)
             ? NasdaqHistoricalEntryReportProjection.Evidence(reviewJson, reviewSession) : [];
         var entryFrames = new List<NasdaqHistoricalEntryFrame>();
+        var exits = root.TryGetProperty("HistoricalExitEvidence", out var exitJson)
+            ? NasdaqHistoricalEntryReportProjection.Exits(exitJson, reviewSession) : [];
         foreach (var frame in frames)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -138,8 +140,10 @@ internal sealed class ReadNasdaqCanonicalPreEntryWindow
                 entryFrames.Add(NasdaqHistoricalEntryCausalSelector.Frame(current));
             var assessment = new NasdaqHistoricalEntryCausalSelector().Select(reviewSession, at, reviews, entryFrames);
             NasdaqHistoricalEntryReportProjection.Validate(frame.TryGetProperty("HistoricalEntryAssessment", out var storedEntry) ? storedEntry : null, assessment);
+            var exitAssessment = new NasdaqHistoricalExitCausalSelector().Select(reviewSession, at, exits, assessment);
+            NasdaqHistoricalEntryReportProjection.ValidateExit(frame.TryGetProperty("HistoricalExitAssessment", out var storedExit) ? storedExit : null, exitAssessment);
             var lifecycle = new NasdaqSupervisedHistoricalTradeSnapshotAssembler().Project(reviewSession, step, at, current.Verdict,
-                current.Rules, current.TradeLifecycle! with { HistoricalEntry = assessment });
+                current.Rules, current.TradeLifecycle! with { HistoricalEntry = assessment, HistoricalExit = exitAssessment });
             NasdaqHistoricalEntryReportProjection.ValidateSnapshot(frame.TryGetProperty("SupervisedSnapshot", out var storedSnapshot) ? storedSnapshot : null, lifecycle.SupervisedSnapshot);
             projections[^1] = current with { TradeLifecycle = lifecycle };
         }

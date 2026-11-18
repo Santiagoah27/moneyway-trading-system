@@ -12,13 +12,14 @@ public sealed record NasdaqHistoricalEntryEvidence(
     DateTimeOffset? LatestEventUtc, string? TimeMappingReference, DateTimeOffset? HistoricalAvailableAtUtc,
     DateOnly? ReviewCreatedOn, decimal? SourceEntryPrice, string? SourcePriceUnit, string? ExecutionReference)
 {
+    public string? PositionReference { get; init; }
     public string? SourceEntryPriceText => SourceEntryPrice?.ToString(CultureInfo.InvariantCulture);
     public void Validate()
     {
         ArgumentNullException.ThrowIfNull(Session);
         foreach (var s in new[] { Scenario, Direction, ReviewId, SourceReference, HumanValidationIdentity, Origin, EventKind, SourcePlatform, TimePrecision })
             if (string.IsNullOrWhiteSpace(s) || s.Length > 4096) throw new ArgumentException("Entry evidence requires bounded explicit provenance and identity.");
-        foreach (var s in new[] { SourceProviderId, SourceSymbol, OriginalTime, TimeMappingReference, SourcePriceUnit, ExecutionReference })
+        foreach (var s in new[] { SourceProviderId, SourceSymbol, OriginalTime, TimeMappingReference, SourcePriceUnit, ExecutionReference, PositionReference })
             if (s is not null && (string.IsNullOrWhiteSpace(s) || s.Length > 4096)) throw new ArgumentException("Optional evidence cannot be a blank default.");
         if (Scenario is not ("WickfillScenario2" or "Standard") || Direction is not ("Sell" or "Buy")
             || Origin is not ("HumanReview" or "NativeExecutionRecord")
@@ -39,7 +40,8 @@ public sealed record NasdaqHistoricalEntryEvidence(
         && SourceProviderId == other.SourceProviderId && SourceSymbol == other.SourceSymbol
         && OriginalTime == other.OriginalTime && TimePrecision == other.TimePrecision
         && EarliestEventUtc == other.EarliestEventUtc && LatestEventUtc == other.LatestEventUtc
-        && SourceEntryPrice == other.SourceEntryPrice && SourcePriceUnit == other.SourcePriceUnit && ExecutionReference == other.ExecutionReference;
+        && SourceEntryPrice == other.SourceEntryPrice && SourcePriceUnit == other.SourcePriceUnit && ExecutionReference == other.ExecutionReference
+        && PositionReference == other.PositionReference;
 }
 
 public sealed record NasdaqHistoricalEntryFrame(long Step, DateTimeOffset AsOfUtc, string? Verdict,

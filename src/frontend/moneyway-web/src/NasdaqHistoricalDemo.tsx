@@ -69,7 +69,14 @@ function SupervisedSnapshot({
                         .join("; ") || "Sin registro nativo"
                 );
             case "DocumentedExit":
-                return "Sin salida WF2 integrada";
+                return (
+                    snapshot.documentaryExit?.observations
+                        .map(
+                            (o) =>
+                                `${o.evidence.sourceSymbol ?? "Instrumento no confirmado"} · ${o.evidence.originalTime ?? "Hora desconocida"} · ${o.evidence.timePrecision} · Precio: ${o.evidence.exitPriceText ?? "No documentado"}`,
+                        )
+                        .join("; ") || "Sin salida WF2 documentada"
+                );
             case "EconomicOutcome":
                 return "No implementado";
             default:
@@ -96,6 +103,12 @@ function SupervisedSnapshot({
                 return (
                     entries.map((o) => o.evidence.sourceReference).join("; ") ||
                     "Sin fuente de entrada"
+                );
+            case "DocumentedExit":
+                return (
+                    snapshot.documentaryExit?.observations
+                        .map((o) => o.evidence.sourceReference)
+                        .join("; ") || "Sin fuente de salida"
                 );
             default:
                 return "Pendiente de implementación y evidencia compatible";
@@ -158,6 +171,85 @@ function SupervisedSnapshot({
                     </tbody>
                 </table>
             </div>
+            {snapshot.documentaryExit && (
+                <section aria-label="Evidencia de salida histórica">
+                    <h5>
+                        Salida histórica{" "}
+                        {snapshot.historicalExitObserved
+                            ? "reportada"
+                            : "no establecida"}{" "}
+                        · Verificación nativa pendiente
+                    </h5>
+                    <p>
+                        Salida nativa verificada: No. Relación de ejecuciones
+                        verificada: No. Operación completa: No. Validación
+                        humana requerida.
+                    </p>
+                    {snapshot.documentaryExit.observations.map((o) => (
+                        <div key={o.evidence.reviewId}>
+                            <p>
+                                {o.evidence.origin} · {o.evidence.eventKind} ·{" "}
+                                {o.observationStatus} · {o.availability}
+                            </p>
+                            <p>
+                                Fuente documental: {o.evidence.sourceReference}.
+                                Fuente original: {o.evidence.sourcePlatform} /{" "}
+                                {o.evidence.sourceSymbol ?? "No confirmado"}.
+                                Revisor: {o.evidence.humanValidationIdentity}.
+                            </p>
+                            <p>
+                                Hora reportada:{" "}
+                                {o.evidence.originalTime ?? "Desconocida"} ·{" "}
+                                {o.evidence.originalClockDomain ??
+                                    "Reloj desconocido"}{" "}
+                                · {o.evidence.timePrecision}. Hora nominal:{" "}
+                                {o.evidence.nominalEventUtc ?? "No documentada"}
+                                . Hora efectiva documentada (no autenticada):{" "}
+                                {o.evidence.effectiveAtUtc ?? "No establecida"}.
+                                Disponibilidad histórica:{" "}
+                                {o.evidence.historicalAvailableAtUtc ??
+                                    "Desconocida; retrospectiva"}
+                                .
+                            </p>
+                            <p>
+                                Vínculo con entrada: {o.entryAssociation} ·{" "}
+                                {o.evidence.linkedEntryReviewId ??
+                                    "Sin referencia explícita"}
+                                . Fuente del vínculo:{" "}
+                                {o.evidence.associationSourceReference ??
+                                    "No documentada"}
+                                .
+                            </p>
+                            <p>
+                                {o.nativeExitStatus} · Deal:{" "}
+                                {o.evidence.executionReference ??
+                                    "No documentado"}{" "}
+                                · Cantidad:{" "}
+                                {o.evidence.quantityText ?? "No documentada"} ·
+                                Mecanismo:{" "}
+                                {o.evidence.documentedCloseMechanism ??
+                                    "Desconocido"}
+                                .
+                            </p>
+                            <p>
+                                Protección posterior reportada:{" "}
+                                {o.evidence.reportedStopProtection ??
+                                    "No documentada"}
+                                . Fuente:{" "}
+                                {o.evidence.stopProtectionSourceReference ??
+                                    "No documentada"}
+                                . No sustituye el SL inicial ni demuestra
+                                ejecución o retorno realizado.
+                            </p>
+                            <p>
+                                Limitaciones:{" "}
+                                {o.evidence.limitations ?? "Ver requisitos"}.
+                                Requisitos: {o.issues.join(", ")}.
+                            </p>
+                        </div>
+                    ))}
+                </section>
+            )}
             <p>
                 Evidencia pendiente: {snapshot.missingEvidence.join(", ")}. La
                 disponibilidad de parámetros no completa ejecución, salida ni

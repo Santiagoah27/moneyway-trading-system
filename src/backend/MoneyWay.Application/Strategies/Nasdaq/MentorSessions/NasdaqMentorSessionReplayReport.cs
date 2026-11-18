@@ -44,6 +44,7 @@ public sealed class NasdaqMentorSessionReplayReport
         ArgumentNullException.ThrowIfNull(input); ArgumentNullException.ThrowIfNull(imports); ArgumentNullException.ThrowIfNull(inputDiagnostics);
         SessionId = input.SessionId; Session = input.Session; SuppliedCsvFiles = input.CsvFiles;
         HistoricalEntryEvidence = input.HistoricalEntryEvidence;
+        HistoricalExitEvidence = input.HistoricalExitEvidence;
         Imports = Array.AsReadOnly(imports.ToArray()); InputDiagnostics = Array.AsReadOnly(inputDiagnostics.ToArray());
         Canonical = canonical; Frames = Array.AsReadOnly((frames ?? []).ToArray());
         BindingDiagnostics = Array.AsReadOnly((bindingDiagnostics ?? []).ToArray());
@@ -55,6 +56,7 @@ public sealed class NasdaqMentorSessionReplayReport
     }
     public string SessionId { get; }
     public IReadOnlyList<NasdaqHistoricalEntryEvidence> HistoricalEntryEvidence { get; }
+    public IReadOnlyList<NasdaqHistoricalExitEvidence> HistoricalExitEvidence { get; }
     public NasdaqDemoSessionIdentity Session { get; }
     public IReadOnlyDictionary<Timeframe, string> SuppliedCsvFiles { get; }
     public IReadOnlyList<NasdaqMentorSessionImport> Imports { get; }

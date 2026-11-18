@@ -424,14 +424,82 @@ it.each([false, true])(
     },
 );
 
-it.each([false, true])(
-    "renders a supervised WF2 snapshot with independent documentary completeness (%s)",
-    async (parameters) => {
+it.each([
+    [false, false],
+    [true, false],
+    [false, true],
+    [true, true],
+])(
+    "renders a supervised WF2 snapshot with independent documentary completeness (%s, exit=%s)",
+    async (parameters, withExit) => {
         const source = {
             sourceReference: "synthetic:native-source",
             sourceReferenceSha256: "a".repeat(64),
         };
         const snapshot: SupervisedHistoricalTradeSnapshot = {
+            historicalExitObserved: withExit,
+            documentaryExit: withExit
+                ? {
+                      asOfUtc: "2026-06-29T13:37:00Z",
+                      humanValidationRequired: true,
+                      nativeExitIndependentlyVerified: false,
+                      entryExitRelationshipIndependentlyVerified: false,
+                      completeSupervisedTrade: false,
+                      economicOutcomeSupported: false,
+                      observations: [
+                          {
+                              evidence: {
+                                  reviewId: "synthetic:exit",
+                                  sourceReference: "synthetic:close-review",
+                                  humanValidationIdentity: "synthetic:human",
+                                  origin: parameters
+                                      ? "NativeExecutionRecord"
+                                      : "HumanReview",
+                                  eventKind: "ReportedClosure",
+                                  sourcePlatform: "synthetic:platform",
+                                  sourceSymbol: parameters ? "US100" : "USTEC",
+                                  originalTime: "synthetic:around 08:37",
+                                  originalClockDomain: "synthetic:UTC-5",
+                                  timePrecision: parameters
+                                      ? "ExactNativeRecord"
+                                      : "Approximate",
+                                  nominalEventUtc: null,
+                                  effectiveAtUtc: parameters
+                                      ? "synthetic:13:37Z"
+                                      : null,
+                                  historicalAvailableAtUtc: null,
+                                  exitPriceText: parameters
+                                      ? "100.00000000000000000000000001"
+                                      : null,
+                                  quantityText: null,
+                                  executionReference: parameters
+                                      ? "synthetic:closing-deal"
+                                      : null,
+                                  linkedEntryReviewId: "synthetic:entry",
+                                  associationSourceReference:
+                                      "synthetic:explicit-association",
+                                  documentedCloseMechanism: null,
+                                  reportedStopProtection:
+                                      "synthetic:approximately 1:1",
+                                  stopProtectionSourceReference:
+                                      "synthetic:management-review",
+                                  limitations:
+                                      "synthetic:unverified-retrospective-evidence",
+                              },
+                              availability: "RetrospectiveOnly",
+                              observationStatus:
+                                  "ReportedClosure_NotIndependentlyVerified",
+                              entryAssociation:
+                                  "DocumentaryCandidate_OrderingRequiresValidation",
+                              nativeExitStatus: "NativeExitUnverified",
+                              nativeIdentityConsistent: false,
+                              issues: [
+                                  "IndependentNativeExitAndRelationshipVerificationNotPerformed",
+                              ],
+                          },
+                      ],
+                  }
+                : null,
             session: {
                 providerId: { value: "synthetic-native" },
                 symbol: { value: "US100" },
@@ -674,6 +742,24 @@ it.each([false, true])(
         );
         expect(panel.textContent).toContain("NotImplemented");
         expect(panel.textContent).toContain("synthetic:original-entry");
+        if (withExit) {
+            const exitPanel = screen.getByRole("region", {
+                name: "Evidencia de salida histórica",
+            });
+            expect(exitPanel.textContent).toContain(
+                "Salida nativa verificada: No",
+            );
+            expect(exitPanel.textContent).toContain("Operación completa: No");
+            expect(exitPanel.textContent).toContain("synthetic:around 08:37");
+            expect(exitPanel.textContent).toContain(
+                "synthetic:approximately 1:1",
+            );
+            expect(exitPanel.textContent).toContain(
+                "DocumentaryCandidate_OrderingRequiresValidation",
+            );
+            expect(exitPanel.textContent).toContain("synthetic:close-review");
+            expect(exitPanel.textContent).not.toContain("+1R");
+        }
         if (parameters) {
             expect(panel.textContent).toContain(
                 "116.00000000000000000000000001",

@@ -49,6 +49,8 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
                     new(Id(session, "ProviderId")), new(Id(session, "Symbol")), day);
                 var reviews = headers.TryGetValue("HistoricalEntryEvidence", out var reviewJson)
                     ? NasdaqHistoricalEntryReportProjection.Evidence(reviewJson, reviewSession) : [];
+                var exits = headers.TryGetValue("HistoricalExitEvidence", out var exitJson)
+                    ? NasdaqHistoricalEntryReportProjection.Exits(exitJson, reviewSession) : [];
                 var entryFrames = new List<NasdaqHistoricalEntryFrame>();
                 json.Token(JsonTokenType.StartArray);
                 while (json.Peek() != JsonTokenType.EndArray)
@@ -67,10 +69,13 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
                     JsonElement? storedEntry = frame.TryGetProperty("TradeLifecycle", out var trade)
                         && trade.TryGetProperty("HistoricalEntry", out var entry) ? entry : null;
                     NasdaqHistoricalEntryReportProjection.Validate(storedEntry, entryAssessment);
+                    var exitAssessment = new NasdaqHistoricalExitCausalSelector().Select(reviewSession, at, exits, entryAssessment);
+                    NasdaqHistoricalEntryReportProjection.ValidateExit(trade.ValueKind == JsonValueKind.Object
+                        && trade.TryGetProperty("HistoricalExit", out var storedExit) ? storedExit : null, exitAssessment);
                     if (projection.TradeLifecycle is { } lifecycle)
                     {
                         lifecycle = new NasdaqSupervisedHistoricalTradeSnapshotAssembler().Project(reviewSession, step, at, projection.Verdict,
-                            projection.Rules, lifecycle with { HistoricalEntry = entryAssessment, SupervisedSnapshot = null });
+                            projection.Rules, lifecycle with { HistoricalEntry = entryAssessment, HistoricalExit = exitAssessment, SupervisedSnapshot = null });
                         NasdaqHistoricalEntryReportProjection.ValidateSnapshot(trade.ValueKind == JsonValueKind.Object
                             && trade.TryGetProperty("SupervisedSnapshot", out var storedSnapshot) ? storedSnapshot : null, lifecycle.SupervisedSnapshot);
                         projection = projection with { TradeLifecycle = lifecycle };
@@ -109,7 +114,7 @@ public sealed class ReadNasdaqHistoricalReport : IDisposable
                     hasCanonical = document.RootElement.ValueKind == JsonValueKind.Object;
                 }
                 if (name is "SchemaVersion" or "SessionId" or "Session" or "FrameCount" or "FinalVerdict"
-                    or "ReplayStartUtc" or "ReplayEndUtc" or "InputDiagnostics" or "BindingDiagnostics" or "HistoricalEntryEvidence")
+                    or "ReplayStartUtc" or "ReplayEndUtc" or "InputDiagnostics" or "BindingDiagnostics" or "HistoricalEntryEvidence" or "HistoricalExitEvidence")
                     headers.Add(name, document.RootElement.Clone());
             }
         }

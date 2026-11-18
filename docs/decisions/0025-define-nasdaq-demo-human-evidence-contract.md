@@ -659,6 +659,31 @@ The source-backed BE concept is favorable first encountered distinct Asia/London
 
 ### Retrospective annotation and conceptual session aggregate
 
+**2026-11-17 WF2 documentary exit extension:** `NasdaqHistoricalExitEvidence`
+and its stateless causal selector follow the existing historical entry diagnostic
+boundary. The Standard `NasdaqHistoricalDocumentedExit` requires an exact
+Standard-owned snapshot, price and execution identity and cannot represent an
+approximate, price-less WF2 review. It remains unchanged. The new documentary
+record is optional report metadata, never an evaluator-driving observation.
+It preserves source identity, clock domain/precision, nominal time versus exact
+source bounds, creation/review/availability, optional price/quantity/deal,
+explicit association provenance and separately reported stop protection.
+No uncertainty interval is invented around an approximation. Known future
+availability or an event after the selected boundary is excluded. Unknown
+availability is explicitly retrospective, never admitted into strategy inputs.
+
+An explicit human entry reference with matching documented instrument/platform
+can establish only documentary association; approximate or overlapping times
+retain an ordering-validation requirement. Missing/mismatched source identity,
+reversed events, contradictory opening references or competing exit claims
+cannot establish a link. Source-qualified native opening/closing references and
+the same supplied position identity can demonstrate documentary identity
+consistency only, not independent authentication. No broker verification
+contract exists in this diagnostic; native exit and relationship verification
+remain false. Reported protection, including 1:1, is neither stop execution nor
+realized return. The supervised snapshot exposes the exit separately and still
+cannot establish a complete trade, PnL or a loss/violation classification.
+
 **2026-11-17 supervised WF2 snapshot composition:**
 `NasdaqSupervisedHistoricalTradeSnapshotAssembler` groups the existing lifecycle
 projection and documentary entry assessment without evaluating a rule or changing

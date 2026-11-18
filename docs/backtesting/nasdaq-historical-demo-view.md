@@ -1,5 +1,91 @@
 # Nasdaq historical report in the supervised local demo
 
+## WF2 supervised historical exit evidence (2026-11-17)
+
+Initial checkpoint: clean synchronized `main` at
+`65266329ea21168677891e50259c3d02a32c5ffd`. The new
+`NasdaqHistoricalExitEvidence` / `NasdaqHistoricalExitCausalSelector` reuse the
+existing optional historical-entry metadata/report projection pattern. The
+Standard-owned exact exit constructor cannot represent this approximate,
+price-less WF2 review and remains unchanged. No evaluator, RuleId, strategy
+metadata, order service, database or time-admission change is introduced.
+
+The existing snapshot now exposes `DocumentaryExit`, `HistoricalExitObserved`,
+native exit verification and entry/exit relationship verification separately.
+Original entry rules and canonical verdict are unchanged. ExitSupported (the
+verified execution support), economic outcome and complete supervised trade
+remain false. A reported human close is not an independently verified native
+close. Source-qualified native documentary opening/closing references, matching
+position identities and strict event order can establish only identity
+consistency; this feature cannot authenticate broker executions.
+
+The [source audit in ADR 0026](../decisions/0026-define-nasdaq-wickfill-scenario-2-applicability.md#supervised-documentary-exit-implementation-and-source-boundary-2026-11-17)
+retains the current task's reported close around 08:37 Bogota / nominal 13:37Z
+as an approximate retrospective claim requiring validation. No original closing
+artifact was accessible. Closing instrument/platform, price, size, deal,
+mechanism, explicit link to S14 and historical availability remain null. No
+USTEC opening identity is assigned to a closing artifact that was not inspected.
+S5's reported subsequent 1:1 protection has its separate source; it supplies no
+executed stop or realized return. Original USTEC initial SL 29662.25 is historical
+S14 evidence, not the modified stop or a native US100 SL input.
+
+Known future availability and future event times are excluded; unknown
+availability is clearly retrospective. Approximate nominal time is not an exact
+effective time, uncertainty interval or availability assertion. An explicit
+review link is required; session, direction, proximity or chart similarity do
+not establish association. Mismatched instruments/references, reversed events
+and conflicting exit claims remain unresolved without selecting a winner.
+Approximate/overlapping ordering retains human validation. The selector and
+assembler remain deterministic and stateless, outside replay driving evidence.
+
+The existing `/api/nasdaq/historical-demo` and `/#nasdaq-historical-demo` show
+the exit source, original instrument (or unconfirmed), reported time/precision,
+availability, optional exact source-price text, documentary association,
+verification limits, separate protection and missing requirements. Legacy
+reports without exit metadata remain readable. Configure the new report path
+and expected hash below to inspect Replay #2. Manual browser visual acceptance
+is recommended; automated API/component coverage does not claim a manual run.
+
+### Exit-enabled authentic artifact and final validation
+
+- Report: `C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-ed4a1539bef845fd84f5a68dcfc81cbe.json`.
+- Repeated serialization: `C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-d0b1c7f6b1a44fb68c052a6b994cad67.json`.
+- Both files: 5,463,052 bytes; SHA256 `48b5743e86ea3f061b9ae3c1f2c7280dcad4bf5272d7da7cf69c68f0d24dd3db`.
+- Independent canonical prefixes contain 7,597 / 7,598 frames, ending at
+  13:37Z / 13:38Z. The entire common canonical prefix and seven diagnostic
+  snapshots (13:31Z–13:37Z) match. Documentary exit is absent in the first six.
+- At 13:37Z the exit is a retrospective ReportedClosure_NotIndependentlyVerified,
+  with Approximate nominal 13:37Z, null exact EffectiveAtUtc, closing instrument,
+  price, quantity, deal and mechanism, and unresolved entry association.
+  Independent native exit/relationship verification, economic outcome and
+  CompleteSupervisedTrade remain false. The original S14 entry and 13:32Z rules
+  are unchanged; final SL is HumanValidationRequired, risk/TP Waiting and
+  canonical verdict HumanValidationRequired.
+- All 28 recorded runtime source hashes, four CSV hashes, adapter, current
+  request text and ADR source hash were independently rechecked after generation.
+  Prior reports remain unchanged, including the prior snapshot SHA256
+  `7993e57947624ac4aff1e4ff88aabbed9b2e9f15a1108a07ab8426cf1128ef2a`,
+  which the new reader also validates for backward compatibility.
+
+Final validation: 2,086 relevant Application tests, 145 Nasdaq integration
+regressions, 19 domain replay tests, 28 related backtesting scenarios, one legacy
+authentic API test and one authentic regeneration/API test passed (2,280 .NET
+tests, zero failed/skipped in these final runs). All 39 frontend tests, full
+backend/frontend builds, ESLint, scoped C#/Prettier formatting, 68 local Markdown
+links and git diff whitespace checks passed. Synthetic native identity and
+mechanism records remain labelled synthetic and never establish an authentic
+Replay #2 close. No manual browser visual acceptance was performed.
+
+Remaining critical path: a supervised execution record with original identity
+and explicit human association; source-backed exit/management; an approved
+economic valuation contract and supported inputs before any PnL; session
+completion and scoped no-reentry decisions. NQ-RISK-003/NQ-REENTRY-001 remain
+unresolved. Useful supervised documentary trading does not require rewriting
+Replay #2 as a native US100 operation. **One next functional feature:** capture
+and display a supervised trade execution record with original instrument,
+explicit identity, human provenance and entry/exit links, preserving unresolved
+native verification and availability. No autonomous sending or valuation formula.
+
 ## WF2 supervised historical trade snapshot (2026-11-17)
 
 Initial checkpoint: clean synchronized `main` at

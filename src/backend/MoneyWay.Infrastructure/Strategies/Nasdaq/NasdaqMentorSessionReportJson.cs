@@ -50,6 +50,8 @@ public static class NasdaqMentorSessionReportJson
         Property("Session", report.Session);
         writer.WritePropertyName("HistoricalEntryEvidence");
         JsonSerializer.Serialize(writer, report.HistoricalEntryEvidence);
+        writer.WritePropertyName("HistoricalExitEvidence");
+        JsonSerializer.Serialize(writer, report.HistoricalExitEvidence);
         Property("SuppliedCsvFiles", report.SuppliedCsvFiles.Select(f => new { Timeframe = f.Key, Path = f.Value }));
         Property("Imports", report.Imports);
         Property("InputDiagnostics", report.InputDiagnostics);
@@ -156,6 +158,11 @@ public static class NasdaqMentorSessionReportJson
             {
                 HistoricalEntry = new NasdaqHistoricalEntryCausalSelector().Select(report.Session, observation.AsOfUtc,
                     report.HistoricalEntryEvidence, entryFrames)
+            };
+            lifecycle = lifecycle with
+            {
+                HistoricalExit = new NasdaqHistoricalExitCausalSelector().Select(report.Session,
+                observation.AsOfUtc, report.HistoricalExitEvidence, lifecycle.HistoricalEntry)
             };
             JsonSerializer.Serialize(writer, new NasdaqSupervisedHistoricalTradeSnapshotAssembler().Project(report.Session, observation.Step, observation.AsOfUtc,
                 report.Canonical?.Frames[index].Verdict.ToString(), frame.Strategy.Evaluations.Select(r =>

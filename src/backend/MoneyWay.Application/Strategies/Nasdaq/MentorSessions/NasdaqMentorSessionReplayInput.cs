@@ -35,7 +35,8 @@ public sealed class NasdaqMentorSessionReplayInput
 
     public NasdaqMentorSessionReplayInput(string sessionId, NasdaqDemoSessionIdentity session,
         IReadOnlyDictionary<Timeframe, string> csvFiles, IEnumerable<NasdaqMentorSessionEvidenceRecord> evidence,
-        IEnumerable<NasdaqHistoricalEntryEvidence>? historicalEntryEvidence = null)
+        IEnumerable<NasdaqHistoricalEntryEvidence>? historicalEntryEvidence = null,
+        IEnumerable<NasdaqHistoricalExitEvidence>? historicalExitEvidence = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId); ArgumentNullException.ThrowIfNull(csvFiles);
         ArgumentNullException.ThrowIfNull(evidence);
@@ -52,6 +53,12 @@ public sealed class NasdaqMentorSessionReplayInput
             throw new ArgumentException("Entry reviews must be bounded, uniquely identified and associated with this session.");
         foreach (var review in reviews) review.Validate();
         HistoricalEntryEvidence = Array.AsReadOnly(reviews);
+        var exits = (historicalExitEvidence ?? []).ToArray();
+        if (exits.Length > 16 || exits.Any(e => e is null || e.Session != Session)
+            || exits.Select(e => e.ReviewId).Distinct(StringComparer.Ordinal).Count() != exits.Length)
+            throw new ArgumentException("Exit reviews must be bounded, uniquely identified and associated with this session.");
+        foreach (var exit in exits) exit.Validate();
+        HistoricalExitEvidence = Array.AsReadOnly(exits);
     }
     public string SessionId { get; }
     public NasdaqDemoSessionIdentity Session { get; }
@@ -59,4 +66,5 @@ public sealed class NasdaqMentorSessionReplayInput
     public IReadOnlyList<NasdaqMentorSessionEvidenceRecord> Evidence { get; }
     // Diagnostic-only metadata. The binder never transports these records to strategy evaluators.
     public IReadOnlyList<NasdaqHistoricalEntryEvidence> HistoricalEntryEvidence { get; }
+    public IReadOnlyList<NasdaqHistoricalExitEvidence> HistoricalExitEvidence { get; }
 }

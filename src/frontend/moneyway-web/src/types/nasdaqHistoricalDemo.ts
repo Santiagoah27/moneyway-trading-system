@@ -161,6 +161,10 @@ export interface HistoricalTradeLifecycle {
 }
 
 export interface SupervisedHistoricalTradeSnapshot {
+    documentaryExit?: HistoricalExitAssessment | null;
+    historicalExitObserved?: boolean;
+    nativeExitIndependentlyVerified?: boolean;
+    entryExitRelationshipIndependentlyVerified?: boolean;
     session: {
         providerId: { value: string };
         symbol: { value: string };
@@ -195,6 +199,47 @@ export interface SupervisedHistoricalTradeSnapshot {
     economicOutcome: string | null;
     completeSupervisedTrade: boolean;
     failureClassification: string;
+}
+
+export interface HistoricalExitAssessment {
+    asOfUtc: string;
+    humanValidationRequired: boolean;
+    nativeExitIndependentlyVerified: boolean;
+    entryExitRelationshipIndependentlyVerified: boolean;
+    completeSupervisedTrade: boolean;
+    economicOutcomeSupported: boolean;
+    observations: {
+        evidence: {
+            reviewId: string;
+            sourceReference: string;
+            humanValidationIdentity: string;
+            origin: string;
+            eventKind: string;
+            sourcePlatform: string;
+            sourceSymbol: string | null;
+            originalTime: string | null;
+            originalClockDomain: string | null;
+            timePrecision: string;
+            nominalEventUtc: string | null;
+            effectiveAtUtc: string | null;
+            historicalAvailableAtUtc: string | null;
+            exitPriceText: string | null;
+            quantityText: string | null;
+            executionReference: string | null;
+            linkedEntryReviewId: string | null;
+            associationSourceReference: string | null;
+            documentedCloseMechanism: string | null;
+            reportedStopProtection: string | null;
+            stopProtectionSourceReference: string | null;
+            limitations: string | null;
+        };
+        availability: string;
+        observationStatus: string;
+        entryAssociation: string;
+        nativeExitStatus: string;
+        nativeIdentityConsistent: boolean;
+        issues: string[];
+    }[];
 }
 
 export interface NasdaqHistoricalReport {

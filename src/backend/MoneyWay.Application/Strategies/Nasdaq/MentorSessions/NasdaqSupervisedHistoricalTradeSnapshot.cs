@@ -11,6 +11,10 @@ public sealed record NasdaqSupervisedHistoricalTradeSnapshot(NasdaqDemoSessionId
     NasdaqHistoricalEntryAssessment? DocumentaryEntry, NasdaqHistoricalScenario2Stop? StopLoss,
     NasdaqHistoricalScenario2Risk? Risk, NasdaqHistoricalScenario2Target? TakeProfit)
 {
+    public NasdaqHistoricalExitAssessment? DocumentaryExit { get; init; }
+    public bool HistoricalExitObserved => DocumentaryExit?.Observations.Any(o => o.ObservationStatus == "ReportedClosure_NotIndependentlyVerified") == true;
+    public bool NativeExitIndependentlyVerified => false;
+    public bool EntryExitRelationshipIndependentlyVerified => false;
     public string Scenario => "WickfillScenario2";
     public string Direction => "Sell";
     public string Scope => "SupervisedHistoricalEvidenceSnapshot";
@@ -33,6 +37,10 @@ public sealed class NasdaqSupervisedHistoricalTradeSnapshotAssembler
         ArgumentNullException.ThrowIfNull(session); ArgumentNullException.ThrowIfNull(lifecycle);
         if (asOfUtc.Offset != TimeSpan.Zero || step <= 0 || lifecycle.Path == "Standard") throw new ArgumentException("An explicit WF2 diagnostic frame is required.");
         var entry = lifecycle.HistoricalEntry;
+        var exit = lifecycle.HistoricalExit;
+        if (exit is not null && (exit.AsOfUtc != asOfUtc || exit.Observations.Any(o => o.Evidence.Session != session
+            || o.Evidence.HistoricalAvailableAtUtc > asOfUtc || o.Evidence.NominalEventUtc > asOfUtc || o.Evidence.LatestEventUtc > asOfUtc)))
+            throw new ArgumentException("Exit assessment must be source-observable or separately retrospective at this same session/frame.");
         if (entry is not null && (entry.AsOfUtc != asOfUtc || entry.Observations.Any(o => o.Evidence.Session != session)))
             throw new ArgumentException("Entry assessment must belong to the same original session and selected frame.");
         if (entry?.Observations.Any(o => o.Evidence.HistoricalAvailableAtUtc > asOfUtc || o.Evidence.EarliestEventUtc > asOfUtc
@@ -87,7 +95,8 @@ public sealed class NasdaqSupervisedHistoricalTradeSnapshotAssembler
         if (!native) missing.Add("NativeExecutionRecordMissingOrUnverified");
         if (!entryAssociation) missing.Add("EntrySetupAssociationUnresolved");
         missing.Add("IndependentNativeExecutionVerificationNotPerformed");
-        missing.Add("Wf2DocumentedExitNotIntegrated"); missing.Add("EconomicOutcomeNotImplemented");
+        if (exit is null) missing.Add("HistoricalExitEvidenceMissing");
+        missing.Add("IndependentNativeExitAndRelationshipVerificationNotPerformed"); missing.Add("EconomicOutcomeNotImplemented");
         if (observations.Any(o => o.Availability == "RetrospectiveOnly")) missing.Add("RetrospectiveEntryNotAdmitted");
         var components = new[]
         {
@@ -100,7 +109,8 @@ public sealed class NasdaqSupervisedHistoricalTradeSnapshotAssembler
             Component("TakeProfit", "NQ-TP-001", tpSupported, "Exact human-selected native Low/TP and provenance required."),
             new("Execution", native ? "RecordedArtifact" : "MissingInput", null, null,
                 "Documentary native record support is separate from independent verification, strategy authorization and order sending."),
-            new("DocumentedExit", "NotImplemented", null, null, "Existing exit types require a Standard snapshot; no WF2 exit is synthesized."),
+            new("DocumentedExit", exit is null ? "MissingInput" : "RecordedArtifact", null, null,
+                "Documentary exit/entry association is separate from native verification, original SL, stop protection and realized return; no close is synthesized."),
             new("EconomicOutcome", "NotImplemented", null, null, "No WF2 monetary outcome or loss/violation classification is implemented.")
         };
         NasdaqHistoricalTradeStage Component(string name, string rule, bool supported, string reason) =>
@@ -108,7 +118,8 @@ public sealed class NasdaqSupervisedHistoricalTradeSnapshotAssembler
                 (lifecycle.Stages.SingleOrDefault(s => s.RuleId == rule)?.Reason ?? "No owning-rule evaluation recorded.") + " " + reason);
         return new(session, step, asOfUtc, canonicalVerdict, Array.AsReadOnly(components), Array.AsReadOnly(missing.ToArray()), correspondence,
             observed, eligibility, slSupported, riskSupported, tpSupported, native, bindings,
-            observed && native && bindings && entryAssociation && correspondence == "native_identity_matches", entry, sl, risk, tp);
+            observed && native && bindings && entryAssociation && correspondence == "native_identity_matches", entry, sl, risk, tp)
+        { DocumentaryExit = exit };
     }
 
     public NasdaqHistoricalTradeLifecycleSummary Project(NasdaqDemoSessionIdentity session, long step, DateTimeOffset asOfUtc,
