@@ -1,5 +1,9 @@
 import { useState } from "react";
 import type { SupervisedSessionState } from "./SupervisedSessionPanel";
+import {
+    PreparationArtifactPanel,
+    type PreparationArtifact,
+} from "./PreparationArtifactPanel";
 
 interface ReferenceReport {
     localReferenceId: string;
@@ -39,7 +43,7 @@ export interface PreparationDraft {
     humanValidationStatus: string;
     references: ReferenceReport[];
 }
-interface PreparationView {
+export interface PreparationView {
     record: {
         recordId: string;
         revision: number;
@@ -50,6 +54,7 @@ interface PreparationView {
         receiptClockSource: string;
         submissionContext: string;
         evidence: PreparationDraft;
+        artifacts?: PreparationArtifact[];
         identity: {
             strategyId: { value: string };
             strategyVersion: { value: string };
@@ -120,8 +125,11 @@ export function ProspectivePreparationPanel({
     const [saved, setSaved] = useState<PreparationView | null>(null);
     const [records, setRecords] = useState<PreparationView[]>([]);
     const [lookup, setLookup] = useState("");
+    const [revisionToRead, setRevisionToRead] = useState("1");
     const [message, setMessage] = useState("");
-    const [busy, setBusy] = useState(false);
+    const [working, setBusy] = useState(false);
+    const [artifactLocked, setArtifactLocked] = useState(false);
+    const busy = working || artifactLocked;
     const [pending, setPending] = useState<{
         path: string;
         body: unknown;
@@ -296,6 +304,31 @@ export function ProspectivePreparationPanel({
             </ul>
             <fieldset disabled={busy || !!pending}>
                 <legend>Recuperación de preparación inmutable</legend>
+                <label>
+                    Número de revisión de preparación
+                    <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={revisionToRead}
+                        onChange={(e) => setRevisionToRead(e.target.value)}
+                    />
+                </label>
+                <button
+                    type="button"
+                    disabled={!lookup || !revisionToRead}
+                    onClick={() =>
+                        void work(async () =>
+                            accept(
+                                await request(
+                                    `/${encodeURIComponent(lookup)}?revision=${encodeURIComponent(revisionToRead)}`,
+                                ),
+                            ),
+                        )
+                    }
+                >
+                    Ver revisión de preparación
+                </button>
                 <label>
                     ID MoneyWay de preparación
                     <input
@@ -730,6 +763,15 @@ export function ProspectivePreparationPanel({
             {saved && (
                 <section aria-label="Preparación persistida">
                     <h5>{saved.documentaryStatus}</h5>
+                    <PreparationArtifactPanel
+                        key={`${saved.record.recordId}-${saved.record.revision}`}
+                        apiBaseUrl={apiBaseUrl}
+                        sessionKey={session.sessionKey}
+                        preparation={saved}
+                        onAttached={accept}
+                        onLockChange={setArtifactLocked}
+                        disabled={working || !!pending}
+                    />
                     <p>
                         {saved.record.identity.strategyId.value}/
                         {saved.record.identity.strategyVersion.value} · ID

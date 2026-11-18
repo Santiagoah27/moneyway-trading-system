@@ -49,6 +49,7 @@ public sealed partial class LocalNasdaqExecutionEvidenceStore
                 previous = value;
             }
         }
+        ValidatePreparationArtifacts(all);
         return all;
     }
     private static NasdaqProspectivePreparationView PreparationView(PreparationEnvelope value) => NasdaqProspectivePreparationProjection.View(value.Record, value.Sha256);
@@ -77,9 +78,12 @@ public sealed partial class LocalNasdaqExecutionEvidenceStore
         return CheckedPreparation(value ?? throw new KeyNotFoundException(), session);
     }
     public NasdaqProspectivePreparationView SavePreparation(Guid submissionId, NasdaqProspectivePreparationDraft draft, Guid? recordId = null, string? expectedRevision = null)
+        => SavePreparationCore(submissionId, draft, recordId, expectedRevision);
+    private NasdaqProspectivePreparationView SavePreparationCore(Guid submissionId, NasdaqProspectivePreparationDraft draft, Guid? recordId, string? expectedRevision,
+        NasdaqPreparationArtifactAnnotation? artifactSource = null, byte[]? artifactBytes = null, DateTimeOffset? artifactReceivedAtUtc = null)
     {
         // Actual receipt of the fully parsed service request, before validation/locking/publication. Not source availability.
-        var received = clock.GetUtcNow(); ArgumentNullException.ThrowIfNull(draft);
+        var received = artifactReceivedAtUtc ?? clock.GetUtcNow(); ArgumentNullException.ThrowIfNull(draft);
         if (received.Offset != TimeSpan.Zero || submissionId == Guid.Empty || recordId == Guid.Empty || recordId.HasValue != (expectedRevision is not null)) throw new ArgumentException("Explicit submission/revision identity and UTC receipt clock required.");
         using var gate = Lock(); var session = PreparationSession(draft.SessionKey); draft.Validate(session.Identity);
         draft = draft with { References = Array.AsReadOnly(draft.References.ToArray()) };
@@ -89,6 +93,10 @@ public sealed partial class LocalNasdaqExecutionEvidenceStore
             if (retry.Record.Evidence.SessionKey != session.SessionKey || (recordId is null ? retry.Record.Revision != 1 : retry.Record.RecordId != recordId)
                 || retry.Record.PreviousRevisionHash != expectedRevision || JsonSerializer.Serialize(retry.Record.Evidence, Json) != JsonSerializer.Serialize(draft, Json))
                 throw new NasdaqEvidenceConflictException("PreparationSubmissionIdentityConflict");
+            var attached = retry.Record.Artifacts.SingleOrDefault(a => a.ArtifactId == submissionId);
+            if (artifactSource is null ? attached is not null : attached is null || attached.Source != artifactSource || attached.Sha256 != ArtifactHash(artifactBytes!))
+                throw new NasdaqEvidenceConflictException("ArtifactSubmissionIdentityConflict");
+            if (attached is not null) _ = ReadArtifactBytes(attached);
             return CheckedPreparation(retry, session);
         }
         var previous = recordId is null ? null : values.Where(v => v.Record.RecordId == recordId).MaxBy(v => v.Record.Revision);
@@ -102,10 +110,20 @@ public sealed partial class LocalNasdaqExecutionEvidenceStore
             ? "CurrentBogotaDate_ReportOnly_NoCalendarOrAdmissionClaim" : "DifferentBogotaDate_RetrospectiveOrOtherSessionReport";
         var clockSource = ReferenceEquals(clock, TimeProvider.System) ? "TimeProvider.System.GetUtcNow_OrdinaryUnauthenticatedWallClock" : "InjectedTimeProvider_NotAuthenticated";
         var record = new NasdaqProspectivePreparationRecord(recordId ?? Guid.NewGuid(), (previous?.Record.Revision ?? 0) + 1, values.Count + 1,
-            submissionId, session.Identity, draft, received, registered, clockSource, mode, previous?.Sha256);
+            submissionId, session.Identity, draft, received, registered, clockSource, mode, previous?.Sha256)
+        { Artifacts = previous?.Record.Artifacts ?? [] };
+        if (artifactSource is not null)
+        {
+            artifactSource.Validate(record);
+            if (record.Artifacts.Count >= 8) throw new ArgumentException("At most eight immutable screenshots per preparation record.");
+            var artifact = new NasdaqPreparationArtifact(submissionId, session.SessionKey, record.RecordId, record.Revision,
+                artifactSource, artifactBytes!.Length, ArtifactHash(artifactBytes), received, clockSource);
+            record = record with { Artifacts = record.Artifacts.Append(artifact).ToArray() };
+        }
         var hash = Convert.ToHexStringLower(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(record, Json)));
         var bytes = JsonSerializer.SerializeToUtf8Bytes(new PreparationEnvelope(record, hash), Json);
         if (bytes.Length > 65536) throw new ArgumentException("Preparation payload too large.");
+        if (artifactSource is not null) PublishArtifact(record.Artifacts[^1], artifactBytes!);
         Publish(PreparationName(record.RecordId, record.Revision), bytes);
         return CheckedPreparation(ReadPreparations().Single(v => v.Record.SubmissionId == submissionId), session);
     }

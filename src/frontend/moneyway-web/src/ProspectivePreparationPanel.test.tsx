@@ -170,6 +170,17 @@ it("revises and reloads immutable originals with an expected hash and reported t
             "Preparación: hora de observación reportada por el operador (opcional)",
         ),
     ).toHaveProperty("value", "");
+    fireEvent.change(
+        screen.getByLabelText("Número de revisión de preparación"),
+        { target: { value: "2" } },
+    );
+    fireEvent.click(
+        screen.getByRole("button", { name: "Ver revisión de preparación" }),
+    );
+    await waitFor(() =>
+        expect(screen.getByText(/revisión 2 · secuencia/)).not.toBeNull(),
+    );
+    expect(fetcher.mock.calls.at(-1)![0]).toMatch(/revision=2$/);
 });
 it("permits documentary corrections for terminal sessions while exposing limitations and no entry control", () => {
     render(

@@ -37,6 +37,7 @@ if (app.Environment.IsDevelopment())
     app.MapNasdaqExecutionEvidenceEndpoints();
     app.MapNasdaqHistoricalPackageEndpoints();
     app.MapNasdaqPreparationEndpoints();
+    app.MapNasdaqPreparationArtifactEndpoints();
 }
 
 app.MapHealthChecks("/health");

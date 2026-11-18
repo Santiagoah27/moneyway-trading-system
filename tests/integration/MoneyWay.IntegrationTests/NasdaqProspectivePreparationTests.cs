@@ -187,6 +187,9 @@ public sealed class NasdaqProspectivePreparationTests : IDisposable
             var first = Store().SavePreparation(Guid.NewGuid(), Partial(s.SessionKey)); clock.Now = clock.Now.AddMinutes(1);
             var next = Store().SavePreparation(Guid.NewGuid(), first.Record.Evidence with { RevisionReason = "synthetic later correction", H4ReviewReportedComplete = true }, first.Record.RecordId, first.RevisionHash);
             Assert.False(next.CanonicalAdmissionPermitted); Assert.Equal(0, next.AdmissibleCompletionObservationCount);
+            var attachment = Store().AttachPreparationArtifact(Guid.NewGuid(), s.SessionKey, next.Record.RecordId, next.Record.Revision, next.RevisionHash,
+                new("synthetic-later.png", "image/png", s.Identity.ProviderId.Value, s.Identity.Symbol.Value, "synthetic later artifact, not original market evidence", "synthetic later attachment"), Convert.FromBase64String(NasdaqPreparationArtifactTests.SyntheticPng));
+            Assert.False(attachment.CanonicalAdmissionPermitted); Assert.Null(attachment.PreparationRuleResult);
             Assert.Equal(JsonSerializer.Serialize(before.SelectedFrame), JsonSerializer.Serialize((await reader.ExecuteAsync(source.Path, source.Hash, frameStep: source.Step)).SelectedFrame));
             Assert.False(Store().Session(s.SessionKey).Terminal);
         }
@@ -222,6 +225,10 @@ public sealed class NasdaqProspectivePreparationTests : IDisposable
         Store().SessionAction(s.SessionKey, new(Guid.NewGuid(), "ConfirmClosure", "synthetic:operator", "note:synthetic close") { Execution = reference, MoneyWayTradeClosedConfirmed = true, ClosureKind = "OtherEvidencedExit", Reason = "synthetic terminal test" });
         var correction = await Post(client, route + $"/{first.Record.RecordId}/revisions", new { submissionId = Guid.NewGuid(), expectedRevision = Store().Preparation(s.SessionKey, first.Record.RecordId).RevisionHash, evidence = Partial(s.SessionKey) with { RevisionReason = "synthetic post-terminal annotation" } });
         Assert.Equal(HttpStatusCode.OK, correction.StatusCode); Assert.True(Store().Session(s.SessionKey).Terminal);
+        var terminalDocument = Store().Preparation(s.SessionKey, first.Record.RecordId);
+        var attached = Store().AttachPreparationArtifact(Guid.NewGuid(), s.SessionKey, first.Record.RecordId, terminalDocument.Record.Revision, terminalDocument.RevisionHash,
+            NasdaqPreparationArtifactTests.Source(), Convert.FromBase64String(NasdaqPreparationArtifactTests.SyntheticPng));
+        Assert.Single(attached.Record.Artifacts); Assert.True(Store().Session(s.SessionKey).Terminal); Assert.False(attached.CanonicalAdmissionPermitted);
         var attempt = new NasdaqSupervisedSessionCommand(Guid.NewGuid(), "EntryIntent", "synthetic:operator", "note:synthetic forbidden reentry") { SetupReference = "synthetic:new setup" };
         Assert.Equal(HttpStatusCode.Conflict, (await Post(client, $"/api/nasdaq/supervised-sessions/{s.SessionKey}/actions", attempt)).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync(route)).StatusCode);

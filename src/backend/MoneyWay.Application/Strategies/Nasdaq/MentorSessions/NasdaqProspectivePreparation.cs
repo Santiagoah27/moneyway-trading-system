@@ -77,7 +77,10 @@ public sealed record NasdaqProspectivePreparationDraft(string SessionKey, string
 }
 public sealed record NasdaqProspectivePreparationRecord(Guid RecordId, int Revision, long SubmissionSequence, Guid SubmissionId,
     NasdaqDemoSessionIdentity Identity, NasdaqProspectivePreparationDraft Evidence, DateTimeOffset ReceivedAtUtc,
-    DateTimeOffset RegisteredAtUtc, string ReceiptClockSource, string SubmissionContext, string? PreviousRevisionHash);
+    DateTimeOffset RegisteredAtUtc, string ReceiptClockSource, string SubmissionContext, string? PreviousRevisionHash)
+{
+    public IReadOnlyList<NasdaqPreparationArtifact> Artifacts { get; init; } = [];
+}
 public sealed record NasdaqProspectivePreparationView(NasdaqProspectivePreparationRecord Record, string RevisionHash,
     IReadOnlyList<string> MissingDocumentaryInputs, int AdmissibleCompletionObservationCount)
 {
@@ -112,7 +115,7 @@ public static class NasdaqProspectivePreparationProjection
         if (d.Direction is null or "Unresolved" || d.H4Context is null or "Unresolved") missing.Add("HumanH4ContextSelectionMissingOrUnresolved");
         if (!d.H4ReviewReportedComplete) missing.Add("H4ReviewCompletionNotReported");
         if (!d.LiquidityReviewReportedComplete) missing.Add("LiquidityReviewCompletionNotReported");
-        if (d.ArtifactReference is null) missing.Add("OriginalArtifactReferenceMissing");
+        if (d.ArtifactReference is null && record.Artifacts.Count == 0) missing.Add("OriginalArtifactReferenceMissing");
         if (d.OriginalTime is null || d.OriginalClockDomain is null || d.TimePrecision == "Unknown") missing.Add("OriginalObservationTimingUnreported");
         if (d.HumanValidationStatus != "confirmed") missing.Add("HumanValidationRequired");
         if (!d.References.Any(r => r.Category == "Structure")) missing.Add("HumanStructuralReferenceMissing");

@@ -73,14 +73,14 @@ public static partial class NasdaqExecutionEvidenceEndpoints
             return Results.Ok(await diagnostics.ReadAsync(key, step, hash, cancellationToken: c.RequestAborted));
         }));
     }
-    private static async Task<T> Read<T>(HttpContext c)
+    private static async Task<T> Read<T>(HttpContext c, int maximumBytes = 65536)
     {
         if (!c.Request.HasJsonContentType() || c.Request.Headers["X-MoneyWay-Local-Capture"] != "1")
             throw new ArgumentException("Explicit JSON local-capture request required.");
-        var bytes = new byte[65537]; var length = 0;
+        var bytes = new byte[maximumBytes + 1]; var length = 0;
         while (length < bytes.Length)
         { var count = await c.Request.Body.ReadAsync(bytes.AsMemory(length), c.RequestAborted); if (count == 0) break; length += count; }
-        if (length > 65536) throw new ArgumentException("Evidence request exceeds 64 KiB.");
+        if (length > maximumBytes) throw new ArgumentException("Evidence request exceeds its bounded upload policy.");
         using var doc = JsonDocument.Parse(bytes.AsMemory(0, length), new JsonDocumentOptions { MaxDepth = 16 });
         static void Unique(JsonElement node)
         {
