@@ -9,7 +9,7 @@ namespace MoneyWay.Infrastructure.Strategies.Nasdaq;
 public sealed class NasdaqEvidenceConflictException(string message) : Exception(message);
 
 /// <summary>Bounded local revision files. Uses the established checkpoint publication pattern, never its MT5 files or store.</summary>
-public sealed class LocalNasdaqExecutionEvidenceStore
+public sealed partial class LocalNasdaqExecutionEvidenceStore
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, RespectRequiredConstructorParameters = true, MaxDepth = 32 };
@@ -124,10 +124,7 @@ public sealed class LocalNasdaqExecutionEvidenceStore
         _ = Project(envelope, values);
         var bytes = JsonSerializer.SerializeToUtf8Bytes(envelope, Json);
         if (bytes.Length > 65536) throw new ArgumentException("Evidence record is too large.");
-        var temporary = Path.Combine(root, ".pending-" + Guid.NewGuid().ToString("N"));
-        using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
-        { stream.Write(bytes); stream.Flush(flushToDisk: true); }
-        Guard(root); File.Move(temporary, Path.Combine(root, Name(record.RecordId, record.Revision)), overwrite: false);
+        Publish(Name(record.RecordId, record.Revision), bytes);
         var published = ReadAll();
         return Project(published.Single(v => v.Record.SubmissionId == submissionId), published);
     }
@@ -136,6 +133,13 @@ public sealed class LocalNasdaqExecutionEvidenceStore
         using var gate = Lock(); var all = ReadAll(); var versions = all.Where(v => v.Record.RecordId == id && (revision is null || v.Record.Revision == revision));
         var value = versions.MaxBy(v => v.Record.Revision) ?? throw new KeyNotFoundException();
         return Project(value, all);
+    }
+    private void Publish(string name, byte[] bytes)
+    {
+        var temporary = Path.Combine(root, ".pending-" + Guid.NewGuid().ToString("N"));
+        using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
+        { stream.Write(bytes); stream.Flush(flushToDisk: true); }
+        Guard(root); File.Move(temporary, Path.Combine(root, name), overwrite: false);
     }
     public IReadOnlyList<NasdaqSupervisedExecutionEvidenceView> List(string sessionId)
     {

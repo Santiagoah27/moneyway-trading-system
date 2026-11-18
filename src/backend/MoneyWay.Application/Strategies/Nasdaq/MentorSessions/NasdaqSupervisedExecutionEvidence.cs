@@ -42,7 +42,7 @@ public sealed record NasdaqSupervisedExecutionEvidenceDraft(string SessionId, Da
             Text(s, required: true);
         Text(SourceProviderId); Text(AssociationSourceReference);
         if (TradingDay == default || OriginalSymbol is not ("US100" or "USTEC") || Direction is not (null or "Buy" or "Sell")
-            || Scenario is not (null or "WickfillScenario2") || Scenario == "WickfillScenario2" && Direction != "Sell"
+            || Scenario is not (null or "Standard" or "WickfillScenario2") || Scenario == "WickfillScenario2" && Direction != "Sell"
             || Association is not ("None" or "HumanReported" or "DocumentarySupported"))
             throw new ArgumentException("Unsupported session, instrument, direction, scenario or association.");
         Reference(SourceReference);

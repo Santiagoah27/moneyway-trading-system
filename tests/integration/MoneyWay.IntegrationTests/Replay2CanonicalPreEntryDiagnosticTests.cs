@@ -37,6 +37,9 @@ public sealed partial class LocalNasdaqMentorSessionTests
         const string priorSnapshot = @"C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-aff9ef78df6244f7b74348f9d649fa08.json";
         const string priorSnapshotHash = "7993e57947624ac4aff1e4ff88aabbed9b2e9f15a1108a07ab8426cf1128ef2a";
         Assert.Equal(priorSnapshotHash, FileSha256(priorSnapshot));
+        const string priorDocumentary = @"C:\MoneyWay\session\reports\2026-09-08\canonical-preentry-ed4a1539bef845fd84f5a68dcfc81cbe.json";
+        const string priorDocumentaryHash = "48b5743e86ea3f061b9ae3c1f2c7280dcad4bf5272d7da7cf69c68f0d24dd3db";
+        Assert.Equal(priorDocumentaryHash, FileSha256(priorDocumentary));
         var first = RunS11Prefix(37);
         var longer = RunS11Prefix(38);
         var definition = MoneyWayNasdaqStrategyDefinition.Instance;
@@ -163,8 +166,8 @@ public sealed partial class LocalNasdaqMentorSessionTests
         {
             Schema = "moneyway.canonical-preentry-window",
             SchemaVersion = 1,
-            CanonicalRuntimeCommit = "65266329ea21168677891e50259c3d02a32c5ffd",
-            RuntimeChanges = "WF2 documentary exit assessment over unchanged canonical evidence; reported approximate close requires validation; no native execution, PnL or entry authorization invented",
+            CanonicalRuntimeCommit = "268d39976ad9aa1918f90ff66dbab9039873cc07",
+            RuntimeChanges = "Local supervised session termination outside canonical replay; documentary mentor exit never establishes MoneyWay ownership or closure; unchanged canonical strategy verdicts",
             Generator = "tests/integration/MoneyWay.IntegrationTests/Replay2CanonicalPreEntryDiagnosticTests.cs",
             Adapter = new { Path = adapterPath, SHA256 = adapterHash },
             first.Input.Session,
@@ -189,6 +192,11 @@ public sealed partial class LocalNasdaqMentorSessionTests
             StrategyDefinition = definition,
             Capability = capability,
             RuntimeWorkingTreeCodeHashes = new[] {
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/MentorSessions/NasdaqSupervisedSession.cs",
+                "src/backend/MoneyWay.Application/Strategies/Nasdaq/MentorSessions/NasdaqSupervisedExecutionEvidence.cs",
+                "src/backend/MoneyWay.Infrastructure/Strategies/Nasdaq/LocalNasdaqSupervisedSessions.cs",
+                "src/backend/MoneyWay.Infrastructure/Strategies/Nasdaq/LocalNasdaqExecutionEvidenceStore.cs",
+                "src/backend/MoneyWay.Api/Endpoints/NasdaqExecutionEvidenceEndpoints.cs",
                 "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayEvaluators/MoneyWayNasdaqHumanStructuralStopLossEvaluator.cs",
                 "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayEvaluators/MoneyWayNasdaqRiskExposureEvaluator.cs",
                 "src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayEvaluators/MoneyWayNasdaqHumanTakeProfitEvaluator.cs",
@@ -295,6 +303,21 @@ public sealed partial class LocalNasdaqMentorSessionTests
         Assert.Null(close.Evidence.SourceSymbol); Assert.Null(close.Evidence.ExitPrice); Assert.Null(close.Evidence.ExecutionReference);
         Assert.Null(close.Evidence.Quantity); Assert.Null(close.Evidence.DocumentedCloseMechanism); Assert.Equal("Unresolved", close.EntryAssociation);
         Assert.All(selected.Take(6), f => Assert.Null(SnapshotAudit(f, first.Link.Frames, canonical)?.DocumentaryExit));
+        // Synthetic own Standard session: the authentic mentor report must never manufacture an operational event.
+        var isolated = Path.Combine(Path.GetTempPath(), "moneyway-replay-session-isolation-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var operational = new MoneyWay.Infrastructure.Strategies.Nasdaq.LocalNasdaqExecutionEvidenceStore(isolated);
+            var own = operational.OpenSession(Guid.NewGuid(), new("synthetic:separate-MoneyWay-session", first.Input.Session.TradingDay,
+                first.Input.Session.ProviderId.Value, first.Input.Session.Symbol.Value, "Standard", "synthetic:test operator", "note:synthetic own session; not a mentor execution"));
+            _ = client.GetFromJsonAsync<NasdaqHistoricalReportSummary>("/api/nasdaq/historical-demo").GetAwaiter().GetResult();
+            var after = operational.Session(own.SessionKey);
+            Assert.Equal("Open_NoTrade", after.Status); Assert.False(after.Terminal);
+            Assert.Null(after.ExecutionConfirmation); Assert.Null(after.ClosureConfirmation); Assert.Single(after.Events);
+        }
+        finally { if (Directory.Exists(isolated)) Directory.Delete(isolated, true); }
+        Assert.Equal(priorDocumentaryHash, FileSha256(priorDocumentary));
+        output.WriteLine("OPERATIONAL ISOLATION: synthetic separate Standard session remains Open_NoTrade after authentic mentor exit report; no automatic lock.");
         output.WriteLine($"EXIT: reported approximation 08:37 Bogota / nominal 13:37Z; original artifact/instrument/link unverified; no native exit or realized 1R.");
         output.WriteLine($"SUPERVISED SNAPSHOT: Complete={supervised.CompleteSupervisedTrade}; InstrumentCorrespondence={supervised.InstrumentCorrespondence}; Missing={string.Join(',', supervised.MissingEvidence)}");
         output.WriteLine($"REPEATED ARTIFACT: {repeated}; SHA256: {FileSha256(repeated)}");

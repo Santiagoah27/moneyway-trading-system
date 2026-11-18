@@ -2,6 +2,11 @@
 
 The capture form also supports [reported monetary outcomes](nasdaq-reported-monetary-outcome.md) through the same immutable revision workflow, separately from calculated or broker-verified results.
 
+Current operational extension: [supervised session termination](nasdaq-supervised-session-termination.md).
+Its explicit own-execution/closure events resolve local no-reentry enforcement;
+the documentary record alone still establishes no session closure. The older
+next-feature/status notes below describe this capture feature's original checkpoint.
+
 Implementation checkpoint: 2026-11-18. Initial clean synchronized `main`:
 `1a275c49a987eca838f4ce1b94f39415d55f6428`.
 

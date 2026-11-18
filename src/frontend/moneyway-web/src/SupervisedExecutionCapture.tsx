@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ReportedMonetaryOutcomeFields } from "./ReportedMonetaryOutcomeFields";
 import type { ReportedMonetaryOutcome } from "./ReportedMonetaryOutcomeFields";
+import { SupervisedSessionPanel } from "./SupervisedSessionPanel";
 
 export interface CaptureEvent {
     sourceReference: string;
@@ -370,6 +371,24 @@ export function SupervisedExecutionCapture({
             aria-label="Captura supervisada de evidencia"
         >
             <h3>Registro supervisado de evidencia de ejecución</h3>
+            <SupervisedSessionPanel
+                apiBaseUrl={apiBaseUrl}
+                evidence={
+                    saved
+                        ? {
+                              recordId: saved.record.recordId,
+                              revision: saved.record.revision,
+                              revisionHash: saved.revisionHash,
+                              sessionId: saved.record.evidence.sessionId,
+                              tradingDay: saved.record.evidence.tradingDay,
+                              providerId:
+                                  saved.record.evidence.sourceProviderId,
+                              symbol: saved.record.evidence.originalSymbol,
+                              scenario: saved.record.evidence.scenario,
+                          }
+                        : null
+                }
+            />
             <p>
                 Declaración manual con procedencia. No envía órdenes ni verifica
                 ejecuciones. No modifica el replay, SL, riesgo o TP. Usa note:
@@ -467,6 +486,9 @@ export function SupervisedExecutionCapture({
                                 }
                             >
                                 <option value="">Sin clasificación</option>
+                                <option value="Standard">
+                                    Standard declarado
+                                </option>
                                 {draft.direction === "Sell" && (
                                     <option>WickfillScenario2</option>
                                 )}

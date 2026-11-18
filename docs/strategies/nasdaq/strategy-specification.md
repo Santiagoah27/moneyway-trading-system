@@ -1065,6 +1065,23 @@ This single example does not establish a universal 15-minute rule. Impact defini
 
 ## 20. Reentries
 
+### Supervised MoneyWay session decision (2026-11-18)
+
+`confirmed` for MoneyWay's own local supervised Nasdaq workflow: one actual
+trade per session. After its explicitly evidenced closure (TP, SL, BE, protected
+exit or another evidenced exit), the session is terminal: no same-setup reentry,
+new setup or second trade. This current human decision supersedes the earlier
+unresolved exit/setup scope below **only for this operational workflow**.
+Mentor documentary records and monetary reports do not establish MoneyWay
+ownership or closure. A protected 1:1 stop is not a realized 1R result.
+
+The local guard preserves America/Bogota and the established [08:30, 11:00)
+entry window; it introduces no calendar, account, broker or automatic management
+rule. A different date removes only the prior date's lock; all independent
+eligibility requirements still apply. See the [operational contract and acceptance](../../backtesting/nasdaq-supervised-session-termination.md).
+Active strategy metadata and historical evaluators are unchanged. The following
+records the original mentor-source audit, not an override of the scoped decision:
+
 ```yaml
 after_break_even: null
 after_stop_loss: null
@@ -1096,7 +1113,7 @@ Confirmed:
 - No direction reversal or new Step 3 after a relevant misaligned pre-entry take invalidates the session; resume only the next trading session/day.
 - No revival of a cancelled setup through later 5M or 1M evidence.
 
-These dependency statements do not define a general runtime verdict projection. The new confirmed relevant misaligned pre-entry take is the explicit exception: NQ-LIQ-003 `Failed`, terminal session invalidation and `no_trade`, as documented in section 6.2 and ADR 0025. FVG size/quality, displacement, Wickfill/Fakeout, structural HL/LH selection and important-high/important-low selection require human validation. News, oversized stops, target distance, reentries, operation counts, daily limit, data quality, lateral markets and holidays remain unresolved.
+These dependency statements do not define a general runtime verdict projection. The new confirmed relevant misaligned pre-entry take is the explicit exception: NQ-LIQ-003 `Failed`, terminal session invalidation and `no_trade`, as documented in section 6.2 and ADR 0025. FVG size/quality, displacement, Wickfill/Fakeout, structural HL/LH selection and important-high/important-low selection require human validation. News, oversized stops, target distance, monetary daily limits, data quality, lateral markets and holidays remain unresolved. Local MoneyWay own-session trade count/no-reentry is explicitly resolved in section 20; independent historical/account scope remains unestablished.
 
 ## 23. Human-validation points
 

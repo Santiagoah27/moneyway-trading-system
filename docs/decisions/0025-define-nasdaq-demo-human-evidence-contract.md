@@ -797,6 +797,21 @@ One cross-rule integration contract and its ADR index are added. No runtime type
 
 ## Implementation and validation evidence
 
+### Local supervised session termination (2026-11-18)
+
+The user explicitly confirms one actual MoneyWay-owned supervised Nasdaq trade
+per session and terminality after its evidenced closure, including TP, SL, BE,
+protected and other evidenced exits. This resolves the scoped operational
+no-reentry decision; it does not change ACTIVE metadata or historical rule
+evaluation. Standard is the primary path; WF2 uses the same operational guard.
+The [session contract](../backtesting/nasdaq-supervised-session-termination.md)
+specifies identity, unknown account scope, explicit ownership/closure provenance,
+immutable revisions, local API enforcement and acceptance evidence. Historical
+mentor observations and reported monetary outcomes remain documentary and never
+manufacture an own execution/closure event. Calendar and other unresolved risk
+limits remain independent; no universal source-derived selection or exit
+algorithm is introduced.
+
 Inspected existing implementation and test source, without running the Application suite:
 
 - `src/backend/MoneyWay.Application/StrategyReplay/`: `IStrategyReplayInputObservation`, `StrategyReplayContext`, raw/context outcome evaluation, workflow definitions and capability declarations.

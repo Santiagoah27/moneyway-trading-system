@@ -9,20 +9,21 @@ namespace MoneyWay.Api.Endpoints;
 public static class NasdaqExecutionEvidenceEndpoints
 {
     private sealed record SaveRequest(Guid SubmissionId, NasdaqSupervisedExecutionEvidenceDraft Evidence, string? ExpectedRevision = null);
+    private sealed record SessionOpenRequest(Guid SubmissionId, NasdaqSupervisedSessionOpen Session);
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, RespectRequiredConstructorParameters = true, MaxDepth = 16 };
     public static void MapNasdaqExecutionEvidenceEndpoints(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPost("/api/nasdaq/execution-evidence", (HttpContext c, LocalNasdaqExecutionEvidenceStore s) => Execute(c, async () =>
         {
-            var request = await Read(c);
+            var request = await Read<SaveRequest>(c);
             if (request.ExpectedRevision is not null) throw new ArgumentException("Creation cannot replace an existing revision.");
             var saved = s.Save(request.SubmissionId, request.Evidence);
             return Results.Created($"/api/nasdaq/execution-evidence/{saved.Record.RecordId}", saved);
         }));
         endpoints.MapPost("/api/nasdaq/execution-evidence/{id:guid}/revisions", (HttpContext c, Guid id, LocalNasdaqExecutionEvidenceStore s) => Execute(c, async () =>
         {
-            var request = await Read(c);
+            var request = await Read<SaveRequest>(c);
             return Results.Ok(s.Save(request.SubmissionId, request.Evidence, id, request.ExpectedRevision));
         }));
         endpoints.MapGet("/api/nasdaq/execution-evidence/{id:guid}", (HttpContext c, Guid id, LocalNasdaqExecutionEvidenceStore s) => Execute(c, () =>
@@ -38,8 +39,23 @@ public static class NasdaqExecutionEvidenceEndpoints
                 throw new ArgumentException("Select a sessionId.");
             return Task.FromResult<IResult>(Results.Ok(s.List(session.ToString())));
         }));
+        endpoints.MapPost("/api/nasdaq/supervised-sessions", (HttpContext c, LocalNasdaqExecutionEvidenceStore s) => Execute(c, async () =>
+        {
+            var request = await Read<SessionOpenRequest>(c);
+            return Results.Ok(s.OpenSession(request.SubmissionId, request.Session));
+        }));
+        endpoints.MapGet("/api/nasdaq/supervised-sessions", (HttpContext c, LocalNasdaqExecutionEvidenceStore s) => Execute(c, () =>
+        {
+            if (c.Request.Query.Count != 1 || !c.Request.Query.TryGetValue("tradingDay", out var date) || date.Count != 1)
+                throw new ArgumentException("Explicit America/Bogota tradingDay required.");
+            return Task.FromResult<IResult>(Results.Ok(s.Sessions(DateOnly.ParseExact(date.ToString(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture))));
+        }));
+        endpoints.MapGet("/api/nasdaq/supervised-sessions/{key}", (HttpContext c, string key, LocalNasdaqExecutionEvidenceStore s) => Execute(c, () =>
+            Task.FromResult<IResult>(Results.Ok(s.Session(key)))));
+        endpoints.MapPost("/api/nasdaq/supervised-sessions/{key}/actions", (HttpContext c, string key, LocalNasdaqExecutionEvidenceStore s) => Execute(c, async () =>
+            Results.Ok(s.SessionAction(key, await Read<NasdaqSupervisedSessionCommand>(c)))));
     }
-    private static async Task<SaveRequest> Read(HttpContext c)
+    private static async Task<T> Read<T>(HttpContext c)
     {
         if (!c.Request.HasJsonContentType() || c.Request.Headers["X-MoneyWay-Local-Capture"] != "1")
             throw new ArgumentException("Explicit JSON local-capture request required.");
@@ -59,7 +75,7 @@ public static class NasdaqExecutionEvidenceEndpoints
             if (node.ValueKind == JsonValueKind.Array) foreach (var value in node.EnumerateArray()) Unique(value);
         }
         Unique(doc.RootElement);
-        return JsonSerializer.Deserialize<SaveRequest>(doc.RootElement, Json) ?? throw new ArgumentException("Missing evidence request.");
+        return JsonSerializer.Deserialize<T>(doc.RootElement, Json) ?? throw new ArgumentException("Missing evidence request.");
     }
     private static async Task<IResult> Execute(HttpContext c, Func<Task<IResult>> operation)
     {
