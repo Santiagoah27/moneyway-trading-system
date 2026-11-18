@@ -11,6 +11,9 @@ builder.Services.AddSingleton<EvaluateStrategyUseCase>();
 builder.Services.AddSingleton<StrategyDefinitionCatalog>();
 builder.Services.AddSingleton<EvaluateRegisteredStrategyUseCase>();
 builder.Services.AddSingleton<ReadNasdaqHistoricalReport>();
+builder.Services.AddSingleton(_ => new LocalNasdaqExecutionEvidenceStore(
+    builder.Configuration["NasdaqExecutionEvidence:Directory"] ?? Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MoneyWay", "supervised-execution-evidence")));
 
 if (builder.Environment.IsDevelopment())
 {
@@ -25,6 +28,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.UseCors("DevelopmentFrontend");
     app.MapNasdaqHistoricalDemoEndpoints();
+    app.MapNasdaqExecutionEvidenceEndpoints();
 }
 
 app.MapHealthChecks("/health");

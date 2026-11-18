@@ -1,5 +1,7 @@
 # Nasdaq historical report in the supervised local demo
 
+The historical area also provides [durable supervised execution-evidence capture](nasdaq-supervised-execution-capture.md), including partial records, corrections and retrieval independently of MT5.
+
 ## WF2 supervised historical exit evidence (2026-11-17)
 
 Initial checkpoint: clean synchronized `main` at

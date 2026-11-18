@@ -88,6 +88,7 @@ public sealed record NasdaqHistoricalTradeLifecycleSummary(
     public NasdaqHistoricalScenario2Risk? Scenario2RiskExposure { get; init; }
     public NasdaqHistoricalScenario2Target? Scenario2TakeProfit { get; init; }
     public NasdaqHistoricalEntryAssessment? HistoricalEntry { get; init; }
+    public NasdaqSupervisedExecutionRecordReference? SupervisedExecutionRecord { get; init; }
     public NasdaqHistoricalExitAssessment? HistoricalExit { get; init; }
     public NasdaqSupervisedHistoricalTradeSnapshot? SupervisedSnapshot { get; init; }
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { SupervisedExecutionCapture } from "./SupervisedExecutionCapture";
 import {
     getNasdaqHistoricalReport,
     HistoricalReportError,
@@ -779,6 +780,7 @@ function HistoricalDemoContent({ apiBaseUrl }: { apiBaseUrl: string }) {
                 Revisión de evidencia histórica. No ejecuta órdenes ni opera en
                 vivo.
             </p>
+            <SupervisedExecutionCapture apiBaseUrl={apiBaseUrl} />
             {!report && !error && (
                 <p role="status">Cargando reporte histórico.</p>
             )}

@@ -659,6 +659,26 @@ The source-backed BE concept is favorable first encountered distinct Asia/London
 
 ### Retrospective annotation and conceptual session aggregate
 
+**2026-11-18 local supervised execution-evidence capture:** the explicitly
+requested product feature adds operator documentary records, durable local
+revisions and a Development/loopback-only API/form. It extends the existing local
+file-publication pattern in a separate store; MT5 checkpoint persistence,
+PostgreSQL architecture and strategy contracts are unchanged. MoneyWay-generated
+IDs, registration/revision provenance and exact price strings remain distinct
+from native identities, source event times and original artifact bytes. Payload
+hashes are integrity metadata only. Reviewer names, native IDs and association
+references remain assertions, never caller-controlled trust or independently
+verified historical availability. Incomplete records can be saved and stay
+incomplete. No original artifact hash is asserted without inspected bytes.
+
+The application consumer reuses the documentary selectors and lifecycle summary
+with an optional exact stored-record reference. It creates no replay Step, rule
+result, order or retrospective authorization. BUY/unknown unclassified records
+do not generalize the SELL-only WF2 strategy. The original historical snapshot
+and verdicts remain unchanged. Economic valuation, session completion and scoped
+no-reentry remain separate source/feature requirements. See the
+[capture workflow and persistence limits](../backtesting/nasdaq-supervised-execution-capture.md).
+
 **2026-11-17 WF2 documentary exit extension:** `NasdaqHistoricalExitEvidence`
 and its stateless causal selector follow the existing historical entry diagnostic
 boundary. The Standard `NasdaqHistoricalDocumentedExit` requires an exact

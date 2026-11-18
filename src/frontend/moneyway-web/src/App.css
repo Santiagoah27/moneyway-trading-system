@@ -228,3 +228,44 @@ aside {
         font-weight: 700;
     }
 }
+
+.execution-capture {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    border: 1px solid #29445f;
+    border-radius: 10px;
+}
+.execution-capture fieldset {
+    margin: 0.8rem 0;
+    border: 1px solid #29445f;
+    min-width: 0;
+}
+.capture-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: 0.8rem;
+    margin: 0.8rem 0;
+    align-items: end;
+}
+.execution-capture label {
+    display: block;
+    margin: 0.5rem 0;
+}
+.execution-capture input:not([type="checkbox"]),
+.execution-capture select {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.5rem;
+    background: #122437;
+    color: #e7edf5;
+    border: 1px solid #44607c;
+    border-radius: 4px;
+}
+.execution-capture button {
+    margin: 0.3rem;
+}
+.execution-capture pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
