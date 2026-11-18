@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { HistoricalEvidencePackagePanel } from "./HistoricalEvidencePackagePanel";
+import { ProspectivePreparationPanel } from "./ProspectivePreparationPanel";
 import { StandardCanonicalDiagnosticPanel } from "./StandardCanonicalDiagnosticPanel";
 import type {
     CanonicalDiagnosticReference,
@@ -381,6 +382,13 @@ export function SupervisedSessionPanel({
             </ul>
             {session && (
                 <section aria-label="Estado de sesión supervisada">
+                    {session.path === "Standard" && (
+                        <ProspectivePreparationPanel
+                            key={session.sessionKey}
+                            apiBaseUrl={apiBaseUrl}
+                            session={session}
+                        />
+                    )}
                     {session.path === "Standard" && (
                         <StandardCanonicalDiagnosticPanel
                             key={session.sessionKey}

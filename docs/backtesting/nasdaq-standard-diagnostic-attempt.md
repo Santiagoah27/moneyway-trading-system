@@ -1,5 +1,9 @@
 # Standard canonical diagnostic to supervised attempt
 
+The [prospective preparation runbook](nasdaq-prospective-preparation.md) describes
+partial Standard human capture before using this diagnostic/attempt workflow.
+Captured preparation remains outside canonical replay without admitted evidence.
+
 2026-11-18 discovery update: the [historical package feature](nasdaq-standard-historical-package.md)
 located the authentic June 29 exports and prior 9,660-frame NoTrade research
 report. The earlier availability search below was incomplete. This candidate
