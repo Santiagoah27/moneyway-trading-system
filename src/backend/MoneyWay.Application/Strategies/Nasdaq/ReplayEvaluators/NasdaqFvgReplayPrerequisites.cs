@@ -6,11 +6,13 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 
 internal static class NasdaqFvgReplayPrerequisites
 {
-    internal static ReplayRuleEvaluationDecision? Check(StrategyReplayContext context, RuleId rule)
+    internal static ReplayRuleEvaluationDecision? Check(StrategyReplayContext context, RuleId rule) =>
+        CheckVersion(context, rule, StrategyDefinitions.Nasdaq.MoneyWayNasdaqStrategyDefinition.Instance.Version);
+    internal static ReplayRuleEvaluationDecision? CheckVersion(StrategyReplayContext context, RuleId rule, StrategyVersion expectedVersion)
     {
         ArgumentNullException.ThrowIfNull(context);
         var definition = StrategyDefinitions.Nasdaq.MoneyWayNasdaqStrategyDefinition.Instance;
-        if (context.StrategyId != definition.StrategyId || context.StrategyVersion != definition.Version)
+        if (context.StrategyId != definition.StrategyId || context.StrategyVersion != expectedVersion)
             throw new InvalidOperationException("Strategy context identity must exactly match the evaluator identity.");
         var seen = new HashSet<NasdaqTradingWindowFact>();
         var windows = new List<NasdaqTradingWindowFact>();

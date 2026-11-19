@@ -8,13 +8,17 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 
 public sealed class MoneyWayNasdaqHumanM1RealignmentEvaluator : IReplayRuleEvaluator
 {
+    private readonly StrategyVersion boundVersion;
+    public MoneyWayNasdaqHumanM1RealignmentEvaluator() : this(MoneyWayNasdaqStrategyDefinition.Instance.Version) { }
+    internal MoneyWayNasdaqHumanM1RealignmentEvaluator(StrategyVersion version) { boundVersion = version; }
+
     public StrategyId StrategyId => MoneyWayNasdaqStrategyDefinition.Instance.StrategyId;
-    public StrategyVersion StrategyVersion => MoneyWayNasdaqStrategyDefinition.Instance.Version;
+    public StrategyVersion StrategyVersion => boundVersion;
     public RuleId RuleId { get; } = new("NQ-M1-002");
 
     public ReplayRuleEvaluationDecision Evaluate(StrategyReplayContext context)
     {
-        var blocked = NasdaqFvgReplayPrerequisites.Check(context, RuleId);
+        var blocked = NasdaqFvgReplayPrerequisites.CheckVersion(context, RuleId, StrategyVersion);
         if (blocked is not null) return blocked;
         var applicability = NasdaqStandardBranchApplicability.Check(context, "NQ-M1-001");
         if (applicability is not null) return applicability;

@@ -9,13 +9,17 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 /// <summary>Derives scoped eligibility from prior canonical reversal only; no downstream branch integration.</summary>
 public sealed class MoneyWayNasdaqWickfillScenario2PreEntryEligibilityEvaluator : IReplayRuleEvaluator
 {
+    private readonly StrategyVersion boundVersion;
+    public MoneyWayNasdaqWickfillScenario2PreEntryEligibilityEvaluator() : this(MoneyWayNasdaqStrategyDefinition.Instance.Version) { }
+    internal MoneyWayNasdaqWickfillScenario2PreEntryEligibilityEvaluator(StrategyVersion version) { boundVersion = version; }
+
     public StrategyId StrategyId => MoneyWayNasdaqStrategyDefinition.Instance.StrategyId;
-    public StrategyVersion StrategyVersion => MoneyWayNasdaqStrategyDefinition.Instance.Version;
+    public StrategyVersion StrategyVersion => boundVersion;
     public RuleId RuleId { get; } = new("NQ-WF2-002");
 
     public ReplayRuleEvaluationDecision Evaluate(StrategyReplayContext context)
     {
-        var blocked = NasdaqFvgReplayPrerequisites.Check(context, RuleId);
+        var blocked = NasdaqFvgReplayPrerequisites.CheckVersion(context, RuleId, StrategyVersion);
         if (blocked is not null) return blocked;
         var active = context.PriorObservations.LastOrDefault(o => o.LifecycleProgression is not null)?.LifecycleProgression?.ActiveInstance;
         var predecessor = context.PriorObservations.LastOrDefault(o => o.Evaluations.Any(e => e.RuleId.Value == "NQ-WF2-001"));

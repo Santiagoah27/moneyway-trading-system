@@ -9,13 +9,17 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 /// <summary>Evaluates only documented structural stop evidence for an established pre-entry setup.</summary>
 public sealed class MoneyWayNasdaqHumanStructuralStopLossEvaluator : IReplayRuleEvaluator
 {
+    private readonly StrategyVersion boundVersion;
+    public MoneyWayNasdaqHumanStructuralStopLossEvaluator() : this(MoneyWayNasdaqStrategyDefinition.Instance.Version) { }
+    internal MoneyWayNasdaqHumanStructuralStopLossEvaluator(StrategyVersion version) { boundVersion = version; }
+
     public StrategyId StrategyId => MoneyWayNasdaqStrategyDefinition.Instance.StrategyId;
-    public StrategyVersion StrategyVersion => MoneyWayNasdaqStrategyDefinition.Instance.Version;
+    public StrategyVersion StrategyVersion => boundVersion;
     public RuleId RuleId { get; } = new("NQ-SL-001");
 
     public ReplayRuleEvaluationDecision Evaluate(StrategyReplayContext context)
     {
-        var blocked = NasdaqFvgReplayPrerequisites.Check(context, RuleId);
+        var blocked = NasdaqFvgReplayPrerequisites.CheckVersion(context, RuleId, StrategyVersion);
         if (blocked is not null) return blocked;
 
         if (NasdaqHumanWickfillScenario2StopLossRuleFact.HasScenario2Ancestry(context))

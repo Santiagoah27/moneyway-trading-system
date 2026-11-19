@@ -8,12 +8,16 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 
 public sealed class MoneyWayNasdaqHumanM5FvgQualityEvaluator : IReplayRuleEvaluator
 {
+    private readonly StrategyVersion boundVersion;
+    public MoneyWayNasdaqHumanM5FvgQualityEvaluator() : this(MoneyWayNasdaqStrategyDefinition.Instance.Version) { }
+    internal MoneyWayNasdaqHumanM5FvgQualityEvaluator(StrategyVersion version) { boundVersion = version; }
+
     public StrategyId StrategyId => MoneyWayNasdaqStrategyDefinition.Instance.StrategyId;
-    public StrategyVersion StrategyVersion => MoneyWayNasdaqStrategyDefinition.Instance.Version;
+    public StrategyVersion StrategyVersion => boundVersion;
     public RuleId RuleId { get; } = new("NQ-FVG-002");
     public ReplayRuleEvaluationDecision Evaluate(StrategyReplayContext context)
     {
-        var blocked = NasdaqFvgReplayPrerequisites.Check(context, RuleId);
+        var blocked = NasdaqFvgReplayPrerequisites.CheckVersion(context, RuleId, StrategyVersion);
         if (blocked is not null) return blocked;
         var candidate = context.PriorObservations.SelectMany(o => o.RuleFacts).Where(f => f.RuleId.Value == "NQ-FVG-001")
             .Select(f => f.Fact).OfType<NasdaqHumanM5FvgRuleFact>().LastOrDefault(f => f.Selection.Fact.Session.Matches(context));

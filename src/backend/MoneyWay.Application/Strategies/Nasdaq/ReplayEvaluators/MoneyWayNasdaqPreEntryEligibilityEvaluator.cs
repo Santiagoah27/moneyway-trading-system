@@ -9,13 +9,17 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 /// <summary>Derives only pre-entry eligibility from the exact prior canonical realignment fact.</summary>
 public sealed class MoneyWayNasdaqPreEntryEligibilityEvaluator : IReplayRuleEvaluator
 {
+    private readonly StrategyVersion boundVersion;
+    public MoneyWayNasdaqPreEntryEligibilityEvaluator() : this(MoneyWayNasdaqStrategyDefinition.Instance.Version) { }
+    internal MoneyWayNasdaqPreEntryEligibilityEvaluator(StrategyVersion version) { boundVersion = version; }
+
     public StrategyId StrategyId => MoneyWayNasdaqStrategyDefinition.Instance.StrategyId;
-    public StrategyVersion StrategyVersion => MoneyWayNasdaqStrategyDefinition.Instance.Version;
+    public StrategyVersion StrategyVersion => boundVersion;
     public RuleId RuleId { get; } = new("NQ-M1-003");
 
     public ReplayRuleEvaluationDecision Evaluate(StrategyReplayContext context)
     {
-        var blocked = NasdaqFvgReplayPrerequisites.Check(context, RuleId);
+        var blocked = NasdaqFvgReplayPrerequisites.CheckVersion(context, RuleId, StrategyVersion);
         if (blocked is not null) return blocked;
         var applicability = NasdaqStandardBranchApplicability.Check(context, "NQ-M1-002");
         if (applicability is not null) return applicability;

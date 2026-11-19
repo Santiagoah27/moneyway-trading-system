@@ -11,6 +11,10 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayLifecycle;
 /// </summary>
 public sealed class MoneyWayNasdaqReplayLifecyclePolicy : IStrategyReplayLifecyclePolicy, IStrategyReplayLifecycleEvidenceProducer
 {
+    private readonly StrategyVersion boundVersion;
+    public MoneyWayNasdaqReplayLifecyclePolicy() : this(MoneyWayNasdaqStrategyDefinition.Instance.Version) { }
+    internal MoneyWayNasdaqReplayLifecyclePolicy(StrategyVersion version) { boundVersion = version; }
+
     private static readonly StrategyDefinition Definition = MoneyWayNasdaqStrategyDefinition.Instance;
     private static readonly RuleId ActivationRuleId = Rule("NQ-LIQ-003");
     private static readonly RuleId CompletionRuleId = Rule("NQ-M1-003");
@@ -18,7 +22,7 @@ public sealed class MoneyWayNasdaqReplayLifecyclePolicy : IStrategyReplayLifecyc
     private static readonly StrategyReplayProgressionStateReference ActivationReference = new(ActivationRuleId.Value);
 
     public StrategyId StrategyId => Definition.StrategyId;
-    public StrategyVersion StrategyVersion => Definition.Version;
+    public StrategyVersion StrategyVersion => boundVersion;
 
     public StrategyReplayLifecycleTransition Decide(StrategyReplayLifecyclePolicyContext context)
     {

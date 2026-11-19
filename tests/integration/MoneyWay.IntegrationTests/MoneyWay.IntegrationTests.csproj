@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <Compile Include="../../unit/MoneyWay.Application.UnitTests/Strategies/Nasdaq/ReplayInputs/M5Fixture.cs" Link="SyntheticFixtures/M5Fixture.cs" />
+    <Compile Include="../../unit/MoneyWay.Application.UnitTests/Strategies/Nasdaq/ReplayInputs/M5CandidateFixture.cs" Link="SyntheticFixtures/M5CandidateFixture.cs" />
     <Compile Include="../../unit/MoneyWay.Application.UnitTests/Strategies/Nasdaq/ReplayInputs/LiquidityFixture.cs" Link="SyntheticFixtures/LiquidityFixture.cs" />
     <Compile Include="../../unit/MoneyWay.Application.UnitTests/Strategies/Nasdaq/ReplayInputs/SyntheticNasdaqMentorSessionFixture.cs" Link="SyntheticFixtures/SyntheticNasdaqMentorSessionFixture.cs" />
     <Compile Include="$(NasdaqMentorSessionInputSource)" Link="LocalSession/ValidatedInput.cs" Condition="'$(NasdaqMentorSessionInputSource)' != ''" />

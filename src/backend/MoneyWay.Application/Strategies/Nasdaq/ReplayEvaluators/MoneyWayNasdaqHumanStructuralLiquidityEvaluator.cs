@@ -9,12 +9,16 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 /// <summary>Maps validated human structural selections to NQ-LIQ-002; discovers no points and detects no takes.</summary>
 public sealed class MoneyWayNasdaqHumanStructuralLiquidityEvaluator : IReplayRuleEvaluator
 {
+    private readonly StrategyVersion boundVersion;
+    public MoneyWayNasdaqHumanStructuralLiquidityEvaluator() : this(MoneyWayNasdaqStrategyDefinition.Instance.Version) { }
+    internal MoneyWayNasdaqHumanStructuralLiquidityEvaluator(StrategyVersion version) { boundVersion = version; }
+
     private static readonly StrategyDefinition Definition = MoneyWayNasdaqStrategyDefinition.Instance;
     private static readonly StrategyRuleDefinition Rule = Definition.Rules.Single(item => item.RuleId.Value == "NQ-LIQ-002");
     private readonly NasdaqHumanStructuralLiquidityObservationSelector selector = new();
 
     public StrategyId StrategyId => Definition.StrategyId;
-    public StrategyVersion StrategyVersion => Definition.Version;
+    public StrategyVersion StrategyVersion => boundVersion;
     public RuleId RuleId => Rule.RuleId;
 
     public ReplayRuleEvaluationDecision Evaluate(StrategyReplayContext context)

@@ -19,14 +19,17 @@ public sealed class MoneyWayNasdaqSessionLiquidityEvaluator
         StrategyDefinition.Rules.Single(rule => rule.RuleId.Value == "NQ-LIQ-001");
     private readonly NasdaqSessionLiquidityCalculator calculator;
 
-    public MoneyWayNasdaqSessionLiquidityEvaluator(NasdaqSessionLiquidityCalculator calculator)
+    public MoneyWayNasdaqSessionLiquidityEvaluator(NasdaqSessionLiquidityCalculator calculator) : this(calculator, MoneyWayNasdaqStrategyDefinition.Instance.Version) { }
+    private readonly StrategyVersion boundVersion;
+    internal MoneyWayNasdaqSessionLiquidityEvaluator(NasdaqSessionLiquidityCalculator calculator, StrategyVersion version)
     {
+        boundVersion = version;
         this.calculator = calculator ?? throw new ArgumentNullException(nameof(calculator));
     }
 
     public StrategyId StrategyId => StrategyDefinition.StrategyId;
 
-    public StrategyVersion StrategyVersion => StrategyDefinition.Version;
+    public StrategyVersion StrategyVersion => boundVersion;
 
     public RuleId RuleId => RuleDefinition.RuleId;
 

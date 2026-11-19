@@ -9,12 +9,16 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 /// <summary>Maps ADR 0025 human H4 evidence to runtime results; implements no structural algorithm or order logic.</summary>
 public sealed class MoneyWayNasdaqHumanH4ContextEvaluator : IReplayRuleEvaluator
 {
+    private readonly StrategyVersion boundVersion;
+    public MoneyWayNasdaqHumanH4ContextEvaluator() : this(MoneyWayNasdaqStrategyDefinition.Instance.Version) { }
+    internal MoneyWayNasdaqHumanH4ContextEvaluator(StrategyVersion version) { boundVersion = version; }
+
     private static readonly StrategyDefinition Definition = MoneyWayNasdaqStrategyDefinition.Instance;
     private static readonly StrategyRuleDefinition Rule = Definition.Rules.Single(item => item.RuleId.Value == "NQ-H4-001");
     private readonly NasdaqHumanH4ContextObservationSelector selector = new();
 
     public StrategyId StrategyId => Definition.StrategyId;
-    public StrategyVersion StrategyVersion => Definition.Version;
+    public StrategyVersion StrategyVersion => boundVersion;
     public RuleId RuleId => Rule.RuleId;
 
     public ReplayRuleEvaluationDecision Evaluate(StrategyReplayContext context)

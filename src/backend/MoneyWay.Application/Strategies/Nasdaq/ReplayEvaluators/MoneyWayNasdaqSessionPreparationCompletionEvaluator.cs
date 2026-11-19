@@ -5,9 +5,13 @@ using MoneyWay.Domain.Strategies;
 
 namespace MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 
-/// <summary>Evaluates same-session preparation completion against the 08:00–08:30 America/Bogota window.</summary>
+/// <summary>Evaluates same-session preparation completion against the 08:00â€“08:30 America/Bogota window.</summary>
 public sealed class MoneyWayNasdaqSessionPreparationCompletionEvaluator : IReplayRuleEvaluator
 {
+    private readonly StrategyVersion boundVersion;
+    public MoneyWayNasdaqSessionPreparationCompletionEvaluator() : this(MoneyWayNasdaqStrategyDefinition.Instance.Version) { }
+    internal MoneyWayNasdaqSessionPreparationCompletionEvaluator(StrategyVersion version) { boundVersion = version; }
+
     private const string TimeZoneId = "America/Bogota";
     private static readonly TimeOnly PreparationStart = new(8, 0);
     private static readonly TimeOnly PreparationDeadline = new(8, 30);
@@ -16,7 +20,7 @@ public sealed class MoneyWayNasdaqSessionPreparationCompletionEvaluator : IRepla
     private static readonly StrategyRuleDefinition RuleDefinition = StrategyDefinition.Rules.Single(rule => rule.RuleId.Value == "NQ-TIME-003");
 
     public StrategyId StrategyId => StrategyDefinition.StrategyId;
-    public StrategyVersion StrategyVersion => StrategyDefinition.Version;
+    public StrategyVersion StrategyVersion => boundVersion;
     public RuleId RuleId => RuleDefinition.RuleId;
 
     public ReplayRuleEvaluationDecision Evaluate(StrategyReplayContext context)

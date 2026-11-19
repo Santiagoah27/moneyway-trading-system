@@ -7,6 +7,20 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 /// <summary>Immutable semantic assertion for an exact take, with authentic review availability and retained provenance.</summary>
 public sealed class NasdaqHumanM5TriggerObservation : IStrategyReplayInputObservation
 {
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string Origin => DerivationOrigin ?? "HumanReview";
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? DerivationOrigin { get; private init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<NasdaqValidatedM5SwingObservation>? SwingSelections { get; private init; }
+    internal static NasdaqHumanM5TriggerObservation Detected(IReadOnlyList<NasdaqValidatedM5SwingObservation> references, Candle confirmation,
+        NasdaqHumanH4PermittedDirection direction, DateTimeOffset availableAtUtc)
+    {
+        var reference = references[0];
+        return new(reference.DecisiveTake, new NasdaqHumanM5TriggerEvent.StructuralChange(confirmation, direction, reference.SourceCandles, reference.SourceCandles, reference.Price),
+            availableAtUtc, "derivation:NasdaqM5StrictCloseDetector; candidate user clarification 2026-11-19")
+        { DerivationOrigin = "DeterministicStrictClose", SwingSelections = Array.AsReadOnly(references.ToArray()) };
+    }
     public NasdaqHumanM5TriggerObservation(NasdaqHumanLiquidityTakeObservation decisiveTake, NasdaqHumanM5TriggerEvent marketEvent,
         DateTimeOffset observedAtUtc, string sourceReference,
         NasdaqHumanM5TakeTriggerOrder sameCandleOrder = NasdaqHumanM5TakeTriggerOrder.Unspecified)

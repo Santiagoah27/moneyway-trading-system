@@ -9,11 +9,15 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 /// <summary>Consumes explicit human relevant selection and prior canonical facts; discovers no market events.</summary>
 public sealed class MoneyWayNasdaqHumanLiquidityTakeEvaluator : IReplayRuleEvaluator
 {
+    private readonly StrategyVersion boundVersion;
+    public MoneyWayNasdaqHumanLiquidityTakeEvaluator() : this(MoneyWayNasdaqStrategyDefinition.Instance.Version) { }
+    internal MoneyWayNasdaqHumanLiquidityTakeEvaluator(StrategyVersion version) { boundVersion = version; }
+
     private static readonly StrategyDefinition Definition = MoneyWayNasdaqStrategyDefinition.Instance;
     private static readonly RuleId TakeRule = new("NQ-LIQ-003");
     private static readonly string[] CommonPrerequisites = ["NQ-TIME-003", "NQ-H4-001"];
     public StrategyId StrategyId => Definition.StrategyId;
-    public StrategyVersion StrategyVersion => Definition.Version;
+    public StrategyVersion StrategyVersion => boundVersion;
     public RuleId RuleId => TakeRule;
 
     public ReplayRuleEvaluationDecision Evaluate(StrategyReplayContext context)

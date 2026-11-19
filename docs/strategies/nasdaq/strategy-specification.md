@@ -826,6 +826,12 @@ The strategy operates the New York market, but that market reference does not ch
 
 ## 12. 5M inversion
 
+2026-11-19 candidate-only clarification: [M5 strict-close candidate](m5-strict-close-candidate.md)
+replaces the additional strong/decisive SC classification with a strict closed-M5
+comparison against a previously validated swing. The historical baseline below
+is preserved; candidate `nasdaq-0.2.0-sc-candidate` is not activated. Swing selection
+and IFVG detection remain unresolved/human-assisted as documented.
+
 Only after the required liquidity take, two Step-4 alternatives are valid with `OR`: traditional Structural Change/ChoCH/MSS or IFVG, whichever occurs first. Both alternatives are not required and neither has a fixed priority. The extreme left by the liquidity-taking event can serve as the first 5M High/Low reference from which the mentor begins reading subsequent 5M structure; this observation does not define a complete 5M structural detector and does not solve 4H bootstrap.
 
 Human review of the mentor material explicitly confirms that the aligned take and qualifying Structural Change or IFVG may occur in the **same 5M candle/event**: liquidity is taken first during formation, then the trigger is confirmed at that candle close. The Demo temporal contract is **`TriggerEffectiveAtUtc >= TakeEffectiveAtUtc`**. Equality is allowed only as a source-backed same-candle representation with human evidence of that internal causal order; it is not causal simultaneity and does not require another 5M candle. Retain the exact decisive take, exact closed 5M source event/candles, trigger kind, take-before-confirmation evidence, effective/observed UTC timestamps and provenance. A trigger strictly before the take cannot qualify or be reused retrospectively; a later trigger remains eligible subject to the existing conditions.

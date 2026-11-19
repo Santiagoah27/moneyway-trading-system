@@ -9,14 +9,18 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 /// <summary>Evaluates human reversal evidence for one explicitly selected Scenario 2 setup. No entry or branch workflow is established.</summary>
 public sealed class MoneyWayNasdaqHumanWickfillScenario2ReversalEvaluator : IReplayRuleEvaluator
 {
+    private readonly StrategyVersion boundVersion;
+    public MoneyWayNasdaqHumanWickfillScenario2ReversalEvaluator() : this(MoneyWayNasdaqStrategyDefinition.Instance.Version) { }
+    internal MoneyWayNasdaqHumanWickfillScenario2ReversalEvaluator(StrategyVersion version) { boundVersion = version; }
+
     public StrategyId StrategyId => MoneyWayNasdaqStrategyDefinition.Instance.StrategyId;
-    public StrategyVersion StrategyVersion => MoneyWayNasdaqStrategyDefinition.Instance.Version;
+    public StrategyVersion StrategyVersion => boundVersion;
     public RuleId RuleId { get; } = new("NQ-WF2-001");
 
     public ReplayRuleEvaluationDecision Evaluate(StrategyReplayContext context)
     {
         // Reuse canonical terminal/window/setup guards, including direct-call protection; never calculate a cutoff here.
-        var blocked = NasdaqFvgReplayPrerequisites.Check(context, RuleId);
+        var blocked = NasdaqFvgReplayPrerequisites.CheckVersion(context, RuleId, StrategyVersion);
         if (blocked is not null) return blocked;
         var active = context.PriorObservations.LastOrDefault(o => o.LifecycleProgression is not null)?.LifecycleProgression?.ActiveInstance;
         var owner = active is null ? null : context.PriorObservations.SingleOrDefault(o => o.AsOfUtc == active.StartedAtUtc

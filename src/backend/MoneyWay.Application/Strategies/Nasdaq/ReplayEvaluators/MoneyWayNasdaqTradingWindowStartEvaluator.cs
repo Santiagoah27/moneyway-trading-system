@@ -13,6 +13,10 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 /// </summary>
 public sealed class MoneyWayNasdaqTradingWindowStartEvaluator : IReplayRuleEvaluator
 {
+    private readonly StrategyVersion boundVersion;
+    public MoneyWayNasdaqTradingWindowStartEvaluator() : this(MoneyWayNasdaqStrategyDefinition.Instance.Version) { }
+    internal MoneyWayNasdaqTradingWindowStartEvaluator(StrategyVersion version) { boundVersion = version; }
+
     private const string TimeZoneId = "America/Bogota";
     private static readonly TimeOnly TradingWindowStart = new(8, 30);
     private static readonly TimeZoneInfo StrategyTimeZone = ResolveStrategyTimeZone();
@@ -20,7 +24,7 @@ public sealed class MoneyWayNasdaqTradingWindowStartEvaluator : IReplayRuleEvalu
     private static readonly StrategyRuleDefinition RuleDefinition = StrategyDefinition.Rules.Single(rule => rule.RuleId.Value == "NQ-TIME-001");
 
     public StrategyId StrategyId => StrategyDefinition.StrategyId;
-    public StrategyVersion StrategyVersion => StrategyDefinition.Version;
+    public StrategyVersion StrategyVersion => boundVersion;
     public RuleId RuleId => RuleDefinition.RuleId;
 
     public ReplayRuleEvaluationDecision Evaluate(StrategyReplayContext context)
