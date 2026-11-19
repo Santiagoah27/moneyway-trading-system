@@ -7,3 +7,4 @@ docs/data/strategy-lab/**/*.tsv text eol=lf
 src/frontend/moneyway-web/src/research/reports/*.json text eol=lf
 src/frontend/moneyway-web/src/research/reports/*.tsv text eol=lf
 src/frontend/moneyway-web/src/research/blind/data/**/*.json text eol=lf
+src/frontend/moneyway-web/src/research/context/data/*.json text eol=lf

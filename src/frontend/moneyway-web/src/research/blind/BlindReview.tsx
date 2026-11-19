@@ -26,6 +26,7 @@ import {
 } from "./labels";
 import { compareReference, rate, summarize } from "./metrics";
 import "./BlindReview.css";
+import { contextWasSeen } from "../contextExposure";
 
 function download(text: string) {
     const url = URL.createObjectURL(
@@ -198,7 +199,8 @@ function EpisodeReview({
     const [known, setKnown] = useState(
         Boolean(
             e.priorExposure === "PreviouslyExposed" ||
-            history?.exposure === "PreviouslyExposed",
+            history?.exposure === "PreviouslyExposed" ||
+            (!history && contextWasSeen(e.id)),
         ),
     );
     const [message, setMessage] = useState("");
@@ -326,6 +328,9 @@ function EpisodeReview({
             />
             <div className="lab-inspector" aria-live="polite">
                 <strong>{formatTime(bar.openTimeUtc)}</strong>
+                <a href="#strategy-lab-context">
+                    Contexto de desarrollo ya revisado
+                </a>
                 <span>
                     O {bar.open} · H {bar.high} · L {bar.low} · C {bar.close}
                 </span>
@@ -481,12 +486,28 @@ function EpisodeReview({
                             : ""}
                     </button>
                 ) : (
-                    <button type="button" onClick={() => setEditing(true)}>
+                    <button
+                        type="button"
+                        disabled={Boolean(
+                            !history?.revealedAtDeviceUtc &&
+                            contextWasSeen(e.id),
+                        )}
+                        onClick={() => setEditing(true)}
+                    >
                         {history?.revealedAtDeviceUtc
                             ? "Registrar corrección (conservar original)"
                             : "Revisar selección antes de revelar"}
                     </button>
                 )}
+                {history &&
+                    !history.revealedAtDeviceUtc &&
+                    contextWasSeen(e.id) && (
+                        <p>
+                            El contexto ya mostró este material: conserve la
+                            selección previa y revele antes de registrar una
+                            corrección.
+                        </p>
+                    )}
                 {history && !history.revealedAtDeviceUtc && !editing && (
                     <button
                         className="blind-primary"

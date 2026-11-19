@@ -1,5 +1,11 @@
 # Strategy Lab V3: multi-episode blind retrospective review
 
+Follow-up, 2026-11-19: the user supplied the actual two Development reviews.
+[V4 evidence registration and contextual view](nasdaq-contextual-session-v4.md)
+records their original revisions and bounded report identities without rewriting
+this dataset or importing over browser labels. Validation and HeldOut remain
+separate. The original implementation-time unlabelled state below is historical.
+
 Source: explicit user task dated 2026-11-19, external attachment
 `b58b1a15-96fe-4595-882a-a93efd3119df`. Implements the isolated research boundary of
 [ADR 0027](../decisions/0027-permit-isolated-experimental-strategy-hypotheses.md).

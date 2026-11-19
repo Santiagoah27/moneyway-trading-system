@@ -63,7 +63,13 @@ export type Agreement = {
     humanConfirmation: string | null;
     latencyMilliseconds: number | null;
 };
-export function compareReference(row: Result, label: Label): Agreement {
+export function compareReference(
+    row: Result,
+    label: Pick<
+        Label,
+        "kind" | "price" | "selectedOpens" | "confirmationCloseUtc"
+    >,
+): Agreement {
     const detected = row.isExperimentalReferenceConfirmed;
     const base = {
         priceAgreement: null,

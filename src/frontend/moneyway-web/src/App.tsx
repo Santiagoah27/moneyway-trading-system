@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { getStrategyDefinitions } from "./api/strategyDefinitionsApi";
 import { getSystemStatus } from "./api/systemApi";
 import type { StrategyDefinition } from "./types/strategyDefinitions";
@@ -7,6 +7,11 @@ import "./App.css";
 import { NasdaqHistoricalDemo } from "./NasdaqHistoricalDemo";
 import { StrategyLab } from "./research/StrategyLab";
 import { BlindReview } from "./research/blind/BlindReview";
+const ContextualResearch = lazy(() =>
+    import("./research/context/ContextView").then((m) => ({
+        default: m.ContextualResearch,
+    })),
+);
 
 type ApiState = "loading" | "connected" | "disconnected";
 type DefinitionsState = "loading" | "success" | "error";
@@ -241,7 +246,11 @@ export default function App() {
         window.addEventListener("hashchange", navigate);
         return () => window.removeEventListener("hashchange", navigate);
     }, []);
-    return route === "#strategy-lab-blind" ? (
+    return route === "#strategy-lab-context" ? (
+        <Suspense fallback={<p role="status">Cargando contexto documental…</p>}>
+            <ContextualResearch />
+        </Suspense>
+    ) : route === "#strategy-lab-blind" ? (
         <BlindReview />
     ) : route === "#strategy-lab" ? (
         <StrategyLab />

@@ -6,6 +6,7 @@ import {
     type Candle,
     type Envelope,
     type Report,
+    type Context,
 } from "./report";
 import "./StrategyLab.css";
 import nativeRows from "./reports/june29-native-source.tsv?raw";
@@ -26,6 +27,24 @@ const number = (v: number | null) =>
               useGrouping: false,
           });
 
+export type ChartReference = {
+    id: string;
+    label: string;
+    price: number;
+    formationUtc: string;
+    knownAtUtc: string;
+    color: string;
+    sourceTimeframe?: string;
+};
+export type ChartGuide = { timeUtc: string; label: string };
+type ChartContext = Pick<Context, "symbol" | "evaluationCutoffUtc"> &
+    Partial<
+        Pick<
+            Context,
+            "timeframe" | "direction" | "initialization" | "initialImpulsePrice"
+        >
+    >;
+
 export function CandleChart({
     report,
     visible,
@@ -34,30 +53,46 @@ export function CandleChart({
     onPick,
     humanReferences = [],
     humanConfirmation,
+    references = [],
+    guides = [],
 }: {
-    report: Pick<Report, "input" | "evidenceCandles" | "results">;
+    report: {
+        input: ChartContext;
+        evidenceCandles: Candle[];
+        results: Report["results"];
+    };
     visible: string[];
     selected: number;
     onSelect: (i: number) => void;
     onPick?: (i: number) => void;
     humanReferences?: string[];
     humanConfirmation?: string | null;
+    references?: ChartReference[];
+    guides?: ChartGuide[];
 }) {
     const bars = report.evidenceCandles;
     if (!bars.length)
-        return (
-            <p role="status">
-                Sin velas visibles en este reporte; revise el motivo de
-                abstención.
-            </p>
-        );
+        return <p role="status">Sin velas visibles en esta selección.</p>;
     const first = Date.parse(bars[0].openTimeUtc);
     const last = Math.max(
         Date.parse(report.input.evaluationCutoffUtc),
         Date.parse(bars[bars.length - 1].closeTimeUtc),
     );
-    const min = Math.min(...bars.map((b) => b.low));
-    const max = Math.max(...bars.map((b) => b.high));
+    const eligibleReferences = references.filter(
+        (r) =>
+            Date.parse(r.formationUtc) <=
+                Date.parse(report.input.evaluationCutoffUtc) &&
+            Date.parse(r.knownAtUtc) <=
+                Date.parse(report.input.evaluationCutoffUtc),
+    );
+    const min = Math.min(
+        ...bars.map((b) => b.low),
+        ...eligibleReferences.map((r) => r.price),
+    );
+    const max = Math.max(
+        ...bars.map((b) => b.high),
+        ...eligibleReferences.map((r) => r.price),
+    );
     const padding = Math.max((max - min) * 0.19, Math.abs(max) * 0.0001, 0.01);
     const floor = min - padding;
     const ceiling = max + padding;
@@ -69,7 +104,15 @@ export function CandleChart({
     const y = (p: number) => 410 - ((p - floor) / (ceiling - floor)) * 360;
     const center = (b: Candle) =>
         x((Date.parse(b.openTimeUtc) + Date.parse(b.closeTimeUtc)) / 2);
-    const width = Math.max(2, Math.min(36, (1040 / bars.length) * 0.58));
+    const spacing =
+        ((Date.parse(bars[0].closeTimeUtc) - Date.parse(bars[0].openTimeUtc)) /
+            Math.max(last - first, 300000)) *
+        1040;
+    const width = Math.max(0.25, Math.min(36, spacing * 0.58));
+    const hitWidth = Math.max(
+        0.25,
+        Math.min(spacing * 0.96, Math.max(12, width * 2)),
+    );
     const active = report.results.filter((r) =>
         visible.includes(r.algorithm.algorithmId),
     );
@@ -93,7 +136,7 @@ export function CandleChart({
                 className="lab-chart"
                 viewBox="0 0 1200 474"
                 role="img"
-                aria-label="Velas OHLC M5 y referencias experimentales"
+                aria-label={`Velas OHLC ${report.input.timeframe ?? "M5"} y referencias experimentales`}
             >
                 <title>
                     OHLC de {report.input.symbol}; horas UTC. Referencias
@@ -149,9 +192,9 @@ export function CandleChart({
                             fill={bar.close >= bar.open ? "#58d7b1" : "#f18482"}
                         />
                         <rect
-                            x={center(bar) - Math.max(6, width)}
+                            x={center(bar) - hitWidth / 2}
                             y={30}
-                            width={Math.max(12, width * 2)}
+                            width={hitWidth}
                             height={390}
                             fill="transparent"
                             tabIndex={0}
@@ -199,7 +242,8 @@ export function CandleChart({
                             strokeDasharray="3 6"
                         />
                         <text x={center(anchor) + 5} y={19} fill="#e0e8f3">
-                            Ancla {number(report.input.initialImpulsePrice)}
+                            Ancla{" "}
+                            {number(report.input.initialImpulsePrice ?? null)}
                         </text>
                     </g>
                 )}
@@ -264,6 +308,99 @@ export function CandleChart({
                                 </text>
                             </g>
                         ))}
+                {eligibleReferences.map((r, i) => (
+                    <g
+                        key={r.id}
+                        className="lab-overlay"
+                        data-context-reference={r.id}
+                    >
+                        <line
+                            x1={38}
+                            x2={1078}
+                            y1={y(r.price)}
+                            y2={y(r.price)}
+                            stroke={r.color}
+                            strokeDasharray="4 5"
+                        />
+                        <text
+                            x={43}
+                            y={y(r.price) - 7 - (i % 2) * 13}
+                            fill={r.color}
+                        >
+                            {r.label} · {number(r.price)}
+                        </text>
+                        {Date.parse(r.formationUtc) >= first && (
+                            <circle
+                                data-formation-utc={r.formationUtc}
+                                cx={
+                                    r.sourceTimeframe ===
+                                        report.input.timeframe &&
+                                    bars.some(
+                                        (b) =>
+                                            Date.parse(b.openTimeUtc) ===
+                                            Date.parse(r.formationUtc),
+                                    )
+                                        ? center(
+                                              bars.find(
+                                                  (b) =>
+                                                      Date.parse(
+                                                          b.openTimeUtc,
+                                                      ) ===
+                                                      Date.parse(
+                                                          r.formationUtc,
+                                                      ),
+                                              )!,
+                                          )
+                                        : x(r.formationUtc)
+                                }
+                                cy={y(r.price)}
+                                r={6}
+                                fill="none"
+                                stroke={r.color}
+                            >
+                                <title>
+                                    Vela fuente{" "}
+                                    {r.sourceTimeframe ?? "original"} abierta{" "}
+                                    {formatTime(r.formationUtc)}; instante
+                                    intra-vela no establecido. Referencia
+                                    visible en esta investigación desde{" "}
+                                    {formatTime(r.knownAtUtc)}
+                                </title>
+                            </circle>
+                        )}
+                    </g>
+                ))}
+                {guides
+                    .filter(
+                        (g) =>
+                            Date.parse(g.timeUtc) >= first &&
+                            Date.parse(g.timeUtc) <=
+                                Date.parse(report.input.evaluationCutoffUtc),
+                    )
+                    .map((g) => (
+                        <g
+                            key={g.label}
+                            className="lab-overlay"
+                            data-time-guide={g.timeUtc}
+                        >
+                            <line
+                                x1={x(g.timeUtc)}
+                                x2={x(g.timeUtc)}
+                                y1={30}
+                                y2={420}
+                                stroke="#c8c0a0"
+                                strokeDasharray="2 6"
+                            />
+                            <text
+                                x={x(g.timeUtc) + 4}
+                                y={45}
+                                transform={`rotate(90 ${x(g.timeUtc) + 4} 45)`}
+                                fill="#c8c0a0"
+                            >
+                                {g.label}
+                            </text>
+                        </g>
+                    ))}
                 {[...levels].map(([price, ids]) => (
                     <g
                         key={price}
@@ -706,6 +843,7 @@ export function StrategyLab() {
                 <a href="#strategy-lab-blind">
                     Revisión ciega multi-episodio →
                 </a>
+                <a href="#strategy-lab-context">Contexto Nasdaq →</a>
                 <span>
                     Strategy Lab <b>EXPERIMENTAL</b>
                 </span>

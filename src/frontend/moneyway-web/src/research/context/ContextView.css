@@ -1,0 +1,131 @@
+.context-research .lab-nav {
+    flex-wrap: wrap;
+}
+.context-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.7rem;
+    padding: 1.5rem 0 1rem;
+}
+.context-heading h1 {
+    font-size: clamp(1.6rem, 3vw, 2.3rem);
+    line-height: 1.1;
+    margin: 0;
+}
+.context-heading p {
+    color: #9fb9d0;
+    font-size: 0.8rem;
+    margin: 0;
+}
+.context-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: end;
+    flex-wrap: wrap;
+}
+.context-controls label,
+.context-comparison-controls label {
+    display: grid;
+    gap: 0.45rem;
+    font-size: 0.8rem;
+    color: #b2c8db;
+}
+.context-controls fieldset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+.context-controls legend {
+    font-size: 0.8rem;
+    color: #b2c8db;
+    margin-bottom: 0.45rem;
+}
+.context-controls button {
+    margin-right: 0.3rem;
+    padding: 0.8rem;
+}
+.context-controls button[aria-pressed="true"] {
+    color: #0a272c;
+    background: #9adfc9;
+}
+.context-limitations {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.2rem;
+    font-size: 0.73rem;
+    color: #e6c88e;
+    padding: 0.8rem 0;
+}
+.context-coverage {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    font-size: 0.75rem;
+    padding: 0.8rem 0;
+    color: #a8bed2;
+}
+.context-coverage strong {
+    color: #d9e8f8;
+}
+.context-research .lab-inspector {
+    margin-top: 0.6rem;
+}
+.context-comparison-controls {
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 1.2rem 0;
+}
+.context-comparison-controls label:last-child {
+    display: block;
+    padding: 0.6rem 0;
+}
+.context-original {
+    padding: 1rem;
+    background: #102337;
+    border: 1px solid #29445f;
+    border-radius: 8px;
+}
+.context-original p {
+    color: #afc3d7;
+    font-size: 0.78rem;
+    line-height: 1.6;
+}
+.context-facts {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    margin: 1rem 0;
+}
+.context-facts small,
+.context-original td small {
+    display: block;
+    font-size: 0.72rem;
+    color: #a7bcd1;
+    margin-top: 0.4rem;
+}
+.context-research table {
+    width: 100%;
+    font-size: 0.75rem;
+}
+.context-research th,
+.context-research td {
+    padding: 0.6rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid #29445f;
+}
+@media (max-width: 640px) {
+    .context-controls {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .context-comparison-controls {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "sourceFileName": "moneyway-m5-research-labels-v1.json",
+  "sourceSha256": "8368a3b6ed259f19e757edac632341674814185c7adab787697258683ebc4861",
+  "evidenceClass": "UnauthenticatedBrowserLocalHumanResearchExport",
+  "privacy": "Reviewer name, device/reveal timestamps and unrelated manifest details omitted from this public projection; original external bytes remain unchanged.",
+  "canonicalAdmissionPermitted": false,
+  "operationalSignal": false,
+  "reviews": [
+    {
+      "episodeId": "m5-20260623-1300-ascending-v1",
+      "datasetId": "m5-june-documentary-blind-v1",
+      "datasetVersion": 1,
+      "inputSha256": "a6b1f5bcb6fa7f9d4175040429b825a71c8b8d7d95be968803d1f6f9122900de",
+      "reportSha256": "ce6c5daceb3ccd2eee01c1e26478144c4982595505da1efe8305746a7ee20615",
+      "originalExposure": "SelfDeclaredIndependent",
+      "originalRevealRevision": 1,
+      "reviewerAlias": "human-reviewer-1",
+      "label": {
+        "revision": 1,
+        "kind": "Reference",
+        "selectedOpens": [
+          "2026-06-23T13:30:00+00:00"
+        ],
+        "extreme": "Low",
+        "price": 29381.7,
+        "confirmationOpenUtc": null,
+        "confirmationCloseUtc": null,
+        "cutoffUtc": "2026-06-23T14:00:00Z",
+        "classification": "IndependentRetrospectiveResearch",
+        "canonicalAdmissionPermitted": false,
+        "operationalSignal": false
+      }
+    },
+    {
+      "episodeId": "m5-20260623-1400-descending-v1",
+      "datasetId": "m5-june-documentary-blind-v1",
+      "datasetVersion": 1,
+      "inputSha256": "2b4f8f6e8cbfc23d21e20ad5a09d1ca3301090eca4dbea093d10c9038bdbd024",
+      "reportSha256": "e58763062315d53553d9c21c780193f09ed621a870ac4b37612fbc33990e9277",
+      "originalExposure": "SelfDeclaredIndependent",
+      "originalRevealRevision": 1,
+      "reviewerAlias": "human-reviewer-1",
+      "label": {
+        "revision": 1,
+        "kind": "Reference",
+        "selectedOpens": [
+          "2026-06-23T14:20:00+00:00"
+        ],
+        "extreme": "High",
+        "price": 29811.6,
+        "confirmationOpenUtc": null,
+        "confirmationCloseUtc": null,
+        "cutoffUtc": "2026-06-23T15:00:00Z",
+        "classification": "IndependentRetrospectiveResearch",
+        "canonicalAdmissionPermitted": false,
+        "operationalSignal": false
+      }
+    }
+  ]
+}
