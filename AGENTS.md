@@ -30,6 +30,17 @@ Cuando una regla sea ambigua, contradictoria, visual o subjetiva:
 - Marcarla como unresolved o human_validation_required.
 - No usarla para autorizar automáticamente una operación.
 
+## Experimental research exception (human-approved 2026-11-19)
+
+La autorización expresa del usuario permite desarrollar hipótesis algorítmicas
+experimentales, deterministas e identificadas como propuestas de MoneyWay.
+No son reglas confirmadas del mentor ni hechos estratégicos validados. Deben
+permanecer aisladas de evaluadores, observaciones canónicas de confianza,
+versiones activas y autorización operativa. Comparar hipótesis no las promueve.
+Esta excepción no autoriza inventar reglas operativas, atribuir hipótesis al
+mentor, usar datos futuros ni eludir admisión temporal. La promoción requiere
+validación independiente y aprobación humana conforme a ADR 0027.
+
 # Development behavior
 
 Antes de modificar código:

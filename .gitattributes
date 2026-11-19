@@ -1,2 +1,4 @@
 # Registered package digests cover exact bytes across checkouts.
 docs/data/nasdaq/packages/*.json text eol=lf
+# Synthetic Strategy Lab fixtures have reproducible byte identities.
+docs/data/strategy-lab/**/*.json text eol=lf
