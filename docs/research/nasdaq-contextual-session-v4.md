@@ -199,6 +199,14 @@ Browser automation prohibited in the previous task was not retried. These steps
 remain manual visual acceptance; DOM/unit tests and HTTP availability do not
 constitute a browser screenshot or visual certification.
 
+Human-reported follow-up, supplied with the inclusive-policy task on 2026-11-19:
+the user completed manual acceptance of H4/H1/M5/M1 rendering, a shared evaluation
+cutoff, future candle/reference concealment at 08:00 America/Bogota and recovery
+of later comparison context. This records the user's visual acceptance; it is not
+automated browser acceptance or authenticated causal market-data validation.
+The separate [inclusive confirmation experiment](m5-inclusive-confirmation-v2.md)
+preserves these original V1 reports and labels; it does not change this viewer.
+
 ## Executed validation
 
 Final relevant scopes on 2026-11-19:

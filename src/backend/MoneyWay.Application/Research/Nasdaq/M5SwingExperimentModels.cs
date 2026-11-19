@@ -29,7 +29,7 @@ public sealed record M5SwingHypothesisResult(M5SwingHypothesisDefinition Algorit
     IReadOnlyList<Candle> ReferenceCandles, IReadOnlyList<Candle> AggregationCandles, Candle? ContinuationCandle)
 {
     public string Classification => "ExperimentalMoneyWayHypothesis_NotMentorConfirmed";
-    public string SharedPolicyId => "EXP-M5-BOUNDED-CONTINUATION-V1";
+    public string SharedPolicyId => Algorithm.AlgorithmVersion == "2.0.0" ? "EXP-M5-BOUNDED-CONTINUATION-INCLUSIVE-V2" : "EXP-M5-BOUNDED-CONTINUATION-V1";
     public bool IsExperimentalReferenceConfirmed => Status == M5ExperimentalStatus.ExperimentalReferenceConfirmed;
     public bool Abstained => Status.ToString().StartsWith("Abstained", StringComparison.Ordinal) || Status == M5ExperimentalStatus.RejectedInput;
     public DateTimeOffset? ConfirmationAtUtc => IsExperimentalReferenceConfirmed ? ContinuationCandle?.CloseTimeUtc : null;

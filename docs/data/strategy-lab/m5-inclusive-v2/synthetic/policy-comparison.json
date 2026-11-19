@@ -1,0 +1,1951 @@
+{
+  "inputSha256": "ea3893e15ff17d4965b0359b70bbe3f51e35b387111f9a3f757d3c6f84835019",
+  "inputHashMeaning": "Byte integrity, not authentication or temporal admission",
+  "originalExclusiveReportSha256": "efc9c52d1e9ad01e2d61183829d7911d6f43e89d703dc622172473228f7c7b91",
+  "pairedComparison": {
+    "exclusiveV1": {
+      "input": {
+        "seriesId": "synthetic-m5-swing-disagreement-v1",
+        "providerId": "moneyway-synthetic-lab",
+        "symbol": "US100",
+        "timeframe": "5m",
+        "direction": "Ascending",
+        "evaluationCutoffUtc": "2026-11-19T13:30:00+00:00",
+        "initialization": {
+          "referenceId": "synthetic-explicit-anchor",
+          "providerId": {
+            "value": "moneyway-synthetic-lab"
+          },
+          "symbol": {
+            "value": "US100"
+          },
+          "timeframe": {
+            "amount": 5,
+            "unit": "Minute"
+          },
+          "anchorOpenTimeUtc": "2026-11-19T13:00:00+00:00",
+          "availableAtUtc": "2026-11-19T13:05:00+00:00",
+          "sourceReference": "synthetic:explicit initial impulse candle; not automatically selected"
+        },
+        "initialImpulsePrice": 110,
+        "initialImpulseClosedAtUtc": "2026-11-19T13:05:00+00:00",
+        "dataOrigin": "Synthetic",
+        "provenance": "Controlled synthetic OHLC for hypothesis disagreement; not mentor-labelled or authentic market activity",
+        "priceUnit": "NativeInstrumentPrice",
+        "historicalAvailability": "Unauthenticated_NotEstablishedByThisExperiment",
+        "coverage": "Bounded supplied sequence; previous means preceding supplied closed candle; completeness not authenticated; no gap filling"
+      },
+      "sharedAssumptions": [
+        "MoneyWay experimental hypotheses; mirrored directions are not independently mentor-confirmed.",
+        "Closed M5 only; explicit source-bound anchor; fixed actual anchor High ascending or Low descending.",
+        "First qualifying start; previous means previous supplied closed candle, beginning with the anchor.",
+        "Minimum Low ascending / maximum High descending from start through pre-continuation candles; exact ties retain every identity.",
+        "First strict-close continuation terminates this one episode; exclude its candle from aggregation.",
+        "Start plus continuation before any established pullback abstains; no pullback before continuation also abstains.",
+        "Initialization must be available before processing the episode; do not retrospectively authorize already closed episode candles.",
+        "No gap filling, automatic initialization, resets, double-touch, multiple cycles, optimization, ranking or operational promotion."
+      ],
+      "results": [
+        {
+          "algorithm": {
+            "hypothesis": "CandleColor",
+            "algorithmId": "EXP-M5-SWING-A-V1",
+            "algorithmVersion": "1.0.0",
+            "startCondition": "Ascending Close \u003C Open; descending Close \u003E Open"
+          },
+          "input": {
+            "seriesId": "synthetic-m5-swing-disagreement-v1",
+            "providerId": "moneyway-synthetic-lab",
+            "symbol": "US100",
+            "timeframe": "5m",
+            "direction": "Ascending",
+            "evaluationCutoffUtc": "2026-11-19T13:30:00+00:00",
+            "initialization": {
+              "referenceId": "synthetic-explicit-anchor",
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "anchorOpenTimeUtc": "2026-11-19T13:00:00+00:00",
+              "availableAtUtc": "2026-11-19T13:05:00+00:00",
+              "sourceReference": "synthetic:explicit initial impulse candle; not automatically selected"
+            },
+            "initialImpulsePrice": 110,
+            "initialImpulseClosedAtUtc": "2026-11-19T13:05:00+00:00",
+            "dataOrigin": "Synthetic",
+            "provenance": "Controlled synthetic OHLC for hypothesis disagreement; not mentor-labelled or authentic market activity",
+            "priceUnit": "NativeInstrumentPrice",
+            "historicalAvailability": "Unauthenticated_NotEstablishedByThisExperiment",
+            "coverage": "Bounded supplied sequence; previous means preceding supplied closed candle; completeness not authenticated; no gap filling"
+          },
+          "status": "ExperimentalReferenceConfirmed",
+          "reason": "A subsequent strict-close continuation confirms this experimental reference; its candle is excluded from aggregation.",
+          "pullbackStart": {
+            "providerId": {
+              "value": "moneyway-synthetic-lab"
+            },
+            "symbol": {
+              "value": "US100"
+            },
+            "timeframe": {
+              "amount": 5,
+              "unit": "Minute"
+            },
+            "openTimeUtc": "2026-11-19T13:05:00+00:00",
+            "closeTimeUtc": "2026-11-19T13:10:00+00:00",
+            "open": 108,
+            "high": 109,
+            "low": 96,
+            "close": 107,
+            "volume": null
+          },
+          "proposedReferencePrice": 90,
+          "referenceCandles": [
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:10:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:15:00+00:00",
+              "open": 100,
+              "high": 108,
+              "low": 90,
+              "close": 106,
+              "volume": null
+            }
+          ],
+          "aggregationCandles": [
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:05:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:10:00+00:00",
+              "open": 108,
+              "high": 109,
+              "low": 96,
+              "close": 107,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:10:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:15:00+00:00",
+              "open": 100,
+              "high": 108,
+              "low": 90,
+              "close": 106,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:15:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:20:00+00:00",
+              "open": 103,
+              "high": 109,
+              "low": 94,
+              "close": 108,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:20:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:25:00+00:00",
+              "open": 108,
+              "high": 109,
+              "low": 93,
+              "close": 105,
+              "volume": null
+            }
+          ],
+          "continuationCandle": {
+            "providerId": {
+              "value": "moneyway-synthetic-lab"
+            },
+            "symbol": {
+              "value": "US100"
+            },
+            "timeframe": {
+              "amount": 5,
+              "unit": "Minute"
+            },
+            "openTimeUtc": "2026-11-19T13:25:00+00:00",
+            "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+            "open": 105,
+            "high": 112,
+            "low": 80,
+            "close": 110.01,
+            "volume": null
+          },
+          "classification": "ExperimentalMoneyWayHypothesis_NotMentorConfirmed",
+          "sharedPolicyId": "EXP-M5-BOUNDED-CONTINUATION-V1",
+          "isExperimentalReferenceConfirmed": true,
+          "abstained": false,
+          "confirmationAtUtc": "2026-11-19T13:30:00+00:00",
+          "confirmationLatencyFromAnchor": "00:25:00",
+          "pullbackToConfirmationLatency": "00:20:00",
+          "mentorRuleConfirmed": false,
+          "canonicalAdmissionPermitted": false,
+          "operationalSignal": false
+        },
+        {
+          "algorithm": {
+            "hypothesis": "PriceStructure",
+            "algorithmId": "EXP-M5-SWING-B-V1",
+            "algorithmVersion": "1.0.0",
+            "startCondition": "Ascending Low \u003C Previous.Low; descending High \u003E Previous.High"
+          },
+          "input": {
+            "seriesId": "synthetic-m5-swing-disagreement-v1",
+            "providerId": "moneyway-synthetic-lab",
+            "symbol": "US100",
+            "timeframe": "5m",
+            "direction": "Ascending",
+            "evaluationCutoffUtc": "2026-11-19T13:30:00+00:00",
+            "initialization": {
+              "referenceId": "synthetic-explicit-anchor",
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "anchorOpenTimeUtc": "2026-11-19T13:00:00+00:00",
+              "availableAtUtc": "2026-11-19T13:05:00+00:00",
+              "sourceReference": "synthetic:explicit initial impulse candle; not automatically selected"
+            },
+            "initialImpulsePrice": 110,
+            "initialImpulseClosedAtUtc": "2026-11-19T13:05:00+00:00",
+            "dataOrigin": "Synthetic",
+            "provenance": "Controlled synthetic OHLC for hypothesis disagreement; not mentor-labelled or authentic market activity",
+            "priceUnit": "NativeInstrumentPrice",
+            "historicalAvailability": "Unauthenticated_NotEstablishedByThisExperiment",
+            "coverage": "Bounded supplied sequence; previous means preceding supplied closed candle; completeness not authenticated; no gap filling"
+          },
+          "status": "ExperimentalReferenceConfirmed",
+          "reason": "A subsequent strict-close continuation confirms this experimental reference; its candle is excluded from aggregation.",
+          "pullbackStart": {
+            "providerId": {
+              "value": "moneyway-synthetic-lab"
+            },
+            "symbol": {
+              "value": "US100"
+            },
+            "timeframe": {
+              "amount": 5,
+              "unit": "Minute"
+            },
+            "openTimeUtc": "2026-11-19T13:10:00+00:00",
+            "closeTimeUtc": "2026-11-19T13:15:00+00:00",
+            "open": 100,
+            "high": 108,
+            "low": 90,
+            "close": 106,
+            "volume": null
+          },
+          "proposedReferencePrice": 90,
+          "referenceCandles": [
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:10:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:15:00+00:00",
+              "open": 100,
+              "high": 108,
+              "low": 90,
+              "close": 106,
+              "volume": null
+            }
+          ],
+          "aggregationCandles": [
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:10:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:15:00+00:00",
+              "open": 100,
+              "high": 108,
+              "low": 90,
+              "close": 106,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:15:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:20:00+00:00",
+              "open": 103,
+              "high": 109,
+              "low": 94,
+              "close": 108,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:20:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:25:00+00:00",
+              "open": 108,
+              "high": 109,
+              "low": 93,
+              "close": 105,
+              "volume": null
+            }
+          ],
+          "continuationCandle": {
+            "providerId": {
+              "value": "moneyway-synthetic-lab"
+            },
+            "symbol": {
+              "value": "US100"
+            },
+            "timeframe": {
+              "amount": 5,
+              "unit": "Minute"
+            },
+            "openTimeUtc": "2026-11-19T13:25:00+00:00",
+            "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+            "open": 105,
+            "high": 112,
+            "low": 80,
+            "close": 110.01,
+            "volume": null
+          },
+          "classification": "ExperimentalMoneyWayHypothesis_NotMentorConfirmed",
+          "sharedPolicyId": "EXP-M5-BOUNDED-CONTINUATION-V1",
+          "isExperimentalReferenceConfirmed": true,
+          "abstained": false,
+          "confirmationAtUtc": "2026-11-19T13:30:00+00:00",
+          "confirmationLatencyFromAnchor": "00:25:00",
+          "pullbackToConfirmationLatency": "00:15:00",
+          "mentorRuleConfirmed": false,
+          "canonicalAdmissionPermitted": false,
+          "operationalSignal": false
+        },
+        {
+          "algorithm": {
+            "hypothesis": "CombinedStrict",
+            "algorithmId": "EXP-M5-SWING-C-V1",
+            "algorithmVersion": "1.0.0",
+            "startCondition": "A AND B on the same start candle"
+          },
+          "input": {
+            "seriesId": "synthetic-m5-swing-disagreement-v1",
+            "providerId": "moneyway-synthetic-lab",
+            "symbol": "US100",
+            "timeframe": "5m",
+            "direction": "Ascending",
+            "evaluationCutoffUtc": "2026-11-19T13:30:00+00:00",
+            "initialization": {
+              "referenceId": "synthetic-explicit-anchor",
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "anchorOpenTimeUtc": "2026-11-19T13:00:00+00:00",
+              "availableAtUtc": "2026-11-19T13:05:00+00:00",
+              "sourceReference": "synthetic:explicit initial impulse candle; not automatically selected"
+            },
+            "initialImpulsePrice": 110,
+            "initialImpulseClosedAtUtc": "2026-11-19T13:05:00+00:00",
+            "dataOrigin": "Synthetic",
+            "provenance": "Controlled synthetic OHLC for hypothesis disagreement; not mentor-labelled or authentic market activity",
+            "priceUnit": "NativeInstrumentPrice",
+            "historicalAvailability": "Unauthenticated_NotEstablishedByThisExperiment",
+            "coverage": "Bounded supplied sequence; previous means preceding supplied closed candle; completeness not authenticated; no gap filling"
+          },
+          "status": "ExperimentalReferenceConfirmed",
+          "reason": "A subsequent strict-close continuation confirms this experimental reference; its candle is excluded from aggregation.",
+          "pullbackStart": {
+            "providerId": {
+              "value": "moneyway-synthetic-lab"
+            },
+            "symbol": {
+              "value": "US100"
+            },
+            "timeframe": {
+              "amount": 5,
+              "unit": "Minute"
+            },
+            "openTimeUtc": "2026-11-19T13:20:00+00:00",
+            "closeTimeUtc": "2026-11-19T13:25:00+00:00",
+            "open": 108,
+            "high": 109,
+            "low": 93,
+            "close": 105,
+            "volume": null
+          },
+          "proposedReferencePrice": 93,
+          "referenceCandles": [
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:20:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:25:00+00:00",
+              "open": 108,
+              "high": 109,
+              "low": 93,
+              "close": 105,
+              "volume": null
+            }
+          ],
+          "aggregationCandles": [
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:20:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:25:00+00:00",
+              "open": 108,
+              "high": 109,
+              "low": 93,
+              "close": 105,
+              "volume": null
+            }
+          ],
+          "continuationCandle": {
+            "providerId": {
+              "value": "moneyway-synthetic-lab"
+            },
+            "symbol": {
+              "value": "US100"
+            },
+            "timeframe": {
+              "amount": 5,
+              "unit": "Minute"
+            },
+            "openTimeUtc": "2026-11-19T13:25:00+00:00",
+            "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+            "open": 105,
+            "high": 112,
+            "low": 80,
+            "close": 110.01,
+            "volume": null
+          },
+          "classification": "ExperimentalMoneyWayHypothesis_NotMentorConfirmed",
+          "sharedPolicyId": "EXP-M5-BOUNDED-CONTINUATION-V1",
+          "isExperimentalReferenceConfirmed": true,
+          "abstained": false,
+          "confirmationAtUtc": "2026-11-19T13:30:00+00:00",
+          "confirmationLatencyFromAnchor": "00:25:00",
+          "pullbackToConfirmationLatency": "00:05:00",
+          "mentorRuleConfirmed": false,
+          "canonicalAdmissionPermitted": false,
+          "operationalSignal": false
+        },
+        {
+          "algorithm": {
+            "hypothesis": "CombinedFlexible",
+            "algorithmId": "EXP-M5-SWING-D-V1",
+            "algorithmVersion": "1.0.0",
+            "startCondition": "A OR B on the same start candle"
+          },
+          "input": {
+            "seriesId": "synthetic-m5-swing-disagreement-v1",
+            "providerId": "moneyway-synthetic-lab",
+            "symbol": "US100",
+            "timeframe": "5m",
+            "direction": "Ascending",
+            "evaluationCutoffUtc": "2026-11-19T13:30:00+00:00",
+            "initialization": {
+              "referenceId": "synthetic-explicit-anchor",
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "anchorOpenTimeUtc": "2026-11-19T13:00:00+00:00",
+              "availableAtUtc": "2026-11-19T13:05:00+00:00",
+              "sourceReference": "synthetic:explicit initial impulse candle; not automatically selected"
+            },
+            "initialImpulsePrice": 110,
+            "initialImpulseClosedAtUtc": "2026-11-19T13:05:00+00:00",
+            "dataOrigin": "Synthetic",
+            "provenance": "Controlled synthetic OHLC for hypothesis disagreement; not mentor-labelled or authentic market activity",
+            "priceUnit": "NativeInstrumentPrice",
+            "historicalAvailability": "Unauthenticated_NotEstablishedByThisExperiment",
+            "coverage": "Bounded supplied sequence; previous means preceding supplied closed candle; completeness not authenticated; no gap filling"
+          },
+          "status": "ExperimentalReferenceConfirmed",
+          "reason": "A subsequent strict-close continuation confirms this experimental reference; its candle is excluded from aggregation.",
+          "pullbackStart": {
+            "providerId": {
+              "value": "moneyway-synthetic-lab"
+            },
+            "symbol": {
+              "value": "US100"
+            },
+            "timeframe": {
+              "amount": 5,
+              "unit": "Minute"
+            },
+            "openTimeUtc": "2026-11-19T13:05:00+00:00",
+            "closeTimeUtc": "2026-11-19T13:10:00+00:00",
+            "open": 108,
+            "high": 109,
+            "low": 96,
+            "close": 107,
+            "volume": null
+          },
+          "proposedReferencePrice": 90,
+          "referenceCandles": [
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:10:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:15:00+00:00",
+              "open": 100,
+              "high": 108,
+              "low": 90,
+              "close": 106,
+              "volume": null
+            }
+          ],
+          "aggregationCandles": [
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:05:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:10:00+00:00",
+              "open": 108,
+              "high": 109,
+              "low": 96,
+              "close": 107,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:10:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:15:00+00:00",
+              "open": 100,
+              "high": 108,
+              "low": 90,
+              "close": 106,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:15:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:20:00+00:00",
+              "open": 103,
+              "high": 109,
+              "low": 94,
+              "close": 108,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:20:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:25:00+00:00",
+              "open": 108,
+              "high": 109,
+              "low": 93,
+              "close": 105,
+              "volume": null
+            }
+          ],
+          "continuationCandle": {
+            "providerId": {
+              "value": "moneyway-synthetic-lab"
+            },
+            "symbol": {
+              "value": "US100"
+            },
+            "timeframe": {
+              "amount": 5,
+              "unit": "Minute"
+            },
+            "openTimeUtc": "2026-11-19T13:25:00+00:00",
+            "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+            "open": 105,
+            "high": 112,
+            "low": 80,
+            "close": 110.01,
+            "volume": null
+          },
+          "classification": "ExperimentalMoneyWayHypothesis_NotMentorConfirmed",
+          "sharedPolicyId": "EXP-M5-BOUNDED-CONTINUATION-V1",
+          "isExperimentalReferenceConfirmed": true,
+          "abstained": false,
+          "confirmationAtUtc": "2026-11-19T13:30:00+00:00",
+          "confirmationLatencyFromAnchor": "00:25:00",
+          "pullbackToConfirmationLatency": "00:20:00",
+          "mentorRuleConfirmed": false,
+          "canonicalAdmissionPermitted": false,
+          "operationalSignal": false
+        }
+      ],
+      "comparisons": [
+        {
+          "leftAlgorithm": "EXP-M5-SWING-A-V1",
+          "rightAlgorithm": "EXP-M5-SWING-B-V1",
+          "fullAgreement": false,
+          "confirmedReferenceAgreement": true,
+          "confirmationLatencyDifference": "00:00:00",
+          "pullbackLatencyDifference": "00:05:00",
+          "explanation": "Ascending Close \u003C Open; descending Close \u003E Open versus Ascending Low \u003C Previous.Low; descending High \u003E Previous.High. Start agreement=False; reference agreement=True; statuses=ExperimentalReferenceConfirmed/ExperimentalReferenceConfirmed. Same confirmed references can have different start-to-confirmation latency. Agreement is not evidence of accuracy or profit."
+        },
+        {
+          "leftAlgorithm": "EXP-M5-SWING-A-V1",
+          "rightAlgorithm": "EXP-M5-SWING-C-V1",
+          "fullAgreement": false,
+          "confirmedReferenceAgreement": false,
+          "confirmationLatencyDifference": "00:00:00",
+          "pullbackLatencyDifference": "00:15:00",
+          "explanation": "Ascending Close \u003C Open; descending Close \u003E Open versus A AND B on the same start candle. Start agreement=False; reference agreement=False; statuses=ExperimentalReferenceConfirmed/ExperimentalReferenceConfirmed. Same confirmed references can have different start-to-confirmation latency. Agreement is not evidence of accuracy or profit."
+        },
+        {
+          "leftAlgorithm": "EXP-M5-SWING-A-V1",
+          "rightAlgorithm": "EXP-M5-SWING-D-V1",
+          "fullAgreement": true,
+          "confirmedReferenceAgreement": true,
+          "confirmationLatencyDifference": "00:00:00",
+          "pullbackLatencyDifference": "00:00:00",
+          "explanation": "Ascending Close \u003C Open; descending Close \u003E Open versus A OR B on the same start candle. Start agreement=True; reference agreement=True; statuses=ExperimentalReferenceConfirmed/ExperimentalReferenceConfirmed. Same confirmed references can have different start-to-confirmation latency. Agreement is not evidence of accuracy or profit."
+        },
+        {
+          "leftAlgorithm": "EXP-M5-SWING-B-V1",
+          "rightAlgorithm": "EXP-M5-SWING-C-V1",
+          "fullAgreement": false,
+          "confirmedReferenceAgreement": false,
+          "confirmationLatencyDifference": "00:00:00",
+          "pullbackLatencyDifference": "00:10:00",
+          "explanation": "Ascending Low \u003C Previous.Low; descending High \u003E Previous.High versus A AND B on the same start candle. Start agreement=False; reference agreement=False; statuses=ExperimentalReferenceConfirmed/ExperimentalReferenceConfirmed. Same confirmed references can have different start-to-confirmation latency. Agreement is not evidence of accuracy or profit."
+        },
+        {
+          "leftAlgorithm": "EXP-M5-SWING-B-V1",
+          "rightAlgorithm": "EXP-M5-SWING-D-V1",
+          "fullAgreement": false,
+          "confirmedReferenceAgreement": true,
+          "confirmationLatencyDifference": "00:00:00",
+          "pullbackLatencyDifference": "-00:05:00",
+          "explanation": "Ascending Low \u003C Previous.Low; descending High \u003E Previous.High versus A OR B on the same start candle. Start agreement=False; reference agreement=True; statuses=ExperimentalReferenceConfirmed/ExperimentalReferenceConfirmed. Same confirmed references can have different start-to-confirmation latency. Agreement is not evidence of accuracy or profit."
+        },
+        {
+          "leftAlgorithm": "EXP-M5-SWING-C-V1",
+          "rightAlgorithm": "EXP-M5-SWING-D-V1",
+          "fullAgreement": false,
+          "confirmedReferenceAgreement": false,
+          "confirmationLatencyDifference": "00:00:00",
+          "pullbackLatencyDifference": "-00:15:00",
+          "explanation": "A AND B on the same start candle versus A OR B on the same start candle. Start agreement=False; reference agreement=False; statuses=ExperimentalReferenceConfirmed/ExperimentalReferenceConfirmed. Same confirmed references can have different start-to-confirmation latency. Agreement is not evidence of accuracy or profit."
+        }
+      ],
+      "evidenceCandles": [
+        {
+          "providerId": {
+            "value": "moneyway-synthetic-lab"
+          },
+          "symbol": {
+            "value": "US100"
+          },
+          "timeframe": {
+            "amount": 5,
+            "unit": "Minute"
+          },
+          "openTimeUtc": "2026-11-19T13:00:00+00:00",
+          "closeTimeUtc": "2026-11-19T13:05:00+00:00",
+          "open": 100,
+          "high": 110,
+          "low": 95,
+          "close": 108,
+          "volume": null
+        },
+        {
+          "providerId": {
+            "value": "moneyway-synthetic-lab"
+          },
+          "symbol": {
+            "value": "US100"
+          },
+          "timeframe": {
+            "amount": 5,
+            "unit": "Minute"
+          },
+          "openTimeUtc": "2026-11-19T13:05:00+00:00",
+          "closeTimeUtc": "2026-11-19T13:10:00+00:00",
+          "open": 108,
+          "high": 109,
+          "low": 96,
+          "close": 107,
+          "volume": null
+        },
+        {
+          "providerId": {
+            "value": "moneyway-synthetic-lab"
+          },
+          "symbol": {
+            "value": "US100"
+          },
+          "timeframe": {
+            "amount": 5,
+            "unit": "Minute"
+          },
+          "openTimeUtc": "2026-11-19T13:10:00+00:00",
+          "closeTimeUtc": "2026-11-19T13:15:00+00:00",
+          "open": 100,
+          "high": 108,
+          "low": 90,
+          "close": 106,
+          "volume": null
+        },
+        {
+          "providerId": {
+            "value": "moneyway-synthetic-lab"
+          },
+          "symbol": {
+            "value": "US100"
+          },
+          "timeframe": {
+            "amount": 5,
+            "unit": "Minute"
+          },
+          "openTimeUtc": "2026-11-19T13:15:00+00:00",
+          "closeTimeUtc": "2026-11-19T13:20:00+00:00",
+          "open": 103,
+          "high": 109,
+          "low": 94,
+          "close": 108,
+          "volume": null
+        },
+        {
+          "providerId": {
+            "value": "moneyway-synthetic-lab"
+          },
+          "symbol": {
+            "value": "US100"
+          },
+          "timeframe": {
+            "amount": 5,
+            "unit": "Minute"
+          },
+          "openTimeUtc": "2026-11-19T13:20:00+00:00",
+          "closeTimeUtc": "2026-11-19T13:25:00+00:00",
+          "open": 108,
+          "high": 109,
+          "low": 93,
+          "close": 105,
+          "volume": null
+        },
+        {
+          "providerId": {
+            "value": "moneyway-synthetic-lab"
+          },
+          "symbol": {
+            "value": "US100"
+          },
+          "timeframe": {
+            "amount": 5,
+            "unit": "Minute"
+          },
+          "openTimeUtc": "2026-11-19T13:25:00+00:00",
+          "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+          "open": 105,
+          "high": 112,
+          "low": 80,
+          "close": 110.01,
+          "volume": null
+        }
+      ],
+      "schemaVersion": "1",
+      "scope": "IsolatedExperimentalResearch_NotCanonicalStrategyEvaluation",
+      "allAlgorithmsAgree": false,
+      "abstainedAlgorithms": [],
+      "canonicalAdmissionPermitted": false,
+      "operationalSignal": false,
+      "promotionStatus": "ResearchOnly_NoWinnerSelected_NoStrategyActivation"
+    },
+    "inclusiveV2": {
+      "input": {
+        "seriesId": "synthetic-m5-swing-disagreement-v1",
+        "providerId": "moneyway-synthetic-lab",
+        "symbol": "US100",
+        "timeframe": "5m",
+        "direction": "Ascending",
+        "evaluationCutoffUtc": "2026-11-19T13:30:00+00:00",
+        "initialization": {
+          "referenceId": "synthetic-explicit-anchor",
+          "providerId": {
+            "value": "moneyway-synthetic-lab"
+          },
+          "symbol": {
+            "value": "US100"
+          },
+          "timeframe": {
+            "amount": 5,
+            "unit": "Minute"
+          },
+          "anchorOpenTimeUtc": "2026-11-19T13:00:00+00:00",
+          "availableAtUtc": "2026-11-19T13:05:00+00:00",
+          "sourceReference": "synthetic:explicit initial impulse candle; not automatically selected"
+        },
+        "initialImpulsePrice": 110,
+        "initialImpulseClosedAtUtc": "2026-11-19T13:05:00+00:00",
+        "dataOrigin": "Synthetic",
+        "provenance": "Controlled synthetic OHLC for hypothesis disagreement; not mentor-labelled or authentic market activity",
+        "priceUnit": "NativeInstrumentPrice",
+        "historicalAvailability": "Unauthenticated_NotEstablishedByThisExperiment",
+        "coverage": "Bounded supplied sequence; previous means preceding supplied closed candle; completeness not authenticated; no gap filling"
+      },
+      "sharedAssumptions": [
+        "MoneyWay experimental hypotheses; mirrored directions are not independently mentor-confirmed.",
+        "Closed M5 only; explicit source-bound anchor; fixed actual anchor High ascending or Low descending.",
+        "First qualifying start; previous means previous supplied closed candle, beginning with the anchor.",
+        "Minimum Low ascending / maximum High descending from established start through the closed continuation candle, inclusive; exact ties retain every identity.",
+        "First strict-close continuation terminates this episode. Include its opposite extreme only after an established pullback; availability is its close, not an intrabar sequence claim.",
+        "Start plus continuation before any established pullback abstains; no pullback before continuation also abstains.",
+        "Initialization must be available before processing the episode; do not retrospectively authorize already closed episode candles.",
+        "No gap filling, automatic initialization, resets, double-touch, multiple cycles, optimization, ranking or operational promotion."
+      ],
+      "results": [
+        {
+          "algorithm": {
+            "hypothesis": "CandleColor",
+            "algorithmId": "EXP-M5-SWING-A-V2",
+            "algorithmVersion": "2.0.0",
+            "startCondition": "Ascending Close \u003C Open; descending Close \u003E Open"
+          },
+          "input": {
+            "seriesId": "synthetic-m5-swing-disagreement-v1",
+            "providerId": "moneyway-synthetic-lab",
+            "symbol": "US100",
+            "timeframe": "5m",
+            "direction": "Ascending",
+            "evaluationCutoffUtc": "2026-11-19T13:30:00+00:00",
+            "initialization": {
+              "referenceId": "synthetic-explicit-anchor",
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "anchorOpenTimeUtc": "2026-11-19T13:00:00+00:00",
+              "availableAtUtc": "2026-11-19T13:05:00+00:00",
+              "sourceReference": "synthetic:explicit initial impulse candle; not automatically selected"
+            },
+            "initialImpulsePrice": 110,
+            "initialImpulseClosedAtUtc": "2026-11-19T13:05:00+00:00",
+            "dataOrigin": "Synthetic",
+            "provenance": "Controlled synthetic OHLC for hypothesis disagreement; not mentor-labelled or authentic market activity",
+            "priceUnit": "NativeInstrumentPrice",
+            "historicalAvailability": "Unauthenticated_NotEstablishedByThisExperiment",
+            "coverage": "Bounded supplied sequence; previous means preceding supplied closed candle; completeness not authenticated; no gap filling"
+          },
+          "status": "ExperimentalReferenceConfirmed",
+          "reason": "A subsequent strict-close continuation confirms this experimental reference; include its opposite extreme at closure only, without inferring intrabar order.",
+          "pullbackStart": {
+            "providerId": {
+              "value": "moneyway-synthetic-lab"
+            },
+            "symbol": {
+              "value": "US100"
+            },
+            "timeframe": {
+              "amount": 5,
+              "unit": "Minute"
+            },
+            "openTimeUtc": "2026-11-19T13:05:00+00:00",
+            "closeTimeUtc": "2026-11-19T13:10:00+00:00",
+            "open": 108,
+            "high": 109,
+            "low": 96,
+            "close": 107,
+            "volume": null
+          },
+          "proposedReferencePrice": 80,
+          "referenceCandles": [
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:25:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+              "open": 105,
+              "high": 112,
+              "low": 80,
+              "close": 110.01,
+              "volume": null
+            }
+          ],
+          "aggregationCandles": [
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:05:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:10:00+00:00",
+              "open": 108,
+              "high": 109,
+              "low": 96,
+              "close": 107,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:10:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:15:00+00:00",
+              "open": 100,
+              "high": 108,
+              "low": 90,
+              "close": 106,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:15:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:20:00+00:00",
+              "open": 103,
+              "high": 109,
+              "low": 94,
+              "close": 108,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:20:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:25:00+00:00",
+              "open": 108,
+              "high": 109,
+              "low": 93,
+              "close": 105,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:25:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+              "open": 105,
+              "high": 112,
+              "low": 80,
+              "close": 110.01,
+              "volume": null
+            }
+          ],
+          "continuationCandle": {
+            "providerId": {
+              "value": "moneyway-synthetic-lab"
+            },
+            "symbol": {
+              "value": "US100"
+            },
+            "timeframe": {
+              "amount": 5,
+              "unit": "Minute"
+            },
+            "openTimeUtc": "2026-11-19T13:25:00+00:00",
+            "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+            "open": 105,
+            "high": 112,
+            "low": 80,
+            "close": 110.01,
+            "volume": null
+          },
+          "classification": "ExperimentalMoneyWayHypothesis_NotMentorConfirmed",
+          "sharedPolicyId": "EXP-M5-BOUNDED-CONTINUATION-INCLUSIVE-V2",
+          "isExperimentalReferenceConfirmed": true,
+          "abstained": false,
+          "confirmationAtUtc": "2026-11-19T13:30:00+00:00",
+          "confirmationLatencyFromAnchor": "00:25:00",
+          "pullbackToConfirmationLatency": "00:20:00",
+          "mentorRuleConfirmed": false,
+          "canonicalAdmissionPermitted": false,
+          "operationalSignal": false
+        },
+        {
+          "algorithm": {
+            "hypothesis": "PriceStructure",
+            "algorithmId": "EXP-M5-SWING-B-V2",
+            "algorithmVersion": "2.0.0",
+            "startCondition": "Ascending Low \u003C Previous.Low; descending High \u003E Previous.High"
+          },
+          "input": {
+            "seriesId": "synthetic-m5-swing-disagreement-v1",
+            "providerId": "moneyway-synthetic-lab",
+            "symbol": "US100",
+            "timeframe": "5m",
+            "direction": "Ascending",
+            "evaluationCutoffUtc": "2026-11-19T13:30:00+00:00",
+            "initialization": {
+              "referenceId": "synthetic-explicit-anchor",
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "anchorOpenTimeUtc": "2026-11-19T13:00:00+00:00",
+              "availableAtUtc": "2026-11-19T13:05:00+00:00",
+              "sourceReference": "synthetic:explicit initial impulse candle; not automatically selected"
+            },
+            "initialImpulsePrice": 110,
+            "initialImpulseClosedAtUtc": "2026-11-19T13:05:00+00:00",
+            "dataOrigin": "Synthetic",
+            "provenance": "Controlled synthetic OHLC for hypothesis disagreement; not mentor-labelled or authentic market activity",
+            "priceUnit": "NativeInstrumentPrice",
+            "historicalAvailability": "Unauthenticated_NotEstablishedByThisExperiment",
+            "coverage": "Bounded supplied sequence; previous means preceding supplied closed candle; completeness not authenticated; no gap filling"
+          },
+          "status": "ExperimentalReferenceConfirmed",
+          "reason": "A subsequent strict-close continuation confirms this experimental reference; include its opposite extreme at closure only, without inferring intrabar order.",
+          "pullbackStart": {
+            "providerId": {
+              "value": "moneyway-synthetic-lab"
+            },
+            "symbol": {
+              "value": "US100"
+            },
+            "timeframe": {
+              "amount": 5,
+              "unit": "Minute"
+            },
+            "openTimeUtc": "2026-11-19T13:10:00+00:00",
+            "closeTimeUtc": "2026-11-19T13:15:00+00:00",
+            "open": 100,
+            "high": 108,
+            "low": 90,
+            "close": 106,
+            "volume": null
+          },
+          "proposedReferencePrice": 80,
+          "referenceCandles": [
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:25:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+              "open": 105,
+              "high": 112,
+              "low": 80,
+              "close": 110.01,
+              "volume": null
+            }
+          ],
+          "aggregationCandles": [
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:10:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:15:00+00:00",
+              "open": 100,
+              "high": 108,
+              "low": 90,
+              "close": 106,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:15:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:20:00+00:00",
+              "open": 103,
+              "high": 109,
+              "low": 94,
+              "close": 108,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:20:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:25:00+00:00",
+              "open": 108,
+              "high": 109,
+              "low": 93,
+              "close": 105,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:25:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+              "open": 105,
+              "high": 112,
+              "low": 80,
+              "close": 110.01,
+              "volume": null
+            }
+          ],
+          "continuationCandle": {
+            "providerId": {
+              "value": "moneyway-synthetic-lab"
+            },
+            "symbol": {
+              "value": "US100"
+            },
+            "timeframe": {
+              "amount": 5,
+              "unit": "Minute"
+            },
+            "openTimeUtc": "2026-11-19T13:25:00+00:00",
+            "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+            "open": 105,
+            "high": 112,
+            "low": 80,
+            "close": 110.01,
+            "volume": null
+          },
+          "classification": "ExperimentalMoneyWayHypothesis_NotMentorConfirmed",
+          "sharedPolicyId": "EXP-M5-BOUNDED-CONTINUATION-INCLUSIVE-V2",
+          "isExperimentalReferenceConfirmed": true,
+          "abstained": false,
+          "confirmationAtUtc": "2026-11-19T13:30:00+00:00",
+          "confirmationLatencyFromAnchor": "00:25:00",
+          "pullbackToConfirmationLatency": "00:15:00",
+          "mentorRuleConfirmed": false,
+          "canonicalAdmissionPermitted": false,
+          "operationalSignal": false
+        },
+        {
+          "algorithm": {
+            "hypothesis": "CombinedStrict",
+            "algorithmId": "EXP-M5-SWING-C-V2",
+            "algorithmVersion": "2.0.0",
+            "startCondition": "A AND B on the same start candle"
+          },
+          "input": {
+            "seriesId": "synthetic-m5-swing-disagreement-v1",
+            "providerId": "moneyway-synthetic-lab",
+            "symbol": "US100",
+            "timeframe": "5m",
+            "direction": "Ascending",
+            "evaluationCutoffUtc": "2026-11-19T13:30:00+00:00",
+            "initialization": {
+              "referenceId": "synthetic-explicit-anchor",
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "anchorOpenTimeUtc": "2026-11-19T13:00:00+00:00",
+              "availableAtUtc": "2026-11-19T13:05:00+00:00",
+              "sourceReference": "synthetic:explicit initial impulse candle; not automatically selected"
+            },
+            "initialImpulsePrice": 110,
+            "initialImpulseClosedAtUtc": "2026-11-19T13:05:00+00:00",
+            "dataOrigin": "Synthetic",
+            "provenance": "Controlled synthetic OHLC for hypothesis disagreement; not mentor-labelled or authentic market activity",
+            "priceUnit": "NativeInstrumentPrice",
+            "historicalAvailability": "Unauthenticated_NotEstablishedByThisExperiment",
+            "coverage": "Bounded supplied sequence; previous means preceding supplied closed candle; completeness not authenticated; no gap filling"
+          },
+          "status": "ExperimentalReferenceConfirmed",
+          "reason": "A subsequent strict-close continuation confirms this experimental reference; include its opposite extreme at closure only, without inferring intrabar order.",
+          "pullbackStart": {
+            "providerId": {
+              "value": "moneyway-synthetic-lab"
+            },
+            "symbol": {
+              "value": "US100"
+            },
+            "timeframe": {
+              "amount": 5,
+              "unit": "Minute"
+            },
+            "openTimeUtc": "2026-11-19T13:20:00+00:00",
+            "closeTimeUtc": "2026-11-19T13:25:00+00:00",
+            "open": 108,
+            "high": 109,
+            "low": 93,
+            "close": 105,
+            "volume": null
+          },
+          "proposedReferencePrice": 80,
+          "referenceCandles": [
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:25:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+              "open": 105,
+              "high": 112,
+              "low": 80,
+              "close": 110.01,
+              "volume": null
+            }
+          ],
+          "aggregationCandles": [
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:20:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:25:00+00:00",
+              "open": 108,
+              "high": 109,
+              "low": 93,
+              "close": 105,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:25:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+              "open": 105,
+              "high": 112,
+              "low": 80,
+              "close": 110.01,
+              "volume": null
+            }
+          ],
+          "continuationCandle": {
+            "providerId": {
+              "value": "moneyway-synthetic-lab"
+            },
+            "symbol": {
+              "value": "US100"
+            },
+            "timeframe": {
+              "amount": 5,
+              "unit": "Minute"
+            },
+            "openTimeUtc": "2026-11-19T13:25:00+00:00",
+            "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+            "open": 105,
+            "high": 112,
+            "low": 80,
+            "close": 110.01,
+            "volume": null
+          },
+          "classification": "ExperimentalMoneyWayHypothesis_NotMentorConfirmed",
+          "sharedPolicyId": "EXP-M5-BOUNDED-CONTINUATION-INCLUSIVE-V2",
+          "isExperimentalReferenceConfirmed": true,
+          "abstained": false,
+          "confirmationAtUtc": "2026-11-19T13:30:00+00:00",
+          "confirmationLatencyFromAnchor": "00:25:00",
+          "pullbackToConfirmationLatency": "00:05:00",
+          "mentorRuleConfirmed": false,
+          "canonicalAdmissionPermitted": false,
+          "operationalSignal": false
+        },
+        {
+          "algorithm": {
+            "hypothesis": "CombinedFlexible",
+            "algorithmId": "EXP-M5-SWING-D-V2",
+            "algorithmVersion": "2.0.0",
+            "startCondition": "A OR B on the same start candle"
+          },
+          "input": {
+            "seriesId": "synthetic-m5-swing-disagreement-v1",
+            "providerId": "moneyway-synthetic-lab",
+            "symbol": "US100",
+            "timeframe": "5m",
+            "direction": "Ascending",
+            "evaluationCutoffUtc": "2026-11-19T13:30:00+00:00",
+            "initialization": {
+              "referenceId": "synthetic-explicit-anchor",
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "anchorOpenTimeUtc": "2026-11-19T13:00:00+00:00",
+              "availableAtUtc": "2026-11-19T13:05:00+00:00",
+              "sourceReference": "synthetic:explicit initial impulse candle; not automatically selected"
+            },
+            "initialImpulsePrice": 110,
+            "initialImpulseClosedAtUtc": "2026-11-19T13:05:00+00:00",
+            "dataOrigin": "Synthetic",
+            "provenance": "Controlled synthetic OHLC for hypothesis disagreement; not mentor-labelled or authentic market activity",
+            "priceUnit": "NativeInstrumentPrice",
+            "historicalAvailability": "Unauthenticated_NotEstablishedByThisExperiment",
+            "coverage": "Bounded supplied sequence; previous means preceding supplied closed candle; completeness not authenticated; no gap filling"
+          },
+          "status": "ExperimentalReferenceConfirmed",
+          "reason": "A subsequent strict-close continuation confirms this experimental reference; include its opposite extreme at closure only, without inferring intrabar order.",
+          "pullbackStart": {
+            "providerId": {
+              "value": "moneyway-synthetic-lab"
+            },
+            "symbol": {
+              "value": "US100"
+            },
+            "timeframe": {
+              "amount": 5,
+              "unit": "Minute"
+            },
+            "openTimeUtc": "2026-11-19T13:05:00+00:00",
+            "closeTimeUtc": "2026-11-19T13:10:00+00:00",
+            "open": 108,
+            "high": 109,
+            "low": 96,
+            "close": 107,
+            "volume": null
+          },
+          "proposedReferencePrice": 80,
+          "referenceCandles": [
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:25:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+              "open": 105,
+              "high": 112,
+              "low": 80,
+              "close": 110.01,
+              "volume": null
+            }
+          ],
+          "aggregationCandles": [
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:05:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:10:00+00:00",
+              "open": 108,
+              "high": 109,
+              "low": 96,
+              "close": 107,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:10:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:15:00+00:00",
+              "open": 100,
+              "high": 108,
+              "low": 90,
+              "close": 106,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:15:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:20:00+00:00",
+              "open": 103,
+              "high": 109,
+              "low": 94,
+              "close": 108,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:20:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:25:00+00:00",
+              "open": 108,
+              "high": 109,
+              "low": 93,
+              "close": 105,
+              "volume": null
+            },
+            {
+              "providerId": {
+                "value": "moneyway-synthetic-lab"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-11-19T13:25:00+00:00",
+              "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+              "open": 105,
+              "high": 112,
+              "low": 80,
+              "close": 110.01,
+              "volume": null
+            }
+          ],
+          "continuationCandle": {
+            "providerId": {
+              "value": "moneyway-synthetic-lab"
+            },
+            "symbol": {
+              "value": "US100"
+            },
+            "timeframe": {
+              "amount": 5,
+              "unit": "Minute"
+            },
+            "openTimeUtc": "2026-11-19T13:25:00+00:00",
+            "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+            "open": 105,
+            "high": 112,
+            "low": 80,
+            "close": 110.01,
+            "volume": null
+          },
+          "classification": "ExperimentalMoneyWayHypothesis_NotMentorConfirmed",
+          "sharedPolicyId": "EXP-M5-BOUNDED-CONTINUATION-INCLUSIVE-V2",
+          "isExperimentalReferenceConfirmed": true,
+          "abstained": false,
+          "confirmationAtUtc": "2026-11-19T13:30:00+00:00",
+          "confirmationLatencyFromAnchor": "00:25:00",
+          "pullbackToConfirmationLatency": "00:20:00",
+          "mentorRuleConfirmed": false,
+          "canonicalAdmissionPermitted": false,
+          "operationalSignal": false
+        }
+      ],
+      "comparisons": [
+        {
+          "leftAlgorithm": "EXP-M5-SWING-A-V2",
+          "rightAlgorithm": "EXP-M5-SWING-B-V2",
+          "fullAgreement": false,
+          "confirmedReferenceAgreement": true,
+          "confirmationLatencyDifference": "00:00:00",
+          "pullbackLatencyDifference": "00:05:00",
+          "explanation": "Ascending Close \u003C Open; descending Close \u003E Open versus Ascending Low \u003C Previous.Low; descending High \u003E Previous.High. Start agreement=False; reference agreement=True; statuses=ExperimentalReferenceConfirmed/ExperimentalReferenceConfirmed. Same confirmed references can have different start-to-confirmation latency. Agreement is not evidence of accuracy or profit."
+        },
+        {
+          "leftAlgorithm": "EXP-M5-SWING-A-V2",
+          "rightAlgorithm": "EXP-M5-SWING-C-V2",
+          "fullAgreement": false,
+          "confirmedReferenceAgreement": true,
+          "confirmationLatencyDifference": "00:00:00",
+          "pullbackLatencyDifference": "00:15:00",
+          "explanation": "Ascending Close \u003C Open; descending Close \u003E Open versus A AND B on the same start candle. Start agreement=False; reference agreement=True; statuses=ExperimentalReferenceConfirmed/ExperimentalReferenceConfirmed. Same confirmed references can have different start-to-confirmation latency. Agreement is not evidence of accuracy or profit."
+        },
+        {
+          "leftAlgorithm": "EXP-M5-SWING-A-V2",
+          "rightAlgorithm": "EXP-M5-SWING-D-V2",
+          "fullAgreement": true,
+          "confirmedReferenceAgreement": true,
+          "confirmationLatencyDifference": "00:00:00",
+          "pullbackLatencyDifference": "00:00:00",
+          "explanation": "Ascending Close \u003C Open; descending Close \u003E Open versus A OR B on the same start candle. Start agreement=True; reference agreement=True; statuses=ExperimentalReferenceConfirmed/ExperimentalReferenceConfirmed. Same confirmed references can have different start-to-confirmation latency. Agreement is not evidence of accuracy or profit."
+        },
+        {
+          "leftAlgorithm": "EXP-M5-SWING-B-V2",
+          "rightAlgorithm": "EXP-M5-SWING-C-V2",
+          "fullAgreement": false,
+          "confirmedReferenceAgreement": true,
+          "confirmationLatencyDifference": "00:00:00",
+          "pullbackLatencyDifference": "00:10:00",
+          "explanation": "Ascending Low \u003C Previous.Low; descending High \u003E Previous.High versus A AND B on the same start candle. Start agreement=False; reference agreement=True; statuses=ExperimentalReferenceConfirmed/ExperimentalReferenceConfirmed. Same confirmed references can have different start-to-confirmation latency. Agreement is not evidence of accuracy or profit."
+        },
+        {
+          "leftAlgorithm": "EXP-M5-SWING-B-V2",
+          "rightAlgorithm": "EXP-M5-SWING-D-V2",
+          "fullAgreement": false,
+          "confirmedReferenceAgreement": true,
+          "confirmationLatencyDifference": "00:00:00",
+          "pullbackLatencyDifference": "-00:05:00",
+          "explanation": "Ascending Low \u003C Previous.Low; descending High \u003E Previous.High versus A OR B on the same start candle. Start agreement=False; reference agreement=True; statuses=ExperimentalReferenceConfirmed/ExperimentalReferenceConfirmed. Same confirmed references can have different start-to-confirmation latency. Agreement is not evidence of accuracy or profit."
+        },
+        {
+          "leftAlgorithm": "EXP-M5-SWING-C-V2",
+          "rightAlgorithm": "EXP-M5-SWING-D-V2",
+          "fullAgreement": false,
+          "confirmedReferenceAgreement": true,
+          "confirmationLatencyDifference": "00:00:00",
+          "pullbackLatencyDifference": "-00:15:00",
+          "explanation": "A AND B on the same start candle versus A OR B on the same start candle. Start agreement=False; reference agreement=True; statuses=ExperimentalReferenceConfirmed/ExperimentalReferenceConfirmed. Same confirmed references can have different start-to-confirmation latency. Agreement is not evidence of accuracy or profit."
+        }
+      ],
+      "evidenceCandles": [
+        {
+          "providerId": {
+            "value": "moneyway-synthetic-lab"
+          },
+          "symbol": {
+            "value": "US100"
+          },
+          "timeframe": {
+            "amount": 5,
+            "unit": "Minute"
+          },
+          "openTimeUtc": "2026-11-19T13:00:00+00:00",
+          "closeTimeUtc": "2026-11-19T13:05:00+00:00",
+          "open": 100,
+          "high": 110,
+          "low": 95,
+          "close": 108,
+          "volume": null
+        },
+        {
+          "providerId": {
+            "value": "moneyway-synthetic-lab"
+          },
+          "symbol": {
+            "value": "US100"
+          },
+          "timeframe": {
+            "amount": 5,
+            "unit": "Minute"
+          },
+          "openTimeUtc": "2026-11-19T13:05:00+00:00",
+          "closeTimeUtc": "2026-11-19T13:10:00+00:00",
+          "open": 108,
+          "high": 109,
+          "low": 96,
+          "close": 107,
+          "volume": null
+        },
+        {
+          "providerId": {
+            "value": "moneyway-synthetic-lab"
+          },
+          "symbol": {
+            "value": "US100"
+          },
+          "timeframe": {
+            "amount": 5,
+            "unit": "Minute"
+          },
+          "openTimeUtc": "2026-11-19T13:10:00+00:00",
+          "closeTimeUtc": "2026-11-19T13:15:00+00:00",
+          "open": 100,
+          "high": 108,
+          "low": 90,
+          "close": 106,
+          "volume": null
+        },
+        {
+          "providerId": {
+            "value": "moneyway-synthetic-lab"
+          },
+          "symbol": {
+            "value": "US100"
+          },
+          "timeframe": {
+            "amount": 5,
+            "unit": "Minute"
+          },
+          "openTimeUtc": "2026-11-19T13:15:00+00:00",
+          "closeTimeUtc": "2026-11-19T13:20:00+00:00",
+          "open": 103,
+          "high": 109,
+          "low": 94,
+          "close": 108,
+          "volume": null
+        },
+        {
+          "providerId": {
+            "value": "moneyway-synthetic-lab"
+          },
+          "symbol": {
+            "value": "US100"
+          },
+          "timeframe": {
+            "amount": 5,
+            "unit": "Minute"
+          },
+          "openTimeUtc": "2026-11-19T13:20:00+00:00",
+          "closeTimeUtc": "2026-11-19T13:25:00+00:00",
+          "open": 108,
+          "high": 109,
+          "low": 93,
+          "close": 105,
+          "volume": null
+        },
+        {
+          "providerId": {
+            "value": "moneyway-synthetic-lab"
+          },
+          "symbol": {
+            "value": "US100"
+          },
+          "timeframe": {
+            "amount": 5,
+            "unit": "Minute"
+          },
+          "openTimeUtc": "2026-11-19T13:25:00+00:00",
+          "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+          "open": 105,
+          "high": 112,
+          "low": 80,
+          "close": 110.01,
+          "volume": null
+        }
+      ],
+      "schemaVersion": "1",
+      "scope": "IsolatedExperimentalResearch_NotCanonicalStrategyEvaluation",
+      "allAlgorithmsAgree": false,
+      "abstainedAlgorithms": [],
+      "canonicalAdmissionPermitted": false,
+      "operationalSignal": false,
+      "promotionStatus": "ResearchOnly_NoWinnerSelected_NoStrategyActivation"
+    },
+    "differences": [
+      {
+        "exclusiveAlgorithmId": "EXP-M5-SWING-A-V1",
+        "inclusiveAlgorithmId": "EXP-M5-SWING-A-V2",
+        "exclusivePolicy": "EXP-M5-BOUNDED-CONTINUATION-V1",
+        "inclusivePolicy": "EXP-M5-BOUNDED-CONTINUATION-INCLUSIVE-V2",
+        "comparableConfirmedReferences": true,
+        "referenceChanged": true,
+        "priceChanged": true,
+        "signedPriceDifference": -10,
+        "absolutePriceDifference": 10,
+        "exclusiveAvailabilityUtc": "2026-11-19T13:30:00+00:00",
+        "inclusiveAvailabilityUtc": "2026-11-19T13:30:00+00:00"
+      },
+      {
+        "exclusiveAlgorithmId": "EXP-M5-SWING-B-V1",
+        "inclusiveAlgorithmId": "EXP-M5-SWING-B-V2",
+        "exclusivePolicy": "EXP-M5-BOUNDED-CONTINUATION-V1",
+        "inclusivePolicy": "EXP-M5-BOUNDED-CONTINUATION-INCLUSIVE-V2",
+        "comparableConfirmedReferences": true,
+        "referenceChanged": true,
+        "priceChanged": true,
+        "signedPriceDifference": -10,
+        "absolutePriceDifference": 10,
+        "exclusiveAvailabilityUtc": "2026-11-19T13:30:00+00:00",
+        "inclusiveAvailabilityUtc": "2026-11-19T13:30:00+00:00"
+      },
+      {
+        "exclusiveAlgorithmId": "EXP-M5-SWING-C-V1",
+        "inclusiveAlgorithmId": "EXP-M5-SWING-C-V2",
+        "exclusivePolicy": "EXP-M5-BOUNDED-CONTINUATION-V1",
+        "inclusivePolicy": "EXP-M5-BOUNDED-CONTINUATION-INCLUSIVE-V2",
+        "comparableConfirmedReferences": true,
+        "referenceChanged": true,
+        "priceChanged": true,
+        "signedPriceDifference": -13,
+        "absolutePriceDifference": 13,
+        "exclusiveAvailabilityUtc": "2026-11-19T13:30:00+00:00",
+        "inclusiveAvailabilityUtc": "2026-11-19T13:30:00+00:00"
+      },
+      {
+        "exclusiveAlgorithmId": "EXP-M5-SWING-D-V1",
+        "inclusiveAlgorithmId": "EXP-M5-SWING-D-V2",
+        "exclusivePolicy": "EXP-M5-BOUNDED-CONTINUATION-V1",
+        "inclusivePolicy": "EXP-M5-BOUNDED-CONTINUATION-INCLUSIVE-V2",
+        "comparableConfirmedReferences": true,
+        "referenceChanged": true,
+        "priceChanged": true,
+        "signedPriceDifference": -10,
+        "absolutePriceDifference": 10,
+        "exclusiveAvailabilityUtc": "2026-11-19T13:30:00+00:00",
+        "inclusiveAvailabilityUtc": "2026-11-19T13:30:00+00:00"
+      }
+    ],
+    "schemaVersion": "m5-paired-policy-1",
+    "classification": "ExperimentalMoneyWayHypotheses_NotMentorConfirmed",
+    "canonicalAdmissionPermitted": false,
+    "operationalSignal": false,
+    "limitation": "Fixed-anchor bounded experiment, not contextual structural relevance or a winning/activated strategy. NativeInstrumentPrice only. Human review is not an algorithm input."
+  },
+  "humanReference": null
+}
