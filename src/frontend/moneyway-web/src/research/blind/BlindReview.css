@@ -1,0 +1,153 @@
+.blind-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.5rem 0;
+}
+.blind-heading h1 {
+    font-size: clamp(1.5rem, 3vw, 2.3rem);
+    line-height: 1.2;
+}
+.blind-heading p,
+.blind-notice {
+    color: #abbdd1;
+    font-size: 0.8rem;
+    line-height: 1.6;
+}
+.blind-heading label,
+.blind-navigation label {
+    display: grid;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+}
+.blind-heading input {
+    padding: 0.7rem;
+    border: 1px solid #39536a;
+    border-radius: 6px;
+    background: #12283c;
+    color: #edf4ff;
+}
+.blind-navigation {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-bottom: 0.8rem;
+}
+.blind-navigation span {
+    margin-left: auto;
+    font-size: 0.85rem;
+    color: #8fd7c3;
+}
+.blind-steps {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #0c2035;
+    border: 1px solid #39536a;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.7rem;
+    font-size: 0.85rem;
+}
+.blind-steps .done {
+    color: #7ae2c3;
+}
+.blind-steps button {
+    margin-left: auto;
+}
+.blind-selection {
+    background: #102337;
+    border: 1px solid #39536a;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+.blind-selection fieldset {
+    border: 0;
+    padding: 0;
+}
+.blind-selection legend {
+    margin-bottom: 0.8rem;
+    font-weight: 600;
+}
+.blind-options {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.blind-options label,
+.blind-known {
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.blind-selection p {
+    color: #aabbd0;
+    font-size: 0.8rem;
+}
+.blind-known {
+    display: block;
+    margin: 0.8rem 0;
+}
+.blind-pick {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+    padding: 0.8rem 0;
+}
+.blind-pick span {
+    color: #adbed3;
+}
+.blind-review .blind-primary {
+    background: #9cddc8;
+    color: #092a2b;
+    border-color: #9cddc8;
+    font-weight: 700;
+    padding: 0.7rem 1rem;
+    margin: 0.4rem 0.6rem 0.4rem 0;
+}
+.blind-selection button {
+    margin-right: 0.6rem;
+}
+.blind-comparison {
+    margin: 1rem 0;
+    padding: 1rem;
+}
+.blind-review table {
+    font-size: 0.75rem;
+}
+.blind-review th,
+.blind-review td {
+    text-align: left;
+    padding: 0.6rem;
+    vertical-align: top;
+    border-bottom: 1px solid #29445f;
+}
+.blind-review fieldset:disabled {
+    opacity: 0.65;
+}
+@media (max-width: 640px) {
+    .blind-heading {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .blind-navigation {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .blind-navigation span {
+        margin: 0;
+    }
+    .blind-steps {
+        gap: 0.4rem;
+        font-size: 0.7rem;
+        flex-wrap: wrap;
+    }
+    .blind-steps button {
+        font-size: 0.8rem;
+    }
+}

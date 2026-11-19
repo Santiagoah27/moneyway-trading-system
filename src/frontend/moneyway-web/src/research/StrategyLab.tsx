@@ -31,11 +31,17 @@ export function CandleChart({
     visible,
     selected,
     onSelect,
+    onPick,
+    humanReferences = [],
+    humanConfirmation,
 }: {
-    report: Report;
+    report: Pick<Report, "input" | "evidenceCandles" | "results">;
     visible: string[];
     selected: number;
     onSelect: (i: number) => void;
+    onPick?: (i: number) => void;
+    humanReferences?: string[];
+    humanConfirmation?: string | null;
 }) {
     const bars = report.evidenceCandles;
     if (!bars.length)
@@ -153,10 +159,16 @@ export function CandleChart({
                             aria-label={`Inspeccionar vela ${formatTime(bar.openTimeUtc)}`}
                             onFocus={() => onSelect(i)}
                             onMouseEnter={() => onSelect(i)}
-                            onClick={() => onSelect(i)}
+                            onClick={() => {
+                                onSelect(i);
+                                onPick?.(i);
+                            }}
                             onKeyDown={(e) => {
-                                if (e.key === "Enter" || e.key === " ")
+                                if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
                                     onSelect(i);
+                                    onPick?.(i);
+                                }
                                 if (e.key === "ArrowRight") {
                                     e.preventDefault();
                                     onSelect(
@@ -191,6 +203,67 @@ export function CandleChart({
                         </text>
                     </g>
                 )}
+                {bars
+                    .filter((b) => humanReferences.includes(b.openTimeUtc))
+                    .map((b) => (
+                        <g
+                            key={b.openTimeUtc}
+                            className="lab-overlay"
+                            data-human-reference={b.openTimeUtc}
+                        >
+                            <circle
+                                cx={center(b)}
+                                cy={y(
+                                    report.input.direction === "Ascending"
+                                        ? b.low
+                                        : b.high,
+                                )}
+                                r={10}
+                                fill="none"
+                                stroke="#ffffff"
+                                strokeWidth={2.5}
+                            />
+                            <text
+                                x={center(b) + 13}
+                                y={
+                                    y(
+                                        report.input.direction === "Ascending"
+                                            ? b.low
+                                            : b.high,
+                                    ) + 4
+                                }
+                                fill="#ffffff"
+                            >
+                                H
+                            </text>
+                        </g>
+                    ))}
+                {humanConfirmation &&
+                    bars
+                        .filter((b) => b.openTimeUtc === humanConfirmation)
+                        .map((b) => (
+                            <g
+                                key={b.openTimeUtc}
+                                className="lab-overlay"
+                                data-human-confirmation={b.openTimeUtc}
+                            >
+                                <line
+                                    x1={x(b.closeTimeUtc)}
+                                    x2={x(b.closeTimeUtc)}
+                                    y1={35}
+                                    y2={420}
+                                    stroke="#ffffff"
+                                    strokeDasharray="2 5"
+                                />
+                                <text
+                                    x={x(b.closeTimeUtc) + 5}
+                                    y={40}
+                                    fill="#ffffff"
+                                >
+                                    H confirmación
+                                </text>
+                            </g>
+                        ))}
                 {[...levels].map(([price, ids]) => (
                     <g
                         key={price}
@@ -630,6 +703,9 @@ export function StrategyLab() {
         <main className="strategy-lab">
             <nav className="lab-nav">
                 <a href="#">MoneyWay / Inicio</a>
+                <a href="#strategy-lab-blind">
+                    Revisión ciega multi-episodio →
+                </a>
                 <span>
                     Strategy Lab <b>EXPERIMENTAL</b>
                 </span>

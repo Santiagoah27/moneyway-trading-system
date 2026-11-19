@@ -1,0 +1,126 @@
+{
+  "seriesId": "m5-20260623-1400-descending-v1",
+  "providerId": "oanda-global-markets-mt5-demo",
+  "symbol": "US100",
+  "timeframe": "5m",
+  "direction": "Descending",
+  "cutoffUtc": "2026-06-23T15:00:00Z",
+  "dataOrigin": "RetrospectiveDocumentary",
+  "provenance": "Fixed calendar-window research sample; native/normalized June export hashes independently matched. UTC mapping is documentary, not authenticated availability. First-candle anchor and alternating Ascending/Descending are research convenience assumptions, not mentor structural labels. No outcome-driven selection.",
+  "initialization": {
+    "referenceId": "explicit-calendar-m5-20260623-1400-descending-v1",
+    "anchorOpenTimeUtc": "2026-06-23T14:00:00Z",
+    "availableAtUtc": "2026-06-23T14:05:00Z",
+    "sourceReference": "Research-only first-candle anchor; nominal close availability is assumed for calculation, not authenticated historical availability."
+  },
+  "candles": [
+    {
+      "openTimeUtc": "2026-06-23T14:00:00Z",
+      "closeTimeUtc": "2026-06-23T14:05:00Z",
+      "open": 29691.4,
+      "high": 29768.1,
+      "low": 29686.7,
+      "close": 29750.1,
+      "volume": 5276.0
+    },
+    {
+      "openTimeUtc": "2026-06-23T14:05:00Z",
+      "closeTimeUtc": "2026-06-23T14:10:00Z",
+      "open": 29750.2,
+      "high": 29762.1,
+      "low": 29699.3,
+      "close": 29740.4,
+      "volume": 5258.0
+    },
+    {
+      "openTimeUtc": "2026-06-23T14:10:00Z",
+      "closeTimeUtc": "2026-06-23T14:15:00Z",
+      "open": 29740.4,
+      "high": 29779.4,
+      "low": 29714.2,
+      "close": 29767.0,
+      "volume": 5288.0
+    },
+    {
+      "openTimeUtc": "2026-06-23T14:15:00Z",
+      "closeTimeUtc": "2026-06-23T14:20:00Z",
+      "open": 29767.1,
+      "high": 29787.4,
+      "low": 29742.9,
+      "close": 29777.7,
+      "volume": 5194.0
+    },
+    {
+      "openTimeUtc": "2026-06-23T14:20:00Z",
+      "closeTimeUtc": "2026-06-23T14:25:00Z",
+      "open": 29777.2,
+      "high": 29811.6,
+      "low": 29742.2,
+      "close": 29756.7,
+      "volume": 5129.0
+    },
+    {
+      "openTimeUtc": "2026-06-23T14:25:00Z",
+      "closeTimeUtc": "2026-06-23T14:30:00Z",
+      "open": 29756.1,
+      "high": 29766.9,
+      "low": 29705.7,
+      "close": 29747.9,
+      "volume": 5186.0
+    },
+    {
+      "openTimeUtc": "2026-06-23T14:30:00Z",
+      "closeTimeUtc": "2026-06-23T14:35:00Z",
+      "open": 29748.5,
+      "high": 29762.4,
+      "low": 29668.2,
+      "close": 29703.4,
+      "volume": 5113.0
+    },
+    {
+      "openTimeUtc": "2026-06-23T14:35:00Z",
+      "closeTimeUtc": "2026-06-23T14:40:00Z",
+      "open": 29703.7,
+      "high": 29762.4,
+      "low": 29659.2,
+      "close": 29665.7,
+      "volume": 5256.0
+    },
+    {
+      "openTimeUtc": "2026-06-23T14:40:00Z",
+      "closeTimeUtc": "2026-06-23T14:45:00Z",
+      "open": 29665.9,
+      "high": 29709.8,
+      "low": 29637.6,
+      "close": 29649.4,
+      "volume": 5204.0
+    },
+    {
+      "openTimeUtc": "2026-06-23T14:45:00Z",
+      "closeTimeUtc": "2026-06-23T14:50:00Z",
+      "open": 29649.9,
+      "high": 29664.8,
+      "low": 29597.5,
+      "close": 29634.1,
+      "volume": 5133.0
+    },
+    {
+      "openTimeUtc": "2026-06-23T14:50:00Z",
+      "closeTimeUtc": "2026-06-23T14:55:00Z",
+      "open": 29634.6,
+      "high": 29693.4,
+      "low": 29593.9,
+      "close": 29616.1,
+      "volume": 5205.0
+    },
+    {
+      "openTimeUtc": "2026-06-23T14:55:00Z",
+      "closeTimeUtc": "2026-06-23T15:00:00Z",
+      "open": 29615.1,
+      "high": 29629.9,
+      "low": 29578.2,
+      "close": 29618.9,
+      "volume": 5135.0
+    }
+  ]
+}

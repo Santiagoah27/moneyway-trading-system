@@ -1,0 +1,1694 @@
+{
+  "m5-20260623-1300-ascending-v1": {
+    "input": {
+      "seriesId": "m5-20260623-1300-ascending-v1",
+      "providerId": "oanda-global-markets-mt5-demo",
+      "symbol": "US100",
+      "timeframe": "5m",
+      "direction": "Ascending",
+      "evaluationCutoffUtc": "2026-06-23T14:00:00+00:00",
+      "initialization": {
+        "referenceId": "explicit-calendar-m5-20260623-1300-ascending-v1",
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "anchorOpenTimeUtc": "2026-06-23T13:00:00+00:00",
+        "availableAtUtc": "2026-06-23T13:05:00+00:00",
+        "sourceReference": "Research-only first-candle anchor; nominal close availability is assumed for calculation, not authenticated historical availability."
+      },
+      "initialImpulsePrice": 29510.2,
+      "initialImpulseClosedAtUtc": "2026-06-23T13:05:00+00:00",
+      "dataOrigin": "RetrospectiveDocumentary",
+      "provenance": "Fixed calendar-window research sample; native/normalized June export hashes independently matched. UTC mapping is documentary, not authenticated availability. First-candle anchor and alternating Ascending/Descending are research convenience assumptions, not mentor structural labels. No outcome-driven selection.",
+      "priceUnit": "NativeInstrumentPrice",
+      "historicalAvailability": "Unauthenticated_NotEstablishedByThisExperiment",
+      "coverage": "Bounded supplied sequence; previous means preceding supplied closed candle; completeness not authenticated; no gap filling"
+    },
+    "evidenceCandles": [
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T13:00:00+00:00",
+        "closeTimeUtc": "2026-06-23T13:05:00+00:00",
+        "open": 29499.4,
+        "high": 29510.2,
+        "low": 29473.2,
+        "close": 29483.6,
+        "volume": 3469.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T13:05:00+00:00",
+        "closeTimeUtc": "2026-06-23T13:10:00+00:00",
+        "open": 29483.9,
+        "high": 29494.4,
+        "low": 29467.1,
+        "close": 29477.4,
+        "volume": 3558.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T13:10:00+00:00",
+        "closeTimeUtc": "2026-06-23T13:15:00+00:00",
+        "open": 29477.8,
+        "high": 29510.0,
+        "low": 29457.4,
+        "close": 29499.7,
+        "volume": 3514.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T13:15:00+00:00",
+        "closeTimeUtc": "2026-06-23T13:20:00+00:00",
+        "open": 29500.1,
+        "high": 29501.3,
+        "low": 29463.2,
+        "close": 29495.7,
+        "volume": 3484.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T13:20:00+00:00",
+        "closeTimeUtc": "2026-06-23T13:25:00+00:00",
+        "open": 29495.6,
+        "high": 29519.6,
+        "low": 29490.9,
+        "close": 29509.9,
+        "volume": 3318.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T13:25:00+00:00",
+        "closeTimeUtc": "2026-06-23T13:30:00+00:00",
+        "open": 29503.9,
+        "high": 29503.9,
+        "low": 29441.2,
+        "close": 29484.2,
+        "volume": 4169.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T13:30:00+00:00",
+        "closeTimeUtc": "2026-06-23T13:35:00+00:00",
+        "open": 29484.1,
+        "high": 29536.9,
+        "low": 29381.7,
+        "close": 29532.7,
+        "volume": 5672.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T13:35:00+00:00",
+        "closeTimeUtc": "2026-06-23T13:40:00+00:00",
+        "open": 29531.9,
+        "high": 29561.5,
+        "low": 29436.2,
+        "close": 29544.7,
+        "volume": 5533.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T13:40:00+00:00",
+        "closeTimeUtc": "2026-06-23T13:45:00+00:00",
+        "open": 29544.4,
+        "high": 29570.3,
+        "low": 29503.8,
+        "close": 29520.1,
+        "volume": 5343.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T13:45:00+00:00",
+        "closeTimeUtc": "2026-06-23T13:50:00+00:00",
+        "open": 29519.1,
+        "high": 29621.6,
+        "low": 29490.2,
+        "close": 29582.6,
+        "volume": 5505.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T13:50:00+00:00",
+        "closeTimeUtc": "2026-06-23T13:55:00+00:00",
+        "open": 29583.2,
+        "high": 29680.0,
+        "low": 29582.1,
+        "close": 29642.2,
+        "volume": 5329.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T13:55:00+00:00",
+        "closeTimeUtc": "2026-06-23T14:00:00+00:00",
+        "open": 29641.2,
+        "high": 29698.6,
+        "low": 29609.5,
+        "close": 29691.6,
+        "volume": 5371.0
+      }
+    ]
+  },
+  "m5-20260623-1400-descending-v1": {
+    "input": {
+      "seriesId": "m5-20260623-1400-descending-v1",
+      "providerId": "oanda-global-markets-mt5-demo",
+      "symbol": "US100",
+      "timeframe": "5m",
+      "direction": "Descending",
+      "evaluationCutoffUtc": "2026-06-23T15:00:00+00:00",
+      "initialization": {
+        "referenceId": "explicit-calendar-m5-20260623-1400-descending-v1",
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "anchorOpenTimeUtc": "2026-06-23T14:00:00+00:00",
+        "availableAtUtc": "2026-06-23T14:05:00+00:00",
+        "sourceReference": "Research-only first-candle anchor; nominal close availability is assumed for calculation, not authenticated historical availability."
+      },
+      "initialImpulsePrice": 29686.7,
+      "initialImpulseClosedAtUtc": "2026-06-23T14:05:00+00:00",
+      "dataOrigin": "RetrospectiveDocumentary",
+      "provenance": "Fixed calendar-window research sample; native/normalized June export hashes independently matched. UTC mapping is documentary, not authenticated availability. First-candle anchor and alternating Ascending/Descending are research convenience assumptions, not mentor structural labels. No outcome-driven selection.",
+      "priceUnit": "NativeInstrumentPrice",
+      "historicalAvailability": "Unauthenticated_NotEstablishedByThisExperiment",
+      "coverage": "Bounded supplied sequence; previous means preceding supplied closed candle; completeness not authenticated; no gap filling"
+    },
+    "evidenceCandles": [
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T14:00:00+00:00",
+        "closeTimeUtc": "2026-06-23T14:05:00+00:00",
+        "open": 29691.4,
+        "high": 29768.1,
+        "low": 29686.7,
+        "close": 29750.1,
+        "volume": 5276.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T14:05:00+00:00",
+        "closeTimeUtc": "2026-06-23T14:10:00+00:00",
+        "open": 29750.2,
+        "high": 29762.1,
+        "low": 29699.3,
+        "close": 29740.4,
+        "volume": 5258.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T14:10:00+00:00",
+        "closeTimeUtc": "2026-06-23T14:15:00+00:00",
+        "open": 29740.4,
+        "high": 29779.4,
+        "low": 29714.2,
+        "close": 29767.0,
+        "volume": 5288.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T14:15:00+00:00",
+        "closeTimeUtc": "2026-06-23T14:20:00+00:00",
+        "open": 29767.1,
+        "high": 29787.4,
+        "low": 29742.9,
+        "close": 29777.7,
+        "volume": 5194.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T14:20:00+00:00",
+        "closeTimeUtc": "2026-06-23T14:25:00+00:00",
+        "open": 29777.2,
+        "high": 29811.6,
+        "low": 29742.2,
+        "close": 29756.7,
+        "volume": 5129.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T14:25:00+00:00",
+        "closeTimeUtc": "2026-06-23T14:30:00+00:00",
+        "open": 29756.1,
+        "high": 29766.9,
+        "low": 29705.7,
+        "close": 29747.9,
+        "volume": 5186.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T14:30:00+00:00",
+        "closeTimeUtc": "2026-06-23T14:35:00+00:00",
+        "open": 29748.5,
+        "high": 29762.4,
+        "low": 29668.2,
+        "close": 29703.4,
+        "volume": 5113.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T14:35:00+00:00",
+        "closeTimeUtc": "2026-06-23T14:40:00+00:00",
+        "open": 29703.7,
+        "high": 29762.4,
+        "low": 29659.2,
+        "close": 29665.7,
+        "volume": 5256.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T14:40:00+00:00",
+        "closeTimeUtc": "2026-06-23T14:45:00+00:00",
+        "open": 29665.9,
+        "high": 29709.8,
+        "low": 29637.6,
+        "close": 29649.4,
+        "volume": 5204.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T14:45:00+00:00",
+        "closeTimeUtc": "2026-06-23T14:50:00+00:00",
+        "open": 29649.9,
+        "high": 29664.8,
+        "low": 29597.5,
+        "close": 29634.1,
+        "volume": 5133.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T14:50:00+00:00",
+        "closeTimeUtc": "2026-06-23T14:55:00+00:00",
+        "open": 29634.6,
+        "high": 29693.4,
+        "low": 29593.9,
+        "close": 29616.1,
+        "volume": 5205.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-23T14:55:00+00:00",
+        "closeTimeUtc": "2026-06-23T15:00:00+00:00",
+        "open": 29615.1,
+        "high": 29629.9,
+        "low": 29578.2,
+        "close": 29618.9,
+        "volume": 5135.0
+      }
+    ]
+  },
+  "m5-20260625-1300-ascending-v1": {
+    "input": {
+      "seriesId": "m5-20260625-1300-ascending-v1",
+      "providerId": "oanda-global-markets-mt5-demo",
+      "symbol": "US100",
+      "timeframe": "5m",
+      "direction": "Ascending",
+      "evaluationCutoffUtc": "2026-06-25T14:00:00+00:00",
+      "initialization": {
+        "referenceId": "explicit-calendar-m5-20260625-1300-ascending-v1",
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "anchorOpenTimeUtc": "2026-06-25T13:00:00+00:00",
+        "availableAtUtc": "2026-06-25T13:05:00+00:00",
+        "sourceReference": "Research-only first-candle anchor; nominal close availability is assumed for calculation, not authenticated historical availability."
+      },
+      "initialImpulsePrice": 29992.1,
+      "initialImpulseClosedAtUtc": "2026-06-25T13:05:00+00:00",
+      "dataOrigin": "RetrospectiveDocumentary",
+      "provenance": "Fixed calendar-window research sample; native/normalized June export hashes independently matched. UTC mapping is documentary, not authenticated availability. First-candle anchor and alternating Ascending/Descending are research convenience assumptions, not mentor structural labels. No outcome-driven selection.",
+      "priceUnit": "NativeInstrumentPrice",
+      "historicalAvailability": "Unauthenticated_NotEstablishedByThisExperiment",
+      "coverage": "Bounded supplied sequence; previous means preceding supplied closed candle; completeness not authenticated; no gap filling"
+    },
+    "evidenceCandles": [
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T13:00:00+00:00",
+        "closeTimeUtc": "2026-06-25T13:05:00+00:00",
+        "open": 29981.6,
+        "high": 29992.1,
+        "low": 29949.6,
+        "close": 29955.1,
+        "volume": 3363.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T13:05:00+00:00",
+        "closeTimeUtc": "2026-06-25T13:10:00+00:00",
+        "open": 29955.0,
+        "high": 29957.2,
+        "low": 29930.9,
+        "close": 29932.7,
+        "volume": 3048.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T13:10:00+00:00",
+        "closeTimeUtc": "2026-06-25T13:15:00+00:00",
+        "open": 29932.6,
+        "high": 29945.8,
+        "low": 29921.4,
+        "close": 29940.9,
+        "volume": 2710.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T13:15:00+00:00",
+        "closeTimeUtc": "2026-06-25T13:20:00+00:00",
+        "open": 29941.1,
+        "high": 29942.1,
+        "low": 29914.4,
+        "close": 29920.2,
+        "volume": 3004.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T13:20:00+00:00",
+        "closeTimeUtc": "2026-06-25T13:25:00+00:00",
+        "open": 29920.8,
+        "high": 29930.2,
+        "low": 29909.1,
+        "close": 29918.2,
+        "volume": 2821.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T13:25:00+00:00",
+        "closeTimeUtc": "2026-06-25T13:30:00+00:00",
+        "open": 29918.4,
+        "high": 29956.2,
+        "low": 29918.4,
+        "close": 29928.9,
+        "volume": 3304.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T13:30:00+00:00",
+        "closeTimeUtc": "2026-06-25T13:35:00+00:00",
+        "open": 29929.5,
+        "high": 29968.6,
+        "low": 29817.4,
+        "close": 29835.7,
+        "volume": 5520.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T13:35:00+00:00",
+        "closeTimeUtc": "2026-06-25T13:40:00+00:00",
+        "open": 29836.2,
+        "high": 29867.6,
+        "low": 29769.9,
+        "close": 29774.1,
+        "volume": 5382.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T13:40:00+00:00",
+        "closeTimeUtc": "2026-06-25T13:45:00+00:00",
+        "open": 29773.6,
+        "high": 29787.7,
+        "low": 29524.4,
+        "close": 29544.8,
+        "volume": 5434.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T13:45:00+00:00",
+        "closeTimeUtc": "2026-06-25T13:50:00+00:00",
+        "open": 29545.2,
+        "high": 29593.4,
+        "low": 29307.6,
+        "close": 29414.2,
+        "volume": 5706.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T13:50:00+00:00",
+        "closeTimeUtc": "2026-06-25T13:55:00+00:00",
+        "open": 29414.7,
+        "high": 29460.9,
+        "low": 29184.7,
+        "close": 29198.1,
+        "volume": 5718.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T13:55:00+00:00",
+        "closeTimeUtc": "2026-06-25T14:00:00+00:00",
+        "open": 29197.3,
+        "high": 29239.1,
+        "low": 29074.9,
+        "close": 29092.7,
+        "volume": 5742.0
+      }
+    ]
+  },
+  "m5-20260625-1400-descending-v1": {
+    "input": {
+      "seriesId": "m5-20260625-1400-descending-v1",
+      "providerId": "oanda-global-markets-mt5-demo",
+      "symbol": "US100",
+      "timeframe": "5m",
+      "direction": "Descending",
+      "evaluationCutoffUtc": "2026-06-25T15:00:00+00:00",
+      "initialization": {
+        "referenceId": "explicit-calendar-m5-20260625-1400-descending-v1",
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "anchorOpenTimeUtc": "2026-06-25T14:00:00+00:00",
+        "availableAtUtc": "2026-06-25T14:05:00+00:00",
+        "sourceReference": "Research-only first-candle anchor; nominal close availability is assumed for calculation, not authenticated historical availability."
+      },
+      "initialImpulsePrice": 29088.2,
+      "initialImpulseClosedAtUtc": "2026-06-25T14:05:00+00:00",
+      "dataOrigin": "RetrospectiveDocumentary",
+      "provenance": "Fixed calendar-window research sample; native/normalized June export hashes independently matched. UTC mapping is documentary, not authenticated availability. First-candle anchor and alternating Ascending/Descending are research convenience assumptions, not mentor structural labels. No outcome-driven selection.",
+      "priceUnit": "NativeInstrumentPrice",
+      "historicalAvailability": "Unauthenticated_NotEstablishedByThisExperiment",
+      "coverage": "Bounded supplied sequence; previous means preceding supplied closed candle; completeness not authenticated; no gap filling"
+    },
+    "evidenceCandles": [
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T14:00:00+00:00",
+        "closeTimeUtc": "2026-06-25T14:05:00+00:00",
+        "open": 29094.4,
+        "high": 29320.4,
+        "low": 29088.2,
+        "close": 29263.9,
+        "volume": 5705.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T14:05:00+00:00",
+        "closeTimeUtc": "2026-06-25T14:10:00+00:00",
+        "open": 29265.3,
+        "high": 29391.7,
+        "low": 29263.4,
+        "close": 29382.5,
+        "volume": 5610.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T14:10:00+00:00",
+        "closeTimeUtc": "2026-06-25T14:15:00+00:00",
+        "open": 29381.8,
+        "high": 29466.7,
+        "low": 29319.9,
+        "close": 29325.2,
+        "volume": 5567.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T14:15:00+00:00",
+        "closeTimeUtc": "2026-06-25T14:20:00+00:00",
+        "open": 29324.1,
+        "high": 29393.2,
+        "low": 29255.6,
+        "close": 29388.6,
+        "volume": 5581.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T14:20:00+00:00",
+        "closeTimeUtc": "2026-06-25T14:25:00+00:00",
+        "open": 29388.5,
+        "high": 29462.2,
+        "low": 29302.1,
+        "close": 29347.0,
+        "volume": 5606.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T14:25:00+00:00",
+        "closeTimeUtc": "2026-06-25T14:30:00+00:00",
+        "open": 29346.5,
+        "high": 29415.0,
+        "low": 29330.2,
+        "close": 29364.6,
+        "volume": 5492.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T14:30:00+00:00",
+        "closeTimeUtc": "2026-06-25T14:35:00+00:00",
+        "open": 29364.5,
+        "high": 29493.1,
+        "low": 29361.2,
+        "close": 29446.0,
+        "volume": 5536.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T14:35:00+00:00",
+        "closeTimeUtc": "2026-06-25T14:40:00+00:00",
+        "open": 29444.6,
+        "high": 29486.7,
+        "low": 29384.5,
+        "close": 29476.1,
+        "volume": 5376.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T14:40:00+00:00",
+        "closeTimeUtc": "2026-06-25T14:45:00+00:00",
+        "open": 29476.2,
+        "high": 29488.3,
+        "low": 29342.0,
+        "close": 29381.5,
+        "volume": 5431.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T14:45:00+00:00",
+        "closeTimeUtc": "2026-06-25T14:50:00+00:00",
+        "open": 29382.3,
+        "high": 29461.9,
+        "low": 29340.1,
+        "close": 29449.6,
+        "volume": 5388.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T14:50:00+00:00",
+        "closeTimeUtc": "2026-06-25T14:55:00+00:00",
+        "open": 29448.4,
+        "high": 29552.6,
+        "low": 29423.4,
+        "close": 29548.2,
+        "volume": 5255.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-25T14:55:00+00:00",
+        "closeTimeUtc": "2026-06-25T15:00:00+00:00",
+        "open": 29548.1,
+        "high": 29548.8,
+        "low": 29390.4,
+        "close": 29411.4,
+        "volume": 5232.0
+      }
+    ]
+  },
+  "previously-exposed-june29": {
+    "input": {
+      "seriesId": "june29-us100-1300-1500-documentary-v1",
+      "providerId": "oanda-global-markets-mt5-demo",
+      "symbol": "US100",
+      "timeframe": "5m",
+      "direction": "Ascending",
+      "evaluationCutoffUtc": "2026-06-29T15:00:00+00:00",
+      "initialization": {
+        "referenceId": "researcher-explicit-june29-1300",
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "anchorOpenTimeUtc": "2026-06-29T13:00:00+00:00",
+        "availableAtUtc": "2026-06-29T13:05:00+00:00",
+        "sourceReference": "Research assumption only: anchor declared available at nominal close for isolated retrospective calculation; no historical availability attestation. High 29507.9 is the original native price."
+      },
+      "initialImpulsePrice": 29507.9,
+      "initialImpulseClosedAtUtc": "2026-06-29T13:05:00+00:00",
+      "dataOrigin": "RetrospectiveDocumentary",
+      "provenance": "Real retained OANDA Global Markets MT5 demo export; June package documentary only. Native server minus 3h is the existing documentary mapping, not authenticated UTC availability. Original native rows: docs/data/strategy-lab/m5-swing-v2/june29-native-source.tsv. Explicit researcher-selected 13:00-15:00Z interval and first-candle ascending anchor for data inspection, not a mentor label or autonomous initialization; chosen before detector execution.",
+      "priceUnit": "NativeInstrumentPrice",
+      "historicalAvailability": "Unauthenticated_NotEstablishedByThisExperiment",
+      "coverage": "Bounded supplied sequence; previous means preceding supplied closed candle; completeness not authenticated; no gap filling"
+    },
+    "evidenceCandles": [
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T13:00:00+00:00",
+        "closeTimeUtc": "2026-06-29T13:05:00+00:00",
+        "open": 29492.5,
+        "high": 29507.9,
+        "low": 29488.4,
+        "close": 29494.3,
+        "volume": 2540.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T13:05:00+00:00",
+        "closeTimeUtc": "2026-06-29T13:10:00+00:00",
+        "open": 29494.9,
+        "high": 29511.6,
+        "low": 29492.3,
+        "close": 29500.6,
+        "volume": 2339.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T13:10:00+00:00",
+        "closeTimeUtc": "2026-06-29T13:15:00+00:00",
+        "open": 29500.5,
+        "high": 29520.8,
+        "low": 29497.3,
+        "close": 29514.6,
+        "volume": 2407.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T13:15:00+00:00",
+        "closeTimeUtc": "2026-06-29T13:20:00+00:00",
+        "open": 29514.8,
+        "high": 29520.1,
+        "low": 29499.9,
+        "close": 29501.1,
+        "volume": 2307.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T13:20:00+00:00",
+        "closeTimeUtc": "2026-06-29T13:25:00+00:00",
+        "open": 29501.1,
+        "high": 29502.1,
+        "low": 29460.9,
+        "close": 29463.6,
+        "volume": 2712.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T13:25:00+00:00",
+        "closeTimeUtc": "2026-06-29T13:30:00+00:00",
+        "open": 29464.3,
+        "high": 29468.3,
+        "low": 29418.1,
+        "close": 29431.7,
+        "volume": 3515.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T13:30:00+00:00",
+        "closeTimeUtc": "2026-06-29T13:35:00+00:00",
+        "open": 29431.7,
+        "high": 29555.1,
+        "low": 29345.9,
+        "close": 29550.7,
+        "volume": 5587.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T13:35:00+00:00",
+        "closeTimeUtc": "2026-06-29T13:40:00+00:00",
+        "open": 29548.3,
+        "high": 29553.3,
+        "low": 29423.8,
+        "close": 29496.6,
+        "volume": 5516.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T13:40:00+00:00",
+        "closeTimeUtc": "2026-06-29T13:45:00+00:00",
+        "open": 29497.9,
+        "high": 29582.1,
+        "low": 29464.1,
+        "close": 29572.3,
+        "volume": 5434.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T13:45:00+00:00",
+        "closeTimeUtc": "2026-06-29T13:50:00+00:00",
+        "open": 29573.4,
+        "high": 29611.3,
+        "low": 29535.7,
+        "close": 29555.1,
+        "volume": 5297.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T13:50:00+00:00",
+        "closeTimeUtc": "2026-06-29T13:55:00+00:00",
+        "open": 29555.0,
+        "high": 29624.8,
+        "low": 29509.0,
+        "close": 29549.3,
+        "volume": 5364.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T13:55:00+00:00",
+        "closeTimeUtc": "2026-06-29T14:00:00+00:00",
+        "open": 29548.8,
+        "high": 29562.6,
+        "low": 29366.3,
+        "close": 29406.1,
+        "volume": 5487.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T14:00:00+00:00",
+        "closeTimeUtc": "2026-06-29T14:05:00+00:00",
+        "open": 29406.3,
+        "high": 29418.4,
+        "low": 29320.2,
+        "close": 29330.8,
+        "volume": 5484.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T14:05:00+00:00",
+        "closeTimeUtc": "2026-06-29T14:10:00+00:00",
+        "open": 29330.6,
+        "high": 29339.2,
+        "low": 29239.9,
+        "close": 29286.8,
+        "volume": 5509.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T14:10:00+00:00",
+        "closeTimeUtc": "2026-06-29T14:15:00+00:00",
+        "open": 29285.8,
+        "high": 29302.0,
+        "low": 29116.3,
+        "close": 29117.8,
+        "volume": 5520.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T14:15:00+00:00",
+        "closeTimeUtc": "2026-06-29T14:20:00+00:00",
+        "open": 29114.9,
+        "high": 29174.2,
+        "low": 29062.0,
+        "close": 29169.9,
+        "volume": 5563.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T14:20:00+00:00",
+        "closeTimeUtc": "2026-06-29T14:25:00+00:00",
+        "open": 29170.0,
+        "high": 29224.1,
+        "low": 29126.5,
+        "close": 29189.5,
+        "volume": 5538.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T14:25:00+00:00",
+        "closeTimeUtc": "2026-06-29T14:30:00+00:00",
+        "open": 29189.6,
+        "high": 29336.8,
+        "low": 29179.4,
+        "close": 29332.4,
+        "volume": 5384.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T14:30:00+00:00",
+        "closeTimeUtc": "2026-06-29T14:35:00+00:00",
+        "open": 29333.3,
+        "high": 29439.8,
+        "low": 29314.8,
+        "close": 29420.3,
+        "volume": 5362.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T14:35:00+00:00",
+        "closeTimeUtc": "2026-06-29T14:40:00+00:00",
+        "open": 29419.9,
+        "high": 29429.6,
+        "low": 29347.9,
+        "close": 29375.2,
+        "volume": 5369.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T14:40:00+00:00",
+        "closeTimeUtc": "2026-06-29T14:45:00+00:00",
+        "open": 29374.9,
+        "high": 29411.8,
+        "low": 29351.1,
+        "close": 29366.1,
+        "volume": 5306.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T14:45:00+00:00",
+        "closeTimeUtc": "2026-06-29T14:50:00+00:00",
+        "open": 29365.9,
+        "high": 29371.0,
+        "low": 29286.2,
+        "close": 29358.6,
+        "volume": 5373.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T14:50:00+00:00",
+        "closeTimeUtc": "2026-06-29T14:55:00+00:00",
+        "open": 29358.8,
+        "high": 29474.6,
+        "low": 29355.3,
+        "close": 29461.8,
+        "volume": 5316.0
+      },
+      {
+        "providerId": {
+          "value": "oanda-global-markets-mt5-demo"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-06-29T14:55:00+00:00",
+        "closeTimeUtc": "2026-06-29T15:00:00+00:00",
+        "open": 29461.1,
+        "high": 29503.6,
+        "low": 29431.4,
+        "close": 29502.4,
+        "volume": 5159.0
+      }
+    ]
+  },
+  "software-synthetic": {
+    "input": {
+      "seriesId": "synthetic-m5-swing-disagreement-v1",
+      "providerId": "moneyway-synthetic-lab",
+      "symbol": "US100",
+      "timeframe": "5m",
+      "direction": "Ascending",
+      "evaluationCutoffUtc": "2026-11-19T13:30:00+00:00",
+      "initialization": {
+        "referenceId": "synthetic-explicit-anchor",
+        "providerId": {
+          "value": "moneyway-synthetic-lab"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "anchorOpenTimeUtc": "2026-11-19T13:00:00+00:00",
+        "availableAtUtc": "2026-11-19T13:05:00+00:00",
+        "sourceReference": "synthetic:explicit initial impulse candle; not automatically selected"
+      },
+      "initialImpulsePrice": 110,
+      "initialImpulseClosedAtUtc": "2026-11-19T13:05:00+00:00",
+      "dataOrigin": "Synthetic",
+      "provenance": "Controlled synthetic OHLC for hypothesis disagreement; not mentor-labelled or authentic market activity",
+      "priceUnit": "NativeInstrumentPrice",
+      "historicalAvailability": "Unauthenticated_NotEstablishedByThisExperiment",
+      "coverage": "Bounded supplied sequence; previous means preceding supplied closed candle; completeness not authenticated; no gap filling"
+    },
+    "evidenceCandles": [
+      {
+        "providerId": {
+          "value": "moneyway-synthetic-lab"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-11-19T13:00:00+00:00",
+        "closeTimeUtc": "2026-11-19T13:05:00+00:00",
+        "open": 100,
+        "high": 110,
+        "low": 95,
+        "close": 108,
+        "volume": null
+      },
+      {
+        "providerId": {
+          "value": "moneyway-synthetic-lab"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-11-19T13:05:00+00:00",
+        "closeTimeUtc": "2026-11-19T13:10:00+00:00",
+        "open": 108,
+        "high": 109,
+        "low": 96,
+        "close": 107,
+        "volume": null
+      },
+      {
+        "providerId": {
+          "value": "moneyway-synthetic-lab"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-11-19T13:10:00+00:00",
+        "closeTimeUtc": "2026-11-19T13:15:00+00:00",
+        "open": 100,
+        "high": 108,
+        "low": 90,
+        "close": 106,
+        "volume": null
+      },
+      {
+        "providerId": {
+          "value": "moneyway-synthetic-lab"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-11-19T13:15:00+00:00",
+        "closeTimeUtc": "2026-11-19T13:20:00+00:00",
+        "open": 103,
+        "high": 109,
+        "low": 94,
+        "close": 108,
+        "volume": null
+      },
+      {
+        "providerId": {
+          "value": "moneyway-synthetic-lab"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-11-19T13:20:00+00:00",
+        "closeTimeUtc": "2026-11-19T13:25:00+00:00",
+        "open": 108,
+        "high": 109,
+        "low": 93,
+        "close": 105,
+        "volume": null
+      },
+      {
+        "providerId": {
+          "value": "moneyway-synthetic-lab"
+        },
+        "symbol": {
+          "value": "US100"
+        },
+        "timeframe": {
+          "amount": 5,
+          "unit": "Minute"
+        },
+        "openTimeUtc": "2026-11-19T13:25:00+00:00",
+        "closeTimeUtc": "2026-11-19T13:30:00+00:00",
+        "open": 105,
+        "high": 112,
+        "low": 80,
+        "close": 110.01,
+        "volume": null
+      }
+    ]
+  }
+}

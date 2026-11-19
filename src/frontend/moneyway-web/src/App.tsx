@@ -6,6 +6,7 @@ import type { SystemStatus } from "./types/system";
 import "./App.css";
 import { NasdaqHistoricalDemo } from "./NasdaqHistoricalDemo";
 import { StrategyLab } from "./research/StrategyLab";
+import { BlindReview } from "./research/blind/BlindReview";
 
 type ApiState = "loading" | "connected" | "disconnected";
 type DefinitionsState = "loading" | "success" | "error";
@@ -240,5 +241,11 @@ export default function App() {
         window.addEventListener("hashchange", navigate);
         return () => window.removeEventListener("hashchange", navigate);
     }, []);
-    return route === "#strategy-lab" ? <StrategyLab /> : <ProductHome />;
+    return route === "#strategy-lab-blind" ? (
+        <BlindReview />
+    ) : route === "#strategy-lab" ? (
+        <StrategyLab />
+    ) : (
+        <ProductHome />
+    );
 }

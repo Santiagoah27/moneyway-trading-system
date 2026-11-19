@@ -146,6 +146,15 @@ both resources and compare exact bytes and source input hashes.
 
 ## Acceptance and next step
 
+Human follow-up, 2026-11-19: the user explicitly reports eight passed browser
+checks: dedicated navigation, OHLC rendering, candle inspection, structural
+reference visualization, discrepancy comparison, formation/confirmation distinction,
+overlay toggles and authentic documentary episode selection/rendering. The user
+approved V2 as the basis for continued development. This is user-reported manual
+acceptance, not automated browser verification, algorithm accuracy or authenticated
+market-data admission. Screenshot bytes were not supplied with this acceptance.
+See [V3 multi-episode review](m5-blind-validation-v3.md) for the subsequent feature.
+
 Manual visual acceptance:
 
 1. Open the direct route with the API stopped. The synthetic chart must render
