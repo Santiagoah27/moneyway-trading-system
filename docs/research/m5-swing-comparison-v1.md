@@ -1,5 +1,9 @@
 # Strategy Lab: experimental M5 swing comparison V1
 
+Follow-up: [Strategy Lab V2 OHLC viewer](m5-swing-viewer-v2.md) now displays these
+unchanged results and an explicitly initialized retrospective documentary episode.
+The original V1 execution record below remains historical.
+
 This is isolated MoneyWay hypothesis research authorized on 2026-11-19, not a
 mentor-rule correction, operational strategy evaluation or candidate activation.
 [ADR 0027](../decisions/0027-permit-isolated-experimental-strategy-hypotheses.md)

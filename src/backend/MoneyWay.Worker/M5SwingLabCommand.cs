@@ -45,7 +45,7 @@ public sealed class M5SwingLabCommand
             var init = request.Initialization is { } i ? new M5ImpulseInitialization(i.ReferenceId, provider, symbol, timeframe, i.AnchorOpenTimeUtc, i.AvailableAtUtc, i.SourceReference) : null;
             var comparison = new CompareM5SwingHypothesesUseCase().Execute(new(request.SeriesId, series, request.Direction, request.CutoffUtc, init, request.DataOrigin, request.Provenance));
             var envelope = new { inputSha256 = Convert.ToHexStringLower(SHA256.HashData(bytes)), inputHashMeaning = "Input byte integrity only; not evidence authentication or temporal admission", comparison };
-            var json = JsonSerializer.Serialize(envelope, Json) + "\n"; var markdown = M5SwingComparisonMarkdown.Render(comparison);
+            var json = JsonSerializer.Serialize(envelope, Json).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n"; var markdown = M5SwingComparisonMarkdown.Render(comparison);
             // Atomic new-directory publication. Both absolute paths are constrained to the explicitly requested parent.
             var parent = Path.GetDirectoryName(destination) ?? throw new ArgumentException("Output parent required.");
             Directory.CreateDirectory(parent); Guard(parent);

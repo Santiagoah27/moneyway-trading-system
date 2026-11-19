@@ -2,3 +2,7 @@
 docs/data/nasdaq/packages/*.json text eol=lf
 # Synthetic Strategy Lab fixtures have reproducible byte identities.
 docs/data/strategy-lab/**/*.json text eol=lf
+docs/data/strategy-lab/**/*.tsv text eol=lf
+# Viewer resources are exact, generated Worker report bytes.
+src/frontend/moneyway-web/src/research/reports/*.json text eol=lf
+src/frontend/moneyway-web/src/research/reports/*.tsv text eol=lf

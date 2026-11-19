@@ -5,6 +5,7 @@ import type { StrategyDefinition } from "./types/strategyDefinitions";
 import type { SystemStatus } from "./types/system";
 import "./App.css";
 import { NasdaqHistoricalDemo } from "./NasdaqHistoricalDemo";
+import { StrategyLab } from "./research/StrategyLab";
 
 type ApiState = "loading" | "connected" | "disconnected";
 type DefinitionsState = "loading" | "success" | "error";
@@ -95,7 +96,7 @@ function StrategyCard({ definition }: { definition: StrategyDefinition }) {
     );
 }
 
-export default function App() {
+function ProductHome() {
     const [apiState, setApiState] = useState<ApiState>("loading");
     const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
     const [definitionsState, setDefinitionsState] =
@@ -154,6 +155,11 @@ export default function App() {
                     Supervised · Auditable · Execution disabled
                 </p>
                 <h1>MoneyWay Trading System</h1>
+                <p>
+                    <a href="#strategy-lab">
+                        Abrir Strategy Lab · comparación experimental M5
+                    </a>
+                </p>
                 <a href="#nasdaq-historical-demo">
                     Abrir demo histórica Nasdaq
                 </a>
@@ -225,4 +231,14 @@ export default function App() {
             </aside>
         </main>
     );
+}
+
+export default function App() {
+    const [route, setRoute] = useState(window.location.hash);
+    useEffect(() => {
+        const navigate = () => setRoute(window.location.hash);
+        window.addEventListener("hashchange", navigate);
+        return () => window.removeEventListener("hashchange", navigate);
+    }, []);
+    return route === "#strategy-lab" ? <StrategyLab /> : <ProductHome />;
 }
