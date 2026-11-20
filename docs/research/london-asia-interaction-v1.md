@@ -1,5 +1,10 @@
 # Descriptive London–Asia H1 interaction
 
+Subsequent research: [contextual liquidity tracking V1](contextual-liquidity-tracking-v1.md)
+reuses these unchanged H1 observations and exact predicates, while tracking a
+separate candidate inventory on explicit closed M5 sources. It does not reinterpret
+this H1 result as an operational take or modify either published candidate.
+
 Source: direct user task `67059360-6f02-4d85-ba08-62b73a7a7d3b`, 2026-11-19,
 under [ADR 0027](../decisions/0027-permit-isolated-experimental-strategy-hypotheses.md).
 `EXP-NQ-LONDON-ASIA-INTERACTION-V1`, version `1.0.0`, is isolated descriptive

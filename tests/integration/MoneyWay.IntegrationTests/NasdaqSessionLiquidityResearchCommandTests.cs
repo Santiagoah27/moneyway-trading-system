@@ -18,6 +18,70 @@ public sealed class NasdaqSessionLiquidityResearchCommandTests : IDisposable
     private static string Hash(string path) => Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(path)));
     private static int Run(string input, string output) => new NasdaqSessionLiquidityResearchCommand().Execute(["nasdaq-session-liquidity", "--input", input, "--output", output], TextWriter.Null, TextWriter.Null);
     private static int Interactions(string input, string output) => new NasdaqSessionLiquidityResearchCommand().Execute(["nasdaq-session-liquidity", "--input", input, "--output", output, "--analyze-interaction"], TextWriter.Null, TextWriter.Null);
+    private static int Tracking(string input, string output) => new NasdaqSessionLiquidityResearchCommand().Execute(["nasdaq-session-liquidity", "--input", input, "--output", output, "--track-context"], TextWriter.Null, TextWriter.Null);
+
+    [Fact]
+    public void ContextTrackingReproducesRealInventoryFullSequenceAndExactOpenBoundaryWithoutApproval()
+    {
+        var hash = Hash(ContextPath); var target = Path.Combine(owned, "tracking"); Assert.Equal(0, Tracking(ContextPath, target));
+        var golden = Path.Combine(Root(), "docs/data/strategy-lab/liquidity-context-v1");
+        var bytes = File.ReadAllBytes(Path.Combine(target, "liquidity-context.json"));
+        Assert.Equal(File.ReadAllBytes(Path.Combine(golden, "june23.json")), bytes);
+        Assert.Equal(File.ReadAllBytes(Path.Combine(golden, "june23.md")), File.ReadAllBytes(Path.Combine(target, "liquidity-context.md")));
+        using var json = JsonDocument.Parse(bytes); var root = json.RootElement; var r = root.GetProperty("tracking");
+        Assert.Equal(hash, root.GetProperty("inputSha256").GetString()); Assert.False(r.GetProperty("canonicalAdmissionPermitted").GetBoolean()); Assert.False(r.GetProperty("operationalSignal").GetBoolean());
+        Assert.Equal("EXP-NQ-LIQ-CONTEXT-V1", r.GetProperty("algorithmId").GetString());
+        var refs = r.GetProperty("references").EnumerateArray().ToArray(); Assert.Equal(4, refs.Length);
+        Assert.Equal(new decimal[] { 30463.9m, 29715.2m, 29818.6m, 29472.7m }, refs.Select(t => t.GetProperty("reference").GetProperty("price").GetDecimal()));
+        Assert.Equal(new[] { 114, 114, 42, 42 }, refs.Select(t => t.GetProperty("observations").GetArrayLength()));
+        Assert.Equal(4, refs.Select(t => t.GetProperty("reference").GetProperty("id").GetString()).Distinct().Count());
+        Assert.All(refs, t => Assert.Equal("CompleteThroughLastClosedInterval", t.GetProperty("observationCoverage").GetString()));
+        Assert.Equal("AsiaLowOnlyPenetrated", r.GetProperty("londonHistoricalContext").GetProperty("completedClassification").GetString());
+        var ll = refs.Single(t => t.GetProperty("reference").GetProperty("category").GetString() == "LL");
+        Assert.True(ll.GetProperty("penetrationObservedBeforeOpen").GetBoolean()); Assert.Equal(4, ll.GetProperty("penetrationsAvailableAtOrAfterOpen").GetInt32());
+        var first = ll.GetProperty("firstObservedPenetration"); var c = first.GetProperty("candle");
+        Assert.Equal(new DateTimeOffset(2026, 6, 23, 13, 5, 0, TimeSpan.Zero), c.GetProperty("openTimeUtc").GetDateTimeOffset());
+        Assert.Equal(new DateTimeOffset(2026, 6, 23, 13, 10, 0, TimeSpan.Zero), first.GetProperty("availableAtUtc").GetDateTimeOffset());
+        Assert.Equal(29483.9m, c.GetProperty("open").GetDecimal()); Assert.Equal(29494.4m, c.GetProperty("high").GetDecimal());
+        Assert.Equal(29467.1m, c.GetProperty("low").GetDecimal()); Assert.Equal(29477.4m, c.GetProperty("close").GetDecimal());
+        var observations = ll.GetProperty("observations").EnumerateArray().ToArray();
+        var boundary = observations.Single(o => o.GetProperty("candle").GetProperty("openTimeUtc").GetDateTimeOffset().Minute == 25 && o.GetProperty("candle").GetProperty("openTimeUtc").GetDateTimeOffset().Hour == 13);
+        Assert.Equal("Preparation", boundary.GetProperty("intervalPhase").GetString()); Assert.Equal("Observation", boundary.GetProperty("availabilityPhase").GetString());
+        Assert.Equal(3, boundary.GetProperty("priorPenetrationCount").GetInt32());
+        var subsequent = observations.Single(o => o.GetProperty("candle").GetProperty("openTimeUtc").GetDateTimeOffset() == new DateTimeOffset(2026, 6, 23, 13, 30, 0, TimeSpan.Zero));
+        Assert.True(subsequent.GetProperty("priorPenetrationBeforeOpen").GetBoolean()); Assert.Equal(4, subsequent.GetProperty("priorPenetrationCount").GetInt32());
+        var repeat = Path.Combine(owned, "repeat"); Assert.Equal(0, Tracking(ContextPath, repeat)); Assert.Equal(bytes, File.ReadAllBytes(Path.Combine(repeat, "liquidity-context.json")));
+        Assert.Equal(2, Tracking(ContextPath, target)); Assert.Equal(hash, Hash(ContextPath));
+        Assert.DoesNotContain("2026-06-25T", System.Text.Encoding.UTF8.GetString(bytes)); Assert.DoesNotContain("2026-06-30T", System.Text.Encoding.UTF8.GetString(bytes));
+    }
+
+    [Fact]
+    public void TrackingMarkdownAndReferenceIdentitiesAreCultureIndependent()
+    {
+        var old = System.Globalization.CultureInfo.CurrentCulture;
+        try
+        {
+            System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("es-CO");
+            var target = Path.Combine(owned, "spanish"); Assert.Equal(0, Tracking(ContextPath, target));
+            Assert.Equal(File.ReadAllBytes(Path.Combine(Root(), "docs/data/strategy-lab/liquidity-context-v1/june23.md")), File.ReadAllBytes(Path.Combine(target, "liquidity-context.md")));
+            Assert.Equal(File.ReadAllBytes(Path.Combine(Root(), "docs/data/strategy-lab/liquidity-context-v1/june23.json")), File.ReadAllBytes(Path.Combine(target, "liquidity-context.json")));
+        }
+        finally { System.Globalization.CultureInfo.CurrentCulture = old; }
+    }
+
+    [Fact]
+    public void ExplicitEarlierTrackingCutoffCannotConsumeLaterSourceRowsOrTheirPrices()
+    {
+        Directory.CreateDirectory(owned); var root = JsonNode.Parse(File.ReadAllText(ContextPath))!;
+        root["maximumCutoffUtc"] = "2026-06-23T13:25:00Z";
+        var input = Path.Combine(owned, "earlier.json"); File.WriteAllText(input, root.ToJsonString());
+        var target = Path.Combine(owned, "earlier"); Assert.Equal(0, Tracking(input, target));
+        using var before = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(target, "liquidity-context.json")));
+        var later = root["series"]!["M5"]!["candles"]!.AsArray().First(c => c!["openTimeUtc"]!.GetValue<string>().StartsWith("2026-06-23T15:40"))!;
+        later["low"] = 1; File.WriteAllText(input, root.ToJsonString()); var after = Path.Combine(owned, "changed-future"); Assert.Equal(0, Tracking(input, after));
+        using var changed = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(after, "liquidity-context.json")));
+        Assert.True(JsonElement.DeepEquals(before.RootElement.GetProperty("tracking"), changed.RootElement.GetProperty("tracking")));
+    }
 
     [Fact]
     public void AuthenticInteractionReportReproducesWithFirstOhlcObservationAndNoRetroactiveFinalClassification()

@@ -5,6 +5,7 @@ docs/data/strategy-lab/**/*.json text eol=lf
 docs/data/strategy-lab/**/*.tsv text eol=lf
 # Paired Markdown reports also reproduce the exact generated Worker bytes.
 docs/data/strategy-lab/m5-inclusive-v2/**/*.md text eol=lf
+docs/data/strategy-lab/liquidity-context-v1/*.md text eol=lf
 # Viewer resources are exact, generated Worker report bytes.
 src/frontend/moneyway-web/src/research/reports/*.json text eol=lf
 src/frontend/moneyway-web/src/research/reports/*.tsv text eol=lf

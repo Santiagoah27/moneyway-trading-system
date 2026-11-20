@@ -18,8 +18,9 @@ public sealed class NasdaqSessionLiquidityResearchCommand
         try
         {
             var interaction = args.Count == 6 && args[5] == "--analyze-interaction";
-            if ((args.Count != 5 && !interaction) || args[0] != "nasdaq-session-liquidity" || args[1] != "--input" || args[3] != "--output"
-                || !Path.IsPathFullyQualified(args[2]) || !Path.IsPathFullyQualified(args[4])) throw new ArgumentException("nasdaq-session-liquidity --input <absolute-context-json> --output <new-absolute-directory> [--analyze-interaction]");
+            var tracking = args.Count == 6 && args[5] == "--track-context";
+            if ((args.Count != 5 && !interaction && !tracking) || args[0] != "nasdaq-session-liquidity" || args[1] != "--input" || args[3] != "--output"
+                || !Path.IsPathFullyQualified(args[2]) || !Path.IsPathFullyQualified(args[4])) throw new ArgumentException("nasdaq-session-liquidity --input <absolute-context-json> --output <new-absolute-directory> [--analyze-interaction | --track-context]");
             var input = Path.GetFullPath(args[2]); var destination = Path.TrimEndingDirectorySeparator(Path.GetFullPath(args[4]));
             Guard(input); Guard(destination);
             if (Directory.Exists(destination) || File.Exists(destination) || destination == Path.GetPathRoot(destination)) throw new ArgumentException("New output directory required; never replace existing evidence.");
@@ -75,7 +76,24 @@ public sealed class NasdaqSessionLiquidityResearchCommand
                 s.SourceAuthority
             };
             object report;
-            if (interaction) report = new
+            ContextualLiquidityTrackingResult? tracked = null;
+            if (tracking)
+            {
+                var m5 = Read("M5", new(5, TimeframeUnit.Minute));
+                var rangeStart = calculator.CalculateExplicitSessions(hour, day, maximum)[1].StartUtc;
+                tracked = new TrackContextualLiquidityUseCase().Execute(hour, m5, day, rangeStart, maximum, M5ResearchDataOrigin.RetrospectiveDocumentary,
+                    "June 23 Development documentary sources; explicit contextual tracking hypothesis 187c3ef3-2fe4-4993-bce3-dee605345b4f; nominal UTC only.");
+                report = new
+                {
+                    SchemaVersion = 1,
+                    ContextId = root.GetProperty("id").GetString(),
+                    InputSha256 = Convert.ToHexStringLower(SHA256.HashData(bytes)),
+                    DocumentaryMapping = root.GetProperty("documentaryMapping").GetString(),
+                    SourceProvenance = new[] { "H1", "M5" }.ToDictionary(k => k, k => root.GetProperty("series").GetProperty(k).EnumerateObject().Where(p => p.Name != "candles").ToDictionary(p => p.Name, p => p.Value.Clone())),
+                    Tracking = tracked
+                };
+            }
+            else if (interaction) report = new
             {
                 SchemaVersion = 1,
                 ContextId = root.GetProperty("id").GetString(),
@@ -111,7 +129,8 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             var content = JsonSerializer.Serialize(report, Json).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n";
             var parent = Path.GetDirectoryName(destination)!; Directory.CreateDirectory(parent); Guard(parent);
             var pending = Path.Combine(parent, ".nasdaq-session-pending-" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(pending); File.WriteAllText(Path.Combine(pending, interaction ? "london-asia-interaction.json" : "session-liquidity.json"), content, new UTF8Encoding(false));
+            Directory.CreateDirectory(pending); File.WriteAllText(Path.Combine(pending, tracking ? "liquidity-context.json" : interaction ? "london-asia-interaction.json" : "session-liquidity.json"), content, new UTF8Encoding(false));
+            if (tracked is not null) File.WriteAllText(Path.Combine(pending, "liquidity-context.md"), ContextualLiquidityResearchMarkdown.Render(tracked), new UTF8Encoding(false));
             Guard(destination); Directory.Move(pending, destination);
             output.WriteLine(destination); return 0;
         }

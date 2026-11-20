@@ -59,16 +59,8 @@ public sealed class AnalyzeLondonAsiaInteractionUseCase
             LondonAsiaCompletedClassification? classification = null) => new(operatingDate, source.ProviderId.Value, source.Symbol.Value,
                 source.Timeframe.ToString(), cutoffUtc, dataOrigin, sourceProvenance, status, reason, asia, london, observations, classification);
         if (!asia.IsComplete) return Result("AsiaUnavailable", $"Completed Asia references unavailable: {asia.CoverageStatus}; no interaction inferred.", []);
-        static LondonAsiaSideObservation Side(Candle c, decimal reference, bool upper)
-        {
-            var extreme = upper ? c.High : c.Low;
-            var penetration = upper ? extreme > reference : extreme < reference;
-            var close = upper ? c.Close > reference : c.Close < reference;
-            return new(reference, extreme == reference, penetration, close, penetration && !close,
-                upper ? c.Open > reference : c.Open < reference, penetration ? upper ? extreme - reference : reference - extreme : 0m);
-        }
         var observations = Array.AsReadOnly(london.SourceCandles.Select(c => new LondonAsiaCandleObservation(c, cutoffUtc,
-            Side(c, asia.High!.Value, true), Side(c, asia.Low!.Value, false))).ToArray());
+            ObserveSide(c, asia.High!.Value, true), ObserveSide(c, asia.Low!.Value, false))).ToArray());
         if (!london.IsComplete)
         {
             var pastMissing = london.MissingOpensUtc.Any(t => t.AddHours(1) <= cutoffUtc);
@@ -79,5 +71,13 @@ public sealed class AnalyzeLondonAsiaInteractionUseCase
         var category = upper ? lower ? LondonAsiaCompletedClassification.BothAsiaExtremesPenetrated : LondonAsiaCompletedClassification.AsiaHighOnlyPenetrated
             : lower ? LondonAsiaCompletedClassification.AsiaLowOnlyPenetrated : LondonAsiaCompletedClassification.NoAsiaExtremePenetrated;
         return Result("Complete", "Completed source coverage supports descriptive OHLC relationships only; no relevance, direction, rejection mechanism, crossing trajectory or strategy authorization inferred.", observations, category);
+    }
+    internal static LondonAsiaSideObservation ObserveSide(Candle c, decimal reference, bool upper)
+    {
+        var extreme = upper ? c.High : c.Low;
+        var penetration = upper ? extreme > reference : extreme < reference;
+        var close = upper ? c.Close > reference : c.Close < reference;
+        return new(reference, extreme == reference, penetration, close, penetration && !close,
+            upper ? c.Open > reference : c.Open < reference, penetration ? upper ? extreme - reference : reference - extreme : 0m);
     }
 }
