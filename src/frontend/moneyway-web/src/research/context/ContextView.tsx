@@ -21,6 +21,7 @@ import {
     type ContextData,
 } from "./model";
 import "./ContextView.css";
+import { LondonAsiaSummary } from "./LondonAsiaSummary";
 import { sessionReferencesAt, sessionReport } from "./sessionLiquidity";
 
 const guides: ChartGuide[] = [
@@ -278,6 +279,7 @@ function ContextSession({ context }: { context: ContextData }) {
                     CanonicalAdmissionPermitted=false · OperationalSignal=false.
                 </p>
             </section>
+            <LondonAsiaSummary context={context} cutoff={cutoff} />
             <div className="context-controls">
                 <label>
                     Sesión

@@ -138,6 +138,14 @@ labels remain hidden at 08:00 and return only at their original later cutoffs.
 The 11:00/11:30 discrepancy must remain visible. This feature has HTTP/component
 verification; no new browser visual acceptance is claimed.
 
+Subsequent human-reported acceptance, supplied with task
+`67059360-6f02-4d85-ba08-62b73a7a7d3b` on 2026-11-19: all four session-reference
+checks passed (01:59 neither final session visible; 02:00 Asia visible; 07:59 Asia
+visible with final London hidden; 08:00 AH/AL/LH/LL visible). This is documentary
+visual acceptance reported by the user, not browser automation or authenticated
+causal admission. The separate [London–Asia research analysis](../../research/london-asia-interaction-v1.md)
+adds no operational rule or change to this published candidate.
+
 Next smallest feature: deterministic documentary analysis of London's interaction
 with these Asia levels, tied to explicit observation intervals and subsequent
 setup context. It requires a bounded, versioned interaction definition before

@@ -265,6 +265,11 @@ export function eligibleReview(id: string, cutoff: string) {
 export const cutoffOptions = [
     "06:59",
     "07:00",
+    "08:00",
+    "09:00",
+    "10:00",
+    "11:00",
+    "12:00",
     "12:59",
     "13:00",
     "13:30",

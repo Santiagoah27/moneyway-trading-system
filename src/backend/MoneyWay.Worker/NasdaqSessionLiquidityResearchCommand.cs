@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using MoneyWay.Application.Strategies.Nasdaq.Liquidity;
 using MoneyWay.Application.StrategyDefinitions.Nasdaq;
 using MoneyWay.Domain.MarketData;
+using MoneyWay.Application.Research.Nasdaq;
 
 namespace MoneyWay.Worker;
 
@@ -16,8 +17,9 @@ public sealed class NasdaqSessionLiquidityResearchCommand
     {
         try
         {
-            if (args.Count != 5 || args[0] != "nasdaq-session-liquidity" || args[1] != "--input" || args[3] != "--output"
-                || !Path.IsPathFullyQualified(args[2]) || !Path.IsPathFullyQualified(args[4])) throw new ArgumentException("nasdaq-session-liquidity --input <absolute-context-json> --output <new-absolute-directory>");
+            var interaction = args.Count == 6 && args[5] == "--analyze-interaction";
+            if ((args.Count != 5 && !interaction) || args[0] != "nasdaq-session-liquidity" || args[1] != "--input" || args[3] != "--output"
+                || !Path.IsPathFullyQualified(args[2]) || !Path.IsPathFullyQualified(args[4])) throw new ArgumentException("nasdaq-session-liquidity --input <absolute-context-json> --output <new-absolute-directory> [--analyze-interaction]");
             var input = Path.GetFullPath(args[2]); var destination = Path.TrimEndingDirectorySeparator(Path.GetFullPath(args[4]));
             Guard(input); Guard(destination);
             if (Directory.Exists(destination) || File.Exists(destination) || destination == Path.GetPathRoot(destination)) throw new ArgumentException("New output directory required; never replace existing evidence.");
@@ -72,7 +74,25 @@ public sealed class NasdaqSessionLiquidityResearchCommand
                 s.AvailabilityMeaning,
                 s.SourceAuthority
             };
-            var report = new
+            object report;
+            if (interaction) report = new
+            {
+                SchemaVersion = 1,
+                ContextId = root.GetProperty("id").GetString(),
+                InputSha256 = Convert.ToHexStringLower(SHA256.HashData(bytes)),
+                SourceProvenance = root.GetProperty("series").GetProperty("H1").EnumerateObject().Where(p => p.Name != "candles").ToDictionary(p => p.Name, p => p.Value.Clone()),
+                DocumentaryMapping = root.GetProperty("documentaryMapping").GetString(),
+                Classification = "IsolatedDescriptiveResearch_NotAdmittedBacktest",
+                CanonicalAdmissionPermitted = false,
+                OperationalSignal = false,
+                Frames = cutoffs.Select(t => new
+                {
+                    CutoffUtc = t,
+                    Interaction = new AnalyzeLondonAsiaInteractionUseCase().Execute(hour, day, t,
+                    M5ResearchDataOrigin.RetrospectiveDocumentary, "June 23 original H1 context; direct user OHLC interaction contract 67059360-6f02-4d85-ba08-62b73a7a7d3b; documentary nominal UTC only.")
+                }).ToArray()
+            };
+            else report = new
             {
                 SchemaVersion = 1,
                 ContextId = root.GetProperty("id").GetString(),
@@ -91,11 +111,11 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             var content = JsonSerializer.Serialize(report, Json).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n";
             var parent = Path.GetDirectoryName(destination)!; Directory.CreateDirectory(parent); Guard(parent);
             var pending = Path.Combine(parent, ".nasdaq-session-pending-" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(pending); File.WriteAllText(Path.Combine(pending, "session-liquidity.json"), content, new UTF8Encoding(false));
+            Directory.CreateDirectory(pending); File.WriteAllText(Path.Combine(pending, interaction ? "london-asia-interaction.json" : "session-liquidity.json"), content, new UTF8Encoding(false));
             Guard(destination); Directory.Move(pending, destination);
             output.WriteLine(destination); return 0;
         }
-        catch (Exception e) when (e is ArgumentException or IOException or UnauthorizedAccessException or JsonException or InvalidOperationException or KeyNotFoundException or FormatException)
+        catch (Exception e) when (e is ArgumentException or IOException or UnauthorizedAccessException or JsonException or InvalidOperationException or KeyNotFoundException or FormatException or OverflowException)
         { error.WriteLine("Documentary session calculation unavailable: " + e.Message); return 2; }
     }
     private static void Guard(string path)
