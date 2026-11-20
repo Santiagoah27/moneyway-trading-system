@@ -1,0 +1,2074 @@
+{
+  "schemaVersion": 1,
+  "contextId": "nasdaq-context-20260622-review-v1",
+  "inputSha256": "cae0759fcbcc0a0464b56409ee921e59a64f0af4711a8c479a54ff8dbbcc7245",
+  "candidateVersion": "nasdaq-0.3.0-session-candidate",
+  "parentVersion": "nasdaq-0.2.0-sc-candidate",
+  "provenance": "Direct user configuration 2026-11-19; attachment 88027fbe-59e6-479e-ba0b-1dc5067d91a2; ADR 0028. No independent mentor verification.",
+  "classification": "RetrospectiveDocumentary_NotAdmittedBacktest",
+  "canonicalAdmissionPermitted": false,
+  "operationalSignal": false,
+  "sourceProvenance": {
+    "sourceTimeframe": "1H",
+    "derived": false,
+    "intervalMinutes": 60,
+    "count": 18,
+    "firstOpenUtc": "2026-06-21T22:00:00Z",
+    "lastClosedUtc": "2026-06-22T16:00:00Z",
+    "sourceGaps": [
+      {
+        "startUtc": "2026-06-20T21:00:00Z",
+        "endUtc": "2026-06-21T22:00:00Z",
+        "classification": "NoSourceRows_NotATradingScheduleConclusion"
+      }
+    ],
+    "rawRelativePath": "raw/2026-06-29/US100_H1_202606220100_202606302300.csv",
+    "rawSha256": "01b0cacf274f0de13ad8f052442071efc677263374b77ed115c0c702cf0be541",
+    "normalizedRelativePath": "normalized/2026-06-29/1H.csv",
+    "normalizedSha256": "2a7437a1b57ca6eac2d2b6a7a3e24c40d5d4030f924a36d7bba791a580ba1c85"
+  },
+  "frames": [
+    {
+      "cutoffUtc": "2026-06-22T00:00:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T00:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 9,
+          "sourceCount": 2,
+          "missingOpensUtc": [
+            "2026-06-22T00:00:00+00:00",
+            "2026-06-22T01:00:00+00:00",
+            "2026-06-22T02:00:00+00:00",
+            "2026-06-22T03:00:00+00:00",
+            "2026-06-22T04:00:00+00:00",
+            "2026-06-22T05:00:00+00:00",
+            "2026-06-22T06:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T00:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 6,
+          "sourceCount": 0,
+          "missingOpensUtc": [
+            "2026-06-22T07:00:00+00:00",
+            "2026-06-22T08:00:00+00:00",
+            "2026-06-22T09:00:00+00:00",
+            "2026-06-22T10:00:00+00:00",
+            "2026-06-22T11:00:00+00:00",
+            "2026-06-22T12:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T01:00:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T01:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 9,
+          "sourceCount": 3,
+          "missingOpensUtc": [
+            "2026-06-22T01:00:00+00:00",
+            "2026-06-22T02:00:00+00:00",
+            "2026-06-22T03:00:00+00:00",
+            "2026-06-22T04:00:00+00:00",
+            "2026-06-22T05:00:00+00:00",
+            "2026-06-22T06:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T01:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 6,
+          "sourceCount": 0,
+          "missingOpensUtc": [
+            "2026-06-22T07:00:00+00:00",
+            "2026-06-22T08:00:00+00:00",
+            "2026-06-22T09:00:00+00:00",
+            "2026-06-22T10:00:00+00:00",
+            "2026-06-22T11:00:00+00:00",
+            "2026-06-22T12:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T02:00:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T02:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 9,
+          "sourceCount": 4,
+          "missingOpensUtc": [
+            "2026-06-22T02:00:00+00:00",
+            "2026-06-22T03:00:00+00:00",
+            "2026-06-22T04:00:00+00:00",
+            "2026-06-22T05:00:00+00:00",
+            "2026-06-22T06:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T02:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 6,
+          "sourceCount": 0,
+          "missingOpensUtc": [
+            "2026-06-22T07:00:00+00:00",
+            "2026-06-22T08:00:00+00:00",
+            "2026-06-22T09:00:00+00:00",
+            "2026-06-22T10:00:00+00:00",
+            "2026-06-22T11:00:00+00:00",
+            "2026-06-22T12:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T03:00:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T03:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 9,
+          "sourceCount": 5,
+          "missingOpensUtc": [
+            "2026-06-22T03:00:00+00:00",
+            "2026-06-22T04:00:00+00:00",
+            "2026-06-22T05:00:00+00:00",
+            "2026-06-22T06:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T03:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 6,
+          "sourceCount": 0,
+          "missingOpensUtc": [
+            "2026-06-22T07:00:00+00:00",
+            "2026-06-22T08:00:00+00:00",
+            "2026-06-22T09:00:00+00:00",
+            "2026-06-22T10:00:00+00:00",
+            "2026-06-22T11:00:00+00:00",
+            "2026-06-22T12:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T04:00:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T04:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 9,
+          "sourceCount": 6,
+          "missingOpensUtc": [
+            "2026-06-22T04:00:00+00:00",
+            "2026-06-22T05:00:00+00:00",
+            "2026-06-22T06:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T04:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 6,
+          "sourceCount": 0,
+          "missingOpensUtc": [
+            "2026-06-22T07:00:00+00:00",
+            "2026-06-22T08:00:00+00:00",
+            "2026-06-22T09:00:00+00:00",
+            "2026-06-22T10:00:00+00:00",
+            "2026-06-22T11:00:00+00:00",
+            "2026-06-22T12:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T05:00:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T05:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 9,
+          "sourceCount": 7,
+          "missingOpensUtc": [
+            "2026-06-22T05:00:00+00:00",
+            "2026-06-22T06:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T05:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 6,
+          "sourceCount": 0,
+          "missingOpensUtc": [
+            "2026-06-22T07:00:00+00:00",
+            "2026-06-22T08:00:00+00:00",
+            "2026-06-22T09:00:00+00:00",
+            "2026-06-22T10:00:00+00:00",
+            "2026-06-22T11:00:00+00:00",
+            "2026-06-22T12:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T06:00:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T06:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 9,
+          "sourceCount": 8,
+          "missingOpensUtc": [
+            "2026-06-22T06:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T06:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 6,
+          "sourceCount": 0,
+          "missingOpensUtc": [
+            "2026-06-22T07:00:00+00:00",
+            "2026-06-22T08:00:00+00:00",
+            "2026-06-22T09:00:00+00:00",
+            "2026-06-22T10:00:00+00:00",
+            "2026-06-22T11:00:00+00:00",
+            "2026-06-22T12:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T06:59:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T06:59:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 9,
+          "sourceCount": 8,
+          "missingOpensUtc": [
+            "2026-06-22T06:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T06:59:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 6,
+          "sourceCount": 0,
+          "missingOpensUtc": [
+            "2026-06-22T07:00:00+00:00",
+            "2026-06-22T08:00:00+00:00",
+            "2026-06-22T09:00:00+00:00",
+            "2026-06-22T10:00:00+00:00",
+            "2026-06-22T11:00:00+00:00",
+            "2026-06-22T12:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T07:00:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T07:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 9,
+          "sourceCount": 9,
+          "missingOpensUtc": [],
+          "high": 30496.9,
+          "low": 30092.1,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T06:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T07:00:00+00:00",
+              "open": 30395.6,
+              "high": 30496.9,
+              "low": 30392.0,
+              "close": 30491.7,
+              "volume": 19431.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-21T23:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T00:00:00+00:00",
+              "open": 30277.4,
+              "high": 30278.5,
+              "low": 30092.1,
+              "close": 30108.2,
+              "volume": 24467.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T07:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T07:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 6,
+          "sourceCount": 0,
+          "missingOpensUtc": [
+            "2026-06-22T07:00:00+00:00",
+            "2026-06-22T08:00:00+00:00",
+            "2026-06-22T09:00:00+00:00",
+            "2026-06-22T10:00:00+00:00",
+            "2026-06-22T11:00:00+00:00",
+            "2026-06-22T12:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T08:00:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T08:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 9,
+          "sourceCount": 9,
+          "missingOpensUtc": [],
+          "high": 30496.9,
+          "low": 30092.1,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T06:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T07:00:00+00:00",
+              "open": 30395.6,
+              "high": 30496.9,
+              "low": 30392.0,
+              "close": 30491.7,
+              "volume": 19431.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-21T23:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T00:00:00+00:00",
+              "open": 30277.4,
+              "high": 30278.5,
+              "low": 30092.1,
+              "close": 30108.2,
+              "volume": 24467.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T08:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T08:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 6,
+          "sourceCount": 1,
+          "missingOpensUtc": [
+            "2026-06-22T08:00:00+00:00",
+            "2026-06-22T09:00:00+00:00",
+            "2026-06-22T10:00:00+00:00",
+            "2026-06-22T11:00:00+00:00",
+            "2026-06-22T12:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T09:00:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T09:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 9,
+          "sourceCount": 9,
+          "missingOpensUtc": [],
+          "high": 30496.9,
+          "low": 30092.1,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T06:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T07:00:00+00:00",
+              "open": 30395.6,
+              "high": 30496.9,
+              "low": 30392.0,
+              "close": 30491.7,
+              "volume": 19431.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-21T23:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T00:00:00+00:00",
+              "open": 30277.4,
+              "high": 30278.5,
+              "low": 30092.1,
+              "close": 30108.2,
+              "volume": 24467.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T09:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T09:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 6,
+          "sourceCount": 2,
+          "missingOpensUtc": [
+            "2026-06-22T09:00:00+00:00",
+            "2026-06-22T10:00:00+00:00",
+            "2026-06-22T11:00:00+00:00",
+            "2026-06-22T12:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T10:00:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T10:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 9,
+          "sourceCount": 9,
+          "missingOpensUtc": [],
+          "high": 30496.9,
+          "low": 30092.1,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T06:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T07:00:00+00:00",
+              "open": 30395.6,
+              "high": 30496.9,
+              "low": 30392.0,
+              "close": 30491.7,
+              "volume": 19431.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-21T23:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T00:00:00+00:00",
+              "open": 30277.4,
+              "high": 30278.5,
+              "low": 30092.1,
+              "close": 30108.2,
+              "volume": 24467.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T10:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T10:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 6,
+          "sourceCount": 3,
+          "missingOpensUtc": [
+            "2026-06-22T10:00:00+00:00",
+            "2026-06-22T11:00:00+00:00",
+            "2026-06-22T12:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T11:00:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T11:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 9,
+          "sourceCount": 9,
+          "missingOpensUtc": [],
+          "high": 30496.9,
+          "low": 30092.1,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T06:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T07:00:00+00:00",
+              "open": 30395.6,
+              "high": 30496.9,
+              "low": 30392.0,
+              "close": 30491.7,
+              "volume": 19431.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-21T23:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T00:00:00+00:00",
+              "open": 30277.4,
+              "high": 30278.5,
+              "low": 30092.1,
+              "close": 30108.2,
+              "volume": 24467.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T11:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T11:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 6,
+          "sourceCount": 4,
+          "missingOpensUtc": [
+            "2026-06-22T11:00:00+00:00",
+            "2026-06-22T12:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T12:00:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T12:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 9,
+          "sourceCount": 9,
+          "missingOpensUtc": [],
+          "high": 30496.9,
+          "low": 30092.1,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T06:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T07:00:00+00:00",
+              "open": 30395.6,
+              "high": 30496.9,
+              "low": 30392.0,
+              "close": 30491.7,
+              "volume": 19431.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-21T23:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T00:00:00+00:00",
+              "open": 30277.4,
+              "high": 30278.5,
+              "low": 30092.1,
+              "close": 30108.2,
+              "volume": 24467.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T12:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T12:00:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 6,
+          "sourceCount": 5,
+          "missingOpensUtc": [
+            "2026-06-22T12:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T12:59:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T12:59:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 9,
+          "sourceCount": 9,
+          "missingOpensUtc": [],
+          "high": 30496.9,
+          "low": 30092.1,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T06:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T07:00:00+00:00",
+              "open": 30395.6,
+              "high": 30496.9,
+              "low": 30392.0,
+              "close": 30491.7,
+              "volume": 19431.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-21T23:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T00:00:00+00:00",
+              "open": 30277.4,
+              "high": 30278.5,
+              "low": 30092.1,
+              "close": 30108.2,
+              "volume": 24467.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T12:59:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T12:59:00+00:00",
+          "coverageStatus": "SessionNotCompleted",
+          "expectedCount": 6,
+          "sourceCount": 5,
+          "missingOpensUtc": [
+            "2026-06-22T12:00:00+00:00"
+          ],
+          "high": null,
+          "low": null,
+          "highCandles": [],
+          "lowCandles": [],
+          "availableAtUtc": null,
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T13:00:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T13:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 9,
+          "sourceCount": 9,
+          "missingOpensUtc": [],
+          "high": 30496.9,
+          "low": 30092.1,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T06:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T07:00:00+00:00",
+              "open": 30395.6,
+              "high": 30496.9,
+              "low": 30392.0,
+              "close": 30491.7,
+              "volume": 19431.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-21T23:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T00:00:00+00:00",
+              "open": 30277.4,
+              "high": 30278.5,
+              "low": 30092.1,
+              "close": 30108.2,
+              "volume": 24467.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T13:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T13:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 6,
+          "sourceCount": 6,
+          "missingOpensUtc": [],
+          "high": 30599.2,
+          "low": 30441.4,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T12:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T13:00:00+00:00",
+              "open": 30511.9,
+              "high": 30599.2,
+              "low": 30506.6,
+              "close": 30555.7,
+              "volume": 23830.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T08:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T09:00:00+00:00",
+              "open": 30512.9,
+              "high": 30519.6,
+              "low": 30441.4,
+              "close": 30484.8,
+              "volume": 22289.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T13:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T14:00:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T14:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 9,
+          "sourceCount": 9,
+          "missingOpensUtc": [],
+          "high": 30496.9,
+          "low": 30092.1,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T06:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T07:00:00+00:00",
+              "open": 30395.6,
+              "high": 30496.9,
+              "low": 30392.0,
+              "close": 30491.7,
+              "volume": 19431.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-21T23:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T00:00:00+00:00",
+              "open": 30277.4,
+              "high": 30278.5,
+              "low": 30092.1,
+              "close": 30108.2,
+              "volume": 24467.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T14:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T14:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 6,
+          "sourceCount": 6,
+          "missingOpensUtc": [],
+          "high": 30599.2,
+          "low": 30441.4,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T12:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T13:00:00+00:00",
+              "open": 30511.9,
+              "high": 30599.2,
+              "low": 30506.6,
+              "close": 30555.7,
+              "volume": 23830.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T08:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T09:00:00+00:00",
+              "open": 30512.9,
+              "high": 30519.6,
+              "low": 30441.4,
+              "close": 30484.8,
+              "volume": 22289.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T14:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T15:00:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T15:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 9,
+          "sourceCount": 9,
+          "missingOpensUtc": [],
+          "high": 30496.9,
+          "low": 30092.1,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T06:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T07:00:00+00:00",
+              "open": 30395.6,
+              "high": 30496.9,
+              "low": 30392.0,
+              "close": 30491.7,
+              "volume": 19431.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-21T23:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T00:00:00+00:00",
+              "open": 30277.4,
+              "high": 30278.5,
+              "low": 30092.1,
+              "close": 30108.2,
+              "volume": 24467.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T15:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T15:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 6,
+          "sourceCount": 6,
+          "missingOpensUtc": [],
+          "high": 30599.2,
+          "low": 30441.4,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T12:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T13:00:00+00:00",
+              "open": 30511.9,
+              "high": 30599.2,
+              "low": 30506.6,
+              "close": 30555.7,
+              "volume": 23830.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T08:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T09:00:00+00:00",
+              "open": 30512.9,
+              "high": 30519.6,
+              "low": 30441.4,
+              "close": 30484.8,
+              "volume": 22289.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T15:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T16:00:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T16:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 9,
+          "sourceCount": 9,
+          "missingOpensUtc": [],
+          "high": 30496.9,
+          "low": 30092.1,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T06:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T07:00:00+00:00",
+              "open": 30395.6,
+              "high": 30496.9,
+              "low": 30392.0,
+              "close": 30491.7,
+              "volume": 19431.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-21T23:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T00:00:00+00:00",
+              "open": 30277.4,
+              "high": 30278.5,
+              "low": 30092.1,
+              "close": 30108.2,
+              "volume": 24467.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T16:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T16:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 6,
+          "sourceCount": 6,
+          "missingOpensUtc": [],
+          "high": 30599.2,
+          "low": 30441.4,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T12:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T13:00:00+00:00",
+              "open": 30511.9,
+              "high": 30599.2,
+              "low": 30506.6,
+              "close": 30555.7,
+              "volume": 23830.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T08:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T09:00:00+00:00",
+              "open": 30512.9,
+              "high": 30519.6,
+              "low": 30441.4,
+              "close": 30484.8,
+              "volume": 22289.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T16:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    },
+    {
+      "cutoffUtc": "2026-06-22T16:30:00+00:00",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T16:30:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 9,
+          "sourceCount": 9,
+          "missingOpensUtc": [],
+          "high": 30496.9,
+          "low": 30092.1,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T06:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T07:00:00+00:00",
+              "open": 30395.6,
+              "high": 30496.9,
+              "low": 30392.0,
+              "close": 30491.7,
+              "volume": 19431.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-21T23:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T00:00:00+00:00",
+              "open": 30277.4,
+              "high": 30278.5,
+              "low": 30092.1,
+              "close": 30108.2,
+              "volume": 24467.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T16:30:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1h",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T16:30:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 6,
+          "sourceCount": 6,
+          "missingOpensUtc": [],
+          "high": 30599.2,
+          "low": 30441.4,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T12:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T13:00:00+00:00",
+              "open": 30511.9,
+              "high": 30599.2,
+              "low": 30506.6,
+              "close": 30555.7,
+              "volume": 23830.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Hour"
+              },
+              "openTimeUtc": "2026-06-22T08:00:00+00:00",
+              "closeTimeUtc": "2026-06-22T09:00:00+00:00",
+              "open": 30512.9,
+              "high": 30519.6,
+              "low": 30441.4,
+              "close": 30484.8,
+              "volume": 22289.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T16:30:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "AuditedExactH1"
+        }
+      ]
+    }
+  ],
+  "nonAuthoritativeComparisons": [
+    {
+      "sourceTimeframe": "5m",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "5m",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T13:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 108,
+          "sourceCount": 108,
+          "missingOpensUtc": [],
+          "high": 30496.9,
+          "low": 30092.1,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-06-22T06:55:00+00:00",
+              "closeTimeUtc": "2026-06-22T07:00:00+00:00",
+              "open": 30489.8,
+              "high": 30496.9,
+              "low": 30487.1,
+              "close": 30491.7,
+              "volume": 1155.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-06-21T23:55:00+00:00",
+              "closeTimeUtc": "2026-06-22T00:00:00+00:00",
+              "open": 30111.5,
+              "high": 30115.9,
+              "low": 30092.1,
+              "close": 30108.2,
+              "volume": 1959.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T13:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "ExplicitNonAuthoritativeComparison"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "5m",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T13:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 72,
+          "sourceCount": 72,
+          "missingOpensUtc": [],
+          "high": 30599.2,
+          "low": 30441.4,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-06-22T12:35:00+00:00",
+              "closeTimeUtc": "2026-06-22T12:40:00+00:00",
+              "open": 30598.3,
+              "high": 30599.2,
+              "low": 30577.4,
+              "close": 30578.6,
+              "volume": 2307.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 5,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-06-22T08:20:00+00:00",
+              "closeTimeUtc": "2026-06-22T08:25:00+00:00",
+              "open": 30460.1,
+              "high": 30469.3,
+              "low": 30441.4,
+              "close": 30466.0,
+              "volume": 1982.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T13:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "ExplicitNonAuthoritativeComparison"
+        }
+      ]
+    },
+    {
+      "sourceTimeframe": "1m",
+      "sessions": [
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "Asia",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1m",
+          "startUtc": "2026-06-21T22:00:00+00:00",
+          "endUtc": "2026-06-22T07:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T13:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 540,
+          "sourceCount": 540,
+          "missingOpensUtc": [],
+          "high": 30496.9,
+          "low": 30092.1,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-06-22T06:55:00+00:00",
+              "closeTimeUtc": "2026-06-22T06:56:00+00:00",
+              "open": 30489.8,
+              "high": 30496.9,
+              "low": 30487.1,
+              "close": 30492.8,
+              "volume": 252.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-06-21T23:59:00+00:00",
+              "closeTimeUtc": "2026-06-22T00:00:00+00:00",
+              "open": 30097.4,
+              "high": 30112.2,
+              "low": 30092.1,
+              "close": 30108.2,
+              "volume": 499.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T13:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "ExplicitNonAuthoritativeComparison"
+        },
+        {
+          "strategyVersion": "nasdaq-0.3.0-session-candidate",
+          "operatingDate": "2026-06-22",
+          "session": "London",
+          "provider": "oanda-global-markets-mt5-demo",
+          "instrument": "US100",
+          "sourceTimeframe": "1m",
+          "startUtc": "2026-06-22T07:00:00+00:00",
+          "endUtc": "2026-06-22T13:00:00+00:00",
+          "evaluatedAtUtc": "2026-06-22T13:00:00+00:00",
+          "coverageStatus": "Complete",
+          "expectedCount": 360,
+          "sourceCount": 360,
+          "missingOpensUtc": [],
+          "high": 30599.2,
+          "low": 30441.4,
+          "highCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-06-22T12:35:00+00:00",
+              "closeTimeUtc": "2026-06-22T12:36:00+00:00",
+              "open": 30598.3,
+              "high": 30599.2,
+              "low": 30592.5,
+              "close": 30594.8,
+              "volume": 470.0
+            }
+          ],
+          "lowCandles": [
+            {
+              "providerId": {
+                "value": "oanda-global-markets-mt5-demo"
+              },
+              "symbol": {
+                "value": "US100"
+              },
+              "timeframe": {
+                "amount": 1,
+                "unit": "Minute"
+              },
+              "openTimeUtc": "2026-06-22T08:23:00+00:00",
+              "closeTimeUtc": "2026-06-22T08:24:00+00:00",
+              "open": 30458.6,
+              "high": 30459.2,
+              "low": 30441.4,
+              "close": 30450.6,
+              "volume": 458.0
+            }
+          ],
+          "availableAtUtc": "2026-06-22T13:00:00+00:00",
+          "availabilityMeaning": "Observable in supplied replay/source prefix; not authenticated provider publication",
+          "sourceAuthority": "ExplicitNonAuthoritativeComparison"
+        }
+      ]
+    }
+  ]
+}

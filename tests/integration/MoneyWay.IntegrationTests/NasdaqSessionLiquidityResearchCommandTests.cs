@@ -22,6 +22,53 @@ public sealed class NasdaqSessionLiquidityResearchCommandTests : IDisposable
     private static int ContextSc(string input, string output) => new NasdaqSessionLiquidityResearchCommand().Execute(["nasdaq-session-liquidity", "--input", input, "--output", output, "--compare-context-sc"], TextWriter.Null, TextWriter.Null);
 
     [Fact]
+    public void FrozenIndependentReviewSourceHasCompleteSessionsAndPreservesNativeIdentityWithoutLabels()
+    {
+        var data = Path.Combine(Root(), "src/frontend/moneyway-web/src/research/context/data/contextual-validation");
+        using var manifest = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(data, "manifest.json")));
+        using var context = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(data, "context.json")));
+        var m = manifest.RootElement; var c = context.RootElement;
+        Assert.Equal("2026-06-22", m.GetProperty("selectedDay").GetString());
+        Assert.Equal(Hash(Path.Combine(data, "context.json")), m.GetProperty("inputSha256").GetString());
+        Assert.Equal("US100", c.GetProperty("symbol").GetString()); Assert.Equal("America/Bogota", c.GetProperty("timeZone").GetString());
+        Assert.Equal(new[] { "2026-06-22", "2026-06-24", "2026-06-26" }, m.GetProperty("inventory").EnumerateArray().Where(i => i.GetProperty("eligible").GetBoolean()).Select(i => i.GetProperty("day").GetString()));
+        Assert.Equal("Validation", m.GetProperty("excluded").GetProperty("2026-06-25").GetString()); Assert.Equal("HeldOut", m.GetProperty("excluded").GetProperty("2026-06-30").GetString());
+        foreach (var (tf, count) in new[] { ("H4", 4), ("H1", 18), ("M5", 222), ("M1", 1110) })
+        {
+            var series = c.GetProperty("series").GetProperty(tf); Assert.Equal(count, series.GetProperty("count").GetInt32()); Assert.False(series.GetProperty("derived").GetBoolean());
+            foreach (var row in series.GetProperty("candles").EnumerateArray())
+            {
+                Assert.Equal("oanda-global-markets-mt5-demo", row.GetProperty("providerId").GetProperty("value").GetString());
+                var open = row.GetProperty("openTimeUtc").GetDateTimeOffset(); Assert.True(open < new DateTimeOffset(2026, 6, 23, 0, 0, 0, TimeSpan.Zero));
+                Assert.Equal(open.AddHours(3).ToString("yyyy.MM.dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture), row.GetProperty("nativeOpenTime").GetString());
+            }
+        }
+        Assert.False(c.GetProperty("canonicalAdmissionPermitted").GetBoolean()); Assert.False(c.GetProperty("operationalSignal").GetBoolean());
+        Assert.False(c.TryGetProperty("labels", out _));
+    }
+
+    [Fact]
+    public void FrozenReviewUsesUnchangedPipelineAndReproducesEveryBoundReportWithoutReservedDateAdmission()
+    {
+        var data = Path.Combine(Root(), "src/frontend/moneyway-web/src/research/context/data/contextual-validation");
+        var input = Path.Combine(data, "context.json"); using var manifest = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(data, "manifest.json")));
+        foreach (var (mode, expected, actual) in new[] { ("sc", "comparison", "contextual-swing-sc"), ("sessions", "sessions", "session-liquidity"), ("interaction", "interaction", "london-asia-interaction") })
+        {
+            var target = Path.Combine(owned, "review-" + mode);
+            Assert.Equal(0, mode == "sc" ? ContextSc(input, target) : mode == "sessions" ? Run(input, target) : Interactions(input, target));
+            Assert.Equal(File.ReadAllBytes(Path.Combine(data, expected + ".json")), File.ReadAllBytes(Path.Combine(target, actual + ".json")));
+            Assert.Equal(Hash(Path.Combine(data, expected + ".json")), manifest.RootElement.GetProperty("reportHashes").GetProperty(expected).GetString());
+        }
+        Directory.CreateDirectory(owned); var altered = JsonNode.Parse(File.ReadAllText(input))!;
+        foreach (var day in new[] { "2026-06-25", "2026-06-30" })
+        {
+            altered["tradingDay"] = day; altered["id"] = "nasdaq-context-" + day.Replace("-", "") + "-review-v1";
+            var path = Path.Combine(owned, "reserved.json"); File.WriteAllText(path, altered.ToJsonString());
+            Assert.Equal(2, ContextSc(path, Path.Combine(owned, "must-not-publish")));
+        }
+    }
+
+    [Fact]
     public void ContextScComparisonReproducesActualEventsFrozenReferencesAndConservativeOutcomes()
     {
         var originalHash = Hash(ContextPath); var target = Path.Combine(owned, "context-sc"); Assert.Equal(0, ContextSc(ContextPath, target));

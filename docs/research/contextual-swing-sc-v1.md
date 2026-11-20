@@ -1,5 +1,8 @@
 # Experimental contextual M5 structural reference and subsequent SC
 
+The [chronological contextual review](contextual-sc-validation-v1.md) supplies a
+separate human-label workflow without changing these frozen hypotheses or results.
+
 Authorized source: user task `292ee493-543a-4742-9cf5-4b9b75186392`, 2026-11-20,
 under [ADR 0027](../decisions/0027-permit-isolated-experimental-strategy-hypotheses.md)
 and the unchanged [ADR 0028 session windows](../decisions/0028-define-candidate-nasdaq-session-windows.md).

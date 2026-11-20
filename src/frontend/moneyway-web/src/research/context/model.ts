@@ -47,11 +47,14 @@ const check = (v: unknown) => {
 };
 const utc = (t: string) =>
     /(?:Z|\+00:00)$/.test(t) && Number.isFinite(Date.parse(t));
-export function validateContext(data: ContextData) {
+export function validateContext(data: ContextData, reviewSession = false) {
     check(
         data.schemaVersion === 1 &&
-            data.id === "nasdaq-context-20260623-v1" &&
-            data.tradingDay === "2026-06-23" &&
+            data.id ===
+                (reviewSession
+                    ? "nasdaq-context-20260622-review-v1"
+                    : "nasdaq-context-20260623-v1") &&
+            data.tradingDay === (reviewSession ? "2026-06-22" : "2026-06-23") &&
             data.providerId === "oanda-global-markets-mt5-demo" &&
             data.symbol === "US100" &&
             data.timeZone === "America/Bogota",
@@ -64,7 +67,9 @@ export function validateContext(data: ContextData) {
     );
     check(
         data.sessionBoundariesStatus ===
-            "UnresolvedForContextualResearch_NoAsiaLondonExtrema",
+            (reviewSession
+                ? "ExplicitCandidateWindows_ADR0028"
+                : "UnresolvedForContextualResearch_NoAsiaLondonExtrema"),
     );
     for (const frame of frames) {
         const series = data.series[frame];

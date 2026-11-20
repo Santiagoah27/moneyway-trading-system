@@ -23,6 +23,7 @@ import {
 import "./ContextView.css";
 import { LondonAsiaSummary } from "./LondonAsiaSummary";
 import { sessionReferencesAt, sessionReport } from "./sessionLiquidity";
+import { ContextualScReview } from "./ContextualScReview";
 
 const guides: ChartGuide[] = [
     { timeUtc: "2026-06-23T13:00:00Z", label: "Preparación 08:00 Bogotá" },
@@ -686,6 +687,7 @@ function ContextSession({ context }: { context: ContextData }) {
 }
 
 export function ContextualResearch() {
+    const [reviewMode, setReviewMode] = useState(false);
     const [state, setState] = useState<{ data?: ContextData; error?: string }>(
         {},
     );
@@ -706,7 +708,24 @@ export function ContextualResearch() {
             });
         return () => controller.abort();
     }, []);
-    if (state.data) return <ContextSession context={state.data} />;
+    if (reviewMode)
+        return (
+            <>
+                <button onClick={() => setReviewMode(false)}>
+                    Volver a exploración expuesta del 23 junio
+                </button>
+                <ContextualScReview />
+            </>
+        );
+    if (state.data)
+        return (
+            <>
+                <button onClick={() => setReviewMode(true)}>
+                    Revisión contextual cronológica · episodio independiente
+                </button>
+                <ContextSession context={state.data} />
+            </>
+        );
     return (
         <main className="strategy-lab">
             <a href="#strategy-lab">← Strategy Lab</a>

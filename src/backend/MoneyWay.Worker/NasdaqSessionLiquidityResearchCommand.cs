@@ -29,11 +29,12 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             if (file.Length is <= 0 or > 8 * 1024 * 1024) throw new ArgumentException("Bounded 8 MiB context required.");
             var bytes = new byte[(int)file.Length]; file.ReadExactly(bytes);
             using var json = JsonDocument.Parse(bytes); var root = json.RootElement;
-            if (root.GetProperty("id").GetString() != "nasdaq-context-20260623-v1" || root.GetProperty("timeZone").GetString() != "America/Bogota"
-                || root.GetProperty("schemaVersion").GetInt32() != 1 || root.GetProperty("canonicalAdmissionPermitted").GetBoolean() || root.GetProperty("operationalSignal").GetBoolean()) throw new ArgumentException("Original isolated June 23 documentary context required.");
+            var reviewSession = root.GetProperty("id").GetString() == "nasdaq-context-20260622-review-v1";
+            if ((!reviewSession && root.GetProperty("id").GetString() != "nasdaq-context-20260623-v1") || root.GetProperty("timeZone").GetString() != "America/Bogota"
+                || root.GetProperty("schemaVersion").GetInt32() != 1 || root.GetProperty("canonicalAdmissionPermitted").GetBoolean() || root.GetProperty("operationalSignal").GetBoolean()) throw new ArgumentException("Registered isolated June 23 or frozen June 22 review context required.");
             var provider = new MarketDataProviderId(root.GetProperty("providerId").GetString()!); var symbol = new MarketSymbol(root.GetProperty("symbol").GetString()!);
-            if (provider.Value != "oanda-global-markets-mt5-demo" || symbol.Value != "US100" || root.GetProperty("tradingDay").GetString() != "2026-06-23") throw new ArgumentException("Original source identity required; no instrument/provider substitution.");
-            var day = new DateOnly(2026, 6, 23); var calculator = new NasdaqSessionLiquidityCalculator();
+            if (provider.Value != "oanda-global-markets-mt5-demo" || symbol.Value != "US100" || root.GetProperty("tradingDay").GetString() != (reviewSession ? "2026-06-22" : "2026-06-23")) throw new ArgumentException("Original source identity required; no instrument/provider substitution.");
+            var day = new DateOnly(2026, 6, reviewSession ? 22 : 23); var calculator = new NasdaqSessionLiquidityCalculator();
             CandleSeries Read(string key, Timeframe timeframe)
             {
                 var source = root.GetProperty("series").GetProperty(key);
@@ -51,8 +52,8 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             }
             var hour = Read("H1", new(1, TimeframeUnit.Hour));
             var maximum = root.GetProperty("maximumCutoffUtc").GetDateTimeOffset();
-            var cutoffs = hour.Candles.Select(c => c.CloseTimeUtc).Where(t => t >= new DateTimeOffset(2026, 6, 23, 0, 0, 0, TimeSpan.Zero) && t <= maximum)
-                .Concat(new[] { new DateTimeOffset(2026, 6, 23, 6, 59, 0, TimeSpan.Zero), new(2026, 6, 23, 12, 59, 0, TimeSpan.Zero), maximum }).Distinct().Order().ToArray();
+            var cutoffs = hour.Candles.Select(c => c.CloseTimeUtc).Where(t => t >= new DateTimeOffset(day.Year, day.Month, day.Day, 0, 0, 0, TimeSpan.Zero) && t <= maximum)
+                .Concat(new[] { new DateTimeOffset(day.Year, day.Month, day.Day, 6, 59, 0, TimeSpan.Zero), new(day.Year, day.Month, day.Day, 12, 59, 0, TimeSpan.Zero), maximum }).Distinct().Order().ToArray();
             object Project(NasdaqSessionReference s) => new
             {
                 s.StrategyVersion,
@@ -84,7 +85,7 @@ public sealed class NasdaqSessionLiquidityResearchCommand
                 var m5 = Read("M5", new(5, TimeframeUnit.Minute));
                 var rangeStart = calculator.CalculateExplicitSessions(hour, day, maximum)[1].StartUtc;
                 scComparison = new CompareContextualSwingScUseCase().Execute(hour, m5, day, rangeStart, maximum, M5ResearchDataOrigin.RetrospectiveDocumentary,
-                    "June 23 Development documentary sources; explicit contextual tracking hypothesis 187c3ef3-2fe4-4993-bce3-dee605345b4f; nominal UTC only.");
+                    reviewSession ? "Frozen earliest eligible June 22 review source; self-declared unreviewed; nominal documentary UTC only; selection e52279ed-2ae9-456e-9c6f-56f11cd22347." : "June 23 Development documentary sources; explicit contextual tracking hypothesis 187c3ef3-2fe4-4993-bce3-dee605345b4f; nominal UTC only.");
                 report = new
                 {
                     SchemaVersion = 1,
@@ -101,7 +102,7 @@ public sealed class NasdaqSessionLiquidityResearchCommand
                 var m5 = Read("M5", new(5, TimeframeUnit.Minute));
                 var rangeStart = calculator.CalculateExplicitSessions(hour, day, maximum)[1].StartUtc;
                 tracked = new TrackContextualLiquidityUseCase().Execute(hour, m5, day, rangeStart, maximum, M5ResearchDataOrigin.RetrospectiveDocumentary,
-                    "June 23 Development documentary sources; explicit contextual tracking hypothesis 187c3ef3-2fe4-4993-bce3-dee605345b4f; nominal UTC only.");
+                    reviewSession ? "Frozen earliest eligible June 22 review source; self-declared unreviewed; nominal documentary UTC only; selection e52279ed-2ae9-456e-9c6f-56f11cd22347." : "June 23 Development documentary sources; explicit contextual tracking hypothesis 187c3ef3-2fe4-4993-bce3-dee605345b4f; nominal UTC only.");
                 report = new
                 {
                     SchemaVersion = 1,
@@ -126,7 +127,7 @@ public sealed class NasdaqSessionLiquidityResearchCommand
                 {
                     CutoffUtc = t,
                     Interaction = new AnalyzeLondonAsiaInteractionUseCase().Execute(hour, day, t,
-                    M5ResearchDataOrigin.RetrospectiveDocumentary, "June 23 original H1 context; direct user OHLC interaction contract 67059360-6f02-4d85-ba08-62b73a7a7d3b; documentary nominal UTC only.")
+                    M5ResearchDataOrigin.RetrospectiveDocumentary, reviewSession ? "Frozen June 22 original H1 context; descriptive interaction, no contextual selection recommendation; nominal documentary UTC only." : "June 23 original H1 context; direct user OHLC interaction contract 67059360-6f02-4d85-ba08-62b73a7a7d3b; documentary nominal UTC only.")
                 }).ToArray()
             };
             else report = new
@@ -143,7 +144,7 @@ public sealed class NasdaqSessionLiquidityResearchCommand
                 SourceProvenance = root.GetProperty("series").GetProperty("H1").EnumerateObject().Where(p => p.Name != "candles").ToDictionary(p => p.Name, p => p.Value.Clone()),
                 Frames = cutoffs.Select(t => new { CutoffUtc = t, Sessions = calculator.CalculateExplicitSessions(hour, day, t).Select(Project).ToArray() }).ToArray(),
                 NonAuthoritativeComparisons = new[] { Read("M5", new(5, TimeframeUnit.Minute)), Read("M1", new(1, TimeframeUnit.Minute)) }
-                    .Select(s => new { SourceTimeframe = s.Timeframe.ToString(), Sessions = calculator.CalculateExplicitSessions(s, day, new DateTimeOffset(2026, 6, 23, 13, 0, 0, TimeSpan.Zero)).Select(Project).ToArray() }).ToArray()
+                    .Select(s => new { SourceTimeframe = s.Timeframe.ToString(), Sessions = calculator.CalculateExplicitSessions(s, day, new DateTimeOffset(day.Year, day.Month, day.Day, 13, 0, 0, TimeSpan.Zero)).Select(Project).ToArray() }).ToArray()
             };
             var content = JsonSerializer.Serialize(report, Json).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n";
             var parent = Path.GetDirectoryName(destination)!; Directory.CreateDirectory(parent); Guard(parent);

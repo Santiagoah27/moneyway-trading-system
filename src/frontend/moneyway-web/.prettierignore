@@ -5,3 +5,4 @@ package-lock.json
 src/research/reports/*.json
 src/research/blind/data/**/*.json
 src/research/context/data/*.json
+src/research/context/data/contextual-validation/*.json
