@@ -1,7 +1,7 @@
 """Read-only, documentary coverage of the registered original Nasdaq H4 source."""
 import argparse
 import csv
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 import hashlib
 import json
@@ -22,22 +22,64 @@ def stamp(value):
     return value.isoformat().replace("+00:00", "Z")
 
 
-def inspect(repo, session, cutoff, history_hours):
+def inspect(repo, session, cutoff, history_hours, import_manifest=None):
     if history_hours <= 0:
         raise ValueError("history-hours must be positive")
     cutoff = utc(cutoff)
     start = cutoff - timedelta(hours=history_hours)
     package = json.loads((repo / PACKAGE).read_bytes())
-    artifacts = {item["id"]: item for item in package["artifacts"]}
-    paths = {}
-    for kind in ("raw", "normalized"):
-        artifact = artifacts[kind + "-4H"]
-        path = (session / artifact["relativePath"]).resolve()
-        if not path.is_relative_to(session.resolve()):
-            raise ValueError("Source path escapes the session root")
-        if hashlib.sha256(path.read_bytes()).hexdigest() != artifact["sha256"]:
-            raise ValueError("Registered H4 source integrity mismatch")
-        paths[kind] = path
+    if import_manifest is None:
+        artifacts = {item["id"]: item for item in package["artifacts"]}
+        paths = {}
+        for kind in ("raw", "normalized"):
+            artifact = artifacts[kind + "-4H"]
+            path = (session / artifact["relativePath"]).resolve()
+            if not path.is_relative_to(session.resolve()):
+                raise ValueError("Source path escapes the session root")
+            if hashlib.sha256(path.read_bytes()).hexdigest() != artifact["sha256"]:
+                raise ValueError("Registered H4 source integrity mismatch")
+            paths[kind] = path
+        source_identity = {kind: {"relativePath": artifacts[kind + "-4H"]["relativePath"],
+                                  "sha256": artifacts[kind + "-4H"]["sha256"]} for kind in ("raw", "normalized")}
+        mapping_rows = None
+        mapping_note = package["timeMapping"]
+        availability_note = package["availabilityEvidence"]
+    else:
+        manifest_path = Path(import_manifest).resolve()
+        manifest = json.loads(manifest_path.read_bytes())
+        if (manifest.get("schemaVersion"), manifest.get("sourceKind"), manifest.get("providerId"),
+                manifest.get("symbol"), manifest.get("originalTimeframe"), manifest.get("derived")) != (
+                1, "OriginalMt5H4Documentary", package["providerId"], package["originalSymbol"], "H4", False):
+            raise ValueError("Unsupported H4 import manifest identity")
+        paths = {kind: manifest_path.parent / manifest[key] for kind, key in (
+            ("raw", "sourceFile"), ("normalized", "normalizedFile"), ("mapping", "mappingFile"),
+            ("evidence", "mappingEvidenceFile"))}
+        expected = {"raw": manifest["sourceSha256"], "normalized": manifest["normalizedSha256"],
+                    "mapping": manifest["mappingSha256"], "evidence": manifest["mappingEvidenceSha256"]}
+        for kind, path in paths.items():
+            if path.resolve().parent != manifest_path.parent or hashlib.sha256(path.read_bytes()).hexdigest() != expected[kind]:
+                raise ValueError("Imported H4 source integrity mismatch")
+        mapping = json.loads(paths["mapping"].read_bytes())
+        if mapping.get("sourceSha256") != expected["raw"] or mapping.get("mappingStatus") != "DocumentaryAudited":
+            raise ValueError("Imported H4 timestamp mapping mismatch")
+        if mapping.get("rows"):
+            mapping_rows = {r["openUtc"]: r["nativeOpenTime"] for r in mapping["rows"]}
+        else:
+            mapping_rows = {}
+            with paths["raw"].open(newline="") as source:
+                for row in csv.DictReader(source, delimiter="\t"):
+                    native_open = row["<DATE>"] + " " + row["<TIME>"]
+                    matches = [part for part in mapping["segments"] if
+                               part["nativeStartInclusive"] <= native_open < part["nativeEndExclusive"]]
+                    if len(matches) != 1:
+                        raise ValueError("Imported H4 timestamp mapping is incomplete")
+                    opening = (datetime.strptime(native_open, "%Y.%m.%d %H:%M:%S") -
+                               timedelta(minutes=matches[0]["serverUtcOffsetMinutes"])).replace(tzinfo=timezone.utc)
+                    mapping_rows[stamp(opening)] = native_open
+        source_identity = {kind: {"relativePath": str(paths[kind]), "sha256": expected[kind]}
+                           for kind in ("raw", "normalized", "mapping")}
+        mapping_note = "Explicit documentary mapping from imported evidence; historical publication unauthenticated"
+        availability_note = manifest["documentaryHistoricalAvailability"]
 
     native = {}
     with paths["raw"].open(newline="") as source:
@@ -59,7 +101,8 @@ def inspect(repo, session, cutoff, history_hours):
                 raise ValueError("Original provider, instrument or timeframe mismatch")
             if opening < start or closing > cutoff:
                 continue
-            native_open = (opening + timedelta(hours=3)).strftime("%Y.%m.%d %H:%M:%S")
+            native_open = ((opening + timedelta(hours=3)).strftime("%Y.%m.%d %H:%M:%S")
+                           if mapping_rows is None else mapping_rows.get(stamp(opening)))
             original = native.get(native_open)
             if original is None or any(Decimal(row[field]) != Decimal(original["<" + field.upper() + ">"])
                                        for field in ("open", "high", "low", "close")) or Decimal(row["volume"]) != Decimal(original["<TICKVOL>"]):
@@ -88,11 +131,11 @@ def inspect(repo, session, cutoff, history_hours):
             "closedCandleCount": len(selected), "firstCandle": selected[0] if selected else None,
             "lastCandle": selected[-1] if selected else None, "candles": selected,
             "missingSourceRanges": gaps, "requestedCoverageAvailable": bool(selected) and not gaps,
-            "source": {kind: {"relativePath": artifacts[kind + "-4H"]["relativePath"],
-                               "sha256": artifacts[kind + "-4H"]["sha256"]} for kind in ("raw", "normalized")},
-            "sourceIntegrity": "RegisteredSha256AndSelectedNativeRowValuesVerified",
-            "documentaryAvailability": package["availabilityEvidence"],
-            "timeMapping": package["timeMapping"], "strategyTimeZone": "America/Bogota",
+            "source": source_identity,
+            "sourceIntegrity": ("RegisteredSha256AndSelectedNativeRowValuesVerified" if import_manifest is None
+                                else "ImportManifestSha256AndSelectedNativeRowValuesVerified"),
+            "documentaryAvailability": availability_note,
+            "timeMapping": mapping_note, "strategyTimeZone": "America/Bogota",
             "canonicalAdmissionPermitted": False, "operationalSignal": False}
 
 
@@ -101,9 +144,11 @@ def main():
     parser.add_argument("--session-root", type=Path, required=True)
     parser.add_argument("--cutoff-utc", required=True)
     parser.add_argument("--history-hours", type=int, required=True)
+    parser.add_argument("--import-manifest", type=Path)
     args = parser.parse_args()
     repo = Path(__file__).resolve().parents[2]
-    print(json.dumps(inspect(repo, args.session_root.resolve(), args.cutoff_utc, args.history_hours), indent=2))
+    print(json.dumps(inspect(repo, args.session_root.resolve(), args.cutoff_utc,
+                             args.history_hours, args.import_manifest), indent=2))
 
 
 if __name__ == "__main__":
