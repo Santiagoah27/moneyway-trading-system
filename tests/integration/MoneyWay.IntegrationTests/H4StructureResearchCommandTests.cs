@@ -41,7 +41,27 @@ public sealed class H4StructureResearchCommandTests
             Assert.Equal(3, results.GetArrayLength());
             Assert.Equal("Bullish", results[0].GetProperty("classification").GetString());
             Assert.Equal("EXP-NQ-H4-STRICT-3-3-V1", results[2].GetProperty("profile").GetProperty("id").GetString());
+            Assert.False(File.Exists(Path.Combine(destination, "context-observations.json")));
             Assert.Equal(2, new H4StructureResearchCommand().Execute(args, new StringWriter(), new StringWriter()));
+
+            var contextDestination = Path.Combine(root, "context");
+            args[12] = contextDestination;
+            Assert.Equal(2, new H4StructureResearchCommand().Execute(
+                [.. args, "--context-horizon", "3"], new StringWriter(), new StringWriter()));
+            Assert.False(Directory.Exists(contextDestination));
+            Assert.Equal(0, new H4StructureResearchCommand().Execute(
+                [.. args, "--context-horizon", "1", "--context-horizon", "2"], new StringWriter(), new StringWriter()));
+            Assert.Equal(File.ReadAllBytes(Path.Combine(destination, "observations.json")),
+                File.ReadAllBytes(Path.Combine(contextDestination, "observations.json")));
+            using var context = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(contextDestination, "context-observations.json")));
+            var experiments = context.RootElement.GetProperty("observations");
+            Assert.Equal(6, experiments.GetArrayLength());
+            Assert.Equal(1, experiments[0].GetProperty("horizon").GetInt32());
+            Assert.Equal(2, experiments[1].GetProperty("horizon").GetInt32());
+            Assert.Equal("EXP-NQ-H4-CONTEXT-V1", experiments[0].GetProperty("candidateId").GetString());
+            Assert.Equal(10, experiments[0].GetProperty("candleHistory").GetArrayLength());
+            Assert.False(context.RootElement.GetProperty("canonicalAdmissionPermitted").GetBoolean());
+            Assert.Equal(bytes, File.ReadAllBytes(input));
         }
         finally { Directory.Delete(root, recursive: true); }
     }

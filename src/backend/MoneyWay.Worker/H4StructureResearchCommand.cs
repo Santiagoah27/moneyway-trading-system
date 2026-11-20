@@ -10,7 +10,7 @@ namespace MoneyWay.Worker;
 /// <summary>One-shot local IO boundary for isolated H4 research; the calculation is pure Application code.</summary>
 public sealed class H4StructureResearchCommand
 {
-    private const string Usage = "h4-structure-research --input <canonical-h4-csv> --sha256 <source-sha256> --requested-start-utc <UTC> --cutoff-utc <UTC> --provenance <reference> --output <new-directory> --profile <id:left:right> [--profile <id:left:right> ...]";
+    private const string Usage = "h4-structure-research --input <canonical-h4-csv> --sha256 <source-sha256> --requested-start-utc <UTC> --cutoff-utc <UTC> --provenance <reference> --output <new-directory> --profile <id:left:right> [--profile <id:left:right> ...] [--context-horizon <1|2> ...]";
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true,
@@ -26,7 +26,7 @@ public sealed class H4StructureResearchCommand
                 args[3] != "--sha256" || args[5] != "--requested-start-utc" || args[7] != "--cutoff-utc" ||
                 args[9] != "--provenance" || args[11] != "--output" ||
                 !Path.IsPathFullyQualified(args[2]) || !Path.IsPathFullyQualified(args[12]) ||
-                (args.Count - 13) % 2 != 0 || args.Skip(13).Where((_, index) => index % 2 == 0).Any(value => value != "--profile"))
+                (args.Count - 13) % 2 != 0)
                 throw new ArgumentException(Usage);
             var input = Path.GetFullPath(args[2]);
             var destination = Path.TrimEndingDirectorySeparator(Path.GetFullPath(args[12]));
@@ -43,18 +43,28 @@ public sealed class H4StructureResearchCommand
             var series = new CsvMarketDataImporter().Import(reader);
             if (series.Count > 10000) throw new ArgumentException("At most 10000 original H4 candles per report.");
             var calculator = new EvaluateH4MarketStructureCandidateUseCase();
-            var observations = new List<H4MarketStructureObservation>();
+            var profiles = new List<H4PivotProfile>();
+            var horizons = new List<int>();
             for (var i = 13; i < args.Count; i += 2)
             {
+                if (args[i] == "--context-horizon")
+                {
+                    if (args[i + 1] is not ("1" or "2"))
+                        throw new ArgumentException("Context horizon must be 1 or 2.");
+                    horizons.Add(args[i + 1] == "1" ? 1 : 2);
+                    continue;
+                }
                 var pieces = args[i + 1].Split(':');
-                if (pieces.Length != 3 || !int.TryParse(pieces[1], NumberStyles.None, CultureInfo.InvariantCulture, out var left) ||
+                if (args[i] != "--profile" || pieces.Length != 3 || !int.TryParse(pieces[1], NumberStyles.None, CultureInfo.InvariantCulture, out var left) ||
                     !int.TryParse(pieces[2], NumberStyles.None, CultureInfo.InvariantCulture, out var right))
                     throw new ArgumentException("Profiles must be id:left:right.");
-                observations.Add(calculator.Execute(new(series, start, cutoff,
-                    new(pieces[0], left, right), args[10])));
+                profiles.Add(new(pieces[0], left, right));
             }
-            if (observations.Select(o => o.Profile.Id).Distinct(StringComparer.Ordinal).Count() != observations.Count)
-                throw new ArgumentException("Profile identifiers must be unique.");
+            if (profiles.Count == 0 || profiles.Select(p => p.Id).Distinct(StringComparer.Ordinal).Count() != profiles.Count ||
+                horizons.Distinct().Count() != horizons.Count)
+                throw new ArgumentException("Select at least one unique profile and avoid duplicate horizons.");
+            var requests = profiles.Select(profile => new H4MarketStructureRequest(series, start, cutoff, profile, args[10])).ToArray();
+            var observations = requests.Select(calculator.Execute).ToArray();
             var report = new
             {
                 schemaVersion = 1,
@@ -69,11 +79,25 @@ public sealed class H4StructureResearchCommand
             var pending = Path.Combine(parent, ".h4-structure-pending-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(pending);
             File.WriteAllText(Path.Combine(pending, "observations.json"), JsonSerializer.Serialize(report, Json) + "\n");
+            if (horizons.Count > 0)
+            {
+                var context = new EvaluateH4ContextCandidateUseCase();
+                var contextReport = new
+                {
+                    report.schemaVersion,
+                    report.inputSha256,
+                    report.scope,
+                    report.canonicalAdmissionPermitted,
+                    report.operationalSignal,
+                    observations = requests.SelectMany(request => horizons.Select(horizon => context.Execute(request, horizon))).ToArray()
+                };
+                File.WriteAllText(Path.Combine(pending, "context-observations.json"), JsonSerializer.Serialize(contextReport, Json) + "\n");
+            }
             Directory.Move(pending, destination);
             output.WriteLine(JsonSerializer.Serialize(new
             {
                 destination,
-                profiles = observations.Count,
+                profiles = observations.Length,
                 canonicalAdmissionPermitted = false,
                 operationalSignal = false
             }, Json));
