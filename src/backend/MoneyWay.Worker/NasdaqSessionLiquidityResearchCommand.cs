@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -20,8 +21,9 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             var interaction = args.Count == 6 && args[5] == "--analyze-interaction";
             var tracking = args.Count == 6 && args[5] == "--track-context";
             var contextualSc = args.Count == 6 && args[5] == "--compare-context-sc";
-            if ((args.Count != 5 && !interaction && !tracking && !contextualSc) || args[0] != "nasdaq-session-liquidity" || args[1] != "--input" || args[3] != "--output"
-                || !Path.IsPathFullyQualified(args[2]) || !Path.IsPathFullyQualified(args[4])) throw new ArgumentException("nasdaq-session-liquidity --input <absolute-context-json> --output <new-absolute-directory> [--analyze-interaction | --track-context | --compare-context-sc]");
+            var sequence = args.Count is 6 or 8 && args[5] == "--compare-context-sequence";
+            if ((args.Count != 5 && !interaction && !tracking && !contextualSc && !sequence) || args[0] != "nasdaq-session-liquidity" || args[1] != "--input" || args[3] != "--output"
+                || !Path.IsPathFullyQualified(args[2]) || !Path.IsPathFullyQualified(args[4])) throw new ArgumentException("nasdaq-session-liquidity --input <absolute-context-json> --output <new-absolute-directory> [--analyze-interaction | --track-context | --compare-context-sc | --compare-context-sequence [--cutoff-utc <UTC>]]");
             var input = Path.GetFullPath(args[2]); var destination = Path.TrimEndingDirectorySeparator(Path.GetFullPath(args[4]));
             Guard(input); Guard(destination);
             if (Directory.Exists(destination) || File.Exists(destination) || destination == Path.GetPathRoot(destination)) throw new ArgumentException("New output directory required; never replace existing evidence.");
@@ -52,6 +54,16 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             }
             var hour = Read("H1", new(1, TimeframeUnit.Hour));
             var maximum = root.GetProperty("maximumCutoffUtc").GetDateTimeOffset();
+            if (sequence && reviewSession) throw new ArgumentException("Sequence comparison requires the exposed Development context.");
+            if (sequence && args.Count == 8)
+            {
+                if (args[6] != "--cutoff-utc" ||
+                    !DateTimeOffset.TryParseExact(args[7], ["yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd'T'HH:mm:ss.FFFFFFF'Z'"],
+                        CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var cutoff) ||
+                    cutoff > maximum)
+                    throw new ArgumentException("Sequence cutoff must be explicit UTC and within the supplied context.");
+                maximum = cutoff;
+            }
             var cutoffs = hour.Candles.Select(c => c.CloseTimeUtc).Where(t => t >= new DateTimeOffset(day.Year, day.Month, day.Day, 0, 0, 0, TimeSpan.Zero) && t <= maximum)
                 .Concat(new[] { new DateTimeOffset(day.Year, day.Month, day.Day, 6, 59, 0, TimeSpan.Zero), new(day.Year, day.Month, day.Day, 12, 59, 0, TimeSpan.Zero), maximum }).Distinct().Order().ToArray();
             object Project(NasdaqSessionReference s) => new
@@ -80,13 +92,13 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             object report;
             ContextualLiquidityTrackingResult? tracked = null;
             ContextualSwingScReport? scComparison = null;
-            if (contextualSc)
+            if (contextualSc || sequence)
             {
                 var m5 = Read("M5", new(5, TimeframeUnit.Minute));
                 var rangeStart = calculator.CalculateExplicitSessions(hour, day, maximum)[1].StartUtc;
                 scComparison = new CompareContextualSwingScUseCase().Execute(hour, m5, day, rangeStart, maximum, M5ResearchDataOrigin.RetrospectiveDocumentary,
                     reviewSession ? "Frozen earliest eligible June 22 review source; self-declared unreviewed; nominal documentary UTC only; selection e52279ed-2ae9-456e-9c6f-56f11cd22347." : "June 23 Development documentary sources; explicit contextual tracking hypothesis 187c3ef3-2fe4-4993-bce3-dee605345b4f; nominal UTC only.");
-                report = new
+                var scReport = new
                 {
                     SchemaVersion = 1,
                     ContextId = root.GetProperty("id").GetString(),
@@ -96,6 +108,26 @@ public sealed class NasdaqSessionLiquidityResearchCommand
                     SourceProvenance = new[] { "H1", "M5" }.ToDictionary(k => k, k => root.GetProperty("series").GetProperty(k).EnumerateObject().Where(p => p.Name != "candles").ToDictionary(p => p.Name, p => p.Value.Clone())),
                     Comparison = scComparison
                 };
+                if (sequence)
+                {
+                    var configs = from sweep in Enum.GetValues<M5SweepPolicy>()
+                                  from window in Enum.GetValues<M5SequenceWindowPolicy>()
+                                  from formation in Enum.GetValues<M5SequenceFvgPolicy>()
+                                  from profile in Enum.GetValues<M5FvgProfile>()
+                                  select new M5SequenceConfiguration(sweep, window, formation, profile, new(8, 30), new(11, 30));
+                    report = new
+                    {
+                        scReport.SchemaVersion,
+                        scReport.ContextId,
+                        scReport.InputSha256,
+                        scReport.DocumentaryMapping,
+                        scReport.SourceProvenance,
+                        Sequence = ContextualSequenceResearchOutput.Project(
+                            new EvaluateM5ContextualSequenceUseCase().Execute(scReport.ContextId!, scComparison, m5, configs.ToArray()))
+                    };
+                    scComparison = null;
+                }
+                else report = scReport;
             }
             else if (tracking)
             {
@@ -149,7 +181,7 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             var content = JsonSerializer.Serialize(report, Json).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n";
             var parent = Path.GetDirectoryName(destination)!; Directory.CreateDirectory(parent); Guard(parent);
             var pending = Path.Combine(parent, ".nasdaq-session-pending-" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(pending); File.WriteAllText(Path.Combine(pending, contextualSc ? "contextual-swing-sc.json" : tracking ? "liquidity-context.json" : interaction ? "london-asia-interaction.json" : "session-liquidity.json"), content, new UTF8Encoding(false));
+            Directory.CreateDirectory(pending); File.WriteAllText(Path.Combine(pending, sequence ? "contextual-sequence.json" : contextualSc ? "contextual-swing-sc.json" : tracking ? "liquidity-context.json" : interaction ? "london-asia-interaction.json" : "session-liquidity.json"), content, new UTF8Encoding(false));
             if (tracked is not null) File.WriteAllText(Path.Combine(pending, "liquidity-context.md"), ContextualLiquidityResearchMarkdown.Render(tracked), new UTF8Encoding(false));
             if (scComparison is not null) File.WriteAllText(Path.Combine(pending, "contextual-swing-sc.md"), ContextualSwingScMarkdown.Render(scComparison), new UTF8Encoding(false));
             Guard(destination); Directory.Move(pending, destination);
