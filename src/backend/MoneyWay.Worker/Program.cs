@@ -1,5 +1,10 @@
 using MoneyWay.Worker;
 
+if (args.Length > 0 && args[0] == "h4-structure-research")
+{
+    return new H4StructureResearchCommand().Execute(args, Console.Out, Console.Error);
+}
+
 if (args.Length > 0 && args[0] == "nasdaq-session-liquidity")
 {
     return new NasdaqSessionLiquidityResearchCommand().Execute(args, Console.Out, Console.Error);
