@@ -19,8 +19,9 @@ public sealed class NasdaqSessionLiquidityResearchCommand
         {
             var interaction = args.Count == 6 && args[5] == "--analyze-interaction";
             var tracking = args.Count == 6 && args[5] == "--track-context";
-            if ((args.Count != 5 && !interaction && !tracking) || args[0] != "nasdaq-session-liquidity" || args[1] != "--input" || args[3] != "--output"
-                || !Path.IsPathFullyQualified(args[2]) || !Path.IsPathFullyQualified(args[4])) throw new ArgumentException("nasdaq-session-liquidity --input <absolute-context-json> --output <new-absolute-directory> [--analyze-interaction | --track-context]");
+            var contextualSc = args.Count == 6 && args[5] == "--compare-context-sc";
+            if ((args.Count != 5 && !interaction && !tracking && !contextualSc) || args[0] != "nasdaq-session-liquidity" || args[1] != "--input" || args[3] != "--output"
+                || !Path.IsPathFullyQualified(args[2]) || !Path.IsPathFullyQualified(args[4])) throw new ArgumentException("nasdaq-session-liquidity --input <absolute-context-json> --output <new-absolute-directory> [--analyze-interaction | --track-context | --compare-context-sc]");
             var input = Path.GetFullPath(args[2]); var destination = Path.TrimEndingDirectorySeparator(Path.GetFullPath(args[4]));
             Guard(input); Guard(destination);
             if (Directory.Exists(destination) || File.Exists(destination) || destination == Path.GetPathRoot(destination)) throw new ArgumentException("New output directory required; never replace existing evidence.");
@@ -77,7 +78,25 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             };
             object report;
             ContextualLiquidityTrackingResult? tracked = null;
-            if (tracking)
+            ContextualSwingScReport? scComparison = null;
+            if (contextualSc)
+            {
+                var m5 = Read("M5", new(5, TimeframeUnit.Minute));
+                var rangeStart = calculator.CalculateExplicitSessions(hour, day, maximum)[1].StartUtc;
+                scComparison = new CompareContextualSwingScUseCase().Execute(hour, m5, day, rangeStart, maximum, M5ResearchDataOrigin.RetrospectiveDocumentary,
+                    "June 23 Development documentary sources; explicit contextual tracking hypothesis 187c3ef3-2fe4-4993-bce3-dee605345b4f; nominal UTC only.");
+                report = new
+                {
+                    SchemaVersion = 1,
+                    ContextId = root.GetProperty("id").GetString(),
+                    InputSha256 = Convert.ToHexStringLower(SHA256.HashData(bytes)),
+                    DocumentaryMapping = root.GetProperty("documentaryMapping").GetString(),
+                    ExperimentSource = "Direct user experimental hypotheses 292ee493-543a-4742-9cf5-4b9b75186392; not mentor-confirmed operational rules.",
+                    SourceProvenance = new[] { "H1", "M5" }.ToDictionary(k => k, k => root.GetProperty("series").GetProperty(k).EnumerateObject().Where(p => p.Name != "candles").ToDictionary(p => p.Name, p => p.Value.Clone())),
+                    Comparison = scComparison
+                };
+            }
+            else if (tracking)
             {
                 var m5 = Read("M5", new(5, TimeframeUnit.Minute));
                 var rangeStart = calculator.CalculateExplicitSessions(hour, day, maximum)[1].StartUtc;
@@ -129,8 +148,9 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             var content = JsonSerializer.Serialize(report, Json).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n";
             var parent = Path.GetDirectoryName(destination)!; Directory.CreateDirectory(parent); Guard(parent);
             var pending = Path.Combine(parent, ".nasdaq-session-pending-" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(pending); File.WriteAllText(Path.Combine(pending, tracking ? "liquidity-context.json" : interaction ? "london-asia-interaction.json" : "session-liquidity.json"), content, new UTF8Encoding(false));
+            Directory.CreateDirectory(pending); File.WriteAllText(Path.Combine(pending, contextualSc ? "contextual-swing-sc.json" : tracking ? "liquidity-context.json" : interaction ? "london-asia-interaction.json" : "session-liquidity.json"), content, new UTF8Encoding(false));
             if (tracked is not null) File.WriteAllText(Path.Combine(pending, "liquidity-context.md"), ContextualLiquidityResearchMarkdown.Render(tracked), new UTF8Encoding(false));
+            if (scComparison is not null) File.WriteAllText(Path.Combine(pending, "contextual-swing-sc.md"), ContextualSwingScMarkdown.Render(scComparison), new UTF8Encoding(false));
             Guard(destination); Directory.Move(pending, destination);
             output.WriteLine(destination); return 0;
         }

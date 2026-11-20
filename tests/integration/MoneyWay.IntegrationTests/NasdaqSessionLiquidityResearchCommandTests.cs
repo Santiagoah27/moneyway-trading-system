@@ -19,6 +19,63 @@ public sealed class NasdaqSessionLiquidityResearchCommandTests : IDisposable
     private static int Run(string input, string output) => new NasdaqSessionLiquidityResearchCommand().Execute(["nasdaq-session-liquidity", "--input", input, "--output", output], TextWriter.Null, TextWriter.Null);
     private static int Interactions(string input, string output) => new NasdaqSessionLiquidityResearchCommand().Execute(["nasdaq-session-liquidity", "--input", input, "--output", output, "--analyze-interaction"], TextWriter.Null, TextWriter.Null);
     private static int Tracking(string input, string output) => new NasdaqSessionLiquidityResearchCommand().Execute(["nasdaq-session-liquidity", "--input", input, "--output", output, "--track-context"], TextWriter.Null, TextWriter.Null);
+    private static int ContextSc(string input, string output) => new NasdaqSessionLiquidityResearchCommand().Execute(["nasdaq-session-liquidity", "--input", input, "--output", output, "--compare-context-sc"], TextWriter.Null, TextWriter.Null);
+
+    [Fact]
+    public void ContextScComparisonReproducesActualEventsFrozenReferencesAndConservativeOutcomes()
+    {
+        var originalHash = Hash(ContextPath); var target = Path.Combine(owned, "context-sc"); Assert.Equal(0, ContextSc(ContextPath, target));
+        var golden = Path.Combine(Root(), "docs/data/strategy-lab/contextual-sc-v1"); var bytes = File.ReadAllBytes(Path.Combine(target, "contextual-swing-sc.json"));
+        Assert.Equal(File.ReadAllBytes(Path.Combine(golden, "june23.json")), bytes);
+        Assert.Equal(File.ReadAllBytes(Path.Combine(golden, "june23.md")), File.ReadAllBytes(Path.Combine(target, "contextual-swing-sc.md")));
+        using var json = JsonDocument.Parse(bytes); var comparison = json.RootElement.GetProperty("comparison");
+        using var tracking = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(Root(), "docs/data/strategy-lab/liquidity-context-v1/june23.json")));
+        Assert.True(JsonElement.DeepEquals(tracking.RootElement.GetProperty("tracking"), comparison.GetProperty("tracking")));
+        Assert.Equal(originalHash, json.RootElement.GetProperty("inputSha256").GetString()); Assert.False(comparison.GetProperty("canonicalAdmissionPermitted").GetBoolean()); Assert.False(comparison.GetProperty("operationalSignal").GetBoolean());
+        var rows = comparison.GetProperty("comparisons").EnumerateArray().ToArray(); Assert.Equal(72, rows.Length);
+        Assert.Equal(3, rows.Count(r => r.GetProperty("status").GetString() == "ExperimentalScObserved"));
+        Assert.Equal(8, rows.Count(r => r.GetProperty("status").GetString() == "AbstainedSameCandleBreak"));
+        Assert.Equal(24, rows.Count(r => r.GetProperty("status").GetString() == "AbstainedConfirmedStructure"));
+        Assert.Equal(36, rows.Count(r => r.GetProperty("status").GetString() == "NoQualifyingEventObserved"));
+        Assert.Equal(1, rows.Count(r => r.GetProperty("status").GetString() == "AbstainedPreparationRangeUnavailable"));
+        var ll = rows.Where(r => r.GetProperty("eventSelection").GetProperty("liquidityReference").GetProperty("category").GetString() == "LL").ToArray();
+        var detected = ll.Where(r => r.GetProperty("status").GetString() == "ExperimentalScObserved").ToArray(); Assert.Equal(2, detected.Length);
+        foreach (var row in detected)
+        {
+            Assert.Equal(29510.2m, row.GetProperty("structuralReference").GetProperty("price").GetDecimal());
+            Assert.Equal(new DateTimeOffset(2026, 6, 23, 13, 35, 0, TimeSpan.Zero), row.GetProperty("subsequentSc").GetProperty("asOfUtc").GetDateTimeOffset());
+            Assert.Equal(29532.7m, row.GetProperty("subsequentSc").GetProperty("candle").GetProperty("close").GetDecimal());
+        }
+        var events = comparison.GetProperty("eventSelections").EnumerateArray().Where(e => e.GetProperty("event").ValueKind != JsonValueKind.Null).ToArray(); Assert.Equal(6, events.Length);
+        foreach (var e in events.Where(e => !e.GetProperty("policyId").GetString()!.EndsWith("E1-V1")))
+            Assert.Equal(new DateTimeOffset(2026, 6, 23, 13, 30, 0, TimeSpan.Zero), e.GetProperty("event").GetProperty("candle").GetProperty("openTimeUtc").GetDateTimeOffset());
+        var groupIds = comparison.GetProperty("outcomeGroups").EnumerateArray().SelectMany(g => g.GetProperty("comparisonIds").EnumerateArray().Select(v => v.GetString())).ToArray();
+        Assert.Equal(72, groupIds.Length); Assert.Equal(72, groupIds.Distinct().Count());
+        Assert.All(rows, r => { Assert.False(r.GetProperty("operationalSignal").GetBoolean()); Assert.False(r.GetProperty("canonicalAdmissionPermitted").GetBoolean()); });
+        var repeat = Path.Combine(owned, "context-sc-repeat"); Assert.Equal(0, ContextSc(ContextPath, repeat)); Assert.Equal(bytes, File.ReadAllBytes(Path.Combine(repeat, "contextual-swing-sc.json")));
+        Assert.Equal(2, ContextSc(ContextPath, target)); Assert.Equal(originalHash, Hash(ContextPath));
+        Assert.DoesNotContain("2026-06-25T", System.Text.Encoding.UTF8.GetString(bytes)); Assert.DoesNotContain("2026-06-30T", System.Text.Encoding.UTF8.GetString(bytes));
+    }
+
+    [Fact]
+    public void ContextScRowsAreStableAtEarlierCutoffAndMarkdownIsCultureIndependent()
+    {
+        var old = System.Globalization.CultureInfo.CurrentCulture;
+        try
+        {
+            System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("es-CO");
+            var target = Path.Combine(owned, "context-sc-culture"); Assert.Equal(0, ContextSc(ContextPath, target));
+            Assert.Equal(File.ReadAllBytes(Path.Combine(Root(), "docs/data/strategy-lab/contextual-sc-v1/june23.md")), File.ReadAllBytes(Path.Combine(target, "contextual-swing-sc.md")));
+        }
+        finally { System.Globalization.CultureInfo.CurrentCulture = old; }
+        Directory.CreateDirectory(owned); var root = JsonNode.Parse(File.ReadAllText(ContextPath))!; root["maximumCutoffUtc"] = "2026-06-23T13:30:00Z";
+        var input = Path.Combine(owned, "cutoff.json"); File.WriteAllText(input, root.ToJsonString()); var first = Path.Combine(owned, "before"); Assert.Equal(0, ContextSc(input, first));
+        using var before = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(first, "contextual-swing-sc.json")));
+        var future = root["series"]!["M5"]!["candles"]!.AsArray().First(c => c!["openTimeUtc"]!.GetValue<string>().StartsWith("2026-06-23T15:40"))!; future["low"] = 1;
+        File.WriteAllText(input, root.ToJsonString()); var second = Path.Combine(owned, "after"); Assert.Equal(0, ContextSc(input, second));
+        using var after = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(second, "contextual-swing-sc.json")));
+        Assert.True(JsonElement.DeepEquals(before.RootElement.GetProperty("comparison"), after.RootElement.GetProperty("comparison")));
+    }
 
     [Fact]
     public void ContextTrackingReproducesRealInventoryFullSequenceAndExactOpenBoundaryWithoutApproval()

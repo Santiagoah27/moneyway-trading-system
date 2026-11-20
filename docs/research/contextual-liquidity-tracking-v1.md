@@ -1,5 +1,10 @@
 # Experimental contextual liquidity reference tracking V1
 
+Subsequent composition: [contextual swing/SC comparison V1](contextual-swing-sc-v1.md)
+consumes this unchanged tracking output under separate event/structural hypotheses.
+It does not add operational relevance, replace tracking history or promote these
+observations to trusted facts.
+
 `EXP-NQ-LIQ-CONTEXT-V1`, version `1.0.0`. Authorized source: user task
 `187c3ef3-2fe4-4993-bce3-dee605345b4f`, 2026-11-20. This is a reusable descriptive
 research fold under [ADR 0027](../decisions/0027-permit-isolated-experimental-strategy-hypotheses.md),
