@@ -26,13 +26,16 @@ internal sealed class M5CandidateFixture
     internal NasdaqHumanH4PermittedDirection Direction { get; }
     internal static DateTimeOffset At(int minute) => M5Fixture.At(14, minute);
     internal M5CandidateFixture(bool buy = true, decimal close = 100.01m, bool baseline = false, NasdaqStrategyPath path = NasdaqStrategyPath.Standard,
-        decimal? candleOpen = null, decimal? high = null, decimal? low = null)
+        decimal? candleOpen = null, decimal? high = null, decimal? low = null, bool sessionCandidate = false)
     {
-        Definition = baseline ? MoneyWayNasdaqStrategyDefinition.Instance : MoneyWayNasdaqM5StrictCloseCandidate.Definition;
+        Definition = sessionCandidate ? MoneyWayNasdaqSessionCandidate.Definition : baseline ? MoneyWayNasdaqStrategyDefinition.Instance : MoneyWayNasdaqM5StrictCloseCandidate.Definition;
         Direction = buy ? NasdaqHumanH4PermittedDirection.Buy : NasdaqHumanH4PermittedDirection.Sell;
         Series = M5Fixture.Series().Select(s => new CandleSeries(s.ProviderId, s.Symbol, s.Timeframe,
             s.Candles.Where(c => c.CloseTimeUtc <= At(30)).Select(c => c.Timeframe == NasdaqHumanM5TriggerEvent.M5 && c.CloseTimeUtc == At(10)
                 ? new Candle(c.ProviderId, c.Symbol, c.Timeframe, c.OpenTimeUtc, c.CloseTimeUtc, candleOpen ?? (buy ? 105 : 95), high ?? Math.Max(110, close), low ?? Math.Min(90, close), close, null) : c))).ToArray();
+        if (sessionCandidate)
+            Series = Series.Select(s => s.Timeframe == new Timeframe(1, TimeframeUnit.Hour)
+                ? new CandleSeries(s.ProviderId, s.Symbol, s.Timeframe, s.Candles.Append(LiquidityFixture.Candle(12)).OrderBy(c => c.OpenTimeUtc)) : s).ToArray();
         var context = Context(M5Fixture.At(13, 15));
         var reference = new NasdaqLiquidityTakeReference.SessionLevel(context, new NasdaqSessionLiquidityCalculator().Calculate(context),
             buy ? NasdaqLiquidityTakeReference.SessionEndpoint.AsiaLow : NasdaqLiquidityTakeReference.SessionEndpoint.AsiaHigh, context.AsOfUtc, "synthetic:reference");
@@ -61,6 +64,7 @@ internal sealed class M5CandidateFixture
     }
     internal MultiTimeframeStrategyBacktestDiagnosticsReport Run(IEnumerable<IStrategyReplayInputObservation>? inputs = null, CandleSeries[]? series = null)
     {
+        if (Definition.Version == MoneyWayNasdaqSessionCandidate.Version) return MoneyWayNasdaqSessionCandidate.CreateBacktest().Execute(Definition, series ?? Series, inputs ?? Inputs);
         var candidate = Definition.Version == MoneyWayNasdaqM5StrictCloseCandidate.Version;
         if (candidate) return MoneyWayNasdaqM5StrictCloseCandidate.CreateBacktest().Execute(Definition, series ?? Series, inputs ?? Inputs);
         var definitions = new[] { Definition };

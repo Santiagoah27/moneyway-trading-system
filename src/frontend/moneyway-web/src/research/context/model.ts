@@ -1,6 +1,7 @@
 import contextUrl from "./data/june23-context.json?url";
 import review from "./data/development-review.json";
 import { readReport, type Candle, type Envelope } from "../report";
+import { sessionReport } from "./sessionLiquidity";
 
 export type Frame = "H4" | "H1" | "M5" | "M1";
 export type ContextCandle = Candle & { nativeOpenTime: string };
@@ -134,7 +135,19 @@ export async function loadContext(signal?: AbortSignal): Promise<ContextData> {
     const response = await fetch(contextUrl, { signal });
     if (!response.ok)
         throw new Error("Contexto documental no disponible; no se sustituirá.");
-    return validateContext((await response.json()) as ContextData);
+    const text = await response.text();
+    const digest = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(text),
+    );
+    const hash = Array.from(new Uint8Array(digest), (b) =>
+        b.toString(16).padStart(2, "0"),
+    ).join("");
+    if (hash !== sessionReport.inputSha256)
+        throw new Error(
+            "Contexto documental no disponible: hash fuente incompatible con las referencias de sesión.",
+        );
+    return validateContext(JSON.parse(text) as ContextData);
 }
 export type OriginalReview = {
     episodeId: string;
@@ -250,6 +263,9 @@ export function eligibleReview(id: string, cutoff: string) {
         : null;
 }
 export const cutoffOptions = [
+    "06:59",
+    "07:00",
+    "12:59",
     "13:00",
     "13:30",
     "14:00",

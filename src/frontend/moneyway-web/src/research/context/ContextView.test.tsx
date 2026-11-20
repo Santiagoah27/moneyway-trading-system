@@ -4,6 +4,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, afterEach, describe, it, expect, vi } from "vitest";
 import raw from "./data/june23-context.json";
+import rawText from "./data/june23-context.json?raw";
 import {
     closedAt,
     coverageAt,
@@ -39,7 +40,7 @@ beforeEach(() => {
         "fetch",
         vi.fn(
             async () =>
-                new Response(JSON.stringify(raw), {
+                new Response(rawText, {
                     status: 200,
                     headers: { "Content-Type": "application/json" },
                 }),
@@ -273,7 +274,12 @@ describe("contextual chart workflow", () => {
         );
         expect(screen.getByText(/Comparación oculta/)).toBeTruthy();
         expect(screen.queryByText(/Humano r1:/)).toBeNull();
-        expect(container.querySelector("[data-context-reference]")).toBeNull();
+        expect(
+            container.querySelector('[data-context-reference^="human-"]'),
+        ).toBeNull();
+        expect(
+            container.querySelector('[data-context-reference^="algorithm-"]'),
+        ).toBeNull();
         expect(screen.queryByText("29381.7")).toBeNull();
         expect(
             container.querySelector('[data-time-guide="2026-06-23T13:30:00Z"]'),
@@ -320,11 +326,13 @@ describe("contextual chart workflow", () => {
         );
         expect(screen.getByText(/Comparación oculta/)).toBeTruthy();
     });
-    it("shows boundary limitations instead of authoritative Asia/London extrema or new strategy facts", async () => {
+    it("shows documentary candidate windows without resolving runtime cutoff or authorizing strategy facts", async () => {
         const { container } = render(<ContextualResearch />);
         await screen.findByRole("heading", { name: "La sesión en contexto" });
         expect(
-            screen.getByText(/Asia\/London: límites no resueltos/),
+            screen.getByText(
+                /Asia\/London: ventanas explícitas de la candidata/,
+            ),
         ).toBeTruthy();
         expect(
             screen.getByText(

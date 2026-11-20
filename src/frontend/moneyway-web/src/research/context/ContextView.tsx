@@ -21,6 +21,7 @@ import {
     type ContextData,
 } from "./model";
 import "./ContextView.css";
+import { sessionReferencesAt, sessionReport } from "./sessionLiquidity";
 
 const guides: ChartGuide[] = [
     { timeUtc: "2026-06-23T13:00:00Z", label: "Preparación 08:00 Bogotá" },
@@ -89,6 +90,33 @@ function ContextSession({ context }: { context: ContextData }) {
         review && loaded?.id === review.episodeId ? loaded.report : undefined;
     const references: ChartReference[] = [];
     const original = report?.comparison;
+    let liquidity: ReturnType<typeof sessionReferencesAt>;
+    let liquidityError = "";
+    try {
+        liquidity = sessionReferencesAt(context, cutoff);
+    } catch (error) {
+        liquidityError =
+            error instanceof Error
+                ? error.message
+                : "Referencias no disponibles.";
+    }
+    for (const s of liquidity?.sessions ?? []) {
+        if (s.coverageStatus !== "Complete" || !s.availableAtUtc) continue;
+        for (const side of ["high", "low"] as const) {
+            const price = s[side];
+            if (price === null) continue;
+            for (const c of side === "high" ? s.highCandles : s.lowCandles)
+                references.push({
+                    id: `${s.session}-${side}-${c.openTimeUtc}`,
+                    label: `${s.session} ${side} H1 documental`,
+                    price,
+                    formationUtc: c.openTimeUtc,
+                    knownAtUtc: s.availableAtUtc,
+                    color: s.session === "Asia" ? "#71d6e8" : "#d6b3ff",
+                    sourceTimeframe: "1h",
+                });
+        }
+    }
     if (review && original && overlays) {
         for (const [i, time] of review.label.selectedOpens.entries())
             references.push({
@@ -169,6 +197,87 @@ function ContextSession({ context }: { context: ContextData }) {
                     America/Bogota
                 </p>
             </header>
+            <section aria-label="Liquidez de sesiones configurada">
+                <h2>Asia y London · candidata documental H1</h2>
+                <p>
+                    Asia [D-1 17:00, D 02:00) · London [D 02:00, D 08:00),
+                    America/Bogota. Fuente exacta H1; no se sustituye por M1/M5.
+                </p>
+                <p>{sessionReport.provenance}</p>
+                {liquidityError ? (
+                    <p role="alert">{liquidityError}</p>
+                ) : liquidity ? (
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Sesión / intervalo UTC</th>
+                                <th>Cobertura H1</th>
+                                <th>High / Low</th>
+                                <th>Formación UTC</th>
+                                <th>Disponibilidad documental</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {liquidity.sessions.map((s) => (
+                                <tr key={s.session}>
+                                    <td>
+                                        {s.session}
+                                        <small>
+                                            {formatTime(s.startUtc)} →{" "}
+                                            {formatTime(s.endUtc)}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {s.coverageStatus} · {s.sourceCount}/
+                                        {s.expectedCount}
+                                        <small>
+                                            {s.missingOpensUtc.length
+                                                ? `${s.missingOpensUtc.length} intervalos no observables`
+                                                : "Cobertura completa"}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {s.high === null
+                                            ? "No disponible"
+                                            : `${s.session === "Asia" ? "AH" : "LH"} ${s.high}`}{" "}
+                                        /{" "}
+                                        {s.low === null
+                                            ? "No disponible"
+                                            : `${s.session === "Asia" ? "AL" : "LL"} ${s.low}`}
+                                    </td>
+                                    <td>
+                                        {[
+                                            ...s.highCandles,
+                                            ...s.lowCandles,
+                                        ].map((c, i) => (
+                                            <small
+                                                key={`${c.openTimeUtc}-${i}`}
+                                            >
+                                                {formatTime(c.openTimeUtc)}
+                                            </small>
+                                        ))}
+                                    </td>
+                                    <td>
+                                        {formatTime(s.availableAtUtc)}
+                                        <small>
+                                            Prefijo evaluado{" "}
+                                            {formatTime(liquidity.cutoffUtc)};
+                                            no acredita publicación autenticada.
+                                        </small>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <p>Sin prefijo documental calculado para este cutoff.</p>
+                )}
+                <p>
+                    Extremos calculados no equivalen a liquidez relevante,
+                    barrido, SC ni aprobación de entrada.
+                    CanonicalAdmissionPermitted=false · OperationalSignal=false.
+                </p>
+            </section>
             <div className="context-controls">
                 <label>
                     Sesión
@@ -234,8 +343,8 @@ function ContextSession({ context }: { context: ContextData }) {
             </div>
             <div className="context-limitations">
                 <span>
-                    Asia/London: límites no resueltos para esta vista; no se
-                    calculan High/Low.
+                    Asia/London: ventanas explícitas de la candidata; extremos
+                    documentales sujetos a cobertura completa H1.
                 </span>
                 <span>
                     Ventana: instrucción 08:30–11:30 / runtime [08:30,11:00).
@@ -548,9 +657,10 @@ function ContextSession({ context }: { context: ContextData }) {
                     como ciegas.
                 </p>
                 <p>
-                    Faltan fronteras Asia/London aplicables y selecciones
-                    estructurales/liquidez humanas contextualizadas. No se
-                    inventan niveles a partir de extremos genéricos.
+                    La configuración candidata resuelve las fronteras
+                    Asia/London. Siguen pendientes las selecciones
+                    estructurales/liquidez relevantes y su validación contextual
+                    humana.
                 </p>
                 {frames.map((f) => (
                     <p key={f}>

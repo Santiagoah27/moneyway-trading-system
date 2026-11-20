@@ -1,5 +1,13 @@
 # Strategy Lab V4: contextual Nasdaq session research
 
+Subsequent configuration: [ADR 0028](../decisions/0028-define-candidate-nasdaq-session-windows.md)
+and the [explicit-session candidate](../strategies/nasdaq/explicit-session-candidate.md)
+now supply user-defined Asia/London windows and a separately generated documentary
+H1 report in this existing route. The original V4 input, unresolved-history
+metadata, labels, sources and earlier validation record below remain unchanged.
+The new report resolves those boundaries for its named candidate configuration;
+it does not approve contextual relevance, causal admission or an operational signal.
+
 Authorized source: user task dated 2026-11-19, attachment
 `a2d3dc45-0223-4dad-b255-92a1677d3067`. This extends the existing
 [V2 chart](m5-swing-viewer-v2.md) and [V3 research workflow](m5-blind-validation-v3.md)

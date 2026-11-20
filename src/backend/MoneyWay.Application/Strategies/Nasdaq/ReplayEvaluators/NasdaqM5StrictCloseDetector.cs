@@ -17,7 +17,8 @@ public sealed class NasdaqM5StrictCloseDetector
     {
         ArgumentNullException.ThrowIfNull(context); ArgumentNullException.ThrowIfNull(take);
         if (context.StrategyId != StrategyDefinitions.Nasdaq.MoneyWayNasdaqM5StrictCloseCandidate.Definition.StrategyId
-            || context.StrategyVersion != StrategyDefinitions.Nasdaq.MoneyWayNasdaqM5StrictCloseCandidate.Version) throw new ArgumentException("Detector is isolated to the opt-in candidate.");
+            || (context.StrategyVersion != StrategyDefinitions.Nasdaq.MoneyWayNasdaqM5StrictCloseCandidate.Version
+                && context.StrategyVersion != StrategyDefinitions.Nasdaq.MoneyWayNasdaqSessionCandidate.Version)) throw new ArgumentException("Detector is isolated to the opt-in strict-close candidate lineage.");
         if (!take.Session.Matches(context)) throw new ArgumentException("Exact setup identity required.");
         var refs = context.InputObservations.OfType<NasdaqValidatedM5SwingObservation>()
             .Where(r => r.Session.Matches(context) && r.DecisiveTake.SameFact(take.Take)).ToArray();

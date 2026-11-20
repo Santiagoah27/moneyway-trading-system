@@ -27,6 +27,10 @@ public sealed record NasdaqSessionLiquidityCalculationResult
 
     internal StrategyReplayContext? SourceContext { get; }
 
+    internal NasdaqSessionLiquidityCalculationResult(NasdaqSessionLiquidityLevels? levels, string reason, StrategyReplayContext context, IReadOnlyList<NasdaqSessionReference> sessions)
+        : this(levels, reason) { SourceContext = context; Sessions = sessions; }
+    internal IReadOnlyList<NasdaqSessionReference>? Sessions { get; }
+
     public bool IsAvailable => Levels is not null;
 
     public NasdaqSessionLiquidityLevels? Levels { get; }

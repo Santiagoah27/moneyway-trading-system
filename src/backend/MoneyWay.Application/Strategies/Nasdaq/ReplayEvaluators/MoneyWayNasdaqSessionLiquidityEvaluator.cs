@@ -2,6 +2,7 @@ using MoneyWay.Application.Strategies.Nasdaq.Liquidity;
 using MoneyWay.Application.StrategyDefinitions.Nasdaq;
 using MoneyWay.Application.StrategyReplay;
 using MoneyWay.Domain.Strategies;
+using System.Text.Json;
 
 namespace MoneyWay.Application.Strategies.Nasdaq.ReplayEvaluators;
 
@@ -47,6 +48,7 @@ public sealed class MoneyWayNasdaqSessionLiquidityEvaluator
             ? RuleEvaluationResult.Passed
             : RuleEvaluationResult.DataUnavailable;
 
-        return new ReplayRuleEvaluationDecision(result, calculation.Reason, null);
+        return new ReplayRuleEvaluationDecision(result, calculation.Reason,
+            calculation.Sessions is { } sessions ? JsonSerializer.Serialize(sessions) : null);
     }
 }

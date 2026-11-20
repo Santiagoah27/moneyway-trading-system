@@ -44,6 +44,14 @@ public abstract class NasdaqLiquidityTakeReference
                 || calculation.Levels!.TradingDay != Session.TradingDay || selectedAtUtc.Offset != TimeSpan.Zero
                 || selectedAtUtc < upstreamContext.AsOfUtc)
                 throw new ArgumentException("Endpoint selection must match the observable upstream session.");
+            if (Session.StrategyVersion == MoneyWayNasdaqSessionCandidate.Version)
+            {
+                var sessions = calculation.Sessions ?? throw new ArgumentException("Exact candidate session sources required.");
+                if (sessions.Any(s => !s.IsComplete || s.AvailableAtUtc > selectedAtUtc)) throw new ArgumentException("Completed candidate session sources must precede selection.");
+                sources = new ReadOnlyCollection<Candle>(sessions.SelectMany(s => s.SourceCandles).ToArray());
+                Calculation = calculation; Endpoint = endpoint; SelectedAtUtc = selectedAtUtc; SourceReference = sourceReference;
+                return;
+            }
             var hour = new Timeframe(1, TimeframeUnit.Hour);
             if (!upstreamContext.TryGetFrame(hour, out var frame)) throw new ArgumentException("Exact session source frame is required.");
             var start = Session.TradingDay.AddDays(-1).ToDateTime(new TimeOnly(17, 0));
