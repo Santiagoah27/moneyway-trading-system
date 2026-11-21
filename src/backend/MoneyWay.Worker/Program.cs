@@ -1,5 +1,10 @@
 using MoneyWay.Worker;
 
+if (args.Length > 0 && args[0] == "nasdaq-evidence-readiness")
+{
+    return new NasdaqEvidenceReadinessCommand().Execute(args, Console.Out, Console.Error);
+}
+
 if (args.Length > 0 && args[0] == "nasdaq-window-research")
 {
     return new NasdaqTradingWindowResearchCommand().Execute(args, Console.Out, Console.Error);

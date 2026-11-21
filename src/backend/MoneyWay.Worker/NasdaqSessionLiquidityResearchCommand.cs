@@ -37,6 +37,12 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             if (file.Length is <= 0 or > 8 * 1024 * 1024) throw new ArgumentException("Bounded 8 MiB context required.");
             var bytes = new byte[(int)file.Length]; file.ReadExactly(bytes);
             using var json = JsonDocument.Parse(bytes); var root = json.RootElement;
+            if (endToEnd && root.TryGetProperty("schema", out var schema) &&
+                schema.GetString() == NasdaqEvidenceReadinessCommand.RegistrationSchema)
+            {
+                output.WriteLine(NasdaqEvidenceReadinessCommand.Replay(bytes, args));
+                return 0;
+            }
             var reviewSession = root.GetProperty("id").GetString() == "nasdaq-context-20260622-review-v1";
             if ((!reviewSession && root.GetProperty("id").GetString() != "nasdaq-context-20260623-v1") || root.GetProperty("timeZone").GetString() != "America/Bogota"
                 || root.GetProperty("schemaVersion").GetInt32() != 1 || root.GetProperty("canonicalAdmissionPermitted").GetBoolean() || root.GetProperty("operationalSignal").GetBoolean()) throw new ArgumentException("Registered isolated June 23 or frozen June 22 review context required.");
@@ -124,34 +130,7 @@ public sealed class NasdaqSessionLiquidityResearchCommand
                             .Where(p => p.Name is "sourceTimeframe" or "derived" or "intervalMinutes" or "rawRelativePath" or
                                 "normalizedRelativePath" or "rawSha256" or "normalizedSha256")
                             .ToDictionary(p => p.Name, p => p.Value.Clone()) : null),
-                    Research = new
-                    {
-                        integrated.CandidateId,
-                        integrated.Version,
-                        RunId = FormattableString.Invariant($"{integrated.CandidateId}/{integrated.DatasetId}/{integrated.ReplayCutoff.RequestedUtc:O}"),
-                        integrated.DatasetId,
-                        integrated.OperatingDate,
-                        integrated.Provider,
-                        integrated.Instrument,
-                        integrated.ReplayStrategyVersion,
-                        integrated.SourceProvenance,
-                        integrated.ReplayCutoff,
-                        integrated.Window,
-                        integrated.Preparation,
-                        integrated.RealignmentCutoffs,
-                        integrated.SessionLiquidity,
-                        integrated.HistoricalAvailability,
-                        integrated.LiquidityAuthority,
-                        integrated.CanonicalAdmissionPermitted,
-                        integrated.OperationalSignal,
-                        integrated.Outcome,
-                        integrated.Summary,
-                        integrated.Chains,
-                        Sequence = integrated.Sequence is { } included ? ContextualSequenceResearchOutput.Project(included) : null,
-                        integrated.Realignment,
-                        integrated.StructuralStop,
-                        integrated.StructuralTakeProfit
-                    }
+                    Research = NasdaqEndToEndResearchOutput.Project(integrated)
                 };
             }
             else if (contextualSc || sequence)
@@ -306,7 +285,7 @@ public sealed class NasdaqSessionLiquidityResearchCommand
         catch (Exception e) when (e is ArgumentException or IOException or UnauthorizedAccessException or JsonException or InvalidOperationException or KeyNotFoundException or FormatException or OverflowException)
         { error.WriteLine("Documentary session calculation unavailable: " + e.Message); return 2; }
     }
-    private static void Guard(string path)
+    internal static void Guard(string path)
     {
         if (path.StartsWith(@"\\", StringComparison.Ordinal) || path.StartsWith("//", StringComparison.Ordinal)) throw new ArgumentException("Local paths only.");
         for (var item = new FileInfo(path) as FileSystemInfo; item is not null; item = item is DirectoryInfo d ? d.Parent : new DirectoryInfo(Path.GetDirectoryName(item.FullName)!))

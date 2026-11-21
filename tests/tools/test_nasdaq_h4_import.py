@@ -70,6 +70,28 @@ class NasdaqH4ImportTests(unittest.TestCase):
         self.assertTrue(inspect(ROOT, self.root, "2026-06-22T05:00:00Z", 8,
                                 self.output / "manifest.json")["requestedCoverageAvailable"])
 
+    def test_same_importer_preserves_native_rows_for_h1_m5_and_m1(self):
+        for timeframe, (amount, unit, duration) in module.PERIODS.items():
+            if timeframe == "H4":
+                continue
+            with self.subTest(timeframe=timeframe):
+                self.write_mapping(timeframe=timeframe)
+                output = self.root / ("import-" + timeframe)
+                def run(at):
+                    return module.import_original(self.source, module.digest(self.source.read_bytes()), self.mapping,
+                                                  module.digest(self.mapping.read_bytes()), output, at, timeframe)
+                with self.assertRaisesRegex(ValueError, "not nominally closed"):
+                    run("2026-06-22T01:00:00Z")
+                self.assertFalse(output.exists())
+                result = run("2026-11-23T18:00:00Z")
+                self.assertEqual(timeframe, result["originalTimeframe"])
+                self.assertEqual(self.source.read_bytes(), (output / "original.tsv").read_bytes())
+                with (output / "normalized.csv").open(newline="") as handle:
+                    row = next(csv.DictReader(handle))
+                self.assertEqual((str(amount), unit), (row["timeframe_amount"], row["timeframe_unit"]))
+                self.assertEqual(duration, module.utc(row["close_time_utc"]) - module.utc(row["open_time_utc"]))
+                self.assertEqual(result, run("2026-11-23T18:01:00Z"))
+
     def test_gap_and_future_invariance(self):
         self.rows[1] = self.rows[1].replace("04:00:00", "08:00:00")
         self.write_source()
