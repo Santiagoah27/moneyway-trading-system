@@ -86,6 +86,7 @@ type Scope = {
     cutoff: string;
     open: string;
     close: string;
+    causalCompletion: boolean;
     h4: ReadonlyMap<string, boolean>;
 };
 
@@ -510,8 +511,14 @@ export function readEpisodes(
                         kind: "Evidencia limitada " + kind,
                     });
             }
+            if (scope.causalCompletion)
+                check(
+                    typeof b.realignmentBindingVerified === "boolean",
+                    "vínculo de rama en M1",
+                );
             return {
                 id,
+                verified: b.realignmentBindingVerified === true,
                 atRealignment: optional(
                     b.stateAtRealignment,
                     "estado M5 en M1",
@@ -588,6 +595,18 @@ export function readEpisodes(
         ].join("|");
         check(!uniqueChains.has(key), "asociación duplicada");
         uniqueChains.add(key);
+        const supporting = branchStates.filter(
+            (b) => b.verified && b.atRealignment === "Observed",
+        );
+        const expectedCompletion = supporting.some(
+            (b) => b.atCutoff === "Observed",
+        )
+            ? "ResearchChainComplete"
+            : supporting.length === 0
+              ? null
+              : supporting.every((b) => b.atCutoff === "Invalidated")
+                ? "ResearchChainCompleteWithInvalidatedContext"
+                : "ResearchChainCompleteWithLimitedContext";
         const geometry = rows(c.geometry, "configuraciones SL/TP").map(
             (g): Geometry => {
                 const id = str(g.configurationId, "identidad SL/TP");
@@ -675,6 +694,16 @@ export function readEpisodes(
                         "finalización histórica",
                         cutoff,
                     );
+                    const outcome = str(o.outcome, "resultado de contexto");
+                    if (scope.causalCompletion)
+                        check(
+                            completedAt
+                                ? expectedCompletion === outcome &&
+                                      g.downstreamOutcome ===
+                                          "StructuralReferencesObserved"
+                                : !outcome.startsWith("ResearchChainComplete"),
+                            "finalización sin contexto M5 sustentador",
+                        );
                     check(
                         !completedAt ||
                             (sameTime(completedAt, time) &&
@@ -686,7 +715,7 @@ export function readEpisodes(
                     return {
                         profiles,
                         completedAt,
-                        outcome: str(o.outcome, "resultado de contexto"),
+                        outcome,
                     };
                 });
                 const all = contexts.flatMap((v) => v.profiles);

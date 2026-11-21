@@ -20,6 +20,8 @@ public sealed class NasdaqEndToEndResearchTests
         var envelope = evidence.RootElement;
         var result = envelope.GetProperty("research");
         Assert.Equal("EXP-NQ-END-TO-END-MTF-V1", result.GetProperty("candidateId").GetString());
+        Assert.Equal("1.1.0", result.GetProperty("version").GetString());
+        Assert.StartsWith("EXP-NQ-END-TO-END-MTF-V1/1.1.0/", result.GetProperty("runId").GetString());
         Assert.Equal("nasdaq-0.1.0-draft", result.GetProperty("replayStrategyVersion").GetString());
         Assert.Equal("EXP-NQ-TRADING-WINDOW-1130-V1", result.GetProperty("window").GetProperty("candidateConfigurationId").GetString());
         Assert.Equal("AtTradingWindowEnd", result.GetProperty("window").GetProperty("candidate").GetProperty("phase").GetString());
@@ -67,6 +69,10 @@ public sealed class NasdaqEndToEndResearchTests
         Assert.Equal(60, summary.GetProperty("distinctStructuralReferenceCombinations").GetInt32());
         Assert.Equal(36, summary.GetProperty("distinctPairsWithPositiveRewardRisk").GetInt32());
         Assert.Equal(2880, summary.GetProperty("evaluatedStructuralAssociations").GetInt32());
+        Assert.Equal(2688, summary.GetProperty("geometryCompletedAssociations").GetInt32());
+        Assert.Equal(0, summary.GetProperty("completeH4ToM1Associations").GetInt32());
+        Assert.Equal(0, summary.GetProperty("completeAssociationsWithInvalidationAtCutoff").GetInt32());
+        Assert.Equal("H4ContextUnavailable", result.GetProperty("outcome").GetString());
         var realignmentCutoffs = result.GetProperty("realignmentCutoffs").EnumerateArray().ToArray();
         Assert.Equal(5, realignmentCutoffs.Length);
         var realigned = Assert.Single(realignmentCutoffs, c => c.GetProperty("requestedUtc").GetDateTimeOffset() == At(13, 58));
@@ -98,6 +104,12 @@ public sealed class NasdaqEndToEndResearchTests
         Assert.Contains(result.GetProperty("chains").EnumerateArray(), c => c.GetProperty("branches").EnumerateArray()
             .Any(b => b.GetProperty("stateAtRealignment").GetString() == "Invalidated"));
         var chains = result.GetProperty("chains").EnumerateArray().ToArray();
+        Assert.Equal(16, chains.Count(c =>
+        {
+            var branches = c.GetProperty("branches").EnumerateArray().ToArray();
+            return c.GetProperty("realignmentUtc").ValueKind == JsonValueKind.String && branches.Length > 0 &&
+                branches.All(b => b.GetProperty("stateAtRealignment").GetString() == "Invalidated");
+        }));
         Assert.Equal(chains.Length, chains.Select(c => (c.GetProperty("episodeId").GetString(),
             c.GetProperty("m5ConfigurationId").GetString(), c.GetProperty("m1Profile").GetString(),
             c.GetProperty("realignmentId").GetString())).Distinct().Count());

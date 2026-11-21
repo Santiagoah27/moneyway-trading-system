@@ -35,7 +35,7 @@ public sealed record NasdaqEndToEndResearchResult(string DatasetId, DateOnly Ope
     M5StructuralStopResearchReport? StructuralStop, StructuralTakeProfitResearchReport? StructuralTakeProfit)
 {
     public string CandidateId => "EXP-NQ-END-TO-END-MTF-V1";
-    public string Version => "1.0.0";
+    public string Version => "1.1.0";
     public string HistoricalAvailability => "DocumentaryNominalClosure_NotAuthenticated";
     public string LiquidityAuthority => "ExistingContextualEpisodes_ResearchOnly_StandardAndWF2Unchanged";
     public bool CanonicalAdmissionPermitted => false;

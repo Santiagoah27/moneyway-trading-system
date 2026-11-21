@@ -8,7 +8,7 @@ internal static class NasdaqEndToEndResearchOutput
     {
         integrated.CandidateId,
         integrated.Version,
-        RunId = FormattableString.Invariant($"{integrated.CandidateId}/{integrated.DatasetId}/{integrated.ReplayCutoff.RequestedUtc:O}"),
+        RunId = FormattableString.Invariant($"{integrated.CandidateId}/{integrated.Version}/{integrated.DatasetId}/{integrated.ReplayCutoff.RequestedUtc:O}"),
         integrated.DatasetId,
         integrated.OperatingDate,
         integrated.Provider,

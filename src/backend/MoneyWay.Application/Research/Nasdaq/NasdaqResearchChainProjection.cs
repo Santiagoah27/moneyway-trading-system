@@ -5,11 +5,12 @@ public enum NasdaqResearchChainOutcome
     WaitingForPreparationEvidence, H4ContextUnavailable, WaitingForLiquidityTake, LiquidityTakeObserved,
     WaitingForSCOrIFVG, WaitingForDirectionalFVG, WaitingForM1Countertrend, WaitingForM1Realignment,
     WaitingForStructuralReferences, ResearchChainComplete, ResearchChainCompleteWithInvalidatedContext,
-    Ambiguous, InsufficientEvidence, DataUnavailable, MixedOutcomes, StructuralReferencesObserved
+    Ambiguous, InsufficientEvidence, DataUnavailable, MixedOutcomes, StructuralReferencesObserved,
+    ContextInvalidatedAtRealignment, ResearchChainCompleteWithLimitedContext
 }
 
 public sealed record NasdaqResearchBranch(M1M5Binding Binding, M1M5ZoneEvidence Fvg, M1M5ZoneEvidence? Ifvg,
-    string? StateAtRealignment, string StateAtCutoff);
+    string? StateAtRealignment, string StateAtCutoff, bool RealignmentBindingVerified);
 public sealed record NasdaqResearchContextOutcome(IReadOnlyList<string> H4ConfigurationIds,
     NasdaqResearchChainOutcome Outcome, DateTimeOffset? CompletedAtUtc);
 public sealed record NasdaqResearchGeometry(string ConfigurationId, string StopProfileId, string TargetProfileId,
@@ -55,15 +56,22 @@ internal static class NasdaqResearchChainProjection
             NasdaqResearchChain Chain(string? realignmentId, DateTimeOffset? realignedAt,
                 IReadOnlyList<StructuralTargetAssociation> rows)
             {
+                var observedRealignment = scan is not null && realignedAt is not null &&
+                    realignmentId is not null && scan.FirstRealignmentUtc == realignedAt &&
+                    scan.FirstRealignmentIds.Contains(realignmentId);
                 var branches = association.Bindings.Distinct().OrderBy(b => b.ConfirmationId, StringComparer.Ordinal)
                     .ThenBy(b => b.FvgId, StringComparer.Ordinal).Select(b =>
                     {
-                        var fvg = m1.ZoneTimelines[b.FvgZoneTimelineId].Zone;
-                        var ifvg = b.IfvgZoneTimelineId is { } original ? m1.ZoneTimelines[original].Zone : null;
-                        return new NasdaqResearchBranch(b, fvg, ifvg,
-                            realignedAt is { } t ? State(fvg, ifvg, t) : null, State(fvg, ifvg, sequence.AsOfUtc));
+                        var fvg = m1.ZoneTimelines[b.FvgZoneTimelineId];
+                        var ifvg = b.IfvgZoneTimelineId is { } original ? m1.ZoneTimelines[original] : null;
+                        var verified = observedRealignment && scan is not null && realignmentId is not null && realignedAt is { } at &&
+                            BindingVerified(evidence, b, fvg, ifvg, scan.Id, realignmentId, at);
+                        return new NasdaqResearchBranch(b, fvg.Zone, ifvg?.Zone,
+                            realignedAt is { } t ? State(fvg.Zone, ifvg?.Zone, t) : null,
+                            State(fvg.Zone, ifvg?.Zone, sequence.AsOfUtc), verified);
                     }).ToArray();
                 var pending = Pending(evidence, scan);
+                var context = realignedAt is { } t ? ContextAtRealignment(branches, t) : default;
                 var geometry = rows.Count == 0
                     ? (from stop in stopProfiles from target in targets.Profiles select Geometry(stop.Id, target.Id, null)).ToArray()
                     : rows.Select(row => Geometry(row.Source.PivotProfile.Id, row.TargetProfile.Id, row)).ToArray();
@@ -82,10 +90,12 @@ internal static class NasdaqResearchChainProjection
                         realignedAt is not null ? NasdaqResearchChainOutcome.WaitingForStructuralReferences : pending;
                     var outcomes = preparation.Profiles.Select(p =>
                     {
-                        var outcome = ContextOutcome(p, stage, branches);
-                        var completedAt = p.ContextAvailable && complete &&
-                            branches.Any(b => b.StateAtRealignment is "Invalidated" or "Observed") ? realignedAt : null;
-                        return (p.Id, Outcome: outcome, CompletedAtUtc: completedAt);
+                        (NasdaqResearchChainOutcome Outcome, DateTimeOffset? CompletedAtUtc) result =
+                            p.ReasonCode == "PreparationCutoffNotReached"
+                            ? (NasdaqResearchChainOutcome.WaitingForPreparationEvidence, null)
+                            : !p.ContextAvailable ? (NasdaqResearchChainOutcome.H4ContextUnavailable, null)
+                            : complete ? context : (stage, null);
+                        return (p.Id, result.Outcome, result.CompletedAtUtc);
                     }).GroupBy(x => (x.Outcome, x.CompletedAtUtc))
                         .Select(g => new NasdaqResearchContextOutcome(g.Select(x => x.Id).ToArray(), g.Key.Outcome, g.Key.CompletedAtUtc)).ToArray();
                     return new(id, stopProfile, targetProfile, row?.Source.EvaluationId, row?.TargetEvaluationId,
@@ -120,15 +130,46 @@ internal static class NasdaqResearchChainProjection
             : NasdaqResearchChainOutcome.WaitingForM1Countertrend;
     }
 
-    private static NasdaqResearchChainOutcome ContextOutcome(NasdaqResearchPreparationProfile preparation,
-        NasdaqResearchChainOutcome stage, IReadOnlyList<NasdaqResearchBranch> branches)
+    private static bool BindingVerified(M5SequenceResult sequence, M1M5Binding binding, M1ZoneTimeline fvg,
+        M1ZoneTimeline? ifvg, string scanId, string attemptId, DateTimeOffset at)
     {
-        if (preparation.ReasonCode == "PreparationCutoffNotReached") return NasdaqResearchChainOutcome.WaitingForPreparationEvidence;
-        if (!preparation.ContextAvailable) return NasdaqResearchChainOutcome.H4ContextUnavailable;
-        if (stage != NasdaqResearchChainOutcome.StructuralReferencesObserved) return stage;
-        if (branches.Any(b => b.StateAtCutoff == "Invalidated")) return NasdaqResearchChainOutcome.ResearchChainCompleteWithInvalidatedContext;
-        return branches.Any(b => b.StateAtCutoff == "EvidenceLimited") || branches.All(b => b.StateAtRealignment == "EvidenceLimited")
-            ? NasdaqResearchChainOutcome.InsufficientEvidence : NasdaqResearchChainOutcome.ResearchChainComplete;
+        if (!sequence.FirstFvgs.Any(f => f.Eligible && f.ConfirmationId == binding.ConfirmationId &&
+            f.Zone.Formation.Id == binding.FvgId) || !Matches(fvg, binding.FvgId, "DirectionalFVG"))
+            return false;
+        var confirmation = sequence.Confirmations.SingleOrDefault(c => c.Event.Id == binding.ConfirmationId && c.Eligible);
+        if (confirmation is null) return false;
+        return confirmation.Event.OriginZone is { } origin
+            ? ifvg is not null && Matches(ifvg, origin.Formation.Id, "IFVG")
+            : ifvg is null;
+
+        bool Matches(M1ZoneTimeline timeline, string zoneId, string role) =>
+            timeline.ScanId == scanId && timeline.Zone.ZoneId == zoneId && timeline.Zone.Role == role &&
+            timeline.Attempts.Where(a => a.AttemptId == attemptId).Select(a => a.StateAtRealignment)
+                .SequenceEqual([timeline.Zone.StateAt(at)]);
+    }
+
+    private static (NasdaqResearchChainOutcome Outcome, DateTimeOffset? CompletedAtUtc) ContextAtRealignment(
+        IReadOnlyList<NasdaqResearchBranch> branches, DateTimeOffset at)
+    {
+        var supporting = branches.Where(b => b.RealignmentBindingVerified && b.StateAtRealignment == "Observed").ToArray();
+        if (supporting.Length > 0)
+        {
+            var outcome = supporting.Any(b => b.StateAtCutoff == "Observed")
+                ? NasdaqResearchChainOutcome.ResearchChainComplete
+                : supporting.All(b => b.StateAtCutoff == "Invalidated")
+                    ? NasdaqResearchChainOutcome.ResearchChainCompleteWithInvalidatedContext
+                    : NasdaqResearchChainOutcome.ResearchChainCompleteWithLimitedContext;
+            return (outcome, at);
+        }
+        if (branches.Any(b => !b.RealignmentBindingVerified || !InvalidatedBefore(b) &&
+            (b.Fvg.InvalidatedAtUtc == at || b.Ifvg?.InvalidatedAtUtc == at)))
+            return (NasdaqResearchChainOutcome.Ambiguous, null);
+        return (branches.Count > 0 && branches.All(InvalidatedBefore)
+            ? NasdaqResearchChainOutcome.ContextInvalidatedAtRealignment
+            : NasdaqResearchChainOutcome.InsufficientEvidence, null);
+
+        bool InvalidatedBefore(NasdaqResearchBranch branch) =>
+            branch.Fvg.InvalidatedAtUtc < at || branch.Ifvg?.InvalidatedAtUtc < at;
     }
 
     internal static NasdaqResearchChainOutcome SummarizeOutcome(IReadOnlyList<NasdaqResearchChain> chains)

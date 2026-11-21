@@ -432,6 +432,36 @@ afterEach(() => {
 });
 
 describe("observación supervisada Nasdaq", () => {
+    it("abre informes 1.1.0 con evidencia sustentadora y rechaza una finalización sin ella", () => {
+        const report = artifact({ complete: true });
+        report.research.version = "1.1.0";
+        report.research.runId = [
+            report.research.candidateId,
+            report.research.version,
+            report.research.datasetId,
+            at.cutoff,
+        ].join("/");
+        for (const chain of report.research.chains)
+            Object.assign(chain.branches[0], {
+                realignmentBindingVerified: true,
+            });
+        expect(parseSessionReport(report).counts.complete).toBe(2);
+
+        for (const chain of report.research.chains)
+            chain.branches[0].stateAtRealignment = "Invalidated";
+        expect(() => parseSessionReport(report)).toThrow(
+            /finalización sin contexto M5 sustentador/,
+        );
+
+        report.research.summary.completeH4ToM1Associations = 0;
+        for (const chain of report.research.chains)
+            Object.assign(chain.geometry[0].contextOutcomes[0], {
+                outcome: "ContextInvalidatedAtRealignment",
+                completedAtUtc: null,
+            });
+        expect(parseSessionReport(report).counts.complete).toBe(0);
+    });
+
     it("navega desde Strategy Lab al espacio de observación local", async () => {
         window.history.replaceState(null, "", "/#strategy-lab");
         render(<App />);

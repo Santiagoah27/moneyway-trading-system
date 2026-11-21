@@ -368,9 +368,11 @@ export function parseSessionReport(value: unknown) {
     check(envelope.schemaVersion === 1, "versión del esquema");
     const r = row(envelope.research, "replay de investigación");
     safe(r, "banderas de investigación");
+    const version = r.version;
+    const causalCompletion = version === "1.1.0";
     check(
         r.candidateId === integrated &&
-            r.version === "1.0.0" &&
+            (version === "1.0.0" || causalCompletion) &&
             r.provider === provider &&
             r.instrument === instrument &&
             r.replayStrategyVersion === publishedVersion &&
@@ -387,7 +389,9 @@ export function parseSessionReport(value: unknown) {
         runId = str(r.runId, "identificador del replay");
     const replay = row(r.replayCutoff, "corte del replay");
     const cutoff = utc(replay.requestedUtc, "corte del replay");
-    const runPrefix = [integrated, dataset, ""].join("/");
+    const runPrefix = causalCompletion
+        ? [integrated, version, dataset, ""].join("/")
+        : [integrated, dataset, ""].join("/");
     check(
         bogotaTime(cutoff).slice(0, 10) === day &&
             runId.startsWith(runPrefix) &&
@@ -509,6 +513,7 @@ export function parseSessionReport(value: unknown) {
         cutoff,
         open: start,
         close: researchEnd,
+        causalCompletion,
         h4: new Map([...h4].map(([id, p]) => [id, p.available])),
     });
     const s = row(r.summary, "resumen");
@@ -576,7 +581,7 @@ export function parseSessionReport(value: unknown) {
         digest,
         provenance: str(r.sourceProvenance, "procedencia"),
         candidate: integrated,
-        version: r.version,
+        version,
         publishedVersion,
         windowVersion,
         window: { start, researchEnd, publishedEnd },

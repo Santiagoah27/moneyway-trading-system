@@ -1,6 +1,6 @@
 # Nasdaq end-to-end multi-timeframe research V1
 
-`EXP-NQ-END-TO-END-MTF-V1` / `1.0.0` composes the existing experimental
+`EXP-NQ-END-TO-END-MTF-V1` / `1.1.0` composes the existing experimental
 Nasdaq components for one operating day and one explicit historical UTC
 cutoff. It keeps `CanonicalAdmissionPermitted=false` and
 `OperationalSignal=false`. The published Nasdaq strategy version remains
@@ -69,14 +69,53 @@ waiting configurations. Distinct event counts use the component association
 keys and observable timestamps with direction for realignment events.
 
 `StructuralReferencesObserved` records completion of downstream SL/TP
-geometry. Full `ResearchChainComplete` requires available H4 preparation
-and observable supporting branch state at M1. A branch retains the original
-invalidation and evidence-limit timestamps plus state at M1 and at the
-requested cutoff. A later invalidation can change the latter and yield
-`ResearchChainCompleteWithInvalidatedContext`. It preserves the historical
-completion timestamp. These are evidence statuses and carry no entry
-eligibility. When full completion is unavailable, the report retains the
-downstream stage, component reasons and the original H4 limitation.
+geometry. Full completion requires available H4 preparation, completed
+geometry and at least one verified branch observed at the M1 realignment
+timestamp T. Verification ties the selected M5 confirmation and directional
+FVG, including the originating zone for an IFVG trigger, to the exact M1
+scan and realignment attempt. Each branch retains its invalidation and
+evidence-limit timestamps, both observable states and a
+`realignmentBindingVerified` flag.
+
+Only branches that supported completion at T determine the status at a
+later cutoff. One observed supporting branch yields
+`ResearchChainComplete`. When all supporting branches have since been
+invalidated, the result is `ResearchChainCompleteWithInvalidatedContext`.
+When the surviving evidence is limited, the result is
+`ResearchChainCompleteWithLimitedContext`. All three retain T and count
+toward full completion. Only the second counts toward completions with
+invalidated context. Geometric completion has its own timestamp and count.
+These are experimental evidence statuses and carry no entry eligibility.
+
+### Invalidation audit
+
+Version `1.0.0` accepted an invalidated branch when assigning a completion
+timestamp and separately classified the result as invalidated when any
+branch was invalidated at the report cutoff. A synthetic H4-available fixture
+with a liquidity take, SC or IFVG, directional FVG, M1 realignment at
+14:00 UTC and positive SL/TP geometry reproduced the discrepancy in 12 of
+21 tests. The same fixture keeps the geometry timestamp in all rows below.
+
+| Branch evidence | Version 1.0.0 | Version 1.1.0 |
+| --- | --- | --- |
+| All invalidated before T | Complete with invalidated context, T, 1 complete / 1 invalidated | `ContextInvalidatedAtRealignment`, no timestamp, 0 / 0 |
+| Directional FVG or origin IFVG invalidated exactly at T, with no other supporting branch | Complete with invalidated context, T, 1 / 1 | `Ambiguous`, no timestamp, 0 / 0 |
+| Sole supporting branch invalidated after T | Complete with invalidated context, T, 1 / 1 | Complete with invalidated context, T, 1 / 1 |
+| Invalidated branch plus verified branch still observed | Complete with invalidated context, T, 1 / 1 | `ResearchChainComplete`, T, 1 / 0 |
+| Limited branch plus verified branch still observed | `InsufficientEvidence`, T, 1 / 0 | `ResearchChainComplete`, T, 1 / 0 |
+| Evidence becomes limited after T for the sole supporting branch | `InsufficientEvidence`, T, 1 / 0 | `ResearchChainCompleteWithLimitedContext`, T, 1 / 0 |
+
+Equal close timestamps leave intrabar order unresolved. Unverified branch
+bindings leave the result ambiguous when no verified branch supports
+completion. Limited or absent evidence yields `InsufficientEvidence` when
+it leaves no support or ordering ambiguity. Missing H4 and incomplete SL/TP
+retain their existing statuses.
+
+The report schema stays at `1`. New run IDs include the integrated
+projection version between the candidate ID and dataset ID. The supervised
+viewer accepts both ID formats and checks completion against supporting
+branch states on `1.1.0` reports. Frozen `1.0.0` artifacts retain their
+original content and meaning.
 
 ## June 23 Development run
 
@@ -109,7 +148,7 @@ complete. Asia High/Low were 30,463.9 / 29,715.2 and London High/Low were
 | TP evaluations / SL evaluations | 20 / 15 |
 | Evaluated TP/SL associations / downstream geometry completions | 2,880 / 2,688 |
 | Full research configuration associations including waiting and H4 profiles | 41,472 |
-| Full H4-to-M1 completions | 0 |
+| Full H4-to-M1 completions / completions with invalidated context | 0 / 0 |
 
 There were nine protective HL observations, six nonprotective SL observations
 and 20 available targets. Of 60 shared SL/TP pairings, 36 yielded a hypothetical
