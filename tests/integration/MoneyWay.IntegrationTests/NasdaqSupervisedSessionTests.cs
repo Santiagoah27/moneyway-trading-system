@@ -126,6 +126,24 @@ public sealed class NasdaqSupervisedSessionTests : IDisposable
         Assert.Throws<NasdaqEvidenceConflictException>(() => Store().SessionAction(s.SessionKey, Command("EntryIntent")));
         Assert.Throws<NasdaqEvidenceConflictException>(() => Store().SessionAction(s.SessionKey, Command("ConfirmExecution", Evidence())));
     }
+
+    [Theory]
+    [InlineData("Standard")]
+    [InlineData("WickfillScenario2")]
+    public void WindowBoundaryDoesNotCloseRecordedTradeOrReopenTerminalSession(string path)
+    {
+        var session = Open(path);
+        var evidence = Evidence(path);
+        Store().SessionAction(session.SessionKey, Command("ConfirmExecution", evidence));
+        clock.Now = new DateTimeOffset(2026, 11, 18, 16, 30, 0, TimeSpan.Zero);
+        var afterWindow = Store().Session(session.SessionKey);
+        Assert.Equal("TradeRegistered_AwaitingClosure", afterWindow.Status);
+        Assert.False(afterWindow.Terminal);
+        Assert.False(afterWindow.LocalEntryIntentPermitted);
+        Assert.Null(afterWindow.ClosureConfirmation);
+        Assert.True(Store().SessionAction(session.SessionKey, Command("ConfirmClosure", evidence)).Terminal);
+        Assert.Throws<NasdaqEvidenceConflictException>(() => Store().SessionAction(session.SessionKey, Command("EntryIntent")));
+    }
     [Fact]
     public void SameScopeAliasesOrOtherBranchCannotBypassLockAndNextDateDoesNotInheritIt()
     {

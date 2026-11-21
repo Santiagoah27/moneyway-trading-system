@@ -116,7 +116,8 @@ public sealed class NasdaqSessionLiquidityResearchCommand
                                   from window in Enum.GetValues<M5SequenceWindowPolicy>()
                                   from formation in Enum.GetValues<M5SequenceFvgPolicy>()
                                   from profile in Enum.GetValues<M5FvgProfile>()
-                                  select new M5SequenceConfiguration(sweep, window, formation, profile, new(8, 30), new(11, 30));
+                                  select new M5SequenceConfiguration(sweep, window, formation, profile,
+                                      NasdaqTradingWindowAlignment.Opening, NasdaqTradingWindowAlignment.Closing);
                     var sequenceResult = new EvaluateM5ContextualSequenceUseCase().Execute(scReport.ContextId!, scComparison, m5, configs.ToArray());
                     report = new
                     {

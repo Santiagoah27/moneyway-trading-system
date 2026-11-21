@@ -53,6 +53,9 @@ public sealed class M1RealignmentResearchCommandTests
             foreach (var association in complete)
             {
                 var scan = scans[association.GetProperty("scanId").GetString()!];
+                var anchor = scan.GetProperty("anchor");
+                Assert.Equal(new DateTimeOffset(2026, 6, 23, 13, 30, 0, TimeSpan.Zero), anchor.GetProperty("windowOpenUtc").GetDateTimeOffset());
+                Assert.Equal(new DateTimeOffset(2026, 6, 23, 16, 30, 0, TimeSpan.Zero), anchor.GetProperty("windowCloseUtc").GetDateTimeOffset());
                 Assert.Equal(new DateTimeOffset(2026, 6, 23, 13, 55, 0, TimeSpan.Zero), scan.GetProperty("anchor").GetProperty("atUtc").GetDateTimeOffset());
                 Assert.Equal(new DateTimeOffset(2026, 6, 23, 13, 58, 0, TimeSpan.Zero), scan.GetProperty("firstRealignmentUtc").GetDateTimeOffset());
                 Assert.Equal(155, scan.GetProperty("closedM1Count").GetInt32());
