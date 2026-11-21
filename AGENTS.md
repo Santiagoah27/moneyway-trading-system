@@ -14,21 +14,56 @@ No implementar operación con dinero real.
 
 # Source of truth
 
-Usar este orden de precedencia:
+Aplicar este orden de autoridad:
 
-1. Código y tests existentes.
-2. Decisiones documentadas en docs/decisions/.
-3. Arquitectura documentada en docs/architecture/.
-4. Estrategias auditadas en docs/strategies/.
-5. Instrucción actual del usuario.
+1. Revisión humana directa del material original, con evidencia y trazabilidad.
+2. Decisiones y correcciones explícitas del propietario del proyecto, incluidas sus aclaraciones posteriores.
+3. Especificaciones de estrategia auditadas y el estado documentado de su evidencia.
+4. Instrucciones aplicables de `AGENTS.md` y ADRs aceptados.
+5. Código existente y pruebas automatizadas, como evidencia del comportamiento implementado.
+6. Resúmenes e informes secundarios, incluidos los reportes de finalización de Codex.
+7. Interpretaciones, inferencias y sugerencias de IA.
+
+Registrar por separado la autoridad de la fuente y el estado de implementación.
+Una decisión aprobada puede seguir pendiente de implementación. Una implementación
+completa y sus pruebas demuestran comportamiento del software. La correspondencia
+con la intención del mentor requiere evidencia revisada. Un informe generado por
+IA requiere validación independiente antes de citarse como evidencia validada.
+Un prompt redactado o un diseño terminado es preparatorio. Declarar una feature
+`DONE` exige haber completado y verificado el alcance solicitado.
+
+## Evidence conflicts
+
+La nueva evidencia de una revisión humana directa del material original puede
+sustituir una interpretación previa. Registrar las correcciones explícitas del
+propietario con su referencia, alcance y la fuente o decisión que sustituyen.
+Conservar la documentación anterior y el historial de auditoría relevante,
+dejando constancia de qué evidencia sigue vigente. Ante una contradicción que
+afecte materialmente la semántica de trading, identificarla antes de cambiar
+la implementación determinista. El orden preferido de actualización es
+`evidencia → especificación → metadata → implementación → integración`.
 
 Nunca inventar reglas de trading ni completar vacíos usando conocimiento general.
 
 Cuando una regla sea ambigua, contradictoria, visual o subjetiva:
 
 - No seleccionar una interpretación silenciosamente.
-- Marcarla como unresolved o human_validation_required.
+- Mantener como `unresolved` cualquier regla operativa determinista sin definir.
+  Mantener los parámetros pendientes sin reinterpretarlos hasta contar con
+  evidencia suficiente. Usar `human_validation_required` cuando corresponda
+  según los estados existentes.
 - No usarla para autorizar automáticamente una operación.
+
+## Confirmed concepts and deterministic algorithms
+
+`Strategy concept confirmed` registra la confirmación humana del concepto.
+`Deterministic algorithm defined` requiere una especificación que permita
+reproducir su selección y evaluación. Por ejemplo, el concepto confirmado de
+SL estructural Nasdaq usa BUY → M5 HL y SELL → M5 LH. La selección concreta
+del pivote HL/LH requiere su propia definición y aprobación. Un candidato de
+investigación puede probar una hipótesis determinista de selección y conservar
+su condición experimental. Estas distinciones documentan el alcance de la
+evidencia y se aplican con el vocabulario de estados existente.
 
 ## Experimental research exception (human-approved 2026-11-19)
 
@@ -40,6 +75,10 @@ versiones activas y autorización operativa. Comparar hipótesis no las promueve
 Esta excepción no autoriza inventar reglas operativas, atribuir hipótesis al
 mentor, usar datos futuros ni eludir admisión temporal. La promoción requiere
 validación independiente y aprobación humana conforme a ADR 0027.
+Documentar los supuestos y parámetros de cada hipótesis, junto con las entradas
+y cortes necesarios para reproducir sus comparaciones. Las versiones `ACTIVE`
+son inmutables. Se prohíbe eludir la admisión canónica, crear órdenes autónomas
+y usar resultados preliminares para autorizar operaciones.
 
 # Development behavior
 
