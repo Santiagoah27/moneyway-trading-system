@@ -21,10 +21,11 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             var interaction = args.Count == 6 && args[5] == "--analyze-interaction";
             var tracking = args.Count == 6 && args[5] == "--track-context";
             var contextualSc = args.Count == 6 && args[5] == "--compare-context-sc";
-            var realignment = args.Count is 6 or 8 && args[5] == "--compare-context-realignment";
+            var structuralStop = args.Count is 6 or 8 && args[5] == "--compare-structural-sl";
+            var realignment = structuralStop || args.Count is 6 or 8 && args[5] == "--compare-context-realignment";
             var sequence = realignment || args.Count is 6 or 8 && args[5] == "--compare-context-sequence";
             if ((args.Count != 5 && !interaction && !tracking && !contextualSc && !sequence) || args[0] != "nasdaq-session-liquidity" || args[1] != "--input" || args[3] != "--output"
-                || !Path.IsPathFullyQualified(args[2]) || !Path.IsPathFullyQualified(args[4])) throw new ArgumentException("nasdaq-session-liquidity --input <absolute-context-json> --output <new-absolute-directory> [--analyze-interaction | --track-context | --compare-context-sc | (--compare-context-sequence | --compare-context-realignment) [--cutoff-utc <UTC>]]");
+                || !Path.IsPathFullyQualified(args[2]) || !Path.IsPathFullyQualified(args[4])) throw new ArgumentException("nasdaq-session-liquidity --input <absolute-context-json> --output <new-absolute-directory> [--analyze-interaction | --track-context | --compare-context-sc | (--compare-context-sequence | --compare-context-realignment | --compare-structural-sl) [--cutoff-utc <UTC>]]");
             var input = Path.GetFullPath(args[2]); var destination = Path.TrimEndingDirectorySeparator(Path.GetFullPath(args[4]));
             Guard(input); Guard(destination);
             if (Directory.Exists(destination) || File.Exists(destination) || destination == Path.GetPathRoot(destination)) throw new ArgumentException("New output directory required; never replace existing evidence.");
@@ -92,6 +93,7 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             };
             object report;
             object? realignmentReport = null;
+            object? structuralStopReport = null;
             ContextualLiquidityTrackingResult? tracked = null;
             ContextualSwingScReport? scComparison = null;
             if (contextualSc || sequence)
@@ -131,18 +133,34 @@ public sealed class NasdaqSessionLiquidityResearchCommand
                     if (realignment)
                     {
                         var m1 = Read("M1", new(1, TimeframeUnit.Minute));
+                        var observations = new EvaluateM1RealignmentCandidateUseCase().Execute(sequenceResult, m1,
+                            Enum.GetValues<M1RealignmentProfile>());
+                        var m1SourceProvenance = root.GetProperty("series").GetProperty("M1").EnumerateObject()
+                            .Where(p => p.Name != "candles").ToDictionary(p => p.Name, p => p.Value.Clone());
                         realignmentReport = new
                         {
                             scReport.SchemaVersion,
                             scReport.ContextId,
                             scReport.InputSha256,
                             scReport.DocumentaryMapping,
-                            M1SourceProvenance = root.GetProperty("series").GetProperty("M1").EnumerateObject()
-                                .Where(p => p.Name != "candles").ToDictionary(p => p.Name, p => p.Value.Clone()),
+                            M1SourceProvenance = m1SourceProvenance,
                             M5EvidenceFile = "contextual-sequence.json",
-                            Realignment = new EvaluateM1RealignmentCandidateUseCase().Execute(sequenceResult, m1,
-                                Enum.GetValues<M1RealignmentProfile>())
+                            Realignment = observations
                         };
+                        if (structuralStop)
+                            structuralStopReport = new
+                            {
+                                scReport.SchemaVersion,
+                                scReport.ContextId,
+                                scReport.InputSha256,
+                                scReport.DocumentaryMapping,
+                                scReport.SourceProvenance,
+                                M1SourceProvenance = m1SourceProvenance,
+                                M5EvidenceFile = "contextual-sequence.json",
+                                M1EvidenceFile = "contextual-m1-realignment.json",
+                                StructuralStop = new CompareM5StructuralStopLossUseCase().Execute(observations, m5,
+                                    M5StructuralPivotProfile.Initial)
+                            };
                     }
                     scComparison = null;
                 }
@@ -204,6 +222,9 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             if (realignmentReport is not null)
                 File.WriteAllText(Path.Combine(pending, "contextual-m1-realignment.json"),
                     JsonSerializer.Serialize(realignmentReport, Json).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n", new UTF8Encoding(false));
+            if (structuralStopReport is not null)
+                File.WriteAllText(Path.Combine(pending, "contextual-m5-structural-sl.json"),
+                    JsonSerializer.Serialize(structuralStopReport, Json).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n", new UTF8Encoding(false));
             if (tracked is not null) File.WriteAllText(Path.Combine(pending, "liquidity-context.md"), ContextualLiquidityResearchMarkdown.Render(tracked), new UTF8Encoding(false));
             if (scComparison is not null) File.WriteAllText(Path.Combine(pending, "contextual-swing-sc.md"), ContextualSwingScMarkdown.Render(scComparison), new UTF8Encoding(false));
             Guard(destination); Directory.Move(pending, destination);

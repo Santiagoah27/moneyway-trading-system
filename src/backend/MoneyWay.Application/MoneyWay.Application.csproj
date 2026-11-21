@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MoneyWay.Domain\MoneyWay.Domain.csproj" />
+    <InternalsVisibleTo Include="MoneyWay.Application.UnitTests" />
   </ItemGroup>
 
   <PropertyGroup>

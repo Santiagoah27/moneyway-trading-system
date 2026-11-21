@@ -105,18 +105,12 @@ public sealed class EvaluateH4MarketStructureCandidateUseCase
         var unknownGap = gaps.Any(g => !g.DocumentedClosure);
         var pivots = new List<H4ConfirmedPivot>();
         if (!unknownGap && !insufficientHistory)
-            for (var index = request.Profile.LeftBars; index + request.Profile.RightBars < visible.Length; index++)
+            foreach (var (extreme, confirmedAt, high, low) in StrictConfirmedPivots.Find(
+                         visible, request.Profile.LeftBars, request.Profile.RightBars))
             {
-                var left = index - request.Profile.LeftBars;
-                var right = index + request.Profile.RightBars;
-                if (Enumerable.Range(left, right - left).Any(i => visible[i].CloseTimeUtc != visible[i + 1].OpenTimeUtc))
-                    continue; // No local neighborhood bridges even a documented closure.
-                var extreme = visible[index];
-                var neighbors = visible[left..(right + 1)].Where(c => c != extreme).ToArray();
-                var confirmedAt = visible[right].CloseTimeUtc;
-                if (neighbors.All(c => extreme.High > c.High))
+                if (high)
                     pivots.Add(Pivot(H4PivotKind.High, extreme.High));
-                if (neighbors.All(c => extreme.Low < c.Low))
+                if (low)
                     pivots.Add(Pivot(H4PivotKind.Low, extreme.Low));
 
                 H4ConfirmedPivot Pivot(H4PivotKind kind, decimal price) => new(
