@@ -14,6 +14,12 @@
     color: #cedcec;
     text-decoration: none;
 }
+.lab-nav .lab-nav-action {
+    border: 1px solid #407b7c;
+    border-radius: 8px;
+    padding: 0.65rem 0.85rem;
+    color: #a0e5d4;
+}
 .lab-nav b {
     font-size: 0.65rem;
     color: #f0cf86;

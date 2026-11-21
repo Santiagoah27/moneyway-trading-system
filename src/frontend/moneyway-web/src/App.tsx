@@ -12,6 +12,9 @@ const ContextualResearch = lazy(() =>
         default: m.ContextualResearch,
     })),
 );
+const NasdaqSessionObservation = lazy(
+    () => import("./research/observation/SessionObservation"),
+);
 
 type ApiState = "loading" | "connected" | "disconnected";
 type DefinitionsState = "loading" | "success" | "error";
@@ -246,7 +249,11 @@ export default function App() {
         window.addEventListener("hashchange", navigate);
         return () => window.removeEventListener("hashchange", navigate);
     }, []);
-    return route === "#strategy-lab-context" ? (
+    return route === "#strategy-lab-observation" ? (
+        <Suspense fallback={<p role="status">Cargando observación Nasdaq…</p>}>
+            <NasdaqSessionObservation />
+        </Suspense>
+    ) : route === "#strategy-lab-context" ? (
         <Suspense fallback={<p role="status">Cargando contexto documental…</p>}>
             <ContextualResearch />
         </Suspense>

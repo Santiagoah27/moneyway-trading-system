@@ -55,6 +55,8 @@ export function CandleChart({
     humanConfirmation,
     references = [],
     guides = [],
+    timeLabel = formatTime,
+    timeZoneLabel = "UTC",
 }: {
     report: {
         input: ChartContext;
@@ -69,6 +71,8 @@ export function CandleChart({
     humanConfirmation?: string | null;
     references?: ChartReference[];
     guides?: ChartGuide[];
+    timeLabel?: (value: string) => string;
+    timeZoneLabel?: string;
 }) {
     const bars = report.evidenceCandles;
     if (!bars.length)
@@ -139,8 +143,8 @@ export function CandleChart({
                 aria-label={`Velas OHLC ${report.input.timeframe ?? "M5"} y referencias experimentales`}
             >
                 <title>
-                    OHLC de {report.input.symbol}; horas UTC. Referencias
-                    retrospectivas, no señales.
+                    OHLC de {report.input.symbol}; horas {timeZoneLabel}.
+                    Referencias retrospectivas, no señales.
                 </title>
                 {[0, 1, 2, 3, 4].map((i) => {
                     const p = floor + ((ceiling - floor) * i) / 4;
@@ -199,7 +203,10 @@ export function CandleChart({
                             fill="transparent"
                             tabIndex={0}
                             role="button"
-                            aria-label={`Inspeccionar vela ${formatTime(bar.openTimeUtc)}`}
+                            aria-label={
+                                "Inspeccionar vela " +
+                                timeLabel(bar.openTimeUtc)
+                            }
                             onFocus={() => onSelect(i)}
                             onMouseEnter={() => onSelect(i)}
                             onClick={() => {
@@ -225,7 +232,7 @@ export function CandleChart({
                             }}
                         >
                             <title>
-                                {formatTime(bar.openTimeUtc)} · O {bar.open} H{" "}
+                                {timeLabel(bar.openTimeUtc)} · O {bar.open} H{" "}
                                 {bar.high} L {bar.low} C {bar.close}
                             </title>
                         </rect>
@@ -361,10 +368,10 @@ export function CandleChart({
                                 <title>
                                     Vela fuente{" "}
                                     {r.sourceTimeframe ?? "original"} abierta{" "}
-                                    {formatTime(r.formationUtc)}; instante
+                                    {timeLabel(r.formationUtc)}; instante
                                     intra-vela no establecido. Referencia
                                     visible en esta investigación desde{" "}
-                                    {formatTime(r.knownAtUtc)}
+                                    {timeLabel(r.knownAtUtc)}
                                 </title>
                             </circle>
                         )}
@@ -844,6 +851,9 @@ export function StrategyLab() {
                     Revisión ciega multi-episodio →
                 </a>
                 <a href="#strategy-lab-context">Contexto Nasdaq →</a>
+                <a href="#strategy-lab-observation" className="lab-nav-action">
+                    Observación supervisada Nasdaq →
+                </a>
                 <span>
                     Strategy Lab <b>EXPERIMENTAL</b>
                 </span>

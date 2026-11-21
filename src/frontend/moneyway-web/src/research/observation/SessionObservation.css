@@ -1,0 +1,333 @@
+.observation {
+    --ob-muted: #a9bbce;
+    --ob-border: #2a425a;
+    --ob-accent: #85d9c7;
+    color: #edf4ff;
+}
+.observation p {
+    line-height: 1.5;
+}
+.observation code {
+    overflow-wrap: anywhere;
+    color: #bfccde;
+    font-size: 0.8rem;
+}
+.observation h2 {
+    font-size: 1.22rem;
+}
+.observation h3 {
+    font-size: 1rem;
+}
+.observation summary {
+    cursor: pointer;
+    color: #c8e9e1;
+}
+.observation :focus-visible {
+    outline: 2px solid var(--ob-accent);
+    outline-offset: 3px;
+}
+.ob-nav span,
+.ob-file-name,
+.ob-label,
+.ob-section-heading span {
+    color: var(--ob-muted);
+    font-size: 0.8rem;
+}
+.ob-header,
+.ob-session-heading,
+.ob-section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+.ob-header {
+    padding-top: 1.8rem;
+}
+.ob-header h1 {
+    margin: 0;
+    font-size: clamp(1.75rem, 4vw, 2.7rem);
+    line-height: 1.1;
+}
+.ob-file {
+    display: grid;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 0.84rem;
+    flex-shrink: 0;
+}
+.ob-file input {
+    max-width: 100%;
+    color: var(--ob-muted);
+    font-size: 0.8rem;
+}
+.ob-file input::file-selector-button {
+    border: 1px solid #447e82;
+    border-radius: 7px;
+    background: #163943;
+    color: #d5f5ea;
+    padding: 0.45rem 0.7rem;
+    margin-right: 0.5rem;
+    cursor: pointer;
+}
+.ob-overview,
+.ob-readiness,
+.ob-episodes,
+.ob-timeline {
+    min-width: 0;
+    padding: 1rem;
+    border-radius: 12px;
+}
+.ob-session-heading h2 {
+    margin-bottom: 0.2rem;
+    font-size: 1.7rem;
+}
+.ob-session-heading p,
+.ob-session-heading strong,
+.ob-label {
+    display: block;
+    margin: 0 0 0.3rem;
+}
+.ob-mode {
+    color: var(--ob-accent);
+    font-size: 0.86rem;
+}
+.ob-windows,
+.ob-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+    gap: 0.55rem;
+    margin: 0.8rem 0;
+}
+.ob-windows > div,
+.ob-metrics > div {
+    border: 1px solid var(--ob-border);
+    background: #102438;
+    border-radius: 8px;
+    min-width: 0;
+    padding: 0.65rem;
+}
+.observation dt,
+.observation small {
+    color: var(--ob-muted);
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+.observation dd {
+    margin: 0.3rem 0;
+    overflow-wrap: anywhere;
+}
+.ob-windows dd,
+.ob-metrics dd {
+    font-variant-numeric: tabular-nums;
+    font-weight: 650;
+}
+.ob-coverage td small {
+    display: block;
+}
+.ob-coverage {
+    border-top: 1px solid var(--ob-border);
+    padding-top: 0.75rem;
+}
+.ob-data,
+.ob-sources {
+    display: grid;
+    gap: 0.6rem;
+}
+.ob-sources,
+.ob-versions,
+.ob-episodes ul {
+    padding: 0;
+    list-style: none;
+}
+.ob-sources li,
+.ob-versions li {
+    overflow-wrap: anywhere;
+}
+.ob-sources small {
+    display: block;
+}
+.ob-table-scroll {
+    overflow-x: auto;
+}
+.ob-table-scroll table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.85rem;
+}
+.ob-table-scroll th,
+.ob-table-scroll td {
+    border-bottom: 1px solid var(--ob-border);
+    padding: 0.55rem;
+}
+.ob-h4-warning {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0.8rem 0;
+}
+.ob-workbench {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr) minmax(230px, 285px);
+    align-items: start;
+    gap: 0.85rem;
+}
+.ob-workbench > section {
+    margin-top: 0;
+}
+.ob-episodes ul {
+    display: grid;
+    gap: 0.3rem;
+    margin: 0;
+}
+.ob-episodes button,
+.ob-stage-list button {
+    width: 100%;
+    border: 1px solid var(--ob-border);
+    border-radius: 7px;
+    background: #0e2033;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.ob-episodes button {
+    display: grid;
+    padding: 0.45rem;
+    gap: 0.2rem;
+}
+.ob-episodes button[aria-pressed="true"],
+.ob-stage-list button[aria-expanded="true"] {
+    border-color: #69b9ab;
+    background: #17323e;
+}
+.ob-configuration,
+.ob-geometry {
+    margin-bottom: 0.7rem;
+    border: 1px solid var(--ob-border);
+    padding: 0.75rem;
+    border-radius: 8px;
+}
+.ob-config-grid {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0.6rem 0;
+}
+.ob-config-grid label {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 0;
+    font-size: 0.82rem;
+}
+.ob-config-grid select {
+    min-width: 0;
+    width: 100%;
+    padding: 0.4rem;
+}
+.ob-section-heading h2,
+.ob-section-heading h3 {
+    margin-bottom: 0.6rem;
+}
+.ob-geometry .ob-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 115px), 1fr));
+}
+.ob-branch-summary,
+.ob-admission {
+    color: #f1cf86;
+    font-size: 0.9rem;
+}
+.ob-branch-summary:empty {
+    display: none;
+}
+.ob-stage-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.4rem;
+}
+.ob-stage-list button {
+    display: grid;
+    grid-template-columns: 4.3rem minmax(0, 1fr) auto auto;
+    gap: 0.65rem;
+    align-items: center;
+    padding: 0.65rem;
+}
+.ob-stage-frame {
+    color: var(--ob-accent);
+    font-size: 0.75rem;
+}
+.ob-stage-name {
+    display: grid;
+    gap: 0.15rem;
+    overflow-wrap: anywhere;
+    font-size: 0.9rem;
+}
+.ob-stage-time {
+    color: #c2d5ec;
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+}
+.ob-evidence {
+    padding: 0.5rem 0.75rem;
+    overflow-wrap: anywhere;
+}
+.ob-evidence-item {
+    display: grid;
+    gap: 0.3rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--ob-border);
+}
+.ob-chart-detail {
+    margin: 0.8rem 0;
+}
+.ob-readiness dl {
+    margin: 0;
+}
+.ob-readiness dl > div {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--ob-border);
+}
+.ob-readiness dd,
+.ob-readiness li,
+.ob-next p {
+    font-size: 0.85rem;
+    line-height: 1.45;
+}
+.ob-readiness details,
+.ob-next {
+    margin: 0.8rem 0;
+}
+@media (max-width: 1050px) {
+    .ob-workbench {
+        grid-template-columns: 150px minmax(0, 1fr);
+    }
+    .ob-readiness {
+        grid-column: 1 / -1;
+    }
+}
+@media (max-width: 620px) {
+    .strategy-lab.observation {
+        width: calc(100% - 1.5rem);
+    }
+    .ob-workbench {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .ob-header,
+    .ob-session-heading {
+        flex-direction: column;
+    }
+    .ob-episodes ul {
+        grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    }
+    .ob-stage-list button {
+        grid-template-columns: 2.7rem minmax(0, 1fr) auto;
+    }
+    .ob-stage-time {
+        grid-row: 2;
+        grid-column: 2;
+    }
+    .ob-stage-list button > span:last-child {
+        grid-row: 1;
+        grid-column: 3;
+    }
+}
