@@ -14,6 +14,8 @@ namespace MoneyWay.Worker;
 public sealed class NasdaqSessionLiquidityResearchCommand
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
+    private static readonly JsonSerializerOptions IntegratedJson = new(Json) { WriteIndented = false };
+    private const string DevelopmentProvenance = "June 23 Development documentary sources; explicit contextual tracking hypothesis 187c3ef3-2fe4-4993-bce3-dee605345b4f; nominal UTC only.";
     public int Execute(IReadOnlyList<string> args, TextWriter output, TextWriter error)
     {
         try
@@ -22,11 +24,12 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             var tracking = args.Count == 6 && args[5] == "--track-context";
             var contextualSc = args.Count == 6 && args[5] == "--compare-context-sc";
             var structuralTarget = args.Count is 6 or 8 && args[5] == "--compare-structural-tp";
+            var endToEnd = args.Count is 6 or 8 && args[5] == "--compare-end-to-end";
             var structuralStop = structuralTarget || args.Count is 6 or 8 && args[5] == "--compare-structural-sl";
             var realignment = structuralStop || args.Count is 6 or 8 && args[5] == "--compare-context-realignment";
             var sequence = realignment || args.Count is 6 or 8 && args[5] == "--compare-context-sequence";
-            if ((args.Count != 5 && !interaction && !tracking && !contextualSc && !sequence) || args[0] != "nasdaq-session-liquidity" || args[1] != "--input" || args[3] != "--output"
-                || !Path.IsPathFullyQualified(args[2]) || !Path.IsPathFullyQualified(args[4])) throw new ArgumentException("nasdaq-session-liquidity --input <absolute-context-json> --output <new-absolute-directory> [--analyze-interaction | --track-context | --compare-context-sc | (--compare-context-sequence | --compare-context-realignment | --compare-structural-sl | --compare-structural-tp) [--cutoff-utc <UTC>]]");
+            if ((args.Count != 5 && !interaction && !tracking && !contextualSc && !sequence && !endToEnd) || args[0] != "nasdaq-session-liquidity" || args[1] != "--input" || args[3] != "--output"
+                || !Path.IsPathFullyQualified(args[2]) || !Path.IsPathFullyQualified(args[4])) throw new ArgumentException("nasdaq-session-liquidity --input <absolute-context-json> --output <new-absolute-directory> [--analyze-interaction | --track-context | --compare-context-sc | (--compare-context-sequence | --compare-context-realignment | --compare-structural-sl | --compare-structural-tp | --compare-end-to-end) [--cutoff-utc <UTC>]]");
             var input = Path.GetFullPath(args[2]); var destination = Path.TrimEndingDirectorySeparator(Path.GetFullPath(args[4]));
             Guard(input); Guard(destination);
             if (Directory.Exists(destination) || File.Exists(destination) || destination == Path.GetPathRoot(destination)) throw new ArgumentException("New output directory required; never replace existing evidence.");
@@ -40,9 +43,13 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             var provider = new MarketDataProviderId(root.GetProperty("providerId").GetString()!); var symbol = new MarketSymbol(root.GetProperty("symbol").GetString()!);
             if (provider.Value != "oanda-global-markets-mt5-demo" || symbol.Value != "US100" || root.GetProperty("tradingDay").GetString() != (reviewSession ? "2026-06-22" : "2026-06-23")) throw new ArgumentException("Original source identity required; no instrument/provider substitution.");
             var day = new DateOnly(2026, 6, reviewSession ? 22 : 23); var calculator = new NasdaqSessionLiquidityCalculator();
+            var sources = root.GetProperty("series");
             CandleSeries Read(string key, Timeframe timeframe)
             {
-                var source = root.GetProperty("series").GetProperty(key);
+                if (!sources.TryGetProperty(key, out var source) && endToEnd)
+                    return new(provider, symbol, timeframe, []);
+                if (source.ValueKind == JsonValueKind.Undefined)
+                    throw new ArgumentException("Missing original source timeframe: " + key);
                 if (source.GetProperty("derived").GetBoolean()) throw new ArgumentException("Original source timeframe required.");
                 var candles = source.GetProperty("candles").EnumerateArray().Select(c =>
                 {
@@ -57,8 +64,8 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             }
             var hour = Read("H1", new(1, TimeframeUnit.Hour));
             var maximum = root.GetProperty("maximumCutoffUtc").GetDateTimeOffset();
-            if (sequence && reviewSession) throw new ArgumentException("Sequence comparison requires the exposed Development context.");
-            if (sequence && args.Count == 8)
+            if ((sequence || endToEnd) && reviewSession) throw new ArgumentException("Sequence comparison requires the exposed Development context.");
+            if ((sequence || endToEnd) && args.Count == 8)
             {
                 if (args[6] != "--cutoff-utc" ||
                     !DateTimeOffset.TryParseExact(args[7], ["yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd'T'HH:mm:ss.FFFFFFF'Z'"],
@@ -98,12 +105,61 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             object? structuralTargetReport = null;
             ContextualLiquidityTrackingResult? tracked = null;
             ContextualSwingScReport? scComparison = null;
-            if (contextualSc || sequence)
+            if (endToEnd)
+            {
+                var h4 = Read("H4", new(4, TimeframeUnit.Hour));
+                DateTimeOffset? h4Start = sources.TryGetProperty("H4", out var h4Source) &&
+                    h4Source.TryGetProperty("firstOpenUtc", out var first) && first.ValueKind != JsonValueKind.Null
+                    ? first.GetDateTimeOffset() : null;
+                var integrated = new EvaluateNasdaqEndToEndResearchUseCase().Execute(new(root.GetProperty("id").GetString()!,
+                    day, maximum, [h4, hour, Read("M5", new(5, TimeframeUnit.Minute)), Read("M1", new(1, TimeframeUnit.Minute))],
+                    h4Start, DevelopmentProvenance));
+                report = new
+                {
+                    SchemaVersion = 1,
+                    InputSha256 = Convert.ToHexStringLower(SHA256.HashData(bytes)),
+                    DocumentaryMapping = root.GetProperty("documentaryMapping").GetString(),
+                    SourceProvenance = new[] { "H4", "H1", "M5", "M1" }.ToDictionary(k => k, k =>
+                        sources.TryGetProperty(k, out var source) ? source.EnumerateObject()
+                            .Where(p => p.Name is "sourceTimeframe" or "derived" or "intervalMinutes" or "rawRelativePath" or
+                                "normalizedRelativePath" or "rawSha256" or "normalizedSha256")
+                            .ToDictionary(p => p.Name, p => p.Value.Clone()) : null),
+                    Research = new
+                    {
+                        integrated.CandidateId,
+                        integrated.Version,
+                        RunId = FormattableString.Invariant($"{integrated.CandidateId}/{integrated.DatasetId}/{integrated.ReplayCutoff.RequestedUtc:O}"),
+                        integrated.DatasetId,
+                        integrated.OperatingDate,
+                        integrated.Provider,
+                        integrated.Instrument,
+                        integrated.ReplayStrategyVersion,
+                        integrated.SourceProvenance,
+                        integrated.ReplayCutoff,
+                        integrated.Window,
+                        integrated.Preparation,
+                        integrated.RealignmentCutoffs,
+                        integrated.SessionLiquidity,
+                        integrated.HistoricalAvailability,
+                        integrated.LiquidityAuthority,
+                        integrated.CanonicalAdmissionPermitted,
+                        integrated.OperationalSignal,
+                        integrated.Outcome,
+                        integrated.Summary,
+                        integrated.Chains,
+                        Sequence = integrated.Sequence is { } included ? ContextualSequenceResearchOutput.Project(included) : null,
+                        integrated.Realignment,
+                        integrated.StructuralStop,
+                        integrated.StructuralTakeProfit
+                    }
+                };
+            }
+            else if (contextualSc || sequence)
             {
                 var m5 = Read("M5", new(5, TimeframeUnit.Minute));
                 var rangeStart = calculator.CalculateExplicitSessions(hour, day, maximum)[1].StartUtc;
                 scComparison = new CompareContextualSwingScUseCase().Execute(hour, m5, day, rangeStart, maximum, M5ResearchDataOrigin.RetrospectiveDocumentary,
-                    reviewSession ? "Frozen earliest eligible June 22 review source; self-declared unreviewed; nominal documentary UTC only; selection e52279ed-2ae9-456e-9c6f-56f11cd22347." : "June 23 Development documentary sources; explicit contextual tracking hypothesis 187c3ef3-2fe4-4993-bce3-dee605345b4f; nominal UTC only.");
+                    reviewSession ? "Frozen earliest eligible June 22 review source; self-declared unreviewed; nominal documentary UTC only; selection e52279ed-2ae9-456e-9c6f-56f11cd22347." : DevelopmentProvenance);
                 var scReport = new
                 {
                     SchemaVersion = 1,
@@ -116,13 +172,8 @@ public sealed class NasdaqSessionLiquidityResearchCommand
                 };
                 if (sequence)
                 {
-                    var configs = from sweep in Enum.GetValues<M5SweepPolicy>()
-                                  from window in Enum.GetValues<M5SequenceWindowPolicy>()
-                                  from formation in Enum.GetValues<M5SequenceFvgPolicy>()
-                                  from profile in Enum.GetValues<M5FvgProfile>()
-                                  select new M5SequenceConfiguration(sweep, window, formation, profile,
-                                      NasdaqTradingWindowAlignment.Opening, NasdaqTradingWindowAlignment.Closing);
-                    var sequenceResult = new EvaluateM5ContextualSequenceUseCase().Execute(scReport.ContextId!, scComparison, m5, configs.ToArray());
+                    var sequenceResult = new EvaluateM5ContextualSequenceUseCase().Execute(scReport.ContextId!, scComparison, m5,
+                        EvaluateNasdaqEndToEndResearchUseCase.SequenceConfigurations());
                     report = new
                     {
                         scReport.SchemaVersion,
@@ -234,10 +285,10 @@ public sealed class NasdaqSessionLiquidityResearchCommand
                 NonAuthoritativeComparisons = new[] { Read("M5", new(5, TimeframeUnit.Minute)), Read("M1", new(1, TimeframeUnit.Minute)) }
                     .Select(s => new { SourceTimeframe = s.Timeframe.ToString(), Sessions = calculator.CalculateExplicitSessions(s, day, new DateTimeOffset(day.Year, day.Month, day.Day, 13, 0, 0, TimeSpan.Zero)).Select(Project).ToArray() }).ToArray()
             };
-            var content = JsonSerializer.Serialize(report, Json).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n";
+            var content = JsonSerializer.Serialize(report, endToEnd ? IntegratedJson : Json).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n";
             var parent = Path.GetDirectoryName(destination)!; Directory.CreateDirectory(parent); Guard(parent);
             var pending = Path.Combine(parent, ".nasdaq-session-pending-" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(pending); File.WriteAllText(Path.Combine(pending, sequence ? "contextual-sequence.json" : contextualSc ? "contextual-swing-sc.json" : tracking ? "liquidity-context.json" : interaction ? "london-asia-interaction.json" : "session-liquidity.json"), content, new UTF8Encoding(false));
+            Directory.CreateDirectory(pending); File.WriteAllText(Path.Combine(pending, endToEnd ? "nasdaq-end-to-end-research.json" : sequence ? "contextual-sequence.json" : contextualSc ? "contextual-swing-sc.json" : tracking ? "liquidity-context.json" : interaction ? "london-asia-interaction.json" : "session-liquidity.json"), content, new UTF8Encoding(false));
             if (realignmentReport is not null)
                 File.WriteAllText(Path.Combine(pending, "contextual-m1-realignment.json"),
                     JsonSerializer.Serialize(realignmentReport, Json).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n", new UTF8Encoding(false));
