@@ -19,8 +19,10 @@ public sealed record StructuralTakeProfitResearchReport(string SessionId, DateTi
     IReadOnlyDictionary<string, StructuralRewardRiskComparison> RewardRiskComparisons,
     IReadOnlyList<StructuralTargetAssociation> Associations)
 {
-    public string CandidateId => "EXP-NQ-STRUCTURAL-TP-V1";
-    public string Version => "1.0.0";
+    public const string ResearchId = "EXP-NQ-STRUCTURAL-TP-V1";
+    public const string ResearchVersion = "1.0.0";
+    public string CandidateId => ResearchId;
+    public string Version => ResearchVersion;
     public string HistoricalAvailability => "DocumentaryNominalClosure_NotAuthenticated";
     public string ExecutableTakeProfitPolicy => "Unresolved";
     public bool CanonicalAdmissionPermitted => false;
@@ -44,6 +46,11 @@ public sealed class CompareNasdaqStructuralTakeProfitUseCase
     private static readonly Timeframe M5 = new(5, TimeframeUnit.Minute);
     private static readonly Timeframe H1 = new(1, TimeframeUnit.Hour);
 
+    public static IReadOnlyList<StructuralTargetProfile> ProfilesFor(IReadOnlyList<M5StructuralPivotProfile> stops) =>
+        Array.AsReadOnly(stops.OrderBy(p => p.LeftBars).ThenBy(p => p.RightBars)
+            .Select(p => new StructuralTargetProfile(StructuralTargetPolicy.NearestConfirmedM5Swing, p))
+            .Append(new StructuralTargetProfile(StructuralTargetPolicy.NearestAuditedSessionExtreme, null)).ToArray());
+
     public StructuralTakeProfitResearchReport Execute(M5StructuralStopResearchReport stops,
         CandleSeries m5, CandleSeries hour, IReadOnlyList<M5FvgClosure>? documentedClosures = null)
     {
@@ -59,10 +66,7 @@ public sealed class CompareNasdaqStructuralTakeProfitUseCase
             closures.Select(c => (c.StartUtc, c.EndUtc)).Distinct().Count() != closures.Count)
             throw new ArgumentException("Documented closures require distinct UTC bounds and evidence.", nameof(documentedClosures));
 
-        var sessionProfile = new StructuralTargetProfile(StructuralTargetPolicy.NearestAuditedSessionExtreme, null);
-        var profiles = Array.AsReadOnly(stops.Profiles.OrderBy(p => p.LeftBars).ThenBy(p => p.RightBars)
-            .Select(p => new StructuralTargetProfile(StructuralTargetPolicy.NearestConfirmedM5Swing, p))
-            .Append(sessionProfile).ToArray());
+        var profiles = ProfilesFor(stops.Profiles);
         var calculator = new NasdaqSessionLiquidityCalculator();
         var evaluations = new SortedDictionary<string, StructuralTargetEvaluation>(StringComparer.Ordinal);
         var comparisons = new SortedDictionary<string, StructuralRewardRiskComparison>(StringComparer.Ordinal);

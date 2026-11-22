@@ -39,8 +39,10 @@ public sealed record H4MarketStructureObservation(DateTimeOffset AsOfUtc, H4Pivo
     H4HighRelation HighRelation, H4LowRelation LowRelation,
     H4StructureClassification Classification, H4ResearchStatus Status, string ReasonCode)
 {
-    public string CandidateId => "EXP-NQ-H4-MARKET-STRUCTURE-V1";
-    public string CandidateVersion => "1.0.0";
+    public const string ResearchId = "EXP-NQ-H4-MARKET-STRUCTURE-V1";
+    public const string ResearchVersion = "1.0.0";
+    public string CandidateId => ResearchId;
+    public string CandidateVersion => ResearchVersion;
     public string HistoricalAvailability => "Documentary_NotAuthenticatedAtHistoricalCutoff";
     public bool MentorRuleConfirmed => false;
     public bool CanonicalAdmissionPermitted => false;

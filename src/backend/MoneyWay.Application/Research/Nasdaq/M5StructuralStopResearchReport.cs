@@ -26,8 +26,10 @@ public sealed record M5StructuralStopResearchReport(string SessionId, DateTimeOf
     string Provider, string Instrument, string SourceProvenance, IReadOnlyList<M5StructuralPivotProfile> Profiles,
     IReadOnlyDictionary<string, M5StructuralStopObservation> Evaluations, IReadOnlyList<M5StructuralStopAssociation> Associations)
 {
-    public string CandidateId => "EXP-NQ-M5-STRUCTURAL-SL-V1";
-    public string Version => "1.0.0";
+    public const string ResearchId = "EXP-NQ-M5-STRUCTURAL-SL-V1";
+    public const string ResearchVersion = "1.0.0";
+    public string CandidateId => ResearchId;
+    public string Version => ResearchVersion;
     public string SelectionPolicy => "LatestConfirmedStructuralReference";
     public string HistoricalAvailability => "DocumentaryNominalClosure_NotAuthenticated";
     public string ExecutableStopLossPolicy => "Unresolved";

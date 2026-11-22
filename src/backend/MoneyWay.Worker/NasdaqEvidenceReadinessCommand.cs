@@ -21,6 +21,11 @@ internal sealed record NasdaqEvidenceRegistration(string RequestSha256, string C
     public bool OperationalSignal => false;
 }
 
+internal sealed record NasdaqEvidenceReadinessReport(string DatasetId, string ProviderId, string Symbol,
+    DateTimeOffset RegisteredAtUtc, string Provenance, string RequestSha256, string CanonicalRequestSha256,
+    NasdaqEvidenceReceipt? LocalAcquisition, IReadOnlyList<NasdaqEvidenceSource> Sources,
+    IReadOnlyDictionary<string, int> IdenticalDuplicateCounts, IReadOnlyList<NasdaqEvidenceSessionReadiness> Sessions);
+
 public sealed class NasdaqEvidenceReadinessCommand
 {
     internal const string RegistrationSchema = "moneyway.nasdaq-multitimeframe-evidence.v1";
@@ -29,7 +34,7 @@ public sealed class NasdaqEvidenceReadinessCommand
         WriteIndented = true,
         Converters = { new JsonStringEnumConverter(allowIntegerValues: false), new ExplicitUtcConverter() }
     };
-    private static readonly DateTimeOffset ProspectiveStart = new(2026, 11, 23, 5, 0, 0, TimeSpan.Zero);
+    internal static readonly DateTimeOffset ProspectiveStart = new(2026, 11, 23, 5, 0, 0, TimeSpan.Zero);
     private static readonly UTF8Encoding Utf8 = new(false);
 
     public int Execute(IReadOnlyList<string> args, TextWriter output, TextWriter error)
@@ -45,29 +50,10 @@ public sealed class NasdaqEvidenceReadinessCommand
                 ?? throw new ArgumentException("Explicit dataset request required.");
             var registration = new NasdaqEvidenceRegistration(NasdaqEvidenceSources.Hash(bytes), RequestDigest(request), request);
             var (loaded, _, sessions) = Assess(registration.Request);
-            var report = new
-            {
-                CandidateId = "EXP-NQ-MULTITIMEFRAME-EVIDENCE-READINESS-V1",
-                registration.Request.DatasetId,
-                registration.Request.ProviderId,
-                registration.Request.Symbol,
-                registration.Request.RegisteredAtUtc,
-                registration.Request.Provenance,
-                registration.RequestSha256,
-                registration.CanonicalRequestSha256,
-                registration.Request.LocalAcquisition,
-                DocumentaryHistoricalAvailability = "NominalClosure_NotAuthenticated",
-                IndependentlyAuthenticatedAvailability = false,
-                Sources = loaded.Sources,
-                IdenticalDuplicateCounts = loaded.IdenticalDuplicateCounts,
-                Sessions = sessions,
-                CanonicalAdmissionPermitted = false,
-                OperationalSignal = false
-            };
             Publish(args[4], new Dictionary<string, string>
             {
                 ["registration.json"] = Serialize(registration),
-                ["readiness.json"] = Serialize(report),
+                ["readiness.json"] = ReadinessJson(registration, loaded, sessions),
                 ["readiness.md"] = Markdown(registration.Request.DatasetId, sessions)
             }, allowIdentical: true);
             output.WriteLine(Path.Combine(args[4], "readiness.json"));
@@ -83,11 +69,8 @@ public sealed class NasdaqEvidenceReadinessCommand
 
     internal static string Replay(ReadOnlySpan<byte> registrationBytes, IReadOnlyList<string> args)
     {
-        var registration = JsonSerializer.Deserialize<NasdaqEvidenceRegistration>(registrationBytes, Json)
-            ?? throw new ArgumentException("Evidence registration required.");
+        var registration = ReadRegistration(registrationBytes);
         var request = registration.Request;
-        if (request is null || registration.CanonicalRequestSha256 != RequestDigest(request))
-            throw new ArgumentException("Registration request fingerprint mismatch. Create a new versioned registration.");
         var (loaded, closures, sessions) = Assess(request);
         DateTimeOffset? cutoff = null;
         if (args.Count == 8)
@@ -122,6 +105,47 @@ public sealed class NasdaqEvidenceReadinessCommand
         }, allowIdentical: false);
         return args[4];
     }
+
+    internal static NasdaqEvidenceRegistration ReadRegistration(ReadOnlySpan<byte> registrationBytes)
+    {
+        var registration = JsonSerializer.Deserialize<NasdaqEvidenceRegistration>(registrationBytes, Json)
+            ?? throw new ArgumentException("Evidence registration required.");
+        if (registration.Request is null || registration.CanonicalRequestSha256 != RequestDigest(registration.Request))
+            throw new ArgumentException("Registration request fingerprint mismatch. Create a new versioned registration.");
+        return registration;
+    }
+
+    internal static NasdaqEvidenceReadinessReport VerifyReadiness(byte[] registrationBytes, byte[] readinessBytes)
+    {
+        var registration = ReadRegistration(registrationBytes);
+        var (loaded, _, sessions) = Assess(registration.Request);
+        if (!readinessBytes.AsSpan().SequenceEqual(Utf8.GetBytes(ReadinessJson(registration, loaded, sessions))))
+            throw new ArgumentException("Readiness artifact differs from the pinned, reproducible evidence registration.");
+        var r = registration.Request;
+        return new(r.DatasetId, r.ProviderId, r.Symbol, r.RegisteredAtUtc, r.Provenance, registration.RequestSha256,
+            registration.CanonicalRequestSha256, r.LocalAcquisition, loaded.Sources, loaded.IdenticalDuplicateCounts, sessions);
+    }
+
+    private static string ReadinessJson(NasdaqEvidenceRegistration registration, NasdaqEvidenceLoaded loaded,
+        IReadOnlyList<NasdaqEvidenceSessionReadiness> sessions) => Serialize(new
+        {
+            CandidateId = "EXP-NQ-MULTITIMEFRAME-EVIDENCE-READINESS-V1",
+            registration.Request.DatasetId,
+            registration.Request.ProviderId,
+            registration.Request.Symbol,
+            registration.Request.RegisteredAtUtc,
+            registration.Request.Provenance,
+            registration.RequestSha256,
+            registration.CanonicalRequestSha256,
+            registration.Request.LocalAcquisition,
+            DocumentaryHistoricalAvailability = "NominalClosure_NotAuthenticated",
+            IndependentlyAuthenticatedAvailability = false,
+            loaded.Sources,
+            loaded.IdenticalDuplicateCounts,
+            Sessions = sessions,
+            CanonicalAdmissionPermitted = false,
+            OperationalSignal = false
+        });
 
     private static (NasdaqEvidenceLoaded, NasdaqEvidenceClosure[], NasdaqEvidenceSessionReadiness[]) Assess(NasdaqEvidenceRequest request)
     {
@@ -197,7 +221,7 @@ public sealed class NasdaqEvidenceReadinessCommand
         }
     }
 
-    private static NasdaqEvidenceExposure? KnownExposure(DateOnly day) => (day.Year, day.Month, day.Day) switch
+    internal static NasdaqEvidenceExposure? KnownExposure(DateOnly day) => (day.Year, day.Month, day.Day) switch
     {
         (2026, 6, 22 or 24 or 26) => NasdaqEvidenceExposure.ChronologicalReview,
         (2026, 6, 23) => NasdaqEvidenceExposure.Development,
@@ -240,7 +264,7 @@ public sealed class NasdaqEvidenceReadinessCommand
     private static string RequestDigest(NasdaqEvidenceRequest request) =>
         NasdaqEvidenceSources.Hash(JsonSerializer.SerializeToUtf8Bytes(request, Json));
 
-    private sealed class ExplicitUtcConverter : JsonConverter<DateTimeOffset>
+    internal sealed class ExplicitUtcConverter : JsonConverter<DateTimeOffset>
     {
         public override DateTimeOffset Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
             NasdaqEvidenceSources.ParseUtc(reader.GetString());
@@ -249,7 +273,7 @@ public sealed class NasdaqEvidenceReadinessCommand
             writer.WriteStringValue(value);
     }
 
-    private static void Publish(string directory, IReadOnlyDictionary<string, string> files, bool allowIdentical)
+    internal static void Publish(string directory, IReadOnlyDictionary<string, string> files, bool allowIdentical)
     {
         if (!Path.IsPathFullyQualified(directory)) throw new ArgumentException("Absolute output path required.");
         var target = Path.TrimEndingDirectorySeparator(Path.GetFullPath(directory));

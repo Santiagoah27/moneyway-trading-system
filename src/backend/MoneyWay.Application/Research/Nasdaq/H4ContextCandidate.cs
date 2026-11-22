@@ -38,9 +38,13 @@ public sealed record H4CandleContext(DateTimeOffset CandleOpenUtc, DateTimeOffse
 public sealed record H4ContextObservation(DateTimeOffset AsOfUtc, int Horizon, H4MarketStructureObservation MarketStructure,
     IReadOnlyList<H4CandleContext> CandleHistory, IReadOnlyList<H4DelayedObservation> DelayedHistory)
 {
-    public string CandidateId => "EXP-NQ-H4-CONTEXT-V1";
-    public string CandidateVersion => "1.0.0";
-    public string ConfigurationId => FormattableString.Invariant($"{MarketStructure.Profile.Id}:{MarketStructure.Profile.LeftBars}:{MarketStructure.Profile.RightBars}:H{Horizon}");
+    public const string ResearchId = "EXP-NQ-H4-CONTEXT-V1";
+    public const string ResearchVersion = "1.0.0";
+    public string CandidateId => ResearchId;
+    public string CandidateVersion => ResearchVersion;
+    public string ConfigurationId => ProfileId(MarketStructure.Profile, Horizon);
+    public static string ProfileId(H4PivotProfile profile, int horizon) =>
+        FormattableString.Invariant($"{profile.Id}:{profile.LeftBars}:{profile.RightBars}:H{horizon}");
     public H4CandleContext? LatestClosedCandle => CandleHistory.LastOrDefault();
     public TimeSpan? LatestClosedCandleAge => LatestClosedCandle is { } candle ? AsOfUtc - candle.ObservedAtUtc : null;
     public IReadOnlyList<TimeSpan> CandleEvidenceAges => CandleHistory.Select(candle => AsOfUtc - candle.ObservedAtUtc).ToArray();

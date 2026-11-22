@@ -13,5 +13,6 @@
   <ItemGroup>
     <ProjectReference Include="..\MoneyWay.Application\MoneyWay.Application.csproj" />
     <ProjectReference Include="..\MoneyWay.Infrastructure\MoneyWay.Infrastructure.csproj" />
+    <InternalsVisibleTo Include="MoneyWay.IntegrationTests" />
   </ItemGroup>
 </Project>

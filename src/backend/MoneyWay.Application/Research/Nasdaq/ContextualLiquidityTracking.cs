@@ -69,8 +69,10 @@ public sealed record ContextualLiquidityTrackingResult(DateOnly OperatingDate, D
     LondonAsiaInteractionResult LondonHistoricalContext, IReadOnlyList<ContextualReferenceTracking> References,
     IReadOnlyList<ContextualLiquidityCandleGroup> CandleGroups, IReadOnlyList<string> UnavailableReferences)
 {
-    public string AlgorithmId => "EXP-NQ-LIQ-CONTEXT-V1";
-    public string AlgorithmVersion => "1.0.0";
+    public const string ResearchId = "EXP-NQ-LIQ-CONTEXT-V1";
+    public const string ResearchVersion = "1.0.0";
+    public string AlgorithmId => ResearchId;
+    public string AlgorithmVersion => ResearchVersion;
     public bool CanonicalAdmissionPermitted => false;
     public bool OperationalSignal => false;
     public string Classification => "BoundedDocumentaryResearch_NotRelevanceOrTradingAuthorization";

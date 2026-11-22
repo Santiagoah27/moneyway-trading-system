@@ -28,8 +28,10 @@ public sealed record ContextualSwingScReport(ContextualLiquidityTrackingResult T
     IReadOnlyList<ContextualScEventSelection> EventSelections, IReadOnlyList<ContextualSwingScComparison> Comparisons,
     IReadOnlyList<ContextualScOutcomeGroup> OutcomeGroups)
 {
-    public string AlgorithmId => "EXP-NQ-CONTEXT-SWING-SC-V1";
-    public string Version => "1.0.0";
+    public const string ResearchId = "EXP-NQ-CONTEXT-SWING-SC-V1";
+    public const string ResearchVersion = "1.0.0";
+    public string AlgorithmId => ResearchId;
+    public string Version => ResearchVersion;
     public bool CanonicalAdmissionPermitted => false;
     public bool OperationalSignal => false;
     public string Scope => "IsolatedContextualStructuralResearch_NotMentorConfirmed_NotIndependentValidation";

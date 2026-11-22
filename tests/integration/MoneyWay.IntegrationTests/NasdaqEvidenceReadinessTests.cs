@@ -6,7 +6,7 @@ using MoneyWay.Worker;
 
 namespace MoneyWay.IntegrationTests;
 
-public sealed class NasdaqEvidenceReadinessTests
+public sealed partial class NasdaqEvidenceReadinessTests
 {
     private static readonly DateTimeOffset Prep = new(2026, 11, 23, 13, 0, 0, TimeSpan.Zero);
     private static readonly DateTimeOffset Cutoff = Prep.AddHours(3.5);
@@ -153,12 +153,15 @@ public sealed class NasdaqEvidenceReadinessTests
         private int index;
         public (string path, string sha256) Evidence { get; }
 
-        public Fixture(bool h4Gap = false)
+        public string Root => directory.FullName;
+
+        public Fixture(bool h4Gap = false, bool structuredH4 = false)
         {
             var proof = Path.Combine(directory.FullName, "evidence.txt");
             File.WriteAllText(proof, "Synthetic fixture mapping and acquisition evidence.");
             Evidence = (proof, Hash(proof));
-            sources.Add(Source("H4", 240, 10, Prep.AddHours(-40), skip: h4Gap ? 4 : -1));
+            sources.Add(Source("H4", 240, 10, Prep.AddHours(-40), skip: h4Gap ? 4 : -1,
+                prices: structuredH4 ? [18, 26, 17, 27, 19, 30, 20, 32, 22, 33] : null));
             sources.Add(Source("H1", 60, 18, Prep.AddHours(-15)));
             sources.Add(Source("M5", 5, 114, Prep.AddHours(-6)));
             sources.Add(Source("M1", 1, 570, Prep.AddHours(-6)));
@@ -178,18 +181,20 @@ public sealed class NasdaqEvidenceReadinessTests
                     { ["H4"] = Prep.AddHours(-40), ["H1"] = Prep.AddHours(-15), ["M5"] = Prep.AddHours(-6), ["M1"] = Prep.AddHours(-6) } } }
         })!.AsObject();
 
-        public JsonObject Source(string tf, int minutes, int count, DateTimeOffset start, int price = 100, int skip = -1)
+        public JsonObject Source(string tf, int minutes, int count, DateTimeOffset start, int price = 100, int skip = -1,
+            IReadOnlyList<int>? prices = null)
         {
             var folder = Directory.CreateDirectory(Path.Combine(directory.FullName, "source-" + index++)).FullName;
             var raw = Path.Combine(folder, "original.tsv");
             var canonical = Path.Combine(folder, "normalized.csv");
             var mapPath = Path.Combine(folder, "timestamp-map.json");
             var observations = Enumerable.Range(0, count).Where(i => i != skip).Select(i => start.AddMinutes(i * minutes)).ToArray();
+            int Price(DateTimeOffset open) => prices?[(int)(open - start).TotalMinutes / minutes] ?? price;
             File.WriteAllLines(raw, new[] { "<DATE>\t<TIME>\t<OPEN>\t<HIGH>\t<LOW>\t<CLOSE>\t<TICKVOL>" }.Concat(observations.Select(o =>
-                FormattableString.Invariant($"{o.AddHours(3):yyyy.MM.dd}\t{o.AddHours(3):HH:mm:ss}\t{price}\t{price + 1}\t{price - 1}\t{price}\t1"))));
+                FormattableString.Invariant($"{o.AddHours(3):yyyy.MM.dd}\t{o.AddHours(3):HH:mm:ss}\t{Price(o)}\t{Price(o) + 1}\t{Price(o) - 1}\t{Price(o)}\t1"))));
             var period = tf.StartsWith('H') ? "Hour" : "Minute";
             File.WriteAllLines(canonical, new[] { "provider_id,symbol,timeframe_amount,timeframe_unit,open_time_utc,close_time_utc,open,high,low,close,volume" }
-                .Concat(observations.Select(o => FormattableString.Invariant($"oanda-global-markets-mt5-demo,US100,{tf[1..]},{period},{o:O},{o.AddMinutes(minutes):O},{price},{price + 1},{price - 1},{price},1"))));
+                .Concat(observations.Select(o => FormattableString.Invariant($"oanda-global-markets-mt5-demo,US100,{tf[1..]},{period},{o:O},{o.AddMinutes(minutes):O},{Price(o)},{Price(o) + 1},{Price(o) - 1},{Price(o)},1"))));
             Write(mapPath, new
             {
                 schemaVersion = 1,

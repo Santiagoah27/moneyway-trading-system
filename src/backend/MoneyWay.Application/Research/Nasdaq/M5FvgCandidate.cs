@@ -46,8 +46,10 @@ public sealed record M5FvgReport(DateTimeOffset RequestedStartUtc, DateTimeOffse
     string ProviderId, string Symbol, string Timeframe, string SourceProvenance, int ClosedCandles,
     int EligibleWindows, IReadOnlyList<M5FvgSourceGap> SourceGaps, IReadOnlyList<M5FvgLifecycle> Zones)
 {
-    public string CandidateId => "EXP-NQ-M5-FVG-IFVG-V1";
-    public string Version => "1.0.0";
+    public const string ResearchId = "EXP-NQ-M5-FVG-IFVG-V1";
+    public const string ResearchVersion = "1.0.0";
+    public string CandidateId => ResearchId;
+    public string Version => ResearchVersion;
     public string HistoricalAvailability => "DocumentaryNominalClosure_NotAuthenticated";
     public bool IntrabarOrderingKnown => false;
     public bool CanonicalAdmissionPermitted => false;

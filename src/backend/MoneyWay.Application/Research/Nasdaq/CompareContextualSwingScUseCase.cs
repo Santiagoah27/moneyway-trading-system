@@ -12,6 +12,9 @@ public sealed class CompareContextualSwingScUseCase
     public const string Previous = "EXP-NQ-CONTEXT-SWING-PREVIOUS-V1";
     public const string Range = "EXP-NQ-CONTEXT-SWING-RANGE-V1";
     public const string Confirmed = "EXP-NQ-CONTEXT-SWING-CONFIRMED-V1";
+    public static IReadOnlyList<string> EventPolicies { get; } = Array.AsReadOnly(new[] { "E1", "E2", "E3" });
+    public static IReadOnlyList<string> SwingFamilies { get; } = Array.AsReadOnly(new[] { Previous, Range, Confirmed });
+    public static string EventPolicyId(string policy) => $"EXP-NQ-CONTEXT-EVENT-{policy}-V1";
     private static DateTimeOffset[] Missing(IReadOnlyList<Candle> rows, DateTimeOffset start, DateTimeOffset end)
     {
         var expected = new List<DateTimeOffset>();
@@ -26,7 +29,7 @@ public sealed class CompareContextualSwingScUseCase
     }
     private static ContextualScEventSelection Select(ContextualLiquidityTrackingResult tracking, ContextualReferenceTracking reference, string policy)
     {
-        var id = "EXP-NQ-CONTEXT-EVENT-" + policy + "-V1";
+        var id = EventPolicyId(policy);
         var rows = reference.Observations;
         ContextualLiquidityObservation? candidate = null, earlier = null, returned = null;
         foreach (var o in rows.Where(o => o.Relationship.StrictPenetration && (policy == "E1" || o.Candle.OpenTimeUtc >= tracking.ObservationStartUtc)))
@@ -57,7 +60,7 @@ public sealed class CompareContextualSwingScUseCase
         var tracking = new TrackContextualLiquidityUseCase().Execute(h1, m5, day, startUtc, cutoffUtc, origin, provenance, structural);
         var visible = m5.Candles.Where(c => c.CloseTimeUtc <= cutoffUtc && c.CloseTimeUtc == c.OpenTimeUtc.AddMinutes(5)
             && c.OpenTimeUtc.Ticks % TimeSpan.FromMinutes(5).Ticks == 0).ToArray();
-        var events = tracking.References.SelectMany(r => new[] { "E1", "E2", "E3" }.Select(p => Select(tracking, r, p))).ToArray();
+        var events = tracking.References.SelectMany(r => EventPolicies.Select(p => Select(tracking, r, p))).ToArray();
         var results = new List<ContextualSwingScComparison>(); var breaks = new StructuralBodyCloseBreakCalculator();
         foreach (var selected in events)
         {
@@ -74,7 +77,7 @@ public sealed class CompareContextualSwingScUseCase
                 detector = new CompareM5SwingHypothesesUseCase().ExecuteInclusive(new("contextual-confirmed-prefix", prefix,
                     upward ? M5ImpulseDirection.Descending : M5ImpulseDirection.Ascending, ev.Candle.OpenTimeUtc, init, origin, provenance)).Results.ToArray();
             }
-            foreach (var family in new[] { Previous, Range, Confirmed })
+            foreach (var family in SwingFamilies)
                 foreach (var variant in family == Confirmed ? CompareM5SwingHypothesesUseCase.InclusiveAlgorithms.Select(a => (M5SwingHypothesisDefinition?)a) : new M5SwingHypothesisDefinition?[] { null })
                 {
                     var actualDetector = family == Confirmed && detector is not null ? detector.Single(d => d.Algorithm.AlgorithmId == variant!.AlgorithmId) : null;

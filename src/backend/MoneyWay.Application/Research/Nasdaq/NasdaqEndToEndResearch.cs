@@ -34,8 +34,10 @@ public sealed record NasdaqEndToEndResearchResult(string DatasetId, DateOnly Ope
     M5ContextualSequenceReport? Sequence, M1RealignmentReport? Realignment,
     M5StructuralStopResearchReport? StructuralStop, StructuralTakeProfitResearchReport? StructuralTakeProfit)
 {
-    public string CandidateId => "EXP-NQ-END-TO-END-MTF-V1";
-    public string Version => "1.1.0";
+    public const string ResearchId = "EXP-NQ-END-TO-END-MTF-V1";
+    public const string ResearchVersion = "1.1.0";
+    public string CandidateId => ResearchId;
+    public string Version => ResearchVersion;
     public string HistoricalAvailability => "DocumentaryNominalClosure_NotAuthenticated";
     public string LiquidityAuthority => "ExistingContextualEpisodes_ResearchOnly_StandardAndWF2Unchanged";
     public bool CanonicalAdmissionPermitted => false;
@@ -51,6 +53,7 @@ public sealed class EvaluateNasdaqEndToEndResearchUseCase
     private static readonly Timeframe M1 = new(1, TimeframeUnit.Minute);
     private static readonly Timeframe[] Required = [H4, H1, M5, M1];
     private static readonly StrategyDefinition Published = MoneyWayNasdaqStrategyDefinition.Instance;
+    public static IReadOnlyList<int> H4ContextHorizons { get; } = Array.AsReadOnly(new[] { 1, 2 });
 
     public static IReadOnlyList<M5SequenceConfiguration> SequenceConfigurations() =>
         (from sweep in Enum.GetValues<M5SweepPolicy>()
@@ -108,7 +111,7 @@ public sealed class EvaluateNasdaqEndToEndResearchUseCase
 
         var h4 = Series(atPrep, H4);
         var preparationProfiles = from profile in H4PivotProfile.InitialResearchProfiles
-                                  from horizon in new[] { 1, 2 }
+                                  from horizon in H4ContextHorizons
                                   select EvaluatePreparation(profile, horizon);
         var preparation = new NasdaqResearchPreparation(prepUtc, request.CutoffUtc >= prepUtc ? Cutoff(atPrep, prepUtc) : null,
             preparationProfiles.ToArray());
@@ -133,7 +136,7 @@ public sealed class EvaluateNasdaqEndToEndResearchUseCase
 
         NasdaqResearchPreparationProfile EvaluatePreparation(H4PivotProfile profile, int horizon)
         {
-            var id = FormattableString.Invariant($"{profile.Id}:{profile.LeftBars}:{profile.RightBars}:H{horizon}");
+            var id = H4ContextObservation.ProfileId(profile, horizon);
             if (request.CutoffUtc < prepUtc)
                 return new(id, profile, horizon, false, "PreparationCutoffNotReached", null);
             if (request.H4HistoryStartUtc is not { } start || start >= prepUtc)

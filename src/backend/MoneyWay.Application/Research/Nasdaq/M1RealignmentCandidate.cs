@@ -79,8 +79,10 @@ public sealed record M1RealignmentReport(string SessionId, DateTimeOffset AsOfUt
     string Provider, string Instrument, IReadOnlyList<M1RealignmentScan> Scans,
     IReadOnlyList<M1RealignmentAssociation> Associations, IReadOnlyDictionary<string, M1ZoneTimeline> ZoneTimelines)
 {
-    public string CandidateId => "EXP-NQ-M1-REALIGNMENT-V1";
-    public string Version => "1.0.0";
+    public const string ResearchId = "EXP-NQ-M1-REALIGNMENT-V1";
+    public const string ResearchVersion = "1.0.0";
+    public string CandidateId => ResearchId;
+    public string Version => ResearchVersion;
     public string HistoricalAvailability => "DocumentaryNominalClosure_NotAuthenticated";
     public bool CanonicalAdmissionPermitted => false;
     public bool OperationalSignal => false;

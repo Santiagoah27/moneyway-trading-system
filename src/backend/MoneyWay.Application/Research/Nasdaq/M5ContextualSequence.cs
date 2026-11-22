@@ -81,8 +81,10 @@ public sealed record M5ContextualSequenceReport(string SessionId, DateTimeOffset
     IReadOnlyList<M5SequenceResult> Results, IReadOnlyList<M5SequenceAssociation> ConfirmationAssociations,
     IReadOnlyList<string> UnavailableLiquidityReferences)
 {
-    public string CandidateId => "EXP-NQ-M5-CONTEXTUAL-SEQUENCE-V1";
-    public string Version => "1.0.0";
+    public const string ResearchId = "EXP-NQ-M5-CONTEXTUAL-SEQUENCE-V1";
+    public const string ResearchVersion = "1.0.0";
+    public string CandidateId => ResearchId;
+    public string Version => ResearchVersion;
     public string HistoricalAvailability => "DocumentaryNominalClosure_NotAuthenticated";
     public bool CanonicalAdmissionPermitted => false;
     public bool OperationalSignal => false;
