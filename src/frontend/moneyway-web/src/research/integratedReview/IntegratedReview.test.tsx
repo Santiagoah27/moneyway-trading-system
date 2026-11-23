@@ -1,12 +1,6 @@
 import { webcrypto } from "node:crypto";
 import { readFileSync } from "node:fs";
-import {
-    fireEvent,
-    render,
-    screen,
-    waitFor,
-    within,
-} from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../../App";
@@ -28,8 +22,19 @@ import {
     importReview,
     loadReview,
     newReview,
+    persistReview,
     reference,
 } from "./reviewHistory";
+import {
+    appendEvent,
+    exportEventReview,
+    groupEvents,
+    importEventReview,
+    loadEventReview,
+    startEventReview,
+    validateEventReview,
+    type EventDraft,
+} from "./eventReview";
 
 const packageSchema = "moneyway.nasdaq-blind-original.v1";
 const now = "2026-11-23T20:00:00Z";
@@ -45,6 +50,203 @@ async function payload() {
 beforeEach(() => {
     vi.stubGlobal("crypto", webcrypto);
     localStorage.clear();
+});
+
+const v2 = "moneyway.nasdaq-integrated-human-review.v2";
+function draft(
+    p: OriginalPackage,
+    observation: EventDraft["observation"],
+    index = 0,
+): EventDraft {
+    const tf = observation === "M1Realignment" ? "M1" : "M5";
+    const bar = p.sources[tf].bars[index];
+    return {
+        observation,
+        kind: "Reference",
+        references: [reference(p, tf, bar.openUtc)],
+        note: "Juicio documental",
+        viewingCutoffUtc: p.cutoffUtc,
+        scopeStartUtc: null,
+    };
+}
+
+describe("contrato de eventos V2", () => {
+    it("mantiene instancias separadas incluso si comparten tipo, precio y vela", async () => {
+        const p = await packet();
+        let review = startEventReview(p, "QA", "Unknown", p.cutoffUtc, now);
+        for (const type of [
+            "LiquidityTake",
+            "M5SC",
+            "M5FVG",
+            "M1Realignment",
+        ] as const) {
+            review = appendEvent(p, review, null, draft(p, type), now);
+            review = appendEvent(p, review, null, draft(p, type), now);
+        }
+        expect(
+            [...groupEvents(review.labels)].map(([id, labels]) => [
+                id,
+                labels.length,
+            ]),
+        ).toEqual(
+            Array.from({ length: 8 }, (_, i) => [
+                `synthetic-us100-v1/event/${i + 1}`,
+                1,
+            ]),
+        );
+        const a = review.labels[0].targetId;
+        const originalB = review.labels[1];
+        review = appendEvent(
+            p,
+            review,
+            a,
+            { ...draft(p, "LiquidityTake", 1), note: "Corrección de A" },
+            now,
+        );
+        review = appendEvent(
+            p,
+            review,
+            a,
+            {
+                ...draft(p, "LiquidityTake", 2),
+                note: "Segunda corrección de A",
+            },
+            now,
+        );
+        expect(
+            groupEvents(review.labels)
+                .get(a)
+                ?.map((label) => [label.revision, label.eventRevision]),
+        ).toEqual([
+            [1, 1],
+            [9, 2],
+            [10, 3],
+        ]);
+        expect(groupEvents(review.labels).get(originalB.targetId)).toEqual([
+            originalB,
+        ]);
+        expect(review.labels[2]).not.toHaveProperty("antecedentTargetId");
+        expect(review.operationalSignal).toBe(false);
+        expect(review.canonicalAdmissionPermitted).toBe(false);
+        const serialized = await exportEventReview(p, review);
+        expect(await importEventReview(p, null, serialized)).toEqual(review);
+        await expect(
+            importEventReview(
+                p,
+                review,
+                await exportEventReview(p, {
+                    ...review,
+                    labels: review.labels.slice(0, 8),
+                }),
+            ),
+        ).rejects.toThrow(/sustituiría/);
+        await expect(
+            importEventReview(
+                p,
+                null,
+                serialized.replace(/"sha256":"./, '"sha256":"Z'),
+            ),
+        ).rejects.toThrow();
+    });
+
+    it("rechaza identidades duplicadas, tipos contradictorios y referencias manipuladas aun con hash correcto", async () => {
+        const p = await packet();
+        const root = startEventReview(
+            p,
+            "QA",
+            "PreviouslyExposed",
+            p.cutoffUtc,
+            now,
+        );
+        const first = appendEvent(
+            p,
+            root,
+            null,
+            draft(p, "LiquidityTake"),
+            now,
+        );
+        const next = appendEvent(p, first, null, draft(p, "M5SC"), now);
+        const [a, b] = next.labels;
+        const cases = [
+            { ...b, targetId: a.targetId, eventNumber: 1 },
+            { ...b, targetId: a.targetId, eventNumber: 1, eventRevision: 2 },
+            { ...b, eventRevision: 3 },
+            { ...b, targetId: "canonical/setup/4" },
+            {
+                ...b,
+                references: [
+                    { ...b.references[0], originalSha256: "f".repeat(64) },
+                ],
+            },
+            {
+                ...b,
+                viewingCutoffUtc: "2000-01-03T12:04:00Z",
+                reviewMode: "RetrospectiveAfterLaterView",
+            },
+            { ...b, antecedentTargetId: a.targetId },
+        ];
+        for (const modified of cases)
+            await expect(
+                importEventReview(
+                    p,
+                    null,
+                    await seal(v2, { ...next, labels: [a, modified] }),
+                ),
+            ).rejects.toThrow();
+        expect(a.phase).toBe("PostRevealCorrection");
+        expect(() =>
+            appendEvent(p, next, a.targetId, draft(p, "M5SC"), now),
+        ).toThrow(/conservar su tipo/);
+    });
+
+    it("registra una revisión retrospectiva y exige un alcance explícito para la ausencia", async () => {
+        const p = await packet();
+        const review = startEventReview(p, "QA", "Unknown", p.cutoffUtc, now);
+        const absent: EventDraft = {
+            ...draft(p, "LiquidityTake"),
+            kind: "NoReference",
+            references: [],
+            viewingCutoffUtc: "2000-01-03T12:05:00Z",
+        };
+        expect(() => appendEvent(p, review, null, absent, now)).toThrow(
+            /alcance explícito/,
+        );
+        const recorded = appendEvent(
+            p,
+            review,
+            null,
+            { ...absent, scopeStartUtc: "2000-01-03T12:00:00Z" },
+            now,
+        );
+        expect(recorded.labels[0]).toMatchObject({
+            reviewedAtUtc: now,
+            maximumViewedUtc: p.cutoffUtc,
+            reviewMode: "RetrospectiveAfterLaterView",
+        });
+        expect(() =>
+            validateEventReview(p, {
+                ...recorded,
+                labels: [
+                    { ...recorded.labels[0], reviewMode: "AtViewingFrontier" },
+                ],
+            }),
+        ).toThrow(/datos posteriores/);
+        for (const kind of [
+            "Ambiguous",
+            "InsufficientSourceEvidence",
+            "Skip",
+        ] as const) {
+            expect(
+                appendEvent(
+                    p,
+                    recorded,
+                    null,
+                    { ...absent, kind },
+                    now,
+                ).labels.at(-1)?.references,
+            ).toEqual([]);
+        }
+    });
 });
 afterEach(() => {
     window.history.replaceState(null, "", "/");
@@ -70,11 +272,15 @@ async function begin(exposure = "SelfDeclaredIndependent") {
     );
 }
 
-async function note(text: string) {
-    await userEvent.type(screen.getByLabelText("Evidencia o motivo"), text);
-    await userEvent.click(
-        screen.getByRole("button", { name: "Guardar revisión" }),
-    );
+async function note(text: string, action = "Guardar evento") {
+    const input = screen.getByLabelText("Evidencia o motivo");
+    await userEvent.clear(input);
+    await userEvent.type(input, text);
+    await userEvent.click(screen.getByRole("button", { name: action }));
+}
+
+async function newEvent() {
+    await userEvent.click(screen.getByRole("button", { name: "Nuevo evento" }));
 }
 
 describe("paquete de velas originales", () => {
@@ -193,6 +399,7 @@ describe("revisión humana integrada", () => {
                 screen.getByRole("img", { name: "Velas OHLC " + tf }),
             ).toBeDefined();
         }
+        await newEvent();
         await userEvent.selectOptions(
             screen.getByLabelText("Observación"),
             "M1Realignment",
@@ -209,8 +416,8 @@ describe("revisión humana integrada", () => {
         ).toBeDefined();
         await note("El revisor identifica esta vela.");
         const p = await packet();
-        expect(loadReview(p)?.labels[0]).toMatchObject({
-            targetId: "synthetic-us100-v1/M1Realignment",
+        expect(loadEventReview(p)?.labels[0]).toMatchObject({
+            targetId: "synthetic-us100-v1/event/1",
             revision: 1,
             phase: "PreRevealJudgment",
             references: [reference(p, "M1", "2000-01-03T12:35:00.000Z")],
@@ -222,7 +429,7 @@ describe("revisión humana integrada", () => {
             screen.getAllByRole("button", { name: /Inspeccionar vela/ }),
         ).toHaveLength(1);
         expect(screen.queryByText(/identifica esta vela/)).toBeNull();
-        expect(loadReview(p)?.maximumViewedUtc).toBe(
+        expect(loadEventReview(p)?.maximumViewedUtc).toBe(
             "2000-01-03T20:00:00.000Z",
         );
     });
@@ -231,21 +438,29 @@ describe("revisión humana integrada", () => {
         const view = render(<IntegratedReview />);
         await openCase();
         await begin("Unknown");
+        await newEvent();
         await userEvent.selectOptions(
             screen.getByLabelText("Clasificación"),
             "NoReference",
+        );
+        await userEvent.selectOptions(
+            screen.getByLabelText("Inicio del alcance"),
+            "2000-01-03T12:00:00.000Z",
         );
         await note("Sin referencia observable.");
         await userEvent.click(
             screen.getByRole("button", { name: /Registrar que vi resultados/ }),
         );
+        await userEvent.click(
+            screen.getByRole("button", { name: "Editar evento seleccionado" }),
+        );
         await userEvent.selectOptions(
             screen.getByLabelText("Clasificación"),
             "Ambiguous",
         );
-        await note("Dos lecturas posibles.");
+        await note("Dos lecturas posibles.", "Guardar corrección");
         const p = await packet();
-        const saved = loadReview(p)!;
+        const saved = loadEventReview(p)!;
         expect(saved.exposure).toBe("Unknown");
         expect(saved.reveal?.afterRevision).toBe(1);
         expect(
@@ -263,11 +478,15 @@ describe("revisión humana integrada", () => {
         view.unmount();
         render(<IntegratedReview />);
         await openCase();
+        await userEvent.selectOptions(
+            screen.getByLabelText("Evento registrado"),
+            saved.labels[0].targetId,
+        );
         expect(screen.getByText(/Sin referencia observable/)).toBeDefined();
         expect(screen.getByText(/Dos lecturas posibles/)).toBeDefined();
     });
 
-    it("verifica exportación, importa etiquetas locales y rechaza reemplazar revisiones previas", async () => {
+    it("mantiene archivo y almacenamiento V1 en solo lectura y rechaza su migración implícita", async () => {
         const p = await packet();
         const first = appendLabel(
             p,
@@ -307,11 +526,178 @@ describe("revisión humana integrada", () => {
         render(<IntegratedReview />);
         await openCase();
         await userEvent.upload(
-            screen.getByLabelText("Importar etiquetas JSON"),
+            screen.getByLabelText("Importar etiquetas JSON V2"),
             new File([exportText], "review.json", { type: "application/json" }),
         );
-        await waitFor(() => expect(loadReview(p)).toEqual(first));
-        expect(screen.getByText(/Ya vi resultados/)).toBeDefined();
+        expect((await screen.findByRole("alert")).textContent).toMatch(
+            /Esquema de revisión/,
+        );
+        expect(loadEventReview(p)).toBeNull();
+        await userEvent.click(screen.getByText("Historial V1 · solo lectura"));
+        await userEvent.upload(
+            screen.getByLabelText("Consultar archivo de etiquetas V1"),
+            new File([exportText], "review.json", { type: "application/json" }),
+        );
+        await screen.findByText(/Cobertura insuficiente/);
+        expect(loadReview(p)).toBeNull();
+        persistReview(p, null, first);
+        const legacyKey = Object.keys(localStorage).find((key) =>
+            key.startsWith("moneyway.nasdaq-integrated-human-review.v1:"),
+        )!;
+        const originalBytes = localStorage.getItem(legacyKey);
+        await userEvent.click(
+            screen.getByRole("button", {
+                name: "Iniciar revisión V2 con la declaración V1",
+            }),
+        );
+        expect(loadEventReview(p)).toMatchObject({
+            labels: [],
+            exposure: "PreviouslyExposed",
+            maximumViewedUtc: p.cutoffUtc,
+            reveal: { afterRevision: 0 },
+        });
+        expect(loadReview(p)).toEqual(first);
+        expect(localStorage.getItem(legacyKey)).toBe(originalBytes);
+    });
+
+    it("restaura un archivo V2 y distingue dos eventos del mismo tipo en el selector", async () => {
+        const p = await packet();
+        const empty = startEventReview(p, "QA", "Unknown", p.cutoffUtc, now);
+        const a = appendEvent(
+            p,
+            empty,
+            null,
+            { ...draft(p, "LiquidityTake"), note: "Toma original A" },
+            now,
+        );
+        const both = appendEvent(
+            p,
+            a,
+            null,
+            { ...draft(p, "LiquidityTake"), note: "Toma original B" },
+            now,
+        );
+        render(<IntegratedReview />);
+        await openCase();
+        await userEvent.upload(
+            screen.getByLabelText("Importar etiquetas JSON V2"),
+            new File([await exportEventReview(p, both)], "review-v2.json", {
+                type: "application/json",
+            }),
+        );
+        await screen.findByRole("button", { name: "Nuevo evento" });
+        await userEvent.click(
+            screen.getByRole("button", { name: "Corte final" }),
+        );
+        const select = screen.getByLabelText("Evento registrado");
+        await userEvent.selectOptions(select, both.labels[0].targetId);
+        expect(screen.getByText(/Toma original A/)).toBeDefined();
+        expect(screen.queryByText(/Toma original B/)).toBeNull();
+        await userEvent.click(
+            screen.getByRole("button", { name: "Editar evento seleccionado" }),
+        );
+        await note("Toma A corregida", "Guardar corrección");
+        await userEvent.selectOptions(select, both.labels[1].targetId);
+        expect(screen.getByText(/Toma original B/)).toBeDefined();
+        expect(screen.queryByText(/Toma A corregida/)).toBeNull();
+        expect(
+            loadEventReview(p)?.labels.map((label) => [
+                label.eventNumber,
+                label.eventRevision,
+            ]),
+        ).toEqual([
+            [1, 1],
+            [2, 1],
+            [1, 2],
+        ]);
+    });
+
+    it("recorre el Development fijado por la interfaz y corrige A sin modificar B", async () => {
+        const original = readFileSync(
+            "src/research/context/data/june23-context.json",
+            "utf8",
+        );
+        const fetchSource = vi.fn(async () => ({
+            ok: true,
+            text: async () => original,
+        }));
+        vi.stubGlobal("fetch", fetchSource);
+        render(<IntegratedReview />);
+        fireEvent.click(
+            screen.getByRole("button", {
+                name: "Abrir Development del 23 de junio",
+            }),
+        );
+        await screen.findByRole("heading", {
+            name: /2026-06-23.*Development expuesto/,
+        });
+        fireEvent.change(screen.getByLabelText("Revisor"), {
+            target: { value: "QA Development" },
+        });
+        fireEvent.change(screen.getByLabelText("Exposición declarada"), {
+            target: { value: "PreviouslyExposed" },
+        });
+        fireEvent.click(
+            screen.getByRole("button", { name: "Iniciar revisión" }),
+        );
+        fireEvent.click(screen.getByRole("button", { name: "Corte final" }));
+        for (const frame of frames) {
+            fireEvent.change(screen.getByLabelText("Temporalidad"), {
+                target: { value: frame },
+            });
+            expect(
+                screen.getByRole("img", { name: "Velas OHLC " + frame }),
+            ).toBeDefined();
+        }
+        for (const name of ["Toma A Development", "Toma B Development"]) {
+            fireEvent.click(
+                screen.getByRole("button", { name: "Nuevo evento" }),
+            );
+            fireEvent.change(screen.getByLabelText("Observación"), {
+                target: { value: "LiquidityTake" },
+            });
+            fireEvent.click(
+                screen
+                    .getAllByRole("button", { name: /Inspeccionar vela/ })
+                    .at(-1)!,
+            );
+            fireEvent.change(screen.getByLabelText("Evidencia o motivo"), {
+                target: { value: name },
+            });
+            fireEvent.click(
+                screen.getByRole("button", { name: "Guardar evento" }),
+            );
+        }
+        const p = await projectDevelopment(original);
+        const [first, second] = loadEventReview(p)!.labels;
+        fireEvent.change(screen.getByLabelText("Evento registrado"), {
+            target: { value: first.targetId },
+        });
+        fireEvent.click(
+            screen.getByRole("button", { name: "Editar evento seleccionado" }),
+        );
+        fireEvent.change(screen.getByLabelText("Evidencia o motivo"), {
+            target: { value: "Corrección A Development" },
+        });
+        fireEvent.click(
+            screen.getByRole("button", { name: "Guardar corrección" }),
+        );
+        expect(loadEventReview(p)).toMatchObject({
+            sessionExposure: "Development",
+            exposure: "PreviouslyExposed",
+            labels: [
+                first,
+                second,
+                {
+                    targetId: first.targetId,
+                    eventRevision: 2,
+                    note: "Corrección A Development",
+                },
+            ],
+        });
+        expect(fetchSource).toHaveBeenCalledExactlyOnceWith(
+            expect.stringContaining("june23-context.json"),
+        );
     });
 
     it("informa mapeo sin verificar y limpia la vista si se abre un informe incompatible", async () => {
@@ -349,7 +735,7 @@ describe("revisión humana integrada", () => {
             /incompatibles/,
         );
         expect(
-            screen.queryByRole("button", { name: "Guardar revisión" }),
+            screen.queryByRole("button", { name: "Nuevo evento" }),
         ).toBeNull();
     });
 });

@@ -1,5 +1,9 @@
 # Nasdaq integrated blind human review V1
 
+The current workbench saves new observations using the
+[multi-event V2 contract](nasdaq-integrated-multi-event-human-review-v2.md).
+V1 records and exports remain readable as historical evidence.
+
 Open **Strategy Lab → Revisión humana ciega Nasdaq** at
 `/#strategy-lab-integrated-review`. This is a local human annotation
 workbench for H4, H1, M5 and M1. It neither runs a candidate nor loads an

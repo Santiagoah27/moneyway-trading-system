@@ -13,16 +13,11 @@ import {
     type OriginalPackage,
 } from "./originalPackage";
 import {
-    appendLabel,
     canPick,
-    exportReview,
     exposures,
     importReview,
     kinds,
     loadReview,
-    newReview,
-    persistReview,
-    recordExternalReveal,
     reference,
     targets,
     type CandleReference,
@@ -31,6 +26,20 @@ import {
     type Review,
     type Target,
 } from "./reviewHistory";
+import {
+    appendEvent,
+    earliestOpen,
+    exportEventReview,
+    groupEvents,
+    importEventReview,
+    loadEventReview,
+    persistEventReview,
+    recordEventReveal,
+    respectsLegacy,
+    startEventReview,
+    type EventReview,
+    type EventRevision,
+} from "./eventReview";
 import "./IntegratedReview.css";
 
 const kindLabels: Record<Kind, string> = {
@@ -74,7 +83,7 @@ function download(text: string) {
     );
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "moneyway-nasdaq-integrated-human-review-v1.json";
+    anchor.download = "moneyway-nasdaq-integrated-human-review-v2.json";
     anchor.click();
     URL.revokeObjectURL(url);
 }
@@ -82,9 +91,11 @@ function download(text: string) {
 function Workbench({
     packet,
     initial,
+    initialLegacy,
 }: {
     packet: OriginalPackage;
-    initial: Review | null;
+    initial: EventReview | null;
+    initialLegacy: Review | null;
 }) {
     const times = useMemo(
         () =>
@@ -103,6 +114,11 @@ function Workbench({
         [packet],
     );
     const [review, setReview] = useState(initial);
+    const [legacy, setLegacy] = useState(initialLegacy);
+    const [eventId, setEventId] = useState("");
+    const [revision, setRevision] = useState(0);
+    const [editor, setEditor] = useState<"new" | "edit" | null>(null);
+    const [scopeStart, setScopeStart] = useState("");
     const [cursor, setCursor] = useState(0);
     const [frame, setFrame] = useState<Frame>("H4");
     const [selected, setSelected] = useState(-1);
@@ -122,6 +138,13 @@ function Workbench({
         };
     }, []);
     const currentTime = times[cursor];
+    const visibleRevisions = (review?.labels ?? []).filter(
+        (l) => Date.parse(l.viewingCutoffUtc) <= Date.parse(currentTime),
+    );
+    const events = groupEvents(visibleRevisions);
+    const history = events.get(eventId) ?? [];
+    const inspected =
+        history.find((label) => label.revision === revision) ?? history.at(-1);
     const visible = packet.sources[frame].bars.filter(
         (b) => Date.parse(b.closeUtc) <= Date.parse(currentTime),
     );
@@ -133,8 +156,8 @@ function Workbench({
             Date.parse(visible[i - 1].closeUtc) < Date.parse(b.openUtc),
     ).length;
 
-    function save(next: Review) {
-        persistReview(packet, review, next);
+    function save(next: EventReview) {
+        persistEventReview(packet, review, next, legacy);
         setReview(next);
     }
 
@@ -159,6 +182,8 @@ function Workbench({
                     (b) => Date.parse(b.closeUtc) <= Date.parse(times[index]),
                 ),
             );
+            if (Date.parse(scopeStart) >= Date.parse(times[index]))
+                setScopeStart("");
             setSelected(-1);
             setCursor(index);
         });
@@ -169,19 +194,27 @@ function Workbench({
         setSelected(-1);
     }
 
-    async function openReview(file: File) {
+    async function openReview(file: File, historical = false) {
         setBusy(true);
         setError("");
         try {
-            const next = await importReview(
-                packet,
-                review,
-                await readLocal(file),
-            );
+            const text = await readLocal(file);
+            if (historical) {
+                const next = await importReview(packet, legacy, text);
+                if (!active.current) return;
+                requireValue(
+                    !review || respectsLegacy(review, next),
+                    "La revisión V1 no coincide con la exposición o el corte ya registrado en V2.",
+                );
+                setLegacy(next);
+                return;
+            }
+            const next = await importEventReview(packet, review, text);
             if (!active.current) return;
             save(next);
-            setPicks([]);
-            setNote("");
+            setEventId("");
+            setRevision(0);
+            setEditor(null);
         } catch (e) {
             if (active.current) setError(failure(e));
         } finally {
@@ -191,6 +224,8 @@ function Workbench({
 
     function pick(i: number) {
         if (
+            busy ||
+            !editor ||
             !canPick(target, frame) ||
             (kind !== "Reference" && kind !== "Ambiguous")
         )
@@ -203,6 +238,24 @@ function Workbench({
                   )
                 : [...old, ref],
         );
+    }
+
+    function openEditor(existing?: EventRevision) {
+        setEditor(existing ? "edit" : "new");
+        setTarget(existing?.observation ?? "H4Context");
+        setKind(existing?.kind ?? "Reference");
+        setNote(existing?.note ?? "");
+        setScopeStart(existing?.scopeStartUtc ?? "");
+        setPicks(existing?.references ?? []);
+        if (existing && !canPick(existing.observation, frame))
+            chooseFrame(targets[existing.observation].frames[0]);
+    }
+
+    function inspect(label: EventRevision) {
+        setRevision(label.revision);
+        setEditor(null);
+        const ref = label.references[0];
+        if (ref) chooseFrame(ref.timeframe);
     }
 
     return (
@@ -237,7 +290,7 @@ function Workbench({
             </details>
             <fieldset className="integrated-controls" disabled={busy}>
                 <label>
-                    Importar etiquetas JSON
+                    Importar etiquetas JSON V2
                     <input
                         type="file"
                         accept=".json,application/json"
@@ -257,14 +310,34 @@ function Workbench({
                         <button
                             type="button"
                             onClick={() => {
-                                void exportReview(packet, review)
+                                void exportEventReview(packet, review)
                                     .then(download)
                                     .catch((e) => setError(failure(e)));
                             }}
                         >
-                            Exportar etiquetas JSON
+                            Exportar etiquetas JSON V2
                         </button>
                     </>
+                ) : legacy ? (
+                    <button
+                        type="button"
+                        onClick={() =>
+                            act(() => {
+                                save(
+                                    startEventReview(
+                                        packet,
+                                        legacy.reviewerId,
+                                        legacy.exposure,
+                                        currentTime,
+                                        now(),
+                                        legacy,
+                                    ),
+                                );
+                            })
+                        }
+                    >
+                        Iniciar revisión V2 con la declaración V1
+                    </button>
                 ) : (
                     <>
                         <label>
@@ -300,7 +373,7 @@ function Workbench({
                                         "Declare su exposición antes de revisar.",
                                     );
                                     save(
-                                        newReview(
+                                        startEventReview(
                                             packet,
                                             reviewer,
                                             exposure,
@@ -316,6 +389,64 @@ function Workbench({
                     </>
                 )}
             </fieldset>
+            <details>
+                <summary>Historial V1 · solo lectura</summary>
+                <p>
+                    Las anotaciones V1 conservan su identidad y orden
+                    originales.
+                </p>
+                <label>
+                    Consultar archivo de etiquetas V1
+                    <input
+                        type="file"
+                        accept=".json,application/json"
+                        disabled={busy}
+                        onChange={(e) => {
+                            const file = e.currentTarget.files?.[0];
+                            e.currentTarget.value = "";
+                            if (file) void openReview(file, true);
+                        }}
+                    />
+                </label>
+                {legacy && (
+                    <>
+                        <p>
+                            {legacy.reviewerId} ·{" "}
+                            {exposureLabels[legacy.exposure]}
+                        </p>
+                        <ol>
+                            {legacy.labels
+                                .filter(
+                                    (l) =>
+                                        !review ||
+                                        Date.parse(l.viewingCutoffUtc) <=
+                                            Date.parse(currentTime),
+                                )
+                                .map((l) => (
+                                    <li key={l.revision}>
+                                        {l.targetId} · Revisión {l.revision} ·{" "}
+                                        {kindLabels[l.kind]} · {l.reviewedAtUtc}{" "}
+                                        · {l.note}
+                                        <ul>
+                                            {l.references.map((ref) => (
+                                                <li
+                                                    key={
+                                                        ref.timeframe +
+                                                        ref.openUtc
+                                                    }
+                                                >
+                                                    {ref.timeframe} ·{" "}
+                                                    {ref.nativeOpen} ·{" "}
+                                                    {ref.openUtc}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </li>
+                                ))}
+                        </ol>
+                    </>
+                )}
+            </details>
             {error && (
                 <p role="alert" className="lab-warning">
                     {error}
@@ -403,7 +534,10 @@ function Workbench({
                         onSelect={setSelected}
                         onPick={pick}
                         originalOnly
-                        humanReferences={picks
+                        humanReferences={(editor
+                            ? picks
+                            : (inspected?.references ?? [])
+                        )
                             .filter((b) => b.timeframe === frame)
                             .map((b) => b.openUtc)}
                     />
@@ -416,91 +550,203 @@ function Workbench({
                         </p>
                     )}
                     <fieldset disabled={busy} className="integrated-controls">
-                        <legend>Anotación humana</legend>
+                        <legend>Eventos registrados</legend>
+                        <button type="button" onClick={() => openEditor()}>
+                            Nuevo evento
+                        </button>
                         <label>
-                            Observación
+                            Evento registrado
                             <select
-                                value={target}
+                                value={inspected ? eventId : ""}
                                 onChange={(e) => {
-                                    const value = e.target.value as Target;
-                                    setTarget(value);
-                                    setPicks([]);
-                                    if (!canPick(value, frame))
-                                        chooseFrame(targets[value].frames[0]);
+                                    const id = e.currentTarget.value;
+                                    setEventId(id);
+                                    setRevision(0);
+                                    setEditor(null);
+                                    const selectedRef = events.get(id)?.at(-1)
+                                        ?.references[0];
+                                    if (selectedRef)
+                                        chooseFrame(selectedRef.timeframe);
                                 }}
                             >
-                                {Object.entries(targets).map(([id, v]) => (
-                                    <option key={id} value={id}>
-                                        {v.label}
-                                    </option>
-                                ))}
+                                <option value="">Seleccione un evento</option>
+                                {[...events.entries()].map(([id, labels]) => {
+                                    const last = labels.at(-1)!;
+                                    return (
+                                        <option key={id} value={id}>
+                                            Evento {last.eventNumber} ·{" "}
+                                            {targets[last.observation].label}
+                                        </option>
+                                    );
+                                })}
                             </select>
-                        </label>
-                        <label>
-                            Clasificación
-                            <select
-                                value={kind}
-                                onChange={(e) => {
-                                    const value = e.target.value as Kind;
-                                    setKind(value);
-                                    if (
-                                        value !== "Reference" &&
-                                        value !== "Ambiguous"
-                                    )
-                                        setPicks([]);
-                                }}
-                            >
-                                {kinds.map((k) => (
-                                    <option key={k} value={k}>
-                                        {kindLabels[k]}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-                        <label>
-                            Evidencia o motivo
-                            <textarea
-                                value={note}
-                                maxLength={2000}
-                                onChange={(e) => setNote(e.target.value)}
-                            />
                         </label>
                         <button
                             type="button"
-                            onClick={() =>
-                                act(() => {
-                                    save(
-                                        appendLabel(
-                                            packet,
-                                            review,
-                                            target,
-                                            kind,
-                                            picks,
-                                            note,
-                                            currentTime,
-                                            now(),
-                                        ),
-                                    );
-                                    setNote("");
-                                    setPicks([]);
-                                })
-                            }
+                            disabled={!inspected}
+                            onClick={() => openEditor(inspected)}
                         >
-                            Guardar revisión
+                            Editar evento seleccionado
                         </button>
                     </fieldset>
-                    <p>
-                        Seleccione una vela en el gráfico para añadirla o
-                        retirarla de la evidencia.
-                    </p>
+                    {editor && (
+                        <fieldset
+                            disabled={busy}
+                            className="integrated-controls"
+                        >
+                            <legend>
+                                {editor === "new"
+                                    ? "Nuevo evento"
+                                    : "Corregir evento seleccionado"}
+                            </legend>
+                            <label>
+                                Observación
+                                <select
+                                    value={target}
+                                    disabled={editor === "edit"}
+                                    onChange={(e) => {
+                                        const value = e.target.value as Target;
+                                        setTarget(value);
+                                        setPicks([]);
+                                        if (!canPick(value, frame))
+                                            chooseFrame(
+                                                targets[value].frames[0],
+                                            );
+                                    }}
+                                >
+                                    {Object.entries(targets).map(([id, v]) => (
+                                        <option key={id} value={id}>
+                                            {v.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            {kind === "NoReference" && (
+                                <label>
+                                    Inicio del alcance
+                                    <select
+                                        value={scopeStart}
+                                        onChange={(e) =>
+                                            setScopeStart(e.target.value)
+                                        }
+                                    >
+                                        <option value="">
+                                            Seleccione el inicio
+                                        </option>
+                                        {[
+                                            ...new Set([
+                                                new Date(
+                                                    earliestOpen(packet),
+                                                ).toISOString(),
+                                                ...times.slice(0, cursor),
+                                            ]),
+                                        ]
+                                            .filter(
+                                                (t) =>
+                                                    Date.parse(t) <
+                                                    Date.parse(currentTime),
+                                            )
+                                            .map((t) => (
+                                                <option key={t} value={t}>
+                                                    {shortTime(t)}
+                                                </option>
+                                            ))}
+                                    </select>
+                                </label>
+                            )}
+                            <label>
+                                Clasificación
+                                <select
+                                    value={kind}
+                                    onChange={(e) => {
+                                        const value = e.target.value as Kind;
+                                        setKind(value);
+                                        if (
+                                            value !== "Reference" &&
+                                            value !== "Ambiguous"
+                                        )
+                                            setPicks([]);
+                                    }}
+                                >
+                                    {kinds.map((k) => (
+                                        <option key={k} value={k}>
+                                            {kindLabels[k]}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label>
+                                Evidencia o motivo
+                                <textarea
+                                    value={note}
+                                    maxLength={2000}
+                                    onChange={(e) => setNote(e.target.value)}
+                                />
+                            </label>
+                            <button
+                                type="button"
+                                disabled={editor === "edit" && !inspected}
+                                onClick={() =>
+                                    act(() => {
+                                        const next = appendEvent(
+                                            packet,
+                                            review,
+                                            editor === "edit" ? eventId : null,
+                                            {
+                                                observation: target,
+                                                kind,
+                                                references: picks,
+                                                note,
+                                                viewingCutoffUtc: currentTime,
+                                                scopeStartUtc:
+                                                    kind === "NoReference"
+                                                        ? scopeStart
+                                                        : null,
+                                            },
+                                            now(),
+                                        );
+                                        save(next);
+                                        const latest = next.labels.at(-1)!;
+                                        setEventId(latest.targetId);
+                                        inspect(latest);
+                                        setNote("");
+                                        setPicks([]);
+                                    })
+                                }
+                            >
+                                {editor === "new"
+                                    ? "Guardar evento"
+                                    : "Guardar corrección"}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setEditor(null)}
+                            >
+                                Cancelar
+                            </button>
+                        </fieldset>
+                    )}
+                    {editor && (
+                        <p>
+                            Seleccione una vela en el gráfico para añadirla o
+                            retirarla de la evidencia.
+                        </p>
+                    )}
                     <ul aria-label="Velas seleccionadas">
-                        {picks.map((p) => (
-                            <li key={p.timeframe + p.openUtc}>
-                                {p.timeframe} · {p.nativeOpen} · {p.openUtc}
-                            </li>
-                        ))}
+                        {(editor ? picks : (inspected?.references ?? [])).map(
+                            (p) => (
+                                <li key={p.timeframe + p.openUtc}>
+                                    {p.timeframe} · {p.nativeOpen} · {p.openUtc}
+                                </li>
+                            ),
+                        )}
                     </ul>
-                    <h3>Historial local</h3>
+                    <h3>Historial de revisiones</h3>
+                    {inspected && (
+                        <p>
+                            Identidad <code>{eventId}</code>
+                        </p>
+                    )}
                     {review.reveal ? (
                         <p>
                             Exposición externa registrada tras la revisión{" "}
@@ -513,7 +759,7 @@ function Workbench({
                             onClick={() =>
                                 act(() => {
                                     save(
-                                        recordExternalReveal(
+                                        recordEventReveal(
                                             packet,
                                             review,
                                             now(),
@@ -526,23 +772,41 @@ function Workbench({
                         </button>
                     )}
                     <ol>
-                        {review.labels
-                            .filter(
-                                (l) =>
-                                    Date.parse(l.viewingCutoffUtc) <=
-                                    Date.parse(currentTime),
-                            )
-                            .map((l) => (
-                                <li key={l.revision}>
-                                    Revisión {l.revision} ·{" "}
-                                    {targets[l.observation].label} ·{" "}
-                                    {kindLabels[l.kind]} ·{" "}
-                                    {l.phase === "PostRevealCorrection"
-                                        ? "Corrección posterior a revelación"
-                                        : "Juicio previo a revelación"}{" "}
-                                    · {l.note}
-                                </li>
-                            ))}
+                        {history.map((l) => (
+                            <li key={l.revision}>
+                                <button
+                                    type="button"
+                                    onClick={() => inspect(l)}
+                                    aria-pressed={
+                                        inspected?.revision === l.revision
+                                    }
+                                >
+                                    Revisión {l.eventRevision} del evento
+                                </button>
+                                {" · Registro "}
+                                {l.revision} · {kindLabels[l.kind]} ·{" "}
+                                {l.phase === "PostRevealCorrection"
+                                    ? "Corrección posterior a revelación"
+                                    : "Juicio previo a revelación"}{" "}
+                                · {l.note} · {l.reviewedAtUtc}
+                                {l.reviewMode ===
+                                    "RetrospectiveAfterLaterView" && (
+                                    <>
+                                        {" "}
+                                        · Retrospectiva tras ver hasta{" "}
+                                        {shortTime(l.maximumViewedUtc)}
+                                    </>
+                                )}
+                                {l.scopeStartUtc && (
+                                    <>
+                                        {" "}
+                                        · Alcance {shortTime(
+                                            l.scopeStartUtc,
+                                        )} a {shortTime(l.viewingCutoffUtc)}
+                                    </>
+                                )}
+                            </li>
+                        ))}
                     </ol>
                 </>
             )}
@@ -553,7 +817,8 @@ function Workbench({
 export default function IntegratedReview() {
     const [loaded, setLoaded] = useState<{
         packet: OriginalPackage;
-        review: Review | null;
+        review: EventReview | null;
+        legacy: Review | null;
     } | null>(null);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
@@ -565,8 +830,15 @@ export default function IntegratedReview() {
         setLoading(true);
         try {
             const packet = await read();
-            if (ordinal.current === run)
-                setLoaded({ packet, review: loadReview(packet) });
+            if (ordinal.current === run) {
+                const review = loadEventReview(packet);
+                const legacy = loadReview(packet);
+                requireValue(
+                    !review || respectsLegacy(review, legacy),
+                    "Los historiales V1 y V2 tienen datos de exposición incompatibles.",
+                );
+                setLoaded({ packet, review, legacy });
+            }
         } catch (e) {
             if (ordinal.current === run) setError(failure(e));
         } finally {
@@ -637,6 +909,7 @@ export default function IntegratedReview() {
                     key={loaded.packet.sha256}
                     packet={loaded.packet}
                     initial={loaded.review}
+                    initialLegacy={loaded.legacy}
                 />
             )}
         </main>
