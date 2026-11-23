@@ -57,6 +57,7 @@ export function CandleChart({
     guides = [],
     timeLabel = formatTime,
     timeZoneLabel = "UTC",
+    originalOnly = false,
 }: {
     report: {
         input: ChartContext;
@@ -73,6 +74,7 @@ export function CandleChart({
     guides?: ChartGuide[];
     timeLabel?: (value: string) => string;
     timeZoneLabel?: string;
+    originalOnly?: boolean;
 }) {
     const bars = report.evidenceCandles;
     if (!bars.length)
@@ -82,7 +84,7 @@ export function CandleChart({
         Date.parse(report.input.evaluationCutoffUtc),
         Date.parse(bars[bars.length - 1].closeTimeUtc),
     );
-    const eligibleReferences = references.filter(
+    const eligibleReferences = (originalOnly ? [] : references).filter(
         (r) =>
             Date.parse(r.formationUtc) <=
                 Date.parse(report.input.evaluationCutoffUtc) &&
@@ -117,7 +119,7 @@ export function CandleChart({
         0.25,
         Math.min(spacing * 0.96, Math.max(12, width * 2)),
     );
-    const active = report.results.filter((r) =>
+    const active = (originalOnly ? [] : report.results).filter((r) =>
         visible.includes(r.algorithm.algorithmId),
     );
     const levels = new Map<number, string[]>();
@@ -127,9 +129,13 @@ export function CandleChart({
                 ...(levels.get(row.proposedReferencePrice) ?? []),
                 letter(row.algorithm.algorithmId),
             ]);
-    const anchor = bars.find(
-        (b) => b.openTimeUtc === report.input.initialization?.anchorOpenTimeUtc,
-    );
+    const anchor = originalOnly
+        ? undefined
+        : bars.find(
+              (b) =>
+                  b.openTimeUtc ===
+                  report.input.initialization?.anchorOpenTimeUtc,
+          );
     return (
         <div
             className="lab-chart-scroll"
@@ -140,11 +146,13 @@ export function CandleChart({
                 className="lab-chart"
                 viewBox="0 0 1200 474"
                 role="img"
-                aria-label={`Velas OHLC ${report.input.timeframe ?? "M5"} y referencias experimentales`}
+                aria-label={`Velas OHLC ${report.input.timeframe ?? "M5"}${originalOnly ? "" : " y referencias experimentales"}`}
             >
                 <title>
                     OHLC de {report.input.symbol}; horas {timeZoneLabel}.
-                    Referencias retrospectivas, no señales.
+                    {originalOnly
+                        ? "Datos fuente y anotaciones humanas."
+                        : "Referencias retrospectivas, no señales."}
                 </title>
                 {[0, 1, 2, 3, 4].map((i) => {
                     const p = floor + ((ceiling - floor) * i) / 4;
@@ -851,6 +859,9 @@ export function StrategyLab() {
                     Revisión ciega multi-episodio →
                 </a>
                 <a href="#strategy-lab-context">Contexto Nasdaq →</a>
+                <a href="#strategy-lab-integrated-review">
+                    Revisión humana ciega Nasdaq →
+                </a>
                 <a href="#strategy-lab-observation" className="lab-nav-action">
                     Observación supervisada Nasdaq →
                 </a>

@@ -1,0 +1,20 @@
+.integrated-review .integrated-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 0.75rem;
+    margin-block: 1rem;
+}
+
+.integrated-review .integrated-controls label {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.integrated-review code {
+    overflow-wrap: anywhere;
+}
+
+.integrated-review textarea {
+    min-height: 4rem;
+}
