@@ -210,6 +210,24 @@ function structural(v: Row, target: boolean, cutoff: string): Structural {
                   id: str(pivot.id, "identidad SL"),
                   at: utc(pivot.confirmedAtUtc, "confirmación SL", at),
                   kind: str(selected!.relation, "tipo SL"),
+                  sourceCoordinates:
+                      pivot.extremeOpenUtc === undefined
+                          ? undefined
+                          : [
+                                {
+                                    timeframe: "M5",
+                                    openUtc: utc(
+                                        pivot.extremeOpenUtc,
+                                        "apertura SL",
+                                        at,
+                                    ),
+                                    closeUtc: utc(
+                                        pivot.extremeCloseUtc,
+                                        "cierre SL",
+                                        at,
+                                    ),
+                                },
+                            ],
                   details: [
                       "Cierre de la vela del extremo " +
                           bogotaTime(
@@ -242,6 +260,29 @@ function structural(v: Row, target: boolean, cutoff: string): Structural {
                 at: utc(c.availableAtUtc, "disponibilidad de objetivo", at),
                 kind: str(c.category, "tipo TP"),
                 timeframe: timeframe === "1h" ? "H1" : "M5",
+                sourceCoordinates: c.pivot
+                    ? [
+                          {
+                              timeframe: "M5",
+                              openUtc: utc(
+                                  row(c.pivot, "pivote TP").extremeOpenUtc,
+                                  "apertura TP",
+                                  at,
+                              ),
+                              closeUtc: utc(
+                                  row(c.pivot, "pivote TP").extremeCloseUtc,
+                                  "cierre TP",
+                                  at,
+                              ),
+                          },
+                      ]
+                    : undefined,
+                candles: c.session
+                    ? rows(
+                          row(c.session, "referencia H1 TP").extremeCandles,
+                          "extremos H1 de TP",
+                      ).map((v) => candle(v, at, "H1"))
+                    : undefined,
                 details: [
                     "Fuente " +
                         bogotaTime(utc(c.sourceTimestampUtc, "fuente TP", at)),

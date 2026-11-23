@@ -862,6 +862,9 @@ export function StrategyLab() {
                 <a href="#strategy-lab-integrated-review">
                     Revisión humana ciega Nasdaq →
                 </a>
+                <a href="#strategy-lab-evidence-comparison">
+                    Comparación de evidencia Nasdaq →
+                </a>
                 <a href="#strategy-lab-observation" className="lab-nav-action">
                     Observación supervisada Nasdaq →
                 </a>

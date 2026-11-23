@@ -18,6 +18,9 @@ const NasdaqSessionObservation = lazy(
 const NasdaqIntegratedReview = lazy(
     () => import("./research/integratedReview/IntegratedReview"),
 );
+const NasdaqEvidenceComparison = lazy(
+    () => import("./research/evidenceComparison/EvidenceComparison"),
+);
 
 type ApiState = "loading" | "connected" | "disconnected";
 type DefinitionsState = "loading" | "success" | "error";
@@ -252,7 +255,13 @@ export default function App() {
         window.addEventListener("hashchange", navigate);
         return () => window.removeEventListener("hashchange", navigate);
     }, []);
-    return route === "#strategy-lab-integrated-review" ? (
+    return route === "#strategy-lab-evidence-comparison" ? (
+        <Suspense
+            fallback={<p role="status">Cargando comparación de evidencia…</p>}
+        >
+            <NasdaqEvidenceComparison />
+        </Suspense>
+    ) : route === "#strategy-lab-integrated-review" ? (
         <Suspense fallback={<p role="status">Cargando revisión humana…</p>}>
             <NasdaqIntegratedReview />
         </Suspense>

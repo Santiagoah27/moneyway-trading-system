@@ -10,6 +10,12 @@ export type Evidence = {
     profile?: string;
     reason?: string;
     candles?: Candle[];
+    sourceCoordinates?: {
+        timeframe: string;
+        openUtc: string;
+        closeUtc: string;
+    }[];
+    endpoints?: Evidence[];
     details?: string[];
 };
 

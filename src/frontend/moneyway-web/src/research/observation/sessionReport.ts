@@ -66,8 +66,11 @@ function readSources(
     day: string,
     cutoff: string,
     dataset: string,
+    synthetic: boolean,
 ) {
-    let exposure: "Development" | "Prospective" = "Development";
+    let exposure: "Development" | "Prospective" | "Synthetic" = synthetic
+        ? "Synthetic"
+        : "Development";
     let readiness: Row | null = null;
     let sources: Source[];
     let digest: string;
@@ -146,9 +149,10 @@ function readSources(
     } else {
         digest = hash(envelope.inputSha256);
         check(
-            day === "2026-06-23" &&
-                dataset === "nasdaq-context-20260623-v1" &&
-                digest === juneDigest,
+            synthetic ||
+                (day === "2026-06-23" &&
+                    dataset === "nasdaq-context-20260623-v1" &&
+                    digest === juneDigest),
             "solo el contexto documental expuesto de junio 23 puede abrirse sin registro",
         );
         const mapping = str(envelope.documentaryMapping, "mapeo documental");
@@ -265,6 +269,20 @@ function readH4(prep: Row, preparation: string, cutoff: string) {
                         id: [id, side, close].join("/"),
                         at: close,
                         kind,
+                        sourceCoordinates:
+                            c.candleOpenUtc === undefined
+                                ? undefined
+                                : [
+                                      {
+                                          timeframe: "H4",
+                                          openUtc: utc(
+                                              c.candleOpenUtc,
+                                              "apertura de contexto H4",
+                                              close,
+                                          ),
+                                          closeUtc: close,
+                                      },
+                                  ],
                     });
             }
         }
@@ -337,8 +355,32 @@ function readH1(research: Row, day: string, cutoff: string): Evidence[] {
         );
         const high = decimal(s.high, "máximo H1"),
             low = decimal(s.low, "mínimo H1");
+        const id = [s.strategyVersion, day, scope].join("/");
+        const endpoints: Evidence[] = [];
+        for (const [side, price, field] of [
+            ["High", high, "highCandles"],
+            ["Low", low, "lowCandles"],
+        ] as const) {
+            if (at && price !== null && s[field] !== undefined) {
+                const candles = rows(s[field], "extremos H1").map((v) =>
+                    candle(v, at, "H1"),
+                );
+                check(
+                    candles.every(
+                        (c) => (side === "High" ? c.high : c.low) === price,
+                    ),
+                    "precio del extremo H1",
+                );
+                endpoints.push({
+                    id: id + "/" + side,
+                    at,
+                    kind: scope + " " + side,
+                    candles,
+                });
+            }
+        }
         return {
-            id: [s.strategyVersion, day, scope].join("/"),
+            id,
             at,
             kind: scope === "London" ? "Londres" : "Asia",
             reason: str(s.coverageStatus, "cobertura H1"),
@@ -353,6 +395,7 @@ function readH1(research: Row, day: string, cutoff: string): Evidence[] {
             candles: rows(s.sourceCandles, "velas H1").map((v) =>
                 candle(v, at ?? cutoff, "H1"),
             ),
+            endpoints,
         };
     });
     check(
@@ -363,7 +406,10 @@ function readH1(research: Row, day: string, cutoff: string): Evidence[] {
     return liquidity;
 }
 
-export function parseSessionReport(value: unknown) {
+export function parseSessionReport(
+    value: unknown,
+    options?: { allowSynthetic?: boolean },
+) {
     const envelope = row(value, "esquema");
     check(envelope.schemaVersion === 1, "versión del esquema");
     const r = row(envelope.research, "replay de investigación");
@@ -387,6 +433,12 @@ export function parseSessionReport(value: unknown) {
         );
     const dataset = str(r.datasetId, "dataset"),
         runId = str(r.runId, "identificador del replay");
+    const synthetic =
+        options?.allowSynthetic === true &&
+        day === "2000-01-03" &&
+        dataset === "synthetic-us100-v1" &&
+        envelope.registrationSha256 === undefined &&
+        envelope.evidenceReadiness === undefined;
     const replay = row(r.replayCutoff, "corte del replay");
     const cutoff = utc(replay.requestedUtc, "corte del replay");
     const runPrefix = causalCompletion
@@ -407,6 +459,7 @@ export function parseSessionReport(value: unknown) {
         day,
         cutoff,
         dataset,
+        synthetic,
     );
     const visible = index(
         rows(replay.sources, "fuentes visibles"),
