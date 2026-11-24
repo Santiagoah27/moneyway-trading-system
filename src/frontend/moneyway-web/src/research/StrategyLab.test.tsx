@@ -1,7 +1,7 @@
 import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ResearchViewer, StrategyLab } from "./StrategyLab";
+import { CandleChart, ResearchViewer, StrategyLab } from "./StrategyLab";
 import { readReport, algorithmIds } from "./report";
 import { loadEpisode } from "./episodes";
 import * as episodeSource from "./episodes";
@@ -14,6 +14,58 @@ afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     window.location.hash = "";
+});
+
+it("separa las guías documentales de resultados y referencias experimentales en originalOnly", () => {
+    const report = fixture().comparison;
+    const time = report.evidenceCandles[0].openTimeUtc;
+    const price = report.evidenceCandles[0].low;
+    render(
+        <CandleChart
+            report={report}
+            visible={[...algorithmIds]}
+            selected={0}
+            onSelect={() => {}}
+            originalOnly
+            humanReferences={[time]}
+            guides={[{ timeUtc: time, label: "Evento experimental" }]}
+            references={[
+                {
+                    id: "experiment",
+                    label: "Experimental",
+                    price,
+                    formationUtc: time,
+                    knownAtUtc: time,
+                    color: "white",
+                },
+            ]}
+            documentarySessions={{
+                sessions: [
+                    {
+                        name: "Asia",
+                        startUtc: time,
+                        endUtc: time,
+                        color: "blue",
+                        levels: [{ code: "AL", price }],
+                    },
+                ],
+                bands: false,
+                levels: true,
+            }}
+        />,
+    );
+    const chart = screen.getByRole("img");
+    expect(
+        chart
+            .querySelector("[data-session-level=AL]")
+            ?.getAttribute("data-price"),
+    ).toBe(String(price));
+    expect(chart.querySelector("[data-human-reference]")).not.toBeNull();
+    expect(
+        chart.querySelector(
+            "[data-overlay], [data-context-reference], [data-anchor], [data-time-guide]",
+        ),
+    ).toBeNull();
 });
 
 describe("versioned research report boundary", () => {

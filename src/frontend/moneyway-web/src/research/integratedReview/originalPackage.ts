@@ -41,6 +41,11 @@ type OriginalPayload = {
 };
 export type OriginalPackage = OriginalPayload & { sha256: string };
 
+export const isPinnedDevelopment = (packet: OriginalPackage) =>
+    packet.exposure === "Development" &&
+    packet.operatingDate === developmentDay &&
+    packet.provenanceSha256 === juneDigest;
+
 export function requireValue(
     condition: unknown,
     message: string,

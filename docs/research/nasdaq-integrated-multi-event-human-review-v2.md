@@ -32,6 +32,22 @@ The application does not infer relationships from time, price, direction or
 shared candles. This version has no causal-link field. A future causal annotation
 requires an explicit and validated reference between events.
 
+## Documentary session overlays
+
+The pinned June 23 Development package uses the ADR 0028 candidate
+`nasdaq-0.3.0-session-candidate`. Asia runs from 17:00 the preceding day to
+02:00 Bogotá and London runs from 02:00 to 08:00. The chart clips each band
+to the visible time range. H4 can project the H1 levels and omits bands
+because H4 candles can straddle the boundaries.
+
+Each final level requires the session end and exact continuous H1 coverage at
+the visible cutoff. The legend shows the prices and all original candles tied
+at each extreme. An arrow marks a price outside the chart scale. Both layers
+have independent visibility controls. A newly saved V2 revision may carry
+optional `sessionOverlay` metadata with the configuration, chart timeframe and
+layers visible at save time. The marker documents visible guides. Earlier
+revisions and V1 retain their original data.
+
 ## Export contract
 
 The envelope is `moneyway.nasdaq-integrated-human-review.v2`. The exact

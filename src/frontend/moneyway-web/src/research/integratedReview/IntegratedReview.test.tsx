@@ -641,13 +641,41 @@ describe("revisión humana integrada", () => {
             screen.getByRole("button", { name: "Iniciar revisión" }),
         );
         fireEvent.click(screen.getByRole("button", { name: "Corte final" }));
+        const prices = ["30463.9", "29715.2", "29818.6", "29472.7"];
         for (const frame of frames) {
             fireEvent.change(screen.getByLabelText("Temporalidad"), {
                 target: { value: frame },
             });
+            const chart = screen.getByRole("img", {
+                name: "Velas OHLC " + frame,
+            });
             expect(
-                screen.getByRole("img", { name: "Velas OHLC " + frame }),
-            ).toBeDefined();
+                [...chart.querySelectorAll("[data-session-level]")].map(
+                    (node) => node.getAttribute("data-price"),
+                ),
+            ).toEqual(prices);
+            expect(
+                [...chart.querySelectorAll("[data-session-band]")].map((node) =>
+                    node.getAttribute("data-session-band"),
+                ),
+            ).toEqual(
+                frame === "H1"
+                    ? ["Asia", "Londres"]
+                    : frame === "M5"
+                      ? ["Londres"]
+                      : [],
+            );
+            if (frame === "M5" || frame === "M1") {
+                expect(chart.querySelectorAll("[data-candle]")).toHaveLength(
+                    80,
+                );
+                if (frame === "M5")
+                    expect(
+                        chart
+                            .querySelector("[data-session-band]")
+                            ?.getAttribute("x"),
+                    ).toBe("38");
+            }
         }
         for (const name of ["Toma A Development", "Toma B Development"]) {
             fireEvent.click(
@@ -670,6 +698,28 @@ describe("revisión humana integrada", () => {
         }
         const p = await projectDevelopment(original);
         const [first, second] = loadEventReview(p)!.labels;
+        expect(first.sessionOverlay).toEqual({
+            configurationId: "nasdaq-0.3.0-session-candidate",
+            frame: "M5",
+            bands: true,
+            levels: true,
+        });
+        const chart = screen.getByRole("img", { name: "Velas OHLC M5" });
+        const wicks = () =>
+            within(chart)
+                .getAllByTestId("wick")
+                .map((wick) => [
+                    wick.getAttribute("y1"),
+                    wick.getAttribute("y2"),
+                ]);
+        const withOverlays = wicks();
+        await userEvent.click(screen.getByLabelText("Bandas de sesión"));
+        await userEvent.click(screen.getByLabelText("Niveles High/Low"));
+        expect(
+            chart.querySelector("[data-session-band], [data-session-level]"),
+        ).toBeNull();
+        expect(wicks()).toEqual(withOverlays);
+        expect(loadEventReview(p)!.labels).toEqual([first, second]);
         fireEvent.change(screen.getByLabelText("Evento registrado"), {
             target: { value: first.targetId },
         });
@@ -695,6 +745,12 @@ describe("revisión humana integrada", () => {
                 },
             ],
         });
+        expect(loadEventReview(p)!.labels[2].sessionOverlay).toBeUndefined();
+        const saved = loadEventReview(p)!;
+        const exported = await exportEventReview(p, saved);
+        await expect(importEventReview(p, saved, exported)).resolves.toEqual(
+            saved,
+        );
         expect(fetchSource).toHaveBeenCalledExactlyOnceWith(
             expect.stringContaining("june23-context.json"),
         );

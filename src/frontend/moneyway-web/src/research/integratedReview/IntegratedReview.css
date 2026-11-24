@@ -18,3 +18,33 @@
 .integrated-review textarea {
     min-height: 4rem;
 }
+
+.integrated-session-overlays {
+    margin-block: 0.75rem;
+}
+
+.integrated-session-overlays .integrated-controls {
+    margin-block: 0;
+    align-items: center;
+}
+
+.integrated-session-overlays .integrated-controls label {
+    display: flex;
+    align-items: center;
+}
+
+.integrated-session-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: 0.5rem 2rem;
+    list-style: none;
+    padding-inline-start: 0;
+}
+
+.integrated-session-swatch {
+    display: inline-block;
+    width: 0.65em;
+    height: 0.65em;
+    margin-inline-end: 0.35em;
+    border-radius: 2px;
+}

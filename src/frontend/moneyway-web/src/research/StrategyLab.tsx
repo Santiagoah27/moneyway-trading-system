@@ -37,6 +37,13 @@ export type ChartReference = {
     sourceTimeframe?: string;
 };
 export type ChartGuide = { timeUtc: string; label: string };
+export type ChartDocumentarySession = {
+    name: string;
+    color: string;
+    startUtc: string;
+    endUtc: string;
+    levels: readonly { code: string; price: number }[];
+};
 type ChartContext = Pick<Context, "symbol" | "evaluationCutoffUtc"> &
     Partial<
         Pick<
@@ -58,6 +65,7 @@ export function CandleChart({
     timeLabel = formatTime,
     timeZoneLabel = "UTC",
     originalOnly = false,
+    documentarySessions,
 }: {
     report: {
         input: ChartContext;
@@ -75,6 +83,11 @@ export function CandleChart({
     timeLabel?: (value: string) => string;
     timeZoneLabel?: string;
     originalOnly?: boolean;
+    documentarySessions?: {
+        sessions: readonly ChartDocumentarySession[];
+        bands: boolean;
+        levels: boolean;
+    };
 }) {
     const bars = report.evidenceCandles;
     if (!bars.length)
@@ -136,6 +149,7 @@ export function CandleChart({
                   b.openTimeUtc ===
                   report.input.initialization?.anchorOpenTimeUtc,
           );
+    const cutoff = Date.parse(report.input.evaluationCutoffUtc);
     return (
         <div
             className="lab-chart-scroll"
@@ -154,6 +168,34 @@ export function CandleChart({
                         ? "Datos fuente y anotaciones humanas."
                         : "Referencias retrospectivas, no señales."}
                 </title>
+                {documentarySessions?.bands &&
+                    documentarySessions.sessions.map((session) => {
+                        const start = Math.max(
+                            first,
+                            Date.parse(session.startUtc),
+                        );
+                        const end = Math.min(
+                            cutoff,
+                            Date.parse(session.endUtc),
+                        );
+                        return (
+                            start < end && (
+                                <rect
+                                    key={session.name}
+                                    data-session-band={session.name}
+                                    x={x(start)}
+                                    y={30}
+                                    width={x(end) - x(start)}
+                                    height={390}
+                                    fill={session.color}
+                                    fillOpacity={0.16}
+                                    className="lab-overlay"
+                                >
+                                    <title>{session.name}</title>
+                                </rect>
+                            )
+                        );
+                    })}
                 {[0, 1, 2, 3, 4].map((i) => {
                     const p = floor + ((ceiling - floor) * i) / 4;
                     return (
@@ -246,6 +288,73 @@ export function CandleChart({
                         </rect>
                     </g>
                 ))}
+                {documentarySessions?.levels &&
+                    documentarySessions.sessions.flatMap(
+                        (session, sessionIndex) => {
+                            const end = Date.parse(session.endUtc);
+                            if (end > cutoff) return [];
+                            const start = x(Math.max(first, end));
+                            return session.levels.map(({ code, price }, i) => {
+                                const outside =
+                                    price > ceiling
+                                        ? "above"
+                                        : price < floor
+                                          ? "below"
+                                          : null;
+                                const edge = outside === "above" ? 38 : 420;
+                                return (
+                                    <g
+                                        key={code}
+                                        className="lab-overlay"
+                                        data-session-level={code}
+                                        data-price={price}
+                                        data-outside-scale={
+                                            outside ?? undefined
+                                        }
+                                        fill={session.color}
+                                    >
+                                        <title>
+                                            {code} {number(price)}
+                                            {outside
+                                                ? " · fuera de escala"
+                                                : ""}
+                                        </title>
+                                        {outside ? (
+                                            <text
+                                                x={1090}
+                                                y={edge + sessionIndex * 14}
+                                                dx={i * 49}
+                                            >
+                                                {outside === "above"
+                                                    ? "↑"
+                                                    : "↓"}{" "}
+                                                {code}
+                                            </text>
+                                        ) : (
+                                            <>
+                                                <line
+                                                    x1={start}
+                                                    x2={1078}
+                                                    y1={y(price)}
+                                                    y2={y(price)}
+                                                    stroke={session.color}
+                                                    strokeWidth={1.5}
+                                                    strokeDasharray="5 3"
+                                                />
+                                                <text
+                                                    x={1071}
+                                                    y={y(price) - 4}
+                                                    textAnchor="end"
+                                                >
+                                                    {code}
+                                                </text>
+                                            </>
+                                        )}
+                                    </g>
+                                );
+                            });
+                        },
+                    )}
                 {anchor && (
                     <g className="lab-overlay" data-anchor={anchor.openTimeUtc}>
                         <line
@@ -385,7 +494,7 @@ export function CandleChart({
                         )}
                     </g>
                 ))}
-                {guides
+                {(originalOnly ? [] : guides)
                     .filter(
                         (g) =>
                             Date.parse(g.timeUtc) >= first &&

@@ -1,4 +1,5 @@
 import {
+    frames,
     isUtc,
     objectWith,
     requireValue,
@@ -17,12 +18,18 @@ import {
     type Review,
     type Target,
 } from "./reviewHistory";
+import {
+    availableSessionLayers,
+    sessionConfiguration,
+    type SessionOverlayAssistance,
+} from "./sessionOverlays";
 
 export type EventRevision = HumanLabel & {
     eventNumber: number;
     eventRevision: number;
     scopeStartUtc: string | null;
     reviewMode: "AtViewingFrontier" | "RetrospectiveAfterLaterView";
+    sessionOverlay?: SessionOverlayAssistance;
 };
 export type EventReview = Omit<Review, "version" | "labels"> & {
     version: 2;
@@ -35,6 +42,7 @@ export type EventDraft = {
     note: string;
     viewingCutoffUtc: string;
     scopeStartUtc: string | null;
+    sessionOverlay?: SessionOverlayAssistance;
 };
 
 const schema = "moneyway.nasdaq-integrated-human-review.v2";
@@ -75,9 +83,13 @@ export function validateEventReview(
     );
     const seen = new Map<number, EventRevision>();
     const commonLabels = review.labels.map((label) => {
+        const keys =
+            "revision targetId observation kind references note reviewedAtUtc viewingCutoffUtc maximumViewedUtc phase eventNumber eventRevision scopeStartUtc reviewMode";
         objectWith(
             label,
-            "revision targetId observation kind references note reviewedAtUtc viewingCutoffUtc maximumViewedUtc phase eventNumber eventRevision scopeStartUtc reviewMode",
+            label && Object.hasOwn(label, "sessionOverlay")
+                ? keys + " sessionOverlay"
+                : keys,
             "revisión de evento",
         );
         const {
@@ -85,8 +97,35 @@ export function validateEventReview(
             eventRevision,
             scopeStartUtc,
             reviewMode,
+            sessionOverlay,
             ...common
         } = label;
+        if (Object.hasOwn(label, "sessionOverlay")) {
+            objectWith(
+                sessionOverlay,
+                "configurationId frame bands levels",
+                "asistencia visual",
+            );
+            requireValue(
+                sessionOverlay &&
+                    sessionOverlay.configurationId === sessionConfiguration &&
+                    frames.includes(sessionOverlay.frame) &&
+                    typeof sessionOverlay.bands === "boolean" &&
+                    typeof sessionOverlay.levels === "boolean" &&
+                    (sessionOverlay.bands || sessionOverlay.levels),
+                "Asistencia visual incompatible.",
+            );
+            const available = availableSessionLayers(
+                p,
+                sessionOverlay.frame,
+                label.viewingCutoffUtc,
+            );
+            requireValue(
+                (!sessionOverlay.bands || available.bands) &&
+                    (!sessionOverlay.levels || available.levels),
+                "La asistencia visual excede el alcance de la revisión.",
+            );
+        }
         const prior = seen.get(eventNumber);
         requireValue(
             Number.isSafeInteger(eventNumber) &&

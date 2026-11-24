@@ -40,6 +40,12 @@ import {
     type EventReview,
     type EventRevision,
 } from "./eventReview";
+import { SessionOverlayLegend } from "./SessionOverlayLegend";
+import {
+    availableSessionLayers,
+    sessionConfiguration,
+    sessionOverlays,
+} from "./sessionOverlays";
 import "./IntegratedReview.css";
 
 const kindLabels: Record<Kind, string> = {
@@ -121,6 +127,8 @@ function Workbench({
     const [scopeStart, setScopeStart] = useState("");
     const [cursor, setCursor] = useState(0);
     const [frame, setFrame] = useState<Frame>("H4");
+    const [showSessionBands, setShowSessionBands] = useState(true);
+    const [showSessionLevels, setShowSessionLevels] = useState(true);
     const [selected, setSelected] = useState(-1);
     const [target, setTarget] = useState<Target>("H4Context");
     const [kind, setKind] = useState<Kind>("Reference");
@@ -138,6 +146,10 @@ function Workbench({
         };
     }, []);
     const currentTime = times[cursor];
+    const sessions = useMemo(
+        () => sessionOverlays(packet, currentTime),
+        [packet, currentTime],
+    );
     const visibleRevisions = (review?.labels ?? []).filter(
         (l) => Date.parse(l.viewingCutoffUtc) <= Date.parse(currentTime),
     );
@@ -517,6 +529,16 @@ function Workbench({
                             temporales utilizables en esta escala.
                         </p>
                     )}
+                    {sessions.length > 0 && (
+                        <SessionOverlayLegend
+                            sessions={sessions}
+                            bands={showSessionBands}
+                            levels={showSessionLevels}
+                            h4={frame === "H4"}
+                            onBands={setShowSessionBands}
+                            onLevels={setShowSessionLevels}
+                        />
+                    )}
                     <CandleChart
                         report={{
                             input: {
@@ -534,6 +556,11 @@ function Workbench({
                         onSelect={setSelected}
                         onPick={pick}
                         originalOnly
+                        documentarySessions={{
+                            sessions,
+                            bands: showSessionBands && frame !== "H4",
+                            levels: showSessionLevels,
+                        }}
                         humanReferences={(editor
                             ? picks
                             : (inspected?.references ?? [])
@@ -688,6 +715,17 @@ function Workbench({
                                 disabled={editor === "edit" && !inspected}
                                 onClick={() =>
                                     act(() => {
+                                        const available =
+                                            availableSessionLayers(
+                                                packet,
+                                                frame,
+                                                currentTime,
+                                            );
+                                        const bands =
+                                            showSessionBands && available.bands;
+                                        const levels =
+                                            showSessionLevels &&
+                                            available.levels;
                                         const next = appendEvent(
                                             packet,
                                             review,
@@ -698,6 +736,17 @@ function Workbench({
                                                 references: picks,
                                                 note,
                                                 viewingCutoffUtc: currentTime,
+                                                ...(bands || levels
+                                                    ? {
+                                                          sessionOverlay: {
+                                                              configurationId:
+                                                                  sessionConfiguration,
+                                                              frame,
+                                                              bands,
+                                                              levels,
+                                                          },
+                                                      }
+                                                    : {}),
                                                 scopeStartUtc:
                                                     kind === "NoReference"
                                                         ? scopeStart
@@ -789,6 +838,19 @@ function Workbench({
                                     ? "Corrección posterior a revelación"
                                     : "Juicio previo a revelación"}{" "}
                                 · {l.note} · {l.reviewedAtUtc}
+                                {l.sessionOverlay && (
+                                    <>
+                                        {" · "}Guías visibles al guardar (
+                                        {l.sessionOverlay.frame}
+                                        {l.sessionOverlay.bands
+                                            ? ", bandas"
+                                            : ""}
+                                        {l.sessionOverlay.levels
+                                            ? ", niveles"
+                                            : ""}
+                                        )
+                                    </>
+                                )}
                                 {l.reviewMode ===
                                     "RetrospectiveAfterLaterView" && (
                                     <>
