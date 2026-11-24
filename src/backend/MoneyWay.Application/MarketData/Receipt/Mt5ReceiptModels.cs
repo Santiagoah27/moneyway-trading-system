@@ -80,7 +80,8 @@ public sealed record Mt5ReceiptRecord(string? FileName, string? ActualSha256, bo
 {
     public bool ReceiptIntegrityValidated => Observation is not null && Status is Mt5ReceiptStatus.Validated or Mt5ReceiptStatus.Unresolved;
     public bool SourceIdentityValidated => ReceiptIntegrityValidated;
-    public bool ReceiptAcknowledgmentEligible => ReceiptIntegrityValidated && (Status == Mt5ReceiptStatus.Validated
+    public bool ReceiptAcknowledgmentEligible => ReceiptIntegrityValidated &&
+        !Diagnostics.Contains("diagnostic_anchor_prior_chain_outside_scope") && (Status == Mt5ReceiptStatus.Validated
         || Observation!.EvidenceKind == Mt5ReceiptEvidenceKind.SourceUnavailableWithoutSample);
     // Only capture-level completeness; never authenticated UTC, closure, freshness or canonical usability.
     public bool CompleteNativeSampleObserved => Status == Mt5ReceiptStatus.Validated && Observation is

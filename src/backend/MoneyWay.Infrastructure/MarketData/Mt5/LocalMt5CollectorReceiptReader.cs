@@ -18,6 +18,13 @@ public sealed class LocalMt5CollectorReceiptReader : IMt5CollectorReceiptReader,
         IReadOnlyDictionary<string, string>? expectedRecordHashes = null)
         => ReadCore(sourceDirectory, checkpoint, expectedRecordHashes, null);
 
+    public Mt5ReceiptBatch ReadSince(string sourceDirectory, Mt5ReceiptPrefixBoundary anchor)
+    {
+        if (anchor.RecordFile is not { } name || anchor.RecordSha256 is not { } hash)
+            throw new ArgumentException("An exact diagnostic anchor and digest are required.", nameof(anchor));
+        return ReadCore(sourceDirectory, null, new Dictionary<string, string> { [name] = hash }, null, anchor);
+    }
+
     public Mt5ReceiptBatch ReadPrefix(string sourceDirectory, Mt5ReceiptPrefixBoundary boundary,
         IReadOnlyDictionary<string, string>? expectedRecordHashes = null)
     {
@@ -35,7 +42,8 @@ public sealed class LocalMt5CollectorReceiptReader : IMt5CollectorReceiptReader,
     }
 
     private static Mt5ReceiptBatch ReadCore(string sourceDirectory, Mt5ReceiptCheckpoint? checkpoint,
-        IReadOnlyDictionary<string, string>? expectedRecordHashes, Mt5ReceiptPrefixBoundary? boundary)
+        IReadOnlyDictionary<string, string>? expectedRecordHashes, Mt5ReceiptPrefixBoundary? boundary,
+        Mt5ReceiptPrefixBoundary? anchor = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceDirectory);
         string root;
@@ -65,8 +73,9 @@ public sealed class LocalMt5CollectorReceiptReader : IMt5CollectorReceiptReader,
         {
             if (!Directory.Exists(root)) return Empty("source_directory_unavailable");
             GuardRoot(root);
-            var inventory = (boundary is null ? Directory.EnumerateFileSystemEntries(root)
-                : PrefixEntries(root, boundary.Sequence)).Take(MaxDirectoryEntries + 1).Select(Path.GetFileName).ToArray();
+            var inventory = (anchor is not null ? SuffixEntries(root, anchor.Sequence) :
+                boundary is null ? Directory.EnumerateFileSystemEntries(root) : PrefixEntries(root, boundary.Sequence))
+                .Take(MaxDirectoryEntries + 1).Select(Path.GetFileName).ToArray();
             if (inventory.Length > MaxDirectoryEntries) return Empty("directory_entry_limit");
             var names = inventory.Where(x => x is not null && x.StartsWith("record-", StringComparison.OrdinalIgnoreCase)).Cast<string>().Order(StringComparer.Ordinal).ToArray();
             if (names.Length > MaxRecords) return Empty("record_count_limit");
@@ -104,7 +113,9 @@ public sealed class LocalMt5CollectorReceiptReader : IMt5CollectorReceiptReader,
                 if (entry.Metadata is not { } meta || entry.Status == Mt5ReceiptStatus.Conflict) continue;
                 try
                 {
-                    if (meta.PreviousRecord is { } predecessor)
+                    if (anchor?.RecordFile == entry.Name)
+                        entry.Codes.Add("diagnostic_anchor_prior_chain_outside_scope");
+                    else if (meta.PreviousRecord is { } predecessor)
                     {
                         if (!entries.TryGetValue(predecessor, out var prior)) { entry.Fail(Mt5ReceiptStatus.DataUnavailable, "missing_predecessor_not_deletion"); continue; }
                         if (prior.Hash != meta.PreviousRecordSha256) { entry.Fail(Mt5ReceiptStatus.Conflict, "predecessor_hash_mismatch"); continue; }
@@ -131,7 +142,8 @@ public sealed class LocalMt5CollectorReceiptReader : IMt5CollectorReceiptReader,
                         if (probe.Frames.Any(f => f.Bars.Any(b => !b.OhlcValid))) entry.Codes.Add("invalid_ohlc_retained_as_diagnostic");
                         if (meta.TriggerM1HeadNative is { } trigger && meta.CapturedM1HeadNative is { } captured && trigger != captured)
                             entry.Codes.Add("trigger_capture_head_disagreement");
-                        if (entry.Codes.Any(c => c is not "publication_sequence_gap_cause_unresolved" and not "unanchored_local_sequence_origin"))
+                        if (entry.Codes.Any(c => c is not ("publication_sequence_gap_cause_unresolved" or
+                            "unanchored_local_sequence_origin" or "diagnostic_anchor_prior_chain_outside_scope")))
                             entry.Status = Mt5ReceiptStatus.Unresolved;
                     }
                     entry.Observation = new(scope, entry.Name, entry.Hash!, meta, probe?.Build, probe?.Gate, probe?.ConnectedBefore,
@@ -164,6 +176,14 @@ public sealed class LocalMt5CollectorReceiptReader : IMt5CollectorReceiptReader,
 
         Mt5ReceiptBatch Empty(string code) => new(scope, Array.Empty<Mt5ReceiptRecord>(), Codes([code]), new(scope, ledger.Values));
     }
+
+    private static IEnumerable<string> SuffixEntries(string root, long sequence) =>
+        Directory.EnumerateFileSystemEntries(root, "record-????????????.json").Where(entry =>
+        {
+            var name = Path.GetFileName(entry);
+            return Mt5WireContract.RecordName(name) &&
+                long.Parse(name.AsSpan(7, 12), CultureInfo.InvariantCulture) >= sequence;
+        });
 
     // Disjoint decimal filename ranges select only names at/before the boundary at the filesystem boundary.
     // Future canonical record names are never opened, parsed, counted against limits or checked for aliases.

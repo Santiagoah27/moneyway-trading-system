@@ -51,6 +51,38 @@ public sealed class Mt5ReceiptObservationTests
     private static JsonObject Changes(JsonObject row) => row["changes"]!.AsObject();
 
     [Fact]
+    public async Task PinnedRangeIgnoresEarlierFilesAndNeverOffersAcknowledgment()
+    {
+        using var f = new Fixture();
+        f.Source.Add();
+        f.Source.Add(2, 1);
+        f.Source.Add(3, 2);
+        File.WriteAllText(f.Source.RecordPath(1), "protected predecessor outside the diagnostic range");
+        var anchor = Mt5ReceiptSyntheticFixture.Hash(f.Source.RecordPath(2));
+        var accepted = await Observe(anchor);
+        Assert.Equal(0, accepted.Exit);
+        Assert.True(Flag(accepted.Pass, "receiptIntegrityValidated"));
+        Assert.Equal(2, Count(accepted.Pass, "discoveredRecords"));
+        Assert.False(Flag(accepted.Pass, "acknowledgmentEligible"));
+        Assert.Contains(accepted.Pass["diagnostics"]!.AsArray(), item =>
+            item!.GetValue<string>() == "diagnostic_anchor_prior_chain_outside_scope");
+        Assert.False(File.Exists(f.Checkpoint));
+        var rejected = await Observe(new string('0', 64));
+        Assert.NotEqual(0, rejected.Exit);
+        Assert.False(Flag(rejected.Pass, "receiptIntegrityValidated"));
+
+        async Task<(int Exit, JsonObject Pass)> Observe(string hash)
+        {
+            using var output = new StringWriter();
+            using var error = new StringWriter();
+            var exit = await new Mt5ReceiptObservationCommand().ExecuteAsync(
+                [.. f.Args("1"), "--anchor-sequence", "2", "--anchor-sha256", hash], output, error);
+            Assert.Empty(error.ToString());
+            return (exit, Lines(output.ToString())[0]);
+        }
+    }
+
+    [Fact]
     public async Task ExplicitPassLimitAndIntervalProduceCompactDeterministicReadOnlySummaries()
     {
         using var f = new Fixture(); f.Source.Add();

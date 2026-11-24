@@ -51,6 +51,21 @@ dotnet "$observation_cli" mt5-receipt observe --help
 
 ## Output and changes
 
+### Observe only a prospective diagnostic range
+
+For an accumulated collector directory, the observer can start at an explicitly
+pinned published record. Add `--anchor-sequence <N> --anchor-sha256 <SHA256>`
+and use an unused checkpoint path outside the source directory. The reader
+checks the anchor bytes and the following records and probes within the
+existing limits. It does not read earlier receipt contents. The chain before
+the anchor remains outside the checked range.
+
+This mode never offers acknowledgment and uses the same source identity and
+integrity checks for observations within the range. The observer remains
+bounded by its pass limit. Use a separate operational deadline if the
+observation must end at a specific wall-clock instant. The anchor and
+observed sequence numbers do not authenticate UTC or source publication.
+
 The output schema is `moneyway.mt5-receipt-observation`, version 1. Each completed
 pass emits one compact JSON line with `type="observation"`, followed by one
 `type="session_end"` line. Detailed per-record review remains available through

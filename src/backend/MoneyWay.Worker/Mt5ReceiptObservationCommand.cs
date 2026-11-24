@@ -10,7 +10,7 @@ namespace MoneyWay.Worker;
 public sealed class Mt5ReceiptObservationCommand
 {
     public const int Cancelled = 130;
-    private const string Usage = "mt5-receipt observe --source <absolute-directory> --checkpoint <absolute-file> --max-passes <positive-integer> --interval-ms <positive-integer>";
+    private const string Usage = "mt5-receipt observe --source <absolute-directory> --checkpoint <absolute-file> --max-passes <positive-integer> --interval-ms <positive-integer> [--anchor-sequence <N> --anchor-sha256 <hash>]";
     private static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
     private readonly IMt5CollectorReceiptReader reader;
     private readonly Func<TimeSpan, CancellationToken, Task> wait;
@@ -54,10 +54,15 @@ public sealed class Mt5ReceiptObservationCommand
             _ = new LocalMt5ReceiptCheckpointStore(options.Checkpoint, options.Source);
             sourcePath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(options.Source));
             checkpointPath = Path.GetFullPath(options.Checkpoint);
+            if (options.Anchor is not null && File.Exists(checkpointPath))
+                throw new ArgumentException("Anchored observation requires a separate, unused checkpoint path.");
+            var observationReader = options.Anchor is { } anchor ? new AnchoredReader(anchor) : reader;
             while (completed < options.MaxPasses)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var (state, batch, passExit) = Mt5ReceiptCommand.InspectCurrent(options.Source, options.Checkpoint, reader);
+                var (state, batch, passExit) = Mt5ReceiptCommand.InspectCurrent(options.Source, options.Checkpoint, observationReader);
+                if (options.Anchor is not null && batch?.ReceiptIntegrityValidated == true && state.Status == Mt5CheckpointStatus.Missing)
+                    passExit = Mt5ReceiptCommand.Success;
                 var delta = changes.Observe(state, batch);
                 if (delta.ChangedReceiptFiles > 0) passExit = Mt5ReceiptCommand.IntegrityFailure;
                 completed++;
@@ -100,7 +105,8 @@ public sealed class Mt5ReceiptObservationCommand
                     ReceiptIntegrityValidated = batch?.ReceiptIntegrityValidated == true && delta.ChangedReceiptFiles == 0,
                     IntegrityStatus = delta.ChangedReceiptFiles > 0 ? "Conflict" : batch?.ReceiptIntegrityValidated == true ? "Validated" : batch?.Status.ToString(),
                     AcquisitionStatus = batch?.Status.ToString(),
-                    AcknowledgmentEligible = delta.ChangedReceiptFiles == 0 && batch?.ReceiptAcknowledgmentEligible == true && state.Status is Mt5CheckpointStatus.Missing or Mt5CheckpointStatus.Loaded,
+                    AcknowledgmentEligible = options.Anchor is null && delta.ChangedReceiptFiles == 0 &&
+                        batch?.ReceiptAcknowledgmentEligible == true && state.Status is Mt5CheckpointStatus.Missing or Mt5CheckpointStatus.Loaded,
                     Changes = delta,
                     Diagnostics = allCodes.Take(12).ToArray(),
                     AdditionalDiagnosticCodes = Math.Max(0, allCodes.Length - 12),
@@ -113,7 +119,8 @@ public sealed class Mt5ReceiptObservationCommand
                 output.WriteLine(JsonSerializer.Serialize(lastObservation, Json));
                 output.Flush();
                 cancellationToken.ThrowIfCancellationRequested();
-                if (delta.ChangedReceiptFiles > 0 || IsTerminal(state, batch))
+                if (delta.ChangedReceiptFiles > 0 || options.Anchor is not null && state.Status != Mt5CheckpointStatus.Missing ||
+                    IsTerminal(state, batch))
                 {
                     reason = "safety_or_storage_failure";
                     break;
@@ -163,7 +170,8 @@ public sealed class Mt5ReceiptObservationCommand
             DiagnosticOnly = true,
             CanonicalReady = false,
             UtcConversionAuthenticated = false,
-            NextAction = exit is Mt5ReceiptCommand.Success or Cancelled
+            NextAction = options.Anchor is not null ? "Preserve the diagnostic range and its anchor. No acknowledgment applies to this range."
+                : exit is Mt5ReceiptCommand.Success or Cancelled
                 ? "Run a fresh mt5-receipt inspect and review its current evidence before explicit manual acknowledgment."
                 : "Investigate diagnostics, preserve evidence and reload checkpoint state before any manual acknowledgment."
         };
@@ -192,14 +200,14 @@ public sealed class Mt5ReceiptObservationCommand
 
     private static bool TryParse(IReadOnlyList<string> args, out Options options)
     {
-        options = new("", "", 0, 0);
-        if (args.Count != 10 || args[0] != "mt5-receipt" || args[1] != "observe") return false;
+        options = new("", "", 0, 0, null);
+        if (args.Count is not (10 or 14) || args[0] != "mt5-receipt" || args[1] != "observe") return false;
         var values = new Dictionary<string, string>(StringComparer.Ordinal);
         for (var index = 2; index < args.Count; index += 2)
         {
             var name = args[index];
             var value = args[index + 1];
-            if (name is not ("--source" or "--checkpoint" or "--max-passes" or "--interval-ms")
+            if (name is not ("--source" or "--checkpoint" or "--max-passes" or "--interval-ms" or "--anchor-sequence" or "--anchor-sha256")
                 || string.IsNullOrWhiteSpace(value) || value != value.Trim() || value.Any(char.IsControl)
                 || !values.TryAdd(name, value)) return false;
         }
@@ -207,11 +215,28 @@ public sealed class Mt5ReceiptObservationCommand
             || !values.TryGetValue("--max-passes", out var passesText) || !values.TryGetValue("--interval-ms", out var intervalText)
             || !int.TryParse(passesText, NumberStyles.None, CultureInfo.InvariantCulture, out var passes) || passes <= 0
             || !int.TryParse(intervalText, NumberStyles.None, CultureInfo.InvariantCulture, out var interval) || interval <= 0) return false;
-        options = new(source, checkpoint, passes, interval);
+        Mt5ReceiptPrefixBoundary? anchor = null;
+        if (args.Count == 14)
+        {
+            if (!values.TryGetValue("--anchor-sequence", out var sequenceText) || !values.TryGetValue("--anchor-sha256", out var hash)
+                || !long.TryParse(sequenceText, NumberStyles.None, CultureInfo.InvariantCulture, out var sequence)
+                || sequence is <= 0 or > 999999999999 || hash.Length != 64 || !hash.All(Uri.IsHexDigit))
+                return false;
+            anchor = new(sequence, hash);
+        }
+        options = new(source, checkpoint, passes, interval, anchor);
         return true;
     }
 
-    private sealed record Options(string Source, string Checkpoint, int MaxPasses, int IntervalMs);
+    private sealed record Options(string Source, string Checkpoint, int MaxPasses, int IntervalMs, Mt5ReceiptPrefixBoundary? Anchor);
+
+    private sealed class AnchoredReader(Mt5ReceiptPrefixBoundary anchor) : IMt5CollectorReceiptReader
+    {
+        private readonly LocalMt5CollectorReceiptReader reader = new();
+
+        public Mt5ReceiptBatch Read(string sourceDirectory, Mt5ReceiptCheckpoint? checkpoint = null,
+            IReadOnlyDictionary<string, string>? expectedRecordHashes = null) => reader.ReadSince(sourceDirectory, anchor);
+    }
 
     private sealed class ChangeTracker
     {
