@@ -165,4 +165,177 @@ public sealed class M5ContextualSequenceTests
         Assert.Equal("MissingSourceBeforeFvg", Assert.Single(post.FvgDiagnostics).Reason);
         Assert.Null(post.CompletedAtUtc);
     }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void OptionalFvgPathsUseTheirOwnAnchorsForScAndIfvg(bool inversion, bool continuation)
+    {
+        var origin = Zone("origin", -10, M5FvgDirection.Bearish, 5);
+        var trigger = inversion ? Event("ifvg", 5, M5ConfirmationKind.IFVG, origin: origin) : Event("sc", 5);
+        M5SequenceZone[] zones = continuation ? [origin, Zone("post-trigger", 10)] : [origin, Zone("pre-trigger", 0)];
+        var result = Paths(Run(0, [trigger], zones, cutoff: 12), Minutes(5, 12, 5, 10));
+        Assert.All(result.Comparisons, comparison =>
+        {
+            var anchored = comparison.TriggerAnchored;
+            Assert.Equal(At(5), anchored.AnchorUtc);
+            Assert.Equal(At(7), anchored.FirstRealignmentUtc);
+            var evidence = Assert.Single(anchored.Triggers);
+            Assert.Equal(trigger.Kind, evidence.Confirmation.Kind);
+            Assert.Equal(inversion ? "NotInvalidatedWithinObservableEvidence" : "ScInvalidationUndefined", evidence.ValidityAtRealignment);
+            Assert.Equal("NoEligibleFvgObservedByAssessmentTime", evidence.OptionalFvgStatus);
+            Assert.Equal(continuation ? At(10) : null, comparison.FvgAnchored.AnchorUtc);
+            Assert.Equal(continuation ? At(12) : null, comparison.FvgAnchored.FirstRealignmentUtc);
+            if (continuation)
+            {
+                Assert.Equal("AfterRealignment", Assert.Single(evidence.OptionalFvgs).RelationToRealignment);
+                Assert.Null(evidence.OptionalFvgs[0].StateAtRealignment);
+                Assert.Equal("ObservableBeforeRealignment", Assert.Single(comparison.FvgAnchored.Triggers).OptionalFvgStatus);
+            }
+            else
+            {
+                Assert.Empty(evidence.OptionalFvgs);
+            }
+        });
+        Assert.Equal(1, result.Summary.DistinctTriggerOnlyRealignments);
+        Assert.Equal(2, result.Summary.TriggerOnlyAssociations);
+    }
+
+    [Theory]
+    [InlineData(7, "AfterRealignment", null)]
+    [InlineData(8, "SameCloseOrderingUnresolved", "NotInvalidatedWithinObservableEvidence")]
+    [InlineData(9, "BeforeRealignment", "NotInvalidatedWithinObservableEvidence")]
+    [InlineData(10, "BeforeRealignment", "NotInvalidatedWithinObservableEvidence")]
+    public void OptionalFvgTimingRetainsCausalSupportAndSharedMarketEvents(int pullback, string relation, string? state)
+    {
+        var row = Run(0, [Event("sc", 5)], [Zone("fvg", 10)], cutoff: 13);
+        var result = Paths(row, Minutes(5, 13, pullback));
+        Assert.All(result.Comparisons, c =>
+        {
+            var optional = Assert.Single(Assert.Single(c.TriggerAnchored.Triggers).OptionalFvgs);
+            Assert.Equal(relation, optional.RelationToRealignment);
+            Assert.Equal(state, optional.StateAtRealignment);
+        });
+        Assert.Equal(pullback == 10 ? 1 : 0, result.Summary.DistinctSharedRealignments);
+    }
+
+    [Fact]
+    public void FirstIfvgInvalidationAndDirectionalFvgInversionRetainGeometryAndCannotSelectLaterSc()
+    {
+        var origin = Zone("origin", -10, M5FvgDirection.Bearish, 5, 15);
+        var row = Run(0, [Event("ifvg", 5, M5ConfirmationKind.IFVG, origin: origin), Event("later-sc", 20)],
+            [Zone("fvg", 10, inversion: 15), Zone("later-fvg", 25)], cutoff: 30);
+        var result = Paths(row, Minutes(5, 30, 14));
+        Assert.All(result.Comparisons, c =>
+        {
+            Assert.Equal(At(16), c.TriggerAnchored.FirstRealignmentUtc);
+            Assert.Equal(At(16), c.FvgAnchored.FirstRealignmentUtc);
+            var first = Assert.Single(c.TriggerAnchored.Triggers);
+            Assert.Equal("ifvg", first.Confirmation.Id);
+            Assert.Equal("Invalidated", first.ValidityAtRealignment);
+            Assert.Equal("Invalidated", Assert.Single(first.OptionalFvgs).StateAtRealignment);
+            Assert.Contains(row.FvgDiagnostics, f => f.Reason == "TriggerInvalidatedByFvgClose");
+        });
+        Assert.Equal(2, result.Summary.InvalidatedIfvgAtTriggerRealignmentAssociations);
+        Assert.Equal(2, result.Summary.InvalidatedFvgAtControlRealignmentAssociations);
+    }
+
+    [Fact]
+    public void TiesKeepEveryIdentityAndNeverIncreaseDistinctMarketEvents()
+    {
+        var origin = Zone("origin", -10, M5FvgDirection.Bearish, 5);
+        var a = Event("sc-a", 5);
+        var b = Event("sc-b", 5);
+        var inversion = Event("ifvg", 5, M5ConfirmationKind.IFVG, origin: origin);
+        var mixed = Paths(Run(0, [b, inversion, a], cutoff: 7), Minutes(5, 7, 5));
+        Assert.All(mixed.Comparisons, c =>
+        {
+            Assert.Equal("SimultaneousScAndIfvg", c.TriggerOrdering);
+            Assert.Equal(["ifvg", "sc-a", "sc-b"], c.TriggerAnchored.Triggers.Select(t => t.Confirmation.Id));
+        });
+        Assert.Equal(2, mixed.Summary.DistinctFirstTriggers);
+        var tied = Paths(Run(0, [b, a], cutoff: 7), Minutes(5, 7, 5));
+        Assert.All(tied.Comparisons, c => Assert.Equal("TiedHypotheses", c.TriggerOrdering));
+        Assert.Equal(1, tied.Summary.DistinctFirstTriggers);
+        Assert.Throws<ArgumentException>(() => Paths(Run(0, [a, a], cutoff: 7), Minutes(5, 7, 5)));
+    }
+
+    [Fact]
+    public void GapAndWindowEvidenceRemainOwnedByTheirExistingPolicies()
+    {
+        var before = new M5FvgSourceGap(At(0), At(5), At(5), null);
+        var after = new M5FvgSourceGap(At(5), At(10), At(10), null);
+        var blocked = Paths(Run(0, [Event("sc", 10)], cutoff: 12, gaps: [before]), Minutes(10, 12, 10));
+        Assert.All(blocked.Comparisons, c => Assert.Equal("InsufficientEvidence", c.TriggerAnchored.Outcome));
+        var missingM5 = Paths(Run(0, [Event("sc", 5)], cutoff: 12, gaps: [after]), Minutes(5, 12, 10));
+        Assert.All(missingM5.Comparisons, c =>
+        {
+            var evidence = Assert.Single(c.TriggerAnchored.Triggers);
+            Assert.Equal("UnknownDueToMissingM5Evidence", evidence.ValidityAtRealignment);
+            Assert.Equal("AbsenceUndeterminedDueToM5Gap", evidence.OptionalFvgStatus);
+        });
+        var missingM1 = Paths(Run(0, [Event("sc", 5)], cutoff: 9), Minutes(7, 9, 7));
+        Assert.All(missingM1.Comparisons, c => Assert.Equal("InsufficientEvidence", c.TriggerAnchored.Outcome));
+        var limit = Paths(Run(170, [Event("sc", 175)], cutoff: 180), Minutes(175, 180, 178));
+        Assert.All(limit.Comparisons, c => Assert.Null(c.TriggerAnchored.FirstRealignmentUtc));
+        Assert.All(limit.Scans, s => Assert.Equal(M1WindowPosition.AtExclusiveEnd, Assert.Single(s.Attempts).WindowPosition));
+
+        var filters = Run(0, [Event("wrong", 5, direction: M5FvgDirection.Bearish), Event("other-session", 1000)],
+            cutoff: 1005, window: M5SequenceWindowPolicy.WindowEventOnly);
+        Assert.Equal(["DirectionMismatch", "ConfirmationOutsideSession"], filters.Confirmations.Select(c => c.Reason));
+        Assert.All(Paths(filters, []).Comparisons, c => Assert.Null(c.TriggerAnchored.ScanId));
+        var preOpen = Paths(Run(-5, [Event("sc", 5)], cutoff: 7,
+            window: M5SequenceWindowPolicy.WindowConfirmationWithPriorSweep), Minutes(5, 7, 5));
+        Assert.All(preOpen.Comparisons, c => Assert.True(c.PreWindowSweep));
+        var sameSweep = Paths(Run(0, [Event("same", 0)], cutoff: 7, ordering: M5SweepPolicy.SameCloseDiagnostic), []);
+        Assert.All(sameSweep.Comparisons, c => Assert.Equal("AmbiguousSweepOrdering", c.TriggerOrdering));
+    }
+
+    [Fact]
+    public void CutoffPreventsEarlierM1FromCompletingPullbackAndIgnoresFutureM5AndM1()
+    {
+        var row = Run(0, [Event("first", 5)], cutoff: 6);
+        var early = Paths(row, Minutes(2, 6, 2));
+        Assert.All(early.Comparisons, c =>
+        {
+            Assert.Equal("WaitingForCountertrend", c.TriggerAnchored.Outcome);
+            Assert.Null(c.TriggerAnchored.FirstPullbackId);
+        });
+        var pending = Paths(row, Minutes(5, 6, 5));
+        Assert.All(pending.Comparisons, c =>
+        {
+            Assert.NotNull(c.TriggerAnchored.FirstPullbackId);
+            Assert.Null(c.TriggerAnchored.FirstRealignmentUtc);
+        });
+        var expected = Snapshot(pending);
+        var future = Run(0, [Event("first", 5), Event("future", 10)], [Zone("future-fvg", 10)], cutoff: 6);
+        Assert.Equal(expected, Snapshot(Paths(future, Minutes(5, 8, 5))));
+        var changed = Run(0, [Event("first", 5), Event("future", 15)], [Zone("moved-fvg", 15)], cutoff: 6);
+        Assert.Equal(expected, Snapshot(Paths(changed, Minutes(5, 8, 5, 7))));
+        var exact = Paths(Run(0, [Event("first", 5)], cutoff: 7), Minutes(5, 7, 5));
+        Assert.All(exact.Comparisons, c => Assert.Equal(At(7), c.TriggerAnchored.FirstRealignmentUtc));
+
+        static string Snapshot((IReadOnlyList<M1RealignmentScan> Scans, IReadOnlyList<NasdaqM1PathComparison> Comparisons,
+            NasdaqPathCounts Summary, IReadOnlyList<NasdaqPathPolicyCounts> ByPolicy) result) =>
+            JsonSerializer.Serialize(new { result.Scans, result.Comparisons, result.Summary, result.ByPolicy });
+    }
+
+    private static (IReadOnlyList<M1RealignmentScan> Scans, IReadOnlyList<NasdaqM1PathComparison> Comparisons,
+        NasdaqPathCounts Summary, IReadOnlyList<NasdaqPathPolicyCounts> ByPolicy) Paths(M5SequenceResult row, Candle[] candles)
+    {
+        var series = new CandleSeries(Provider, Symbol, new(1, TimeframeUnit.Minute), candles);
+        var sequence = new M5ContextualSequenceReport("session", row.AsOfUtc, "fixture", [row], [], []);
+        var control = new EvaluateM1RealignmentCandidateUseCase().Execute(sequence, series, Enum.GetValues<M1RealignmentProfile>());
+        return CompareNasdaqOptionalFvgPathsUseCase.Compare(sequence, control, series);
+    }
+
+    private static Candle[] Minutes(int start, int end, params int[] pullbacks) =>
+        Enumerable.Range(start, end - start).Select(minute =>
+        {
+            var opposite = pullbacks.Contains(minute);
+            return new Candle(Provider, Symbol, new(1, TimeframeUnit.Minute), At(minute), At(minute + 1),
+                100, opposite ? 101 : 104, 97, opposite ? 98 : 103, null);
+        }).ToArray();
 }

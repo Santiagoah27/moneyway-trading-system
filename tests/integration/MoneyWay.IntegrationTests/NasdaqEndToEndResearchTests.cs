@@ -399,6 +399,35 @@ public sealed class NasdaqEndToEndResearchTests
         run.Execute(reserved, Cutoff, mode, expected: 2);
     }
 
+    [Fact]
+    public void OptionalFvgV2ComparesPinnedDevelopmentWithoutChangingPublishedV1Bytes()
+    {
+        const string mode = "--compare-m5-to-m1-optional-fvg-v2";
+        const string file = "nasdaq-m5-to-m1-optional-fvg-v2.json";
+        using var run = new ResearchRun();
+        var baseline = File.ReadAllBytes(Path.Combine(run.Execute(run.Source, Cutoff), "nasdaq-end-to-end-research.json"));
+        Assert.Equal("D19C506BBCE9609A8D3237E9F21B527D4D0150A1ED0339DC3A86F04735B8CB61",
+            Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(baseline)));
+        var bytes = File.ReadAllBytes(Path.Combine(run.Execute(run.Source, Cutoff, mode), file));
+        Assert.Equal(bytes, File.ReadAllBytes(Path.Combine(run.Execute(run.Source, Cutoff, mode), file)));
+        using var report = JsonDocument.Parse(bytes);
+        var research = report.RootElement.GetProperty("research");
+        Assert.False(research.GetProperty("canonicalAdmissionPermitted").GetBoolean());
+        Assert.False(research.GetProperty("operationalSignal").GetBoolean());
+        Assert.Equal(0, research.GetProperty("baselineCompleteH4ToM1Associations").GetInt32());
+        var count = research.GetProperty("summary");
+        Assert.Equal(4, count.GetProperty("distinctTakes").GetInt32());
+        Assert.Equal(5, count.GetProperty("distinctFirstTriggers").GetInt32());
+        Assert.Equal(5, count.GetProperty("distinctFvgAnchoredRealignments").GetInt32());
+        Assert.Equal(6, count.GetProperty("distinctTriggerAnchoredRealignments").GetInt32());
+        Assert.Equal(3, count.GetProperty("distinctSharedRealignments").GetInt32());
+        Assert.Equal(3, count.GetProperty("distinctTriggerOnlyRealignments").GetInt32());
+        Assert.Equal(16, count.GetProperty("invalidatedIfvgAtTriggerRealignmentAssociations").GetInt32());
+        Assert.Contains(research.GetProperty("byPolicy").EnumerateArray(), r => r.GetProperty("preWindowSweep").GetBoolean());
+        var altered = run.WriteInput("non-pinned-development", new JsonObject { ["tradingDay"] = "2026-06-23" });
+        run.Execute(altered, Cutoff, mode, expected: 2);
+    }
+
     private static DateTimeOffset At(int hour, int minute = 0) => new(2026, 6, 23, hour, minute, 0, TimeSpan.Zero);
 
     private sealed class ResearchRun : IDisposable

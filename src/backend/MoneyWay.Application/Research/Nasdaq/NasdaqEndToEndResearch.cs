@@ -63,7 +63,9 @@ public sealed class EvaluateNasdaqEndToEndResearchUseCase
          select new M5SequenceConfiguration(sweep, window, formation, profile,
              NasdaqTradingWindowAlignment.Opening, NasdaqTradingWindowAlignment.Closing)).ToArray();
 
-    public NasdaqEndToEndResearchResult Execute(NasdaqResearchReplayRequest request)
+    public NasdaqEndToEndResearchResult Execute(NasdaqResearchReplayRequest request) => Execute(request, out _);
+
+    internal NasdaqEndToEndResearchResult Execute(NasdaqResearchReplayRequest request, out CandleSeries m1)
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentException.ThrowIfNullOrWhiteSpace(request.DatasetId);
@@ -117,7 +119,7 @@ public sealed class EvaluateNasdaqEndToEndResearchUseCase
             preparationProfiles.ToArray());
         var h1 = Series(at, H1);
         var m5 = Series(at, M5);
-        var m1 = Series(at, M1);
+        m1 = Series(at, M1);
         var sessions = new NasdaqSessionLiquidityCalculator().CalculateExplicitSessions(h1, request.OperatingDate, request.CutoffUtc);
         var rangeStart = sessions.Single(s => s.Session == "London").StartUtc;
         if (request.CutoffUtc < rangeStart)

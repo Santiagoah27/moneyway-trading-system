@@ -177,7 +177,7 @@ public sealed class EvaluateM1RealignmentCandidateUseCase
         }
     }
 
-    private static M1RealignmentScan Scan(M1ResearchAnchor anchor, M1RealignmentProfile profile,
+    internal static M1RealignmentScan Scan(M1ResearchAnchor anchor, M1RealignmentProfile profile,
         DateTimeOffset cutoff, IReadOnlyList<Candle> visible)
     {
         var dayEnd = (DateTimeOffset)TimeZoneInfo.ConvertTimeToUtc(anchor.OperatingDate.AddDays(1).ToDateTime(TimeOnly.MinValue),
