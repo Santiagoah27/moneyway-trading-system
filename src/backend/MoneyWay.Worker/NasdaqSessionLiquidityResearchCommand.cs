@@ -16,6 +16,7 @@ public sealed class NasdaqSessionLiquidityResearchCommand
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { WriteIndented = true, Converters = { new JsonStringEnumConverter() } };
     private static readonly JsonSerializerOptions IntegratedJson = new(Json) { WriteIndented = false };
     private const string DevelopmentProvenance = "June 23 Development documentary sources; explicit contextual tracking hypothesis 187c3ef3-2fe4-4993-bce3-dee605345b4f; nominal UTC only.";
+    private const string June23DevelopmentSha256 = "3ecd8aec92c7ba5b5f36b27cc41d709512bf11797259be799c9f050aaf06a67c";
     public int Execute(IReadOnlyList<string> args, TextWriter output, TextWriter error)
     {
         try
@@ -24,18 +25,21 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             var tracking = args.Count == 6 && args[5] == "--track-context";
             var contextualSc = args.Count == 6 && args[5] == "--compare-context-sc";
             var structuralTarget = args.Count is 6 or 8 && args[5] == "--compare-structural-tp";
-            var endToEnd = args.Count is 6 or 8 && args[5] == "--compare-end-to-end";
+            var causalContextV2 = args.Count == 8 && args[5] == "--compare-h4-causal-context-v2";
+            var endToEnd = causalContextV2 || args.Count is 6 or 8 && args[5] == "--compare-end-to-end";
             var structuralStop = structuralTarget || args.Count is 6 or 8 && args[5] == "--compare-structural-sl";
             var realignment = structuralStop || args.Count is 6 or 8 && args[5] == "--compare-context-realignment";
             var sequence = realignment || args.Count is 6 or 8 && args[5] == "--compare-context-sequence";
             if ((args.Count != 5 && !interaction && !tracking && !contextualSc && !sequence && !endToEnd) || args[0] != "nasdaq-session-liquidity" || args[1] != "--input" || args[3] != "--output"
-                || !Path.IsPathFullyQualified(args[2]) || !Path.IsPathFullyQualified(args[4])) throw new ArgumentException("nasdaq-session-liquidity --input <absolute-context-json> --output <new-absolute-directory> [--analyze-interaction | --track-context | --compare-context-sc | (--compare-context-sequence | --compare-context-realignment | --compare-structural-sl | --compare-structural-tp | --compare-end-to-end) [--cutoff-utc <UTC>]]");
+                || !Path.IsPathFullyQualified(args[2]) || !Path.IsPathFullyQualified(args[4])) throw new ArgumentException("nasdaq-session-liquidity --input <absolute-context-json> --output <new-absolute-directory> [--analyze-interaction | --track-context | --compare-context-sc | (--compare-context-sequence | --compare-context-realignment | --compare-structural-sl | --compare-structural-tp | --compare-end-to-end | --compare-h4-causal-context-v2) [--cutoff-utc <UTC>]]");
             var input = Path.GetFullPath(args[2]); var destination = Path.TrimEndingDirectorySeparator(Path.GetFullPath(args[4]));
             Guard(input); Guard(destination);
             if (Directory.Exists(destination) || File.Exists(destination) || destination == Path.GetPathRoot(destination)) throw new ArgumentException("New output directory required; never replace existing evidence.");
             using var file = new FileStream(input, FileMode.Open, FileAccess.Read, FileShare.Read);
             if (file.Length is <= 0 or > 8 * 1024 * 1024) throw new ArgumentException("Bounded 8 MiB context required.");
             var bytes = new byte[(int)file.Length]; file.ReadExactly(bytes);
+            if (causalContextV2 && Convert.ToHexStringLower(SHA256.HashData(bytes)) != June23DevelopmentSha256)
+                throw new ArgumentException("H4 causal context V2 requires the SHA-256-pinned June 23 Development package.");
             using var json = JsonDocument.Parse(bytes); var root = json.RootElement;
             if (endToEnd && root.TryGetProperty("schema", out var schema) &&
                 schema.GetString() == NasdaqEvidenceReadinessCommand.RegistrationSchema)
@@ -117,12 +121,12 @@ public sealed class NasdaqSessionLiquidityResearchCommand
                 DateTimeOffset? h4Start = sources.TryGetProperty("H4", out var h4Source) &&
                     h4Source.TryGetProperty("firstOpenUtc", out var first) && first.ValueKind != JsonValueKind.Null
                     ? first.GetDateTimeOffset() : null;
-                var integrated = new EvaluateNasdaqEndToEndResearchUseCase().Execute(new(root.GetProperty("id").GetString()!,
+                var request = new NasdaqResearchReplayRequest(root.GetProperty("id").GetString()!,
                     day, maximum, [h4, hour, Read("M5", new(5, TimeframeUnit.Minute)), Read("M1", new(1, TimeframeUnit.Minute))],
-                    h4Start, DevelopmentProvenance));
+                    h4Start, DevelopmentProvenance);
                 report = new
                 {
-                    SchemaVersion = 1,
+                    SchemaVersion = causalContextV2 ? 2 : 1,
                     InputSha256 = Convert.ToHexStringLower(SHA256.HashData(bytes)),
                     DocumentaryMapping = root.GetProperty("documentaryMapping").GetString(),
                     SourceProvenance = new[] { "H4", "H1", "M5", "M1" }.ToDictionary(k => k, k =>
@@ -130,7 +134,8 @@ public sealed class NasdaqSessionLiquidityResearchCommand
                             .Where(p => p.Name is "sourceTimeframe" or "derived" or "intervalMinutes" or "rawRelativePath" or
                                 "normalizedRelativePath" or "rawSha256" or "normalizedSha256")
                             .ToDictionary(p => p.Name, p => p.Value.Clone()) : null),
-                    Research = NasdaqEndToEndResearchOutput.Project(integrated)
+                    Research = causalContextV2 ? new CompareNasdaqH4CausalContextUseCase().Execute(request) :
+                        NasdaqEndToEndResearchOutput.Project(new EvaluateNasdaqEndToEndResearchUseCase().Execute(request))
                 };
             }
             else if (contextualSc || sequence)
@@ -267,7 +272,8 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             var content = JsonSerializer.Serialize(report, endToEnd ? IntegratedJson : Json).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n";
             var parent = Path.GetDirectoryName(destination)!; Directory.CreateDirectory(parent); Guard(parent);
             var pending = Path.Combine(parent, ".nasdaq-session-pending-" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(pending); File.WriteAllText(Path.Combine(pending, endToEnd ? "nasdaq-end-to-end-research.json" : sequence ? "contextual-sequence.json" : contextualSc ? "contextual-swing-sc.json" : tracking ? "liquidity-context.json" : interaction ? "london-asia-interaction.json" : "session-liquidity.json"), content, new UTF8Encoding(false));
+            Directory.CreateDirectory(pending); File.WriteAllText(Path.Combine(pending, causalContextV2 ? "nasdaq-h4-causal-context-v2.json" :
+                endToEnd ? "nasdaq-end-to-end-research.json" : sequence ? "contextual-sequence.json" : contextualSc ? "contextual-swing-sc.json" : tracking ? "liquidity-context.json" : interaction ? "london-asia-interaction.json" : "session-liquidity.json"), content, new UTF8Encoding(false));
             if (realignmentReport is not null)
                 File.WriteAllText(Path.Combine(pending, "contextual-m1-realignment.json"),
                     JsonSerializer.Serialize(realignmentReport, Json).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n", new UTF8Encoding(false));

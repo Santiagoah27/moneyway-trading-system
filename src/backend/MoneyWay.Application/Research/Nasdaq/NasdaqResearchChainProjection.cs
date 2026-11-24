@@ -148,7 +148,7 @@ internal static class NasdaqResearchChainProjection
                 .SequenceEqual([timeline.Zone.StateAt(at)]);
     }
 
-    private static (NasdaqResearchChainOutcome Outcome, DateTimeOffset? CompletedAtUtc) ContextAtRealignment(
+    internal static (NasdaqResearchChainOutcome Outcome, DateTimeOffset? CompletedAtUtc) ContextAtRealignment(
         IReadOnlyList<NasdaqResearchBranch> branches, DateTimeOffset at)
     {
         var supporting = branches.Where(b => b.RealignmentBindingVerified && b.StateAtRealignment == "Observed").ToArray();

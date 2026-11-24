@@ -1,6 +1,8 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using MoneyWay.Application.Research.Nasdaq;
+using MoneyWay.Domain.MarketData;
 using MoneyWay.Worker;
 
 namespace MoneyWay.IntegrationTests;
@@ -245,6 +247,115 @@ public sealed class NasdaqEndToEndResearchTests
                 Assert.Equal(JsonValueKind.Null, g.GetProperty("targetEvaluationId").ValueKind);
             });
         });
+    }
+
+    [Fact]
+    public void V2ComparesThePinnedJuneAtBothCutoffsWithoutReplacingTheBaseline()
+    {
+        const string mode = "--compare-h4-causal-context-v2";
+        const string filename = "nasdaq-h4-causal-context-v2.json";
+        using var run = new ResearchRun();
+        var sourceBefore = System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(run.Source));
+        var output = run.Execute(run.Source, Cutoff, mode);
+        var artifact = File.ReadAllBytes(Path.Combine(output, filename));
+        Assert.Equal(artifact, File.ReadAllBytes(Path.Combine(run.Execute(run.Source, Cutoff, mode), filename)));
+        Assert.False(File.Exists(Path.Combine(output, "nasdaq-end-to-end-research.json")));
+        using var checkedReport = JsonDocument.Parse(artifact);
+        Assert.Equal(2, checkedReport.RootElement.GetProperty("schemaVersion").GetInt32());
+        var research = checkedReport.RootElement.GetProperty("research");
+        Assert.Equal("EXP-NQ-H4-CAUSAL-CONTEXT-V2", research.GetProperty("candidateId").GetString());
+        Assert.Equal("2.0.0", research.GetProperty("version").GetString());
+        Assert.Equal("1.1.0", research.GetProperty("baselineVersion").GetString());
+        Assert.Equal("H4ContextUnavailable", research.GetProperty("v1Outcome").GetString());
+        Assert.Equal(At(13), research.GetProperty("preparationUtc").GetDateTimeOffset());
+        Assert.Equal(At(16, 30), research.GetProperty("reportCutoff").GetProperty("requestedUtc").GetDateTimeOffset());
+        Assert.False(research.GetProperty("canonicalReady").GetBoolean());
+        Assert.False(research.GetProperty("canonicalAdmissionPermitted").GetBoolean());
+        Assert.False(research.GetProperty("operationalSignal").GetBoolean());
+        Assert.False(research.GetProperty("experimentalChainComplete").GetBoolean());
+        Assert.Equal(8, research.GetProperty("documentaryM5Events").GetArrayLength());
+        Assert.Equal(5, research.GetProperty("documentaryM1Events").GetArrayLength());
+        var profiles = research.GetProperty("profiles").EnumerateArray().ToArray();
+        Assert.Equal(6, profiles.Length);
+        Assert.All(profiles, p =>
+        {
+            Assert.False(p.GetProperty("v1ContextAvailable").GetBoolean());
+            Assert.Equal("InsufficientConfirmedPivots", p.GetProperty("v1GateReason").GetString());
+            Assert.True(p.GetProperty("v1CandlesWithReferences").GetInt32() > 0);
+            var v2 = p.GetProperty("v2");
+            Assert.Equal("Provisional", v2.GetProperty("structureState").GetString());
+            Assert.Equal("NoQualifiedEvent", v2.GetProperty("contextState").GetString());
+            Assert.Equal(0, p.GetProperty("v2CompleteAssociations").GetInt32());
+        });
+        Assert.Equal(new[] { 3, 3, 1, 1, 1, 1 },
+            profiles.Select(p => p.GetProperty("v2").GetProperty("confirmedReferences").GetArrayLength()));
+        using var atPrep = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(run.Execute(run.Source, "2026-06-23T13:00:00Z", mode), filename)));
+        Assert.Equal(profiles.Select(p => p.GetProperty("v2").GetRawText()),
+            atPrep.RootElement.GetProperty("research").GetProperty("profiles").EnumerateArray().Select(p => p.GetProperty("v2").GetRawText()));
+        using var before = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(run.Execute(run.Source, "2026-06-23T12:59:00Z", mode), filename)));
+        Assert.All(before.RootElement.GetProperty("research").GetProperty("profiles").EnumerateArray(),
+            p => Assert.Equal(JsonValueKind.Null, p.GetProperty("v2").ValueKind));
+        Assert.Equal(sourceBefore, System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(run.Source)));
+    }
+
+    [Theory]
+    [InlineData("2026-11-23", "Validation")]
+    [InlineData("2026-11-24", "HeldOut")]
+    [InlineData("2026-06-23", "Development")]
+    public void V2RejectsUnpinnedPackagesWithoutPublishing(string day, string partition)
+    {
+        using var run = new ResearchRun();
+        var stub = new JsonObject { ["schema"] = "moneyway.nasdaq-evidence-registration.v1", ["date"] = day, ["partition"] = partition };
+        run.Execute(run.WriteInput("unpinned", stub), Cutoff, "--compare-h4-causal-context-v2", expected: 2);
+    }
+
+    [Fact]
+    public void V2OnlyCompletesCausallyAlignedChainsInTheSyntheticH4Projection()
+    {
+        using var run = new ResearchRun();
+        using var source = JsonDocument.Parse(File.ReadAllBytes(run.Source));
+        var provider = new MarketDataProviderId("oanda-global-markets-mt5-demo");
+        var instrument = new MarketSymbol("US100");
+        var h4 = new Timeframe(4, TimeframeUnit.Hour);
+        var start = At(13).AddHours(-40);
+        var original = source.RootElement.GetProperty("series");
+        var h1 = Read("H1", new(1, TimeframeUnit.Hour));
+        var m5 = Read("M5", new(5, TimeframeUnit.Minute));
+        var m1 = Read("M1", new(1, TimeframeUnit.Minute));
+        var aligned = Compare(mirror: false, breakout: true);
+        var withoutEvent = Compare(mirror: false, breakout: false);
+        var opposite = Compare(mirror: true, breakout: true);
+        Assert.True(aligned.ExperimentalChainComplete);
+        Assert.Equal(H4ResearchDirection.Buy, aligned.Profiles[0].V2!.ContextAlignedDirection);
+        Assert.NotEmpty(aligned.Profiles[0].V2CompletedM1Events);
+        Assert.True(aligned.Profiles[0].V2CompleteAssociations > aligned.V2DistinctCompletedM1Events);
+        Assert.All(aligned.Profiles[0].V2CompletedM1Events,
+            e => Assert.Contains(aligned.DocumentaryM1Events, d => d.ConfirmedAtUtc == e.ConfirmedAtUtc && d.Direction == e.Direction));
+        Assert.True(withoutEvent.V1DownstreamSummary.CompleteH4ToM1Associations > 0);
+        Assert.False(withoutEvent.ExperimentalChainComplete);
+        Assert.Equal(H4ResearchDirection.Sell, opposite.Profiles[0].V2!.ContextAlignedDirection);
+        Assert.False(opposite.ExperimentalChainComplete);
+        Assert.False(aligned.CanonicalReady);
+
+        NasdaqH4CausalContextComparison Compare(bool mirror, bool breakout)
+        {
+            (decimal Low, decimal High, decimal Open, decimal Close)[] prices =
+                [(11, 12, 11, 12), (9, 13, 10, 11), (8, 15, 11, 11), (10, 20, 15, 15), (5, 16, 10, 10),
+                 (9, 18, 12, 12), (11, 24, 17, 17), (7, 22, 15, 15), (12, 23, 20, 21),
+                 breakout ? (13, 27, 21, 25) : (13, 24, 21, 24)];
+            var bars = prices.Select((p, i) => new Candle(provider, instrument, h4, start.AddHours(4 * i),
+                start.AddHours(4 * (i + 1)), mirror ? 100 - p.Open : p.Open, mirror ? 100 - p.Low : p.High,
+                mirror ? 100 - p.High : p.Low, mirror ? 100 - p.Close : p.Close, null));
+            return new CompareNasdaqH4CausalContextUseCase().Execute(new("synthetic-h4-on-june-development-downstream",
+                new(2026, 6, 23), At(16, 30), [new(provider, instrument, h4, bars), h1, m5, m1], start, "test fixture"));
+        }
+
+        CandleSeries Read(string key, Timeframe timeframe) => new(provider, instrument, timeframe,
+            original.GetProperty(key).GetProperty("candles").EnumerateArray().Select(c => new Candle(provider, instrument, timeframe,
+                c.GetProperty("openTimeUtc").GetDateTimeOffset(), c.GetProperty("closeTimeUtc").GetDateTimeOffset(),
+                c.GetProperty("open").GetDecimal(), c.GetProperty("high").GetDecimal(), c.GetProperty("low").GetDecimal(),
+                c.GetProperty("close").GetDecimal(), c.GetProperty("volume").ValueKind == JsonValueKind.Number
+                    ? c.GetProperty("volume").GetDecimal() : null)));
     }
 
     private static DateTimeOffset At(int hour, int minute = 0) => new(2026, 6, 23, hour, minute, 0, TimeSpan.Zero);
