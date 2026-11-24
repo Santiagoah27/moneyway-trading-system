@@ -6,10 +6,21 @@ namespace MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
 /// <summary>Canonical decisive take; terminality is scoped to the exact session and retained in replay history.</summary>
 public sealed record NasdaqLiquidityTakeRuleFact : IReplayRuleGateFact
 {
-    internal NasdaqLiquidityTakeRuleFact(NasdaqHumanLiquidityTakeObservation take, NasdaqHumanH4PermittedDirection direction, bool invalidated, string evidence, NasdaqHumanLiquidityTakeObservation? initiatingTake = null)
-    { InitiatingTake = initiatingTake ?? take; Take = take; Direction = direction; IsSessionInvalidated = invalidated; EvidenceReference = evidence; }
+    internal NasdaqLiquidityTakeRuleFact(NasdaqHumanLiquidityTakeObservation take, NasdaqHumanH4PermittedDirection direction, bool invalidated, string evidence,
+        NasdaqHumanLiquidityTakeObservation? initiatingTake = null, NasdaqHumanLiquidityTakeObservation? recordedTake = null)
+    {
+        InitiatingTake = initiatingTake ?? take;
+        Take = take;
+        RecordedTake = recordedTake ?? take;
+        Direction = direction;
+        IsSessionInvalidated = invalidated;
+        EvidenceReference = evidence;
+    }
     public NasdaqHumanLiquidityTakeObservation InitiatingTake { get; }
+    /// <summary>The decisive take used by downstream gates.</summary>
     public NasdaqHumanLiquidityTakeObservation Take { get; }
+    /// <summary>The accepted event for this observation, including extensions that keep the decisive reference.</summary>
+    public NasdaqHumanLiquidityTakeObservation RecordedTake { get; }
     public NasdaqDemoSessionIdentity Session => Take.Session;
     public NasdaqHumanH4PermittedDirection Direction { get; }
     public bool IsSessionInvalidated { get; }

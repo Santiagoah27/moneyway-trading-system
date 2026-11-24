@@ -26,15 +26,26 @@ public sealed class MoneyWayNasdaqHumanLiquidityTakeEvaluator : IReplayRuleEvalu
         if (context.StrategyId != StrategyId || context.StrategyVersion != StrategyVersion)
             throw new InvalidOperationException("Strategy context identity must exactly match the evaluator identity.");
         var session = NasdaqDemoSessionIdentity.FromContext(context);
-        var terminal = context.PriorObservations.SelectMany(o => o.RuleFacts).Select(f => f.Fact)
-            .OfType<NasdaqLiquidityTakeRuleFact>().FirstOrDefault(f => f.Session == session && f.IsSessionInvalidated);
+        var sessionTakes = context.PriorObservations.SelectMany(o => o.RuleFacts).Select(f => f.Fact)
+            .OfType<NasdaqLiquidityTakeRuleFact>().Where(f => f.Session == session).ToArray();
+        var terminal = sessionTakes.FirstOrDefault(f => f.IsSessionInvalidated);
         if (terminal is not null)
             return new(RuleEvaluationResult.Failed, "The Nasdaq session remains terminally invalidated; later takes cannot revive it.", terminal.EvidenceReference, terminal);
-        var initiating = context.PriorObservations.SelectMany(o => o.RuleFacts).Select(f => f.Fact)
-            .OfType<NasdaqLiquidityTakeRuleFact>().FirstOrDefault(f => f.Session == session && !f.IsSessionInvalidated);
+        var initiating = sessionTakes.FirstOrDefault();
+        var current = sessionTakes.LastOrDefault();
         var candidates = context.InputObservations.OfType<NasdaqHumanRelevantLiquidityTakeObservation>().Where(o => o.Session == session).ToArray();
         var later = initiating is null ? [] : candidates.Where(o => o.InitiatingTake is not null && o.InitiatingTake.SameFact(initiating.InitiatingTake)).ToArray();
         // Sequential lifecycle events have exact initiating lineage; they are not competing initial claims.
+        if (current is not null && IsSessionExtension(current.InitiatingTake, current.RecordedTake))
+        {
+            var pending = later.Where(o => !sessionTakes.Any(f => f.RecordedTake.SameFact(o.Take))).ToArray();
+            // Only move past accepted events when every outstanding claim is strictly later.
+            // Late competing or simultaneous claims still need human resolution.
+            if (pending.Length > 0 && pending.All(o => o.Take.EffectiveAtUtc > current.RecordedTake.EffectiveAtUtc))
+                later = pending;
+            else if (pending.Length == 0)
+                later = later.Where(o => o.Take.SameFact(current.RecordedTake)).ToArray();
+        }
         var selections = (later.Length > 0 ? later : candidates.Where(o => o.InitiatingTake is null))
             .OrderBy(o => o.ObservedAtUtc).ThenBy(o => o.SourceReference, StringComparer.Ordinal)
             .ThenBy(o => JsonSerializer.Serialize(Describe(o.Take)), StringComparer.Ordinal).ToArray();
@@ -100,19 +111,40 @@ public sealed class MoneyWayNasdaqHumanLiquidityTakeEvaluator : IReplayRuleEvalu
         var direction = h4.Selection.Fact.PermittedDirection;
         var aligned = take.Side == NasdaqStructuralLiquiditySide.Low
             ? direction == NasdaqHumanH4PermittedDirection.Buy : direction == NasdaqHumanH4PermittedDirection.Sell;
+        var decisiveTake = take;
+        if (aligned && current is not null && valid[0].Selection.InitiatingTake is not null
+            && IsSessionExtension(current.InitiatingTake, take)
+            && (current.RecordedTake.SameFact(take) || HasConfirmedStepFourBefore(context, current.Take, take)))
+            decisiveTake = current.Take;
         evidence = JsonSerializer.Serialize(new
         {
             Evidence = JsonSerializer.Deserialize<JsonElement>(evidence),
             H4Direction = direction,
             H4Sources = h4.Selection.SupportingObservations.Select(o => new { o.SourceReference, o.ObservedAtUtc, o.EffectiveAtUtc }),
             TakeEffectiveAtUtc = take.EffectiveAtUtc,
+            DecisiveTake = decisiveTake.SameFact(take) ? null : Describe(decisiveTake),
             SessionInvalidated = !aligned
         });
         return new(aligned ? RuleEvaluationResult.Passed : RuleEvaluationResult.Failed,
-            aligned ? "An eligible relevant take aligns with canonical H4 direction; only later 5M progression is enabled."
+            aligned ? decisiveTake.SameFact(take)
+                ? "An eligible relevant take aligns with canonical H4 direction; only later 5M progression is enabled."
+                : "An aligned session sweep is recorded in the existing setup with its decisive reference retained."
                 : "A relevant misaligned pre-entry take terminally invalidates the Nasdaq session.",
-            evidence, new NasdaqLiquidityTakeRuleFact(take, direction, !aligned, evidence, initiating?.InitiatingTake));
+            evidence, new NasdaqLiquidityTakeRuleFact(decisiveTake, direction, !aligned, evidence, initiating?.InitiatingTake, take));
     }
+
+    private static bool IsSessionExtension(NasdaqHumanLiquidityTakeObservation first, NasdaqHumanLiquidityTakeObservation next) =>
+        first.Reference is NasdaqLiquidityTakeReference.SessionLevel initial
+        && next.Reference is NasdaqLiquidityTakeReference.SessionLevel extension
+        && initial.Endpoint != extension.Endpoint && first.Side == next.Side;
+
+    private static bool HasConfirmedStepFourBefore(StrategyReplayContext context, NasdaqHumanLiquidityTakeObservation current,
+        NasdaqHumanLiquidityTakeObservation next) =>
+        context.PriorObservations.Where(o =>
+                o.WorkflowProgression?.RuleEligibility.Any(e => e.RuleId.Value == "NQ-M5-001" && e.EstablishesProgression) == true)
+            .SelectMany(o => o.RuleFacts).Where(f => f.RuleId.Value == "NQ-M5-001").Select(f => f.Fact)
+            .OfType<NasdaqHumanM5TriggerRuleFact>()
+            .Any(f => f.Selection.Fact.DecisiveTake.SameFact(current) && f.Selection.Fact.EffectiveAtUtc < next.EffectiveAtUtc);
 
     private static object Describe(NasdaqHumanLiquidityTakeObservation o) => new
     {
