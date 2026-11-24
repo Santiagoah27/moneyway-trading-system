@@ -358,6 +358,47 @@ public sealed class NasdaqEndToEndResearchTests
                     ? c.GetProperty("volume").GetDecimal() : null)));
     }
 
+    [Fact]
+    public void V3PreservesJuneEventContinuityWithoutReclassifyingV2OrAdmittingOtherSources()
+    {
+        const string mode = "--compare-h4-context-continuity-v3";
+        const string filename = "nasdaq-h4-context-continuity-v3.json";
+        using var run = new ResearchRun();
+        var full = File.ReadAllBytes(Path.Combine(run.Execute(run.Source, Cutoff, mode), filename));
+        Assert.Equal(full, File.ReadAllBytes(Path.Combine(run.Execute(run.Source, Cutoff, mode), filename)));
+        using var reproduced = JsonDocument.Parse(full);
+        using var atPreparation = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(run.Execute(run.Source, "2026-06-23T13:00:00Z", mode), filename)));
+        var research = reproduced.RootElement.GetProperty("research");
+        var profiles = research.GetProperty("profiles").EnumerateArray().ToArray();
+        Assert.Equal(atPreparation.RootElement.GetProperty("research").GetProperty("profiles").GetRawText(), research.GetProperty("profiles").GetRawText());
+        Assert.Equal(6, profiles.Length);
+        Assert.False(research.GetProperty("canonicalAdmissionPermitted").GetBoolean());
+        Assert.False(research.GetProperty("operationalSignal").GetBoolean());
+        Assert.Equal(0, research.GetProperty("v2DistinctCompletedM1Events").GetInt32());
+        Assert.All(profiles, p =>
+        {
+            Assert.Empty(p.GetProperty("eventsAtLatestClose").EnumerateArray());
+            Assert.Equal("Provisional", p.GetProperty("structureState").GetString());
+            Assert.Equal(JsonValueKind.Null, p.GetProperty("confirmedStructureDirection").ValueKind);
+            Assert.Equal("NoQualifiedEvent", p.GetProperty("v2ContextState").GetString());
+        });
+        Assert.All(profiles.Take(2), p =>
+        {
+            Assert.Equal(2, p.GetProperty("eventHistory").GetArrayLength());
+            var previous = Assert.Single(p.GetProperty("latestPreviouslyObservedEvents").EnumerateArray());
+            Assert.Equal(At(5), previous.GetProperty("event").GetProperty("observedAtUtc").GetDateTimeOffset());
+            Assert.Equal(30268m, previous.GetProperty("event").GetProperty("reference").GetProperty("price").GetDecimal());
+            Assert.True(previous.GetProperty("humanValidationRequired").GetBoolean());
+            Assert.All(previous.GetProperty("subsequentCloses").EnumerateArray(),
+                c => Assert.Equal("BelowReference", c.GetProperty("closeRelation").GetString()));
+            Assert.Equal("ContextValidityUnresolved", previous.GetProperty("validity").GetString());
+        });
+        Assert.All(profiles.Skip(2), p => Assert.Empty(p.GetProperty("eventHistory").EnumerateArray()));
+        var reserved = run.WriteInput("reserved-fixture", new JsonObject
+        { ["tradingDay"] = "2026-11-23", ["partition"] = "Validation" });
+        run.Execute(reserved, Cutoff, mode, expected: 2);
+    }
+
     private static DateTimeOffset At(int hour, int minute = 0) => new(2026, 6, 23, hour, minute, 0, TimeSpan.Zero);
 
     private sealed class ResearchRun : IDisposable

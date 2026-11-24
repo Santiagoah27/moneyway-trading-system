@@ -26,12 +26,13 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             var contextualSc = args.Count == 6 && args[5] == "--compare-context-sc";
             var structuralTarget = args.Count is 6 or 8 && args[5] == "--compare-structural-tp";
             var causalContextV2 = args.Count == 8 && args[5] == "--compare-h4-causal-context-v2";
-            var endToEnd = causalContextV2 || args.Count is 6 or 8 && args[5] == "--compare-end-to-end";
+            var contextContinuityV3 = args.Count == 8 && args[5] == "--compare-h4-context-continuity-v3";
+            var endToEnd = causalContextV2 || contextContinuityV3 || args.Count is 6 or 8 && args[5] == "--compare-end-to-end";
             var structuralStop = structuralTarget || args.Count is 6 or 8 && args[5] == "--compare-structural-sl";
             var realignment = structuralStop || args.Count is 6 or 8 && args[5] == "--compare-context-realignment";
             var sequence = realignment || args.Count is 6 or 8 && args[5] == "--compare-context-sequence";
             if ((args.Count != 5 && !interaction && !tracking && !contextualSc && !sequence && !endToEnd) || args[0] != "nasdaq-session-liquidity" || args[1] != "--input" || args[3] != "--output"
-                || !Path.IsPathFullyQualified(args[2]) || !Path.IsPathFullyQualified(args[4])) throw new ArgumentException("nasdaq-session-liquidity --input <absolute-context-json> --output <new-absolute-directory> [--analyze-interaction | --track-context | --compare-context-sc | (--compare-context-sequence | --compare-context-realignment | --compare-structural-sl | --compare-structural-tp | --compare-end-to-end | --compare-h4-causal-context-v2) [--cutoff-utc <UTC>]]");
+                || !Path.IsPathFullyQualified(args[2]) || !Path.IsPathFullyQualified(args[4])) throw new ArgumentException("nasdaq-session-liquidity --input <absolute-context-json> --output <new-absolute-directory> [--analyze-interaction | --track-context | --compare-context-sc | (--compare-context-sequence | --compare-context-realignment | --compare-structural-sl | --compare-structural-tp | --compare-end-to-end | --compare-h4-causal-context-v2 | --compare-h4-context-continuity-v3) [--cutoff-utc <UTC>]]");
             var input = Path.GetFullPath(args[2]); var destination = Path.TrimEndingDirectorySeparator(Path.GetFullPath(args[4]));
             Guard(input); Guard(destination);
             if (Directory.Exists(destination) || File.Exists(destination) || destination == Path.GetPathRoot(destination)) throw new ArgumentException("New output directory required; never replace existing evidence.");
@@ -40,6 +41,8 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             var bytes = new byte[(int)file.Length]; file.ReadExactly(bytes);
             if (causalContextV2 && Convert.ToHexStringLower(SHA256.HashData(bytes)) != June23DevelopmentSha256)
                 throw new ArgumentException("H4 causal context V2 requires the SHA-256-pinned June 23 Development package.");
+            if (contextContinuityV3 && Convert.ToHexStringLower(SHA256.HashData(bytes)) != June23DevelopmentSha256)
+                throw new ArgumentException("H4 context continuity V3 requires the SHA-256-pinned June 23 Development package.");
             using var json = JsonDocument.Parse(bytes); var root = json.RootElement;
             if (endToEnd && root.TryGetProperty("schema", out var schema) &&
                 schema.GetString() == NasdaqEvidenceReadinessCommand.RegistrationSchema)
@@ -126,7 +129,7 @@ public sealed class NasdaqSessionLiquidityResearchCommand
                     h4Start, DevelopmentProvenance);
                 report = new
                 {
-                    SchemaVersion = causalContextV2 ? 2 : 1,
+                    SchemaVersion = contextContinuityV3 ? 3 : causalContextV2 ? 2 : 1,
                     InputSha256 = Convert.ToHexStringLower(SHA256.HashData(bytes)),
                     DocumentaryMapping = root.GetProperty("documentaryMapping").GetString(),
                     SourceProvenance = new[] { "H4", "H1", "M5", "M1" }.ToDictionary(k => k, k =>
@@ -134,7 +137,8 @@ public sealed class NasdaqSessionLiquidityResearchCommand
                             .Where(p => p.Name is "sourceTimeframe" or "derived" or "intervalMinutes" or "rawRelativePath" or
                                 "normalizedRelativePath" or "rawSha256" or "normalizedSha256")
                             .ToDictionary(p => p.Name, p => p.Value.Clone()) : null),
-                    Research = causalContextV2 ? new CompareNasdaqH4CausalContextUseCase().Execute(request) :
+                    Research = contextContinuityV3 ? new EvaluateH4ContextContinuityUseCase().Execute(new CompareNasdaqH4CausalContextUseCase().Execute(request)) :
+                        causalContextV2 ? new CompareNasdaqH4CausalContextUseCase().Execute(request) :
                         NasdaqEndToEndResearchOutput.Project(new EvaluateNasdaqEndToEndResearchUseCase().Execute(request))
                 };
             }
@@ -272,7 +276,8 @@ public sealed class NasdaqSessionLiquidityResearchCommand
             var content = JsonSerializer.Serialize(report, endToEnd ? IntegratedJson : Json).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n";
             var parent = Path.GetDirectoryName(destination)!; Directory.CreateDirectory(parent); Guard(parent);
             var pending = Path.Combine(parent, ".nasdaq-session-pending-" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(pending); File.WriteAllText(Path.Combine(pending, causalContextV2 ? "nasdaq-h4-causal-context-v2.json" :
+            Directory.CreateDirectory(pending); File.WriteAllText(Path.Combine(pending, contextContinuityV3 ? "nasdaq-h4-context-continuity-v3.json" :
+                causalContextV2 ? "nasdaq-h4-causal-context-v2.json" :
                 endToEnd ? "nasdaq-end-to-end-research.json" : sequence ? "contextual-sequence.json" : contextualSc ? "contextual-swing-sc.json" : tracking ? "liquidity-context.json" : interaction ? "london-asia-interaction.json" : "session-liquidity.json"), content, new UTF8Encoding(false));
             if (realignmentReport is not null)
                 File.WriteAllText(Path.Combine(pending, "contextual-m1-realignment.json"),

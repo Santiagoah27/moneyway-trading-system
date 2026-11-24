@@ -106,6 +106,14 @@ public sealed class H4CausalContextResearchTests
         Assert.Equal(H4CausalContextState.Ambiguous, report.ContextState);
         Assert.Null(report.ContextAlignedDirection);
         Assert.Equal(2, report.ContextEvents.Count(e => e.ObservedAtUtc == report.AsOfUtc));
+        var continuity = new EvaluateH4ContextContinuityUseCase().ProjectEvents(report);
+        var simultaneous = continuity.Where(e => e.AtLatestClosedCandle).ToArray();
+        Assert.Equal(2, simultaneous.Length);
+        Assert.All(simultaneous, e =>
+        {
+            Assert.Empty(e.LaterOpposingEvents);
+            Assert.Equal(H4ContinuityValidity.ContextValidityUnresolved, e.Validity);
+        });
     }
 
     [Fact]
@@ -121,6 +129,14 @@ public sealed class H4CausalContextResearchTests
         Assert.Equal(H4ResearchDirection.Sell, rejection.Direction);
         Assert.Equal(H4ResearchDirection.Buy, after.ConfirmedStructureDirection);
         Assert.Null(after.ContextAlignedDirection);
+        var continuity = new EvaluateH4ContextContinuityUseCase();
+        var initial = Assert.Single(continuity.ProjectEvents(before), e => e.Event.Kind == H4CausalContextKind.Breakout);
+        var invalidated = Assert.Single(continuity.ProjectEvents(after), e => e.Event.Kind == H4CausalContextKind.Breakout);
+        Assert.Equal(H4ContinuityValidity.ContextValidityUnresolved, initial.Validity);
+        Assert.Equal(H4ContinuityValidity.TrackedBreakoutInvalidated, invalidated.Validity);
+        Assert.Equal(initial.Event.ObservedAtUtc, invalidated.Event.ObservedAtUtc);
+        Assert.Equal(At(9), Assert.Single(invalidated.LaterOpposingEvents).ObservedAtUtc);
+        Assert.Equal(At(9), Assert.Single(invalidated.TrackedBreakoutHistory, d => d.Status == H4DelayedStatus.Invalidated).ObservedAtUtc);
     }
 
     [Fact]
@@ -175,6 +191,61 @@ public sealed class H4CausalContextResearchTests
         Assert.Equal(initial, JsonSerializer.Serialize(Execute(bars, asOf)));
         bars[7] = Bar(7, 0, 500, 300, 400);
         Assert.Equal(initial, JsonSerializer.Serialize(Execute([.. bars, Bar(8, 1, 550)], asOf)));
+    }
+
+    [Theory]
+    [InlineData(false, H4ResearchDirection.Buy, H4CloseRelation.AboveReference)]
+    [InlineData(true, H4ResearchDirection.Sell, H4CloseRelation.BelowReference)]
+    public void ContinuitySeparatesEarlierEventsFromValidityAndClosingEvidence(bool mirror,
+        H4ResearchDirection direction, H4CloseRelation relation)
+    {
+        var bars = Trend(mirror);
+        Candle Later(int i, decimal low, decimal high, decimal open, decimal close) =>
+            mirror ? Bar(i, 100 - high, 100 - low, 100 - open, 100 - close) : Bar(i, low, high, open, close);
+        var after = new[] { Later(8, 20, 27, 25, 26), Later(9, 21, 28, 26, 27), Later(10, 17, 28, 27, 22) };
+        var continuity = new EvaluateH4ContextContinuityUseCase();
+        Assert.Empty(continuity.ProjectEvents(Execute(bars[..2])));
+        Assert.DoesNotContain(continuity.ProjectEvents(Execute(bars, At(8).AddTicks(-1))), e => e.Event.Kind == H4CausalContextKind.Breakout);
+        var observed = Assert.Single(continuity.ProjectEvents(Execute(bars)), e => e.Event.Kind == H4CausalContextKind.Breakout);
+        Assert.True(observed.AtLatestClosedCandle);
+        Assert.Equal(direction, observed.Event.Direction);
+        var followed = Assert.Single(continuity.ProjectEvents(Execute([.. bars, .. after])), e => e.Event.Kind == H4CausalContextKind.Breakout);
+        Assert.False(followed.AtLatestClosedCandle);
+        Assert.Equal(observed.Event.ObservedAtUtc, followed.Event.ObservedAtUtc);
+        Assert.All(followed.SubsequentCloses.Take(2), e => Assert.Equal(relation, e.CloseRelation));
+        Assert.NotEqual(relation, followed.SubsequentCloses[^1].CloseRelation);
+        Assert.Equal(H4DelayedStatus.HorizonCompleted, followed.TrackedBreakoutHistory[^1].Status);
+        Assert.True(followed.HumanValidationRequired);
+        Assert.Equal(H4ContinuityValidity.ContextValidityUnresolved, followed.Validity);
+    }
+
+    [Fact]
+    public void ContinuityDoesNotTreatAReplacementReferenceOrASourceGapAsInvalidation()
+    {
+        var continuity = new EvaluateH4ContextContinuityUseCase();
+        var bars = Trend();
+        var replacement = Assert.Single(continuity.ProjectEvents(Execute(
+            [.. bars, Bar(8, 20, 29, 25, 28), Bar(9, 21, 28, 27, 26)])), e => e.Event.Kind == H4CausalContextKind.Breakout);
+        Assert.NotNull(replacement.LatestConfirmedSameSideReference);
+        Assert.NotEqual(replacement.Event.Reference.CandidateId, replacement.LatestConfirmedSameSideReference.CandidateId);
+        Assert.Equal(H4ContinuityValidity.ContextValidityUnresolved, replacement.Validity);
+        var gap = Assert.Single(continuity.ProjectEvents(Execute([.. bars, Bar(9, 13, 21, 20, 19)])),
+            e => e.Event.Kind == H4CausalContextKind.Breakout);
+        Assert.False(Assert.Single(gap.SubsequentSourceGaps).DocumentedClosure);
+        Assert.Equal(H4DelayedStatus.EvidenceLimited, gap.TrackedBreakoutHistory[^1].Status);
+        Assert.True(gap.HumanValidationRequired);
+    }
+
+    [Fact]
+    public void ContinuityOfAConfirmedEventIsInvariantToFutureAppendAndMutation()
+    {
+        var continuity = new EvaluateH4ContextContinuityUseCase();
+        var bars = Trend();
+        var cutoff = At(8);
+        string Snapshot(Candle[] source) => JsonSerializer.Serialize(continuity.ProjectEvents(Execute(source, cutoff)));
+        var expected = Snapshot(bars);
+        Assert.Equal(expected, Snapshot([.. bars, Bar(8, 17, 27, 25, 22)]));
+        Assert.Equal(expected, Snapshot([.. bars, Bar(8, -1, 500, 30, 400), Bar(9, 6, 700)]));
     }
 
     private static Candle[] Trend(bool mirror = false)
