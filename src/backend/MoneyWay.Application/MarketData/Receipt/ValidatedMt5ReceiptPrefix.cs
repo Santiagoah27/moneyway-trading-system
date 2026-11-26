@@ -33,11 +33,13 @@ public sealed record Mt5ReceiptPrefixSelection(Mt5ReceiptStatus Status, Validate
 /// <summary>Immutable observations from one validated, anchored predecessor chain through a pinned boundary.</summary>
 public sealed class ValidatedMt5ReceiptPrefix
 {
-    private ValidatedMt5ReceiptPrefix(Mt5ReceiptBatch batch, Mt5ReceiptPrefixBoundary boundary)
+    private ValidatedMt5ReceiptPrefix(Mt5ReceiptBatch batch, Mt5ReceiptPrefixBoundary boundary, Mt5ReceiptPrefixBoundary? diagnosticAnchor)
     {
         DirectoryScope = batch.DirectoryScope;
         Boundary = boundary;
-        Records = Array.AsReadOnly(batch.Records.OrderBy(r => r.Observation!.Metadata.Sequence).Select(r => r with
+        DiagnosticAnchor = diagnosticAnchor;
+        Records = Array.AsReadOnly(batch.Records.Where(r => r.FileName != diagnosticAnchor?.RecordFile)
+            .OrderBy(r => r.Observation!.Metadata.Sequence).Select(r => r with
         {
             Diagnostics = Array.AsReadOnly(r.Diagnostics.ToArray()),
             Observation = r.Observation! with
@@ -55,12 +57,27 @@ public sealed class ValidatedMt5ReceiptPrefix
 
     public string DirectoryScope { get; }
     public Mt5ReceiptPrefixBoundary Boundary { get; }
+    public Mt5ReceiptPrefixBoundary? DiagnosticAnchor { get; }
     public IReadOnlyList<Mt5ReceiptRecord> Records { get; }
     public string EvidenceManifestSha256 { get; }
     public Mt5ReceivedRecordIdentity? FinalReceipt => Records.LastOrDefault()?.Observation is { } a
         ? new(a.RecordFile, a.RecordSha256, a.Metadata.Sequence, a.Metadata.RunId, a.Metadata.PollSequence, a.Metadata.Event) : null;
 
     public static Mt5ReceiptPrefixSelection Select(Mt5ReceiptBatch batch, Mt5ReceiptPrefixBoundary boundary)
+        => SelectCore(batch, boundary, null);
+
+    public static Mt5ReceiptPrefixSelection SelectDiagnosticRange(Mt5ReceiptBatch batch,
+        Mt5ReceiptPrefixBoundary anchor, Mt5ReceiptPrefixBoundary boundary)
+    {
+        ArgumentNullException.ThrowIfNull(anchor);
+        ArgumentNullException.ThrowIfNull(boundary);
+        if (anchor.Sequence == 0 || anchor.Sequence >= boundary.Sequence)
+            throw new ArgumentException("A diagnostic range requires a pinned anchor before a pinned cut.");
+        return SelectCore(batch, boundary, anchor);
+    }
+
+    private static Mt5ReceiptPrefixSelection SelectCore(Mt5ReceiptBatch batch,
+        Mt5ReceiptPrefixBoundary boundary, Mt5ReceiptPrefixBoundary? diagnosticAnchor)
     {
         ArgumentNullException.ThrowIfNull(batch);
         ArgumentNullException.ThrowIfNull(boundary);
@@ -82,7 +99,9 @@ public sealed class ValidatedMt5ReceiptPrefix
                     codes.Add("prefix_receipt_identity_mismatch");
                 if (previous is null)
                 {
-                    if (m.Sequence != 1 || m.PreviousRecord is not null) codes.Add("prefix_origin_not_established");
+                    if (diagnosticAnchor is null ? m.Sequence != 1 || m.PreviousRecord is not null
+                        : m.Sequence != diagnosticAnchor.Sequence || a.RecordSha256 != diagnosticAnchor.RecordSha256)
+                        codes.Add("prefix_origin_not_established");
                 }
                 else if (m.Sequence <= previous.Metadata.Sequence || m.PreviousRecord != previous.RecordFile
                     || m.PreviousRecordSha256 != previous.RecordSha256) codes.Add("prefix_is_not_one_complete_predecessor_chain");
@@ -96,7 +115,7 @@ public sealed class ValidatedMt5ReceiptPrefix
             else if (previous is null || previous.RecordFile != boundary.RecordFile || previous.RecordSha256 != boundary.RecordSha256)
                 codes.Add("pinned_prefix_boundary_unavailable_or_changed");
         }
-        if (codes.Count == 0) return new(Mt5ReceiptStatus.Validated, new(batch, boundary), records.Length, Array.Empty<string>());
+        if (codes.Count == 0) return new(Mt5ReceiptStatus.Validated, new(batch, boundary, diagnosticAnchor), records.Length, Array.Empty<string>());
         var status = batch.Status is Mt5ReceiptStatus.Conflict or Mt5ReceiptStatus.Invalid or Mt5ReceiptStatus.DataUnavailable
             ? batch.Status : Mt5ReceiptStatus.Conflict;
         return new(status, null, records.Length, Array.AsReadOnly(codes.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray()));

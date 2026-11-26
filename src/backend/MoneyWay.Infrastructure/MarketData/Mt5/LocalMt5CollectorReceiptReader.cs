@@ -41,6 +41,18 @@ public sealed class LocalMt5CollectorReceiptReader : IMt5CollectorReceiptReader,
         return ReadCore(sourceDirectory, null, pins, boundary);
     }
 
+    public Mt5ReceiptBatch ReadDiagnosticRange(string sourceDirectory, Mt5ReceiptPrefixBoundary anchor,
+        Mt5ReceiptPrefixBoundary boundary)
+    {
+        if (anchor.RecordFile is not { } anchorFile || boundary.RecordFile is not { } boundaryFile
+            || anchor.Sequence >= boundary.Sequence)
+            throw new ArgumentException("A diagnostic range requires a pinned anchor before a pinned cut.");
+        return ReadCore(sourceDirectory, null, new Dictionary<string, string>
+        {
+            [anchorFile] = anchor.RecordSha256!, [boundaryFile] = boundary.RecordSha256!
+        }, boundary, anchor);
+    }
+
     private static Mt5ReceiptBatch ReadCore(string sourceDirectory, Mt5ReceiptCheckpoint? checkpoint,
         IReadOnlyDictionary<string, string>? expectedRecordHashes, Mt5ReceiptPrefixBoundary? boundary,
         Mt5ReceiptPrefixBoundary? anchor = null)
@@ -73,7 +85,7 @@ public sealed class LocalMt5CollectorReceiptReader : IMt5CollectorReceiptReader,
         {
             if (!Directory.Exists(root)) return Empty("source_directory_unavailable");
             GuardRoot(root);
-            var inventory = (anchor is not null ? SuffixEntries(root, anchor.Sequence) :
+            var inventory = (anchor is not null ? SuffixEntries(root, anchor.Sequence, boundary?.Sequence) :
                 boundary is null ? Directory.EnumerateFileSystemEntries(root) : PrefixEntries(root, boundary.Sequence))
                 .Take(MaxDirectoryEntries + 1).Select(Path.GetFileName).ToArray();
             if (inventory.Length > MaxDirectoryEntries) return Empty("directory_entry_limit");
@@ -177,12 +189,13 @@ public sealed class LocalMt5CollectorReceiptReader : IMt5CollectorReceiptReader,
         Mt5ReceiptBatch Empty(string code) => new(scope, Array.Empty<Mt5ReceiptRecord>(), Codes([code]), new(scope, ledger.Values));
     }
 
-    private static IEnumerable<string> SuffixEntries(string root, long sequence) =>
+    private static IEnumerable<string> SuffixEntries(string root, long sequence, long? through) =>
         Directory.EnumerateFileSystemEntries(root, "record-????????????.json").Where(entry =>
         {
             var name = Path.GetFileName(entry);
-            return Mt5WireContract.RecordName(name) &&
-                long.Parse(name.AsSpan(7, 12), CultureInfo.InvariantCulture) >= sequence;
+            if (!Mt5WireContract.RecordName(name)) return false;
+            var candidate = long.Parse(name.AsSpan(7, 12), CultureInfo.InvariantCulture);
+            return candidate >= sequence && (through is null || candidate <= through);
         });
 
     // Disjoint decimal filename ranges select only names at/before the boundary at the filesystem boundary.
