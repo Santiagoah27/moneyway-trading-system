@@ -30,7 +30,10 @@ public sealed class NasdaqHumanM5TriggerObservationSelector
             .Where(f => f.RuleId.Value is "NQ-TIME-001" or "NQ-TIME-002")
             .Select(f => f.Fact).OfType<NasdaqTradingWindowFact>()
             .LastOrDefault(w => w.Contains(decisiveTake.Take.EffectiveAtUtc));
-        if (window is null || !window.Contains(context.AsOfUtc)) return new NasdaqHumanM5TriggerSelection.Missing([]);
+        if (window is null || !window.Contains(context.AsOfUtc)
+            || context.StrategyVersion == StrategyDefinitions.Nasdaq.MoneyWayNasdaqWindow1130Candidate.Version
+                && !NasdaqTradingWindowFact.ForReplay(context).Contains(context.AsOfUtc))
+            return new NasdaqHumanM5TriggerSelection.Missing([]);
 
         var valid = new List<NasdaqHumanM5TriggerObservation>();
         var unavailable = new List<NasdaqHumanM5TriggerObservation>();

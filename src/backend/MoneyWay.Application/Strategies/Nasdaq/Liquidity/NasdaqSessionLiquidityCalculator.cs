@@ -30,7 +30,7 @@ public sealed class NasdaqSessionLiquidityCalculator
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        if (context.StrategyVersion == MoneyWayNasdaqSessionCandidate.Version)
+        if (MoneyWayNasdaqWindow1130Candidate.UsesExplicitSessions(context.StrategyVersion))
             return CalculateExplicit(context);
 
         var localAsOf = TimeZoneInfo.ConvertTime(context.AsOfUtc, StrategyTimeZone);

@@ -17,9 +17,6 @@ public sealed class MoneyWayNasdaqTradingWindowStartEvaluator : IReplayRuleEvalu
     public MoneyWayNasdaqTradingWindowStartEvaluator() : this(MoneyWayNasdaqStrategyDefinition.Instance.Version) { }
     internal MoneyWayNasdaqTradingWindowStartEvaluator(StrategyVersion version) { boundVersion = version; }
 
-    private const string TimeZoneId = "America/Bogota";
-    private static readonly TimeOnly TradingWindowStart = new(8, 30);
-    private static readonly TimeZoneInfo StrategyTimeZone = ResolveStrategyTimeZone();
     private static readonly StrategyDefinition StrategyDefinition = MoneyWayNasdaqStrategyDefinition.Instance;
     private static readonly StrategyRuleDefinition RuleDefinition = StrategyDefinition.Rules.Single(rule => rule.RuleId.Value == "NQ-TIME-001");
 
@@ -33,26 +30,14 @@ public sealed class MoneyWayNasdaqTradingWindowStartEvaluator : IReplayRuleEvalu
         if (context.StrategyId != StrategyId || context.StrategyVersion != StrategyVersion)
             throw new InvalidOperationException("Strategy context identity must exactly match the evaluator identity.");
 
-        var localTime = TimeZoneInfo.ConvertTime(context.AsOfUtc, StrategyTimeZone);
-        var result = TimeOnly.FromDateTime(localTime.DateTime) < TradingWindowStart
+        var window = NasdaqTradingWindowFact.ForReplay(context);
+        var result = context.AsOfUtc < window.StartUtc
             ? RuleEvaluationResult.Waiting
             : RuleEvaluationResult.Passed;
         var reason = result == RuleEvaluationResult.Waiting
             ? "The replay context is before the 08:30 America/Bogota trading-window start."
             : "The replay context is at or after the 08:30 America/Bogota trading-window start.";
 
-        return new ReplayRuleEvaluationDecision(result, reason, null, new NasdaqTradingWindowFact(context.AsOfUtc, StrategyTimeZone));
-    }
-
-    private static TimeZoneInfo ResolveStrategyTimeZone()
-    {
-        try
-        {
-            return TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId);
-        }
-        catch (TimeZoneNotFoundException) when (TimeZoneInfo.TryConvertIanaIdToWindowsId(TimeZoneId, out var windowsId))
-        {
-            return TimeZoneInfo.FindSystemTimeZoneById(windowsId);
-        }
+        return new ReplayRuleEvaluationDecision(result, reason, null, window);
     }
 }

@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
+using MoneyWay.Application.Strategies.Nasdaq.MentorSessions;
 using MoneyWay.Application.Strategies.Nasdaq.ReplayInputs;
+using MoneyWay.Application.StrategyDefinitions.Nasdaq;
 using MoneyWay.Application.StrategyReplay;
 using MoneyWay.Application.StrategyReplay.Workflow;
 using MoneyWay.Domain.Strategies;
@@ -44,6 +46,8 @@ public sealed class NasdaqScenario2LifecycleCompletionEvidence : IStrategyReplay
         // erase a genuine earlier completion; current incompatible reviews and terminal evidence still do.
         var window = start!.RuleFacts.Where(f => f.RuleId.Value is "NQ-TIME-001" or "NQ-TIME-002")
             .Select(f => f.Fact).OfType<NasdaqTradingWindowFact>().FirstOrDefault(w => w.Contains(start.AsOfUtc));
+        if (window is not null && context.StrategyVersion == MoneyWayNasdaqWindow1130Candidate.Version)
+            window = new NasdaqTradingWindowFact(start.AsOfUtc, NasdaqSupervisedSessionPolicy.Zone);
         var history = context.PriorObservations.Where(o => o.AsOfUtc >= start.AsOfUtc && window?.Contains(o.AsOfUtc) == true).ToArray();
         var candidate = history.LastOrDefault(o => o.Evaluations.Any(e => e.RuleId.Value == "NQ-WF2-002"));
         var candidateFact = candidate?.RuleFacts.Where(f => f.RuleId.Value == "NQ-WF2-002")

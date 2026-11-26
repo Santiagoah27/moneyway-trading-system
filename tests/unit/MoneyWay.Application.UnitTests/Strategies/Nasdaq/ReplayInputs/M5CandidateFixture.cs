@@ -26,9 +26,11 @@ internal sealed class M5CandidateFixture
     internal NasdaqHumanH4PermittedDirection Direction { get; }
     internal static DateTimeOffset At(int minute) => M5Fixture.At(14, minute);
     internal M5CandidateFixture(bool buy = true, decimal close = 100.01m, bool baseline = false, NasdaqStrategyPath path = NasdaqStrategyPath.Standard,
-        decimal? candleOpen = null, decimal? high = null, decimal? low = null, bool sessionCandidate = false)
+        decimal? candleOpen = null, decimal? high = null, decimal? low = null, bool sessionCandidate = false, bool window1130Candidate = false)
     {
-        Definition = sessionCandidate ? MoneyWayNasdaqSessionCandidate.Definition : baseline ? MoneyWayNasdaqStrategyDefinition.Instance : MoneyWayNasdaqM5StrictCloseCandidate.Definition;
+        sessionCandidate |= window1130Candidate;
+        Definition = window1130Candidate ? MoneyWayNasdaqWindow1130Candidate.Definition
+            : sessionCandidate ? MoneyWayNasdaqSessionCandidate.Definition : baseline ? MoneyWayNasdaqStrategyDefinition.Instance : MoneyWayNasdaqM5StrictCloseCandidate.Definition;
         Direction = buy ? NasdaqHumanH4PermittedDirection.Buy : NasdaqHumanH4PermittedDirection.Sell;
         Series = M5Fixture.Series().Select(s => new CandleSeries(s.ProviderId, s.Symbol, s.Timeframe,
             s.Candles.Where(c => c.CloseTimeUtc <= At(30)).Select(c => c.Timeframe == NasdaqHumanM5TriggerEvent.M5 && c.CloseTimeUtc == At(10)
@@ -64,6 +66,8 @@ internal sealed class M5CandidateFixture
     }
     internal MultiTimeframeStrategyBacktestDiagnosticsReport Run(IEnumerable<IStrategyReplayInputObservation>? inputs = null, CandleSeries[]? series = null)
     {
+        if (Definition.Version == MoneyWayNasdaqWindow1130Candidate.Version)
+            return MoneyWayNasdaqWindow1130Candidate.CreateBacktest().Execute(Definition, series ?? Series, inputs ?? Inputs);
         if (Definition.Version == MoneyWayNasdaqSessionCandidate.Version) return MoneyWayNasdaqSessionCandidate.CreateBacktest().Execute(Definition, series ?? Series, inputs ?? Inputs);
         var candidate = Definition.Version == MoneyWayNasdaqM5StrictCloseCandidate.Version;
         if (candidate) return MoneyWayNasdaqM5StrictCloseCandidate.CreateBacktest().Execute(Definition, series ?? Series, inputs ?? Inputs);

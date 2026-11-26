@@ -50,7 +50,7 @@ public sealed class MoneyWayNasdaqHumanM5TriggerEvaluator : IReplayRuleEvaluator
                 JsonSerializer.Serialize(new { Session = session, prerequisite?.Result, Eligibility = eligibility, prerequisite?.EvidenceReference }));
 
         NasdaqM5StrictCloseDetector.Detection? detection = null;
-        if (StrategyVersion == MoneyWayNasdaqM5StrictCloseCandidate.Version || StrategyVersion == MoneyWayNasdaqSessionCandidate.Version)
+        if (StrategyVersion == MoneyWayNasdaqM5StrictCloseCandidate.Version || MoneyWayNasdaqWindow1130Candidate.UsesExplicitSessions(StrategyVersion))
         {
             var retained = context.PriorObservations.SelectMany(o => o.RuleFacts).Where(f => f.RuleId == RuleId)
                 .SelectMany(f => f.Fact switch

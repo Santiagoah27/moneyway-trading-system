@@ -34,14 +34,13 @@ public static class NasdaqTradingWindowAlignment
         var day = DateOnly.FromDateTime(local.Date);
         DateTimeOffset Utc(TimeOnly time) => TimeZoneInfo.ConvertTimeToUtc(day.ToDateTime(time), zone);
         var preparation = Utc(Preparation);
-        var opening = Utc(Opening);
-        var closing = Utc(Closing);
+        var candidate = new NasdaqTradingWindowFact(at, zone, Opening, Closing);
         var legacy = new NasdaqTradingWindowFact(at, zone);
         var clockPreparation = at < preparation ? NasdaqPreparationClockPhase.BeforePreparation :
-            at < opening ? NasdaqPreparationClockPhase.PreparationPhase : NasdaqPreparationClockPhase.PreparationIntervalElapsed;
+            at < candidate.StartUtc ? NasdaqPreparationClockPhase.PreparationPhase : NasdaqPreparationClockPhase.PreparationIntervalElapsed;
         return new(validCutoff, at, local, preparation, evidence, clockPreparation,
             Timing(legacy.StartUtc, legacy.EndUtc, legacy.Contains(at)),
-            Timing(opening, closing, at >= opening && at < closing));
+            Timing(candidate.StartUtc, candidate.EndUtc, candidate.Contains(at)));
 
         NasdaqWindowTiming Timing(DateTimeOffset start, DateTimeOffset end, bool inside) =>
             new(start, end, at < start ? NasdaqWindowClockPhase.BeforeTradingWindow :

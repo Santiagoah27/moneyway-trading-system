@@ -95,8 +95,11 @@ public sealed class MoneyWayNasdaqHumanLiquidityTakeEvaluator : IReplayRuleEvalu
             if (result == RuleEvaluationResult.NotApplicable) result = RuleEvaluationResult.Waiting;
             return new(result, "A required prior canonical prerequisite has not passed for this event/session.", evidence);
         }
-        if (window is not null && context.AsOfUtc >= window.EndUtc)
-            return new(RuleEvaluationResult.Failed, "The canonical TIME-owned operational cutoff has been reached; no pre-entry continuation is allowed.", evidence);
+        var currentWindow = StrategyVersion == MoneyWayNasdaqWindow1130Candidate.Version
+            ? NasdaqTradingWindowFact.ForReplay(context) : window;
+        if (window is not null && currentWindow is not null && context.AsOfUtc >= currentWindow.EndUtc)
+            return new(RuleEvaluationResult.Failed, "The canonical TIME-owned operational cutoff has been reached; no pre-entry continuation is allowed.",
+                currentWindow == window ? evidence : JsonSerializer.Serialize(new { PriorEvidence = JsonSerializer.Deserialize<JsonElement>(evidence), CurrentWindow = currentWindow }));
         if (window is null || !window.Contains(context.AsOfUtc))
             return new(RuleEvaluationResult.Waiting, "No canonical operational-window fact permits this event/current frame.", evidence);
         if (context.PriorObservations.Any(o => o.AsOfUtc >= window.StartUtc && o.AsOfUtc < window.EndUtc

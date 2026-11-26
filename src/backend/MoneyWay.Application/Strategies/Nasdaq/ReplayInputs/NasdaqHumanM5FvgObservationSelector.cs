@@ -53,7 +53,9 @@ public sealed class NasdaqHumanM5FvgObservationSelector
             && latest.WorkflowProgression?.RuleEligibility.SingleOrDefault(e => e.RuleId.Value == "NQ-M5-001")?.EstablishesProgression == true
             && InWindow(context, context.AsOfUtc);
     }
-    internal static bool InWindow(StrategyReplayContext context, DateTimeOffset time) => context.PriorObservations
+    internal static bool InWindow(StrategyReplayContext context, DateTimeOffset time) =>
+        (context.StrategyVersion != StrategyDefinitions.Nasdaq.MoneyWayNasdaqWindow1130Candidate.Version
+            || NasdaqTradingWindowFact.ForReplay(context).Contains(context.AsOfUtc)) && context.PriorObservations
         .SelectMany(o => o.RuleFacts).Where(f => f.RuleId.Value is "NQ-TIME-001" or "NQ-TIME-002")
         .Select(f => f.Fact).OfType<NasdaqTradingWindowFact>().Any(w => w.Contains(time) && w.Contains(context.AsOfUtc));
 

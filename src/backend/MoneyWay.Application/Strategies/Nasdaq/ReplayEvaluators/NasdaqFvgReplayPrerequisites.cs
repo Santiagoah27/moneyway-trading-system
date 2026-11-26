@@ -32,7 +32,9 @@ internal static class NasdaqFvgReplayPrerequisites
             }
         }
         // Keep session arithmetic/cutoff evaluation after all terminal gates, as before.
-        var sameSession = windows.Where(w => context.AsOfUtc >= w.DayStartUtc && context.AsOfUtc < w.DayStartUtc.AddDays(1)).ToArray();
+        var sameSession = context.StrategyVersion == StrategyDefinitions.Nasdaq.MoneyWayNasdaqWindow1130Candidate.Version
+            ? [NasdaqTradingWindowFact.ForReplay(context)]
+            : windows.Where(w => context.AsOfUtc >= w.DayStartUtc && context.AsOfUtc < w.DayStartUtc.AddDays(1)).ToArray();
         if (sameSession.Any(w => context.AsOfUtc >= w.EndUtc))
             return new(RuleEvaluationResult.Failed, "The canonical TIME-owned entry-acquisition cutoff has been reached.", System.Text.Json.JsonSerializer.Serialize(sameSession));
         if (context.PriorObservations.LastOrDefault(o => o.LifecycleProgression is not null)?.LifecycleProgression is { ActiveInstance: null })
