@@ -97,3 +97,28 @@ The required `NQ-H4-001` definition asks for the formally closed 08:00 H4 contex
 ## Consequences
 
 This decision defines where a future H4 fold enters canonical replay and which causal facts must survive frames. It does not implement runtime, change metadata/capability, define a missing-evidence verdict or permit live execution.
+
+## Runtime audit at 2026-11-26
+
+This audit records implementation status without changing the decision above.
+
+- `e5ad2ab` implemented [the immutable snapshot variants](../../src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqH4ReconstructionSnapshot.cs) and the typed pre-evaluation context seam. A caller can explicitly attach a snapshot with `ExecuteWithPreEvaluationState` or `ExecuteCanonicalWithPreEvaluationState`, and an evaluator can recover it with `TryGetPreEvaluationState<T>`. The generic context checks strategy, version, provider and symbol. Its separate input-observation filter checks `ObservedAtUtc <= AsOfUtc`. The generic state slot itself does not establish when a supplied snapshot became observable.
+- `f232573` implemented [catch-up from an existing episode snapshot](../../src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayInputs/NasdaqH4ReconstructionCatchUpOrchestrator.cs). When advancing market state it resolves the cursor in the bounded H4 series and checks the candle's coordinates and OHLCV. It passes only the next visible closed candle to the applicable reducer. Missing or conflicting human evidence remains explicit. An evidence-only completion preserves the market cursor. The orchestrator stops at `Completed` for that episode.
+- [The canonical backtest runner](../../src/backend/MoneyWay.Application/Backtesting/GenerateMultiTimeframeStrategyBacktestRunUseCase.cs) still builds contexts through the ordinary factories. It does not seed or call the H4 catch-up, retain its result from frame to frame, or publish that state on `StrategyReplayContextObservation`. The workflow and setup snapshots are separate, later stages. The existing tests establish causality and replay isolation of the supplied-context seam and focused catch-up. They do not establish a canonical H4 fold.
+- [The registered NQ-H4-001 evaluator](../../src/backend/MoneyWay.Application/Strategies/Nasdaq/ReplayEvaluators/MoneyWayNasdaqHumanH4ContextEvaluator.cs) uses the assisted path in ADR 0025. It reads causally visible, exact-session human H4 context, returns `HumanValidationRequired` for missing, conflicting or unresolved review, and can pass a unique usable review with resolved context and direction. It does not read reconstruction snapshots. Completing a reconstruction episode does not establish the session's context, classification and permitted direction.
+
+The immediate blocker for a canonical fold is a source-backed initial episode
+and its causal activation. `InvalidatedAwaitingOrigin` needs an already
+verified invalidation and its exact H4 candle; the catch-up cannot infer those
+facts from arbitrary raw history. The existing context slot does not choose
+the seed, decide its availability or retain the full human selection across
+frames. In particular, [ADR 0019](0019-clarify-nasdaq-post-completion-h4-lifecycle.md)
+distinguishes origin and ordinary 009 supporting observations carried by the
+outer result from state embedded in the completed snapshot.
+
+The next scoped input is one reviewed, replay-admissible starting episode
+with exact strategy/version and H4 series identity, a verified invalidation
+candle/cursor, and the source reference and time at which that seed became
+observable. Use that case to specify the run-local activation and preservation
+of the complete catch-up provenance. Raw bootstrap, general post-completion
+handoff and an automatic NQ-H4-001 mapping remain separate concerns.
