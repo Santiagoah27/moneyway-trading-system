@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { SupervisedSessionState } from "./SupervisedSessionPanel";
+import { PreparationReceiptBindingPanel } from "./PreparationReceiptBindingPanel";
 import {
     PreparationArtifactPanel,
     type PreparationArtifact,
@@ -771,6 +772,11 @@ export function ProspectivePreparationPanel({
                         onAttached={accept}
                         onLockChange={setArtifactLocked}
                         disabled={working || !!pending}
+                    />
+                    <PreparationReceiptBindingPanel
+                        key={saved.revisionHash}
+                        apiBaseUrl={apiBaseUrl}
+                        preparation={saved}
                     />
                     <p>
                         {saved.record.identity.strategyId.value}/

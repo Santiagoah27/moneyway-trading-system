@@ -40,6 +40,7 @@ if (app.Environment.IsDevelopment())
     app.MapNasdaqHistoricalPackageEndpoints();
     app.MapNasdaqPreparationEndpoints();
     app.MapNasdaqPreparationArtifactEndpoints();
+    app.MapNasdaqPreparationReceiptBindingEndpoints();
 }
 
 app.MapHealthChecks("/health");

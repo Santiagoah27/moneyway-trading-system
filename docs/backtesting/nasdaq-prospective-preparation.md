@@ -1,5 +1,39 @@
 # Nasdaq Standard prospective preparation
 
+## Bind an exact preparation revision to a receipt cut
+
+The local Development UI offers **Vincular esta revisión a un corte MT5** under
+the saved preparation revision. The new GET and POST share the existing local
+capture guard at
+`/api/nasdaq/supervised-sessions/{key}/preparation/{id}/revisions/{revision}/receipt-cuts`.
+The POST takes the preparation revision SHA-256, registered cut ID and report
+SHA-256. The server verifies the pinned Worker report, exact Standard session,
+provider, instrument, Bogotá day of the unauthenticated cut label, preparation
+revision and original attachment bytes. The association is published once in the
+existing local evidence directory. Reading it after a restart verifies its
+hash, the exact revision and attached bytes. A later preparation revision
+requires its own association.
+
+For November 30, preserve any original preparation observations actually
+available to the reviewer in the existing form while the session runs. Open
+the Standard session for that date using `oanda-global-markets-mt5-demo` and
+`US100`. In the local API process, add the exact `StandardSessionKey` to the
+authorized report's existing `NasdaqReceiptCuts:Reports:<id>` registration,
+alongside the file, sequence and SHA-256 options. Reload the API with the same
+evidence directory. Open the immutable revision in the preparation panel and
+choose the verified cut. An omitted session key leaves the cut available for
+inspection only. This workflow requires no change to the scheduled capture.
+
+For documentary coordinate matching, only an explicit `MT5Native` /
+`ExactNativeRecord` opening label with the exact original source and frame
+can match a sample. Approximate, missing or unavailable coordinates stay
+unresolved. The binding keeps the original human time, application receipt and
+registration, cut host label, sample receipt and association creation distinct.
+Their order can be displayed as an ordinary-clock comparison. Availability at
+the cut remains `Unresolved` and NQ-TIME-003 / NQ-H4-001 remain
+`NotEvaluated` in this view. Source-backed preparation availability and an
+independently admitted replay are still needed to display rule results.
+
 ## Scope and contracts
 
 The Standard supervised session now accepts partial human preparation reports in

@@ -29,26 +29,9 @@ public static class NasdaqReceiptCutEndpoints
         if (context.Request.Query.Count != 0 || id is not null && !ValidId(id))
             return Problem(400, "InvalidReceiptCutSelection");
 
-        var registry = configuration.GetSection("NasdaqReceiptCuts");
-        var entries = registry.GetSection("Reports").GetChildren().Take(33).ToArray();
-        var root = registry["DevelopmentDirectory"];
-        if (entries.Length == 0 && string.IsNullOrWhiteSpace(root))
-            return id is null ? Results.Ok(Array.Empty<object>()) : Problem(404, "ReceiptCutNotConfigured");
-        if (string.IsNullOrWhiteSpace(root) || entries.Length > 32)
-            return Problem(503, "ReceiptCutConfigurationInvalid");
-        var registrations = new List<NasdaqReceiptCutRegistration>();
-        foreach (var entry in entries)
-        {
-            var file = entry["File"];
-            var hash = entry["Sha256"];
-            if (!ValidId(entry.Key) || !ReadNasdaqReceiptCutReport.IsDigest(hash)
-                || file is not { Length: > 5 and <= 128 } || !file.EndsWith(".json", StringComparison.Ordinal)
-                || !file.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.')
-                || !long.TryParse(entry["Sequence"], NumberStyles.None, CultureInfo.InvariantCulture, out var sequence)
-                || sequence is <= 0 or > 999999999999)
-                return Problem(503, "ReceiptCutConfigurationInvalid");
-            registrations.Add(new(entry.Key, file, sequence, hash!.ToLowerInvariant()));
-        }
+        string root; IReadOnlyList<NasdaqReceiptCutRegistration> registrations;
+        try { (root, registrations) = Registry(configuration); }
+        catch (IOException) { return Problem(503, "ReceiptCutConfigurationInvalid"); }
         if (id is null)
             return Results.Ok(registrations.OrderBy(r => r.Sequence).ThenBy(r => r.Id, StringComparer.Ordinal)
                 .Select(r => new { r.Id, r.Sequence, reportSha256 = r.Sha256 }).ToArray());
@@ -73,7 +56,30 @@ public static class NasdaqReceiptCutEndpoints
         }
     }
 
-    private static bool ValidId(string id) => id.Length is > 0 and <= 48
+    internal static (string Root, IReadOnlyList<NasdaqReceiptCutRegistration> Reports) Registry(IConfiguration configuration)
+    {
+        var registry = configuration.GetSection("NasdaqReceiptCuts");
+        var entries = registry.GetSection("Reports").GetChildren().Take(33).ToArray();
+        var root = registry["DevelopmentDirectory"];
+        if (entries.Length == 0 && string.IsNullOrWhiteSpace(root)) return (string.Empty, []);
+        if (string.IsNullOrWhiteSpace(root) || entries.Length > 32) throw new IOException("Invalid receipt-cut registry.");
+        var registrations = new List<NasdaqReceiptCutRegistration>();
+        foreach (var entry in entries)
+        {
+            var file = entry["File"]; var hash = entry["Sha256"]; var sessionKey = entry["StandardSessionKey"];
+            if (!ValidId(entry.Key) || !ReadNasdaqReceiptCutReport.IsDigest(hash)
+                || sessionKey is not null && (sessionKey.Length != 64 || !sessionKey.All(char.IsAsciiHexDigitLower))
+                || file is not { Length: > 5 and <= 128 } || !file.EndsWith(".json", StringComparison.Ordinal)
+                || !file.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.')
+                || !long.TryParse(entry["Sequence"], NumberStyles.None, CultureInfo.InvariantCulture, out var sequence)
+                || sequence is <= 0 or > 999999999999)
+                throw new IOException("Invalid receipt-cut registry entry.");
+            registrations.Add(new(entry.Key, file, sequence, hash!.ToLowerInvariant(), sessionKey));
+        }
+        return (root, registrations);
+    }
+
+    internal static bool ValidId(string id) => id.Length is > 0 and <= 48
         && id.All(c => char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c) || c is '-' or '_');
 
     private static IResult Problem(int status, string code) => Results.Problem(statusCode: status,
