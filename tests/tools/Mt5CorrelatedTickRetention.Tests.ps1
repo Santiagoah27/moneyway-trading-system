@@ -3,6 +3,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $tools = Join-Path $PSScriptRoot '../../tools/market-data/mt5'
 $importer = Join-Path $tools 'Import-Mt5CorrelatedTickEvidence.ps1'
+$sidecar = Join-Path $tools 'New-Mt5TemporalBasisSessionArtifact.ps1'
 . (Join-Path $tools 'Mt5CorrelatedTickEvidence.ps1')
 . (Join-Path $PSScriptRoot 'Mt5Probe.SyntheticFixtures.ps1')
 $passed = 0; $failed = 0
@@ -101,6 +102,31 @@ function Rebind($State) {
 }
 function Import($State) {
     & $importer -SourceDirectory $State.Source -RetentionRoot $State.Root -ExpectedEvidenceSHA256 $State.EvidenceHash -ExpectedResponseSHA256 $State.ResponseHash
+}
+function NewSyntheticCut($State) {
+    $open = $State.Evidence.context.m1_head
+    [pscustomobject]@{ audit = [pscustomobject]@{
+        schema = 'moneyway.nasdaq-prospective-receipt-cut-diagnostic'; version = 1
+        expected_source = [pscustomobject]@{ company = 'OANDA Global Markets Limited'; server = 'OANDA_Global-Demo-1'; native_symbol = 'US100'; demo = $true }
+        integrity = 'Validated'; standard_evaluation = 'NotEvaluated'; canonical_ready = $false
+        canonical_admission_permitted = $false; operational_signal = $false
+        anchor = [pscustomobject]@{ sequence = 1; record_sha256 = 'a' * 64 }
+        boundary = [pscustomobject]@{ sequence = 4; record_sha256 = 'b' * 64 }
+        cut_receipt = [pscustomobject]@{ sequence = 4; sha256 = 'b' * 64; file_name = 'record-000000000004.json' }
+        cut_local_receipt_clock_label = '2026-01-05T10:02:00Z'; prefix_manifest_sha256 = 'c' * 64
+        observation_continuity = 'ContinuityNotEstablishedByReceiptChain'; notices = @()
+        samples = @([pscustomobject]@{ timeframe = 'M1'; open_time_native = $open
+            local_receipt_clock_label = '2026-01-05T10:01:01Z'
+            first_usable_historical = [pscustomobject]@{ source_position = 1; usable = $true; complete_native_sample_observed = $true
+                usable_frame = $true; ohlc_valid = $true
+                receipt = [pscustomobject]@{ sequence = 3; record_sha256 = 'c' * 64; probe_sha256 = 'd' * 64
+                    record_file = 'record-000000000003.json'; probe_file = 'probe-000000000003.json' } } })
+    } }
+}
+function NewSidecar($State, $Cut, [string]$Pin, [string]$Output) {
+    & $sidecar -WindowStartHostUtcCandidate '2026-01-05T09:59:00Z' -WindowEndHostUtcCandidate '2026-01-05T10:30:00Z' `
+        -ReceiptCutReport $Cut -ReceiptCutReportSHA256 $Pin -CorrelationSourceDirectory $State.Source `
+        -RetentionRoot $State.Root -ExpectedEvidenceSHA256 $State.EvidenceHash -ExpectedResponseSHA256 $State.ResponseHash -OutputPath $Output
 }
 try {
     Case 'Authentic-format synthetic bundle validates full lineage and retains exact source bytes' {
@@ -263,6 +289,54 @@ try {
         $text = [IO.File]::ReadAllText((Resolve-Path $importer).Path)
         Check ($text -notmatch 'OrderSend|CTrade|StrategyReplayContext|Invoke-Mt5BoundedTimeQuery|Get-Mt5TickReference|checkpoint|MoneyWayAutomaticReadOnly')
         Check ($text -match 'Assert-Mt5TickResponse' -and $text -match 'Get-Mt5TickAssessment' -and $text -match 'FileShare\]::Read')
+    }
+    Case 'Same-session native M1 join preserves the frozen bounds and yields only a reproducible offset candidate' {
+        $s = NewFixture
+        $cut = Join-Path $workspace 'matching-cut.json'; SaveJson $cut (NewSyntheticCut $s)
+        $hash = (Get-FileHash -LiteralPath $cut).Hash.ToLowerInvariant()
+        $first = Join-Path $workspace 'first-sidecar.json'; $repeat = Join-Path $workspace 'repeat-sidecar.json'
+        $r = NewSidecar $s $cut $hash $first
+        NewSidecar $s $cut $hash $repeat | Out-Null
+        Check ($r.NativeTimeObserved -and $r.ReceiptVisibilityVerified -and $r.UtcCorrelationCandidate)
+        Check (-not $r.UtcMappingVerified -and -not $r.ProviderFinalizationVerified -and -not $r.StandardEvaluationPermitted)
+        Check (-not $r.CanonicalReady -and -not $r.CanonicalAdmissionPermitted -and -not $r.OperationalSignal)
+        Check ($r.correlated_tick.tick_native.time_msc -eq $s.Evidence.response.tick.time_msc)
+        Check ($null -eq $r.correlated_tick.utc_reference.absolute_error_bound_seconds)
+        Check ($r.same_session_link.matching_m1.nominal_close_native.raw -eq $s.Evidence.context.m1_head.raw + 60)
+        Check ($r.same_session_link.scope -ceq 'captured_tick_and_exact_frozen_m1_only')
+        Check ((Get-FileHash -LiteralPath $first).Hash -ceq (Get-FileHash -LiteralPath $repeat).Hash)
+        Reject { NewSidecar $s $cut $hash $first }
+    }
+    foreach ($fault in @('hash','source','other-date','future-sample','later-reference','no-reference','wrong-head')) {
+        Case "Sidecar with $fault remains outside a joint UTC candidate" {
+            $s = NewFixture; $cut = NewSyntheticCut $s
+            switch ($fault) {
+                'source' { $cut.audit.expected_source.native_symbol = 'USTEC' }
+                'other-date' { $cut.audit.cut_local_receipt_clock_label = '2026-01-06T10:02:00Z' }
+                'future-sample' { $cut.audit.samples[0].first_usable_historical.receipt.sequence = 5 }
+                'later-reference' {
+                    $cut.audit.cut_local_receipt_clock_label = '2026-01-05T10:00:11.5Z'
+                    $cut.audit.samples[0].local_receipt_clock_label = '2026-01-05T10:00:11Z'
+                }
+                'no-reference' {
+                    $s.Evidence.reference_after.parsed.status = 'data_unavailable'
+                    SaveEvidence $s
+                }
+                'wrong-head' { $cut.audit.samples[0].open_time_native = Native '2026.01.05 12:01:00' }
+            }
+            $path = Join-Path $workspace "$fault-cut.json"; SaveJson $path $cut
+            $hash = if ($fault -eq 'hash') { '0' * 64 } else { (Get-FileHash -LiteralPath $path).Hash.ToLowerInvariant() }
+            $r = NewSidecar $s $path $hash (Join-Path $workspace "$fault-sidecar.json")
+            Check (-not $r.UtcCorrelationCandidate -and $null -eq $r.same_session_link -and -not $r.StandardEvaluationPermitted)
+            $expected = @{
+                'hash' = 'receipt_cut_hash_mismatch'; 'source' = 'receipt_cut_source_mismatch'
+                'other-date' = 'receipt_cut_outside_session'; 'future-sample' = 'invalid_or_future_frozen_sample'
+                'later-reference' = 'correlation_evidence_after_cut'; 'no-reference' = 'utc_reference_unavailable'
+                'wrong-head' = 'matching_native_m1_not_in_cut'
+            }
+            Check ($r.blockers -ccontains $expected[$fault])
+            if ($fault -in @('later-reference','no-reference')) { Check ($null -eq $r.correlated_tick) }
+        }
     }
 } finally {
     $resolved = (Resolve-Path -LiteralPath $workspace).Path
