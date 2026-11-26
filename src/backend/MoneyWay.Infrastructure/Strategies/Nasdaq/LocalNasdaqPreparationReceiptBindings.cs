@@ -40,7 +40,6 @@ public sealed record NasdaqPreparationReceiptBindingView(NasdaqPreparationReceip
 
 public sealed partial class LocalNasdaqExecutionEvidenceStore
 {
-    private const string ReceiptCutProvider = "oanda-global-markets-mt5-demo";
     private sealed record PreparationBindingEnvelope(NasdaqPreparationReceiptBinding Binding, string Sha256, int SchemaVersion = 1);
     private static string BindingStem(Guid id, int revision) => $"preparation-cut-{id:N}.{revision:D3}-";
     private static string BindingName(NasdaqPreparationReceiptBinding value) =>
@@ -67,7 +66,7 @@ public sealed partial class LocalNasdaqExecutionEvidenceStore
         if (preparation.RevisionHash != expectedRevision) throw new NasdaqEvidenceConflictException("PreparationBindingRevisionHashMismatch");
         var record = preparation.Record;
         var report = receiptCut.Diagnostic;
-        if (session.Identity.ProviderId.Value != ReceiptCutProvider || session.Identity.Symbol.Value != report.ExpectedSource.NativeSymbol
+        if (session.Identity.ProviderId.Value != receiptCut.ProviderId || session.Identity.Symbol.Value != report.ExpectedSource.NativeSymbol
             || report.ExpectedSource != Mt5ReceiptCutDiagnostic.SupportedSource)
             throw new NasdaqEvidenceConflictException("PreparationBindingSourceIdentityMismatch");
         if (report.CutLocalReceiptClockLabel is not { Offset: { Ticks: 0 } } label

@@ -48,3 +48,81 @@
 .receipt-cut details {
     margin-block: 0.65rem;
 }
+
+.receipt-native-chart {
+    margin-block: 0.5rem 1rem;
+}
+
+.receipt-native-chart-scroll {
+    overflow: auto;
+    border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+    border-radius: 0.4rem;
+}
+
+.receipt-native-chart svg {
+    display: block;
+    width: 100%;
+    min-width: 36rem;
+}
+
+.receipt-native-axis {
+    fill: currentColor;
+    font-size: 11px;
+}
+
+.receipt-native-grid {
+    stroke: currentColor;
+    opacity: 0.17;
+}
+
+.receipt-native-gap {
+    stroke: currentColor;
+    stroke-dasharray: 4 4;
+    opacity: 0.65;
+}
+
+.receipt-native-bar {
+    cursor: pointer;
+    color: #147d69;
+}
+
+.receipt-native-bar.down {
+    color: #c44e4a;
+}
+
+.receipt-native-wick {
+    stroke: currentColor;
+    stroke-width: 1.3;
+}
+
+.receipt-native-body {
+    fill: currentColor;
+}
+
+.receipt-native-hit {
+    fill: transparent;
+}
+
+.receipt-native-bar:hover .receipt-native-hit,
+.receipt-native-bar:focus-visible .receipt-native-hit,
+.receipt-native-bar[aria-pressed="true"] .receipt-native-hit {
+    fill: color-mix(in srgb, currentColor 13%, transparent);
+    stroke: currentColor;
+}
+
+.receipt-native-nav {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-block: 0.65rem;
+}
+
+.receipt-native-detail {
+    margin-block: 1rem;
+}
+
+.receipt-native-chart textarea {
+    max-width: 100%;
+    width: 34rem;
+}

@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
+import { ReceiptCutNativeCandleChart } from "./ReceiptCutNativeCandleChart";
 import "./NasdaqReceiptCutExplorer.css";
 
 const frames = ["H4", "H1", "M5", "M1"] as const;
-type Frame = (typeof frames)[number];
+export type Frame = (typeof frames)[number];
 type NativeOpen = { raw: number; display: string };
 type RegisteredCut = { id: string; sequence: number; reportSha256: string };
-type Sample = {
+export type Sample = {
     timeframe: Frame;
     openTimeNative: NativeOpen;
     localReceiptClockLabel: string | null;
     laterHistoricalRevisions: number;
     spansInterruption: boolean;
     firstUsableHistorical: {
+        usable: boolean;
         sourcePosition: number;
         receipt: {
             sequence: number;
@@ -69,7 +71,12 @@ type Diagnostic = {
         reference: string;
     }[];
 };
-type Cut = { id: string; reportSha256: string; diagnostic: Diagnostic };
+export type Cut = {
+    id: string;
+    reportSha256: string;
+    providerId: string;
+    diagnostic: Diagnostic;
+};
 
 function issue(code: string) {
     switch (code) {
@@ -521,21 +528,20 @@ function CutDetails({ cut }: { cut: Cut }) {
                     ))}
                 </ul>
             </details>
+            <label>
+                Temporalidad
+                <select
+                    value={frame}
+                    onChange={(event) => setFrame(event.target.value as Frame)}
+                >
+                    {frames.map((value) => (
+                        <option key={value}>{value}</option>
+                    ))}
+                </select>
+            </label>
+            <ReceiptCutNativeCandleChart key={frame} cut={cut} frame={frame} />
             <details>
                 <summary>Inspeccionar muestras nativas</summary>
-                <label>
-                    Temporalidad
-                    <select
-                        value={frame}
-                        onChange={(event) =>
-                            setFrame(event.target.value as Frame)
-                        }
-                    >
-                        {frames.map((value) => (
-                            <option key={value}>{value}</option>
-                        ))}
-                    </select>
-                </label>
                 <div className="receipt-cut-table">
                     <table>
                         <thead>

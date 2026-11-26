@@ -54,6 +54,7 @@ public sealed class NasdaqReceiptCutEndpointTests : IDisposable
         var bytes = await first.Content.ReadAsStringAsync();
         using var payload = JsonDocument.Parse(bytes);
         Assert.Equal(Mt5ReceiptSyntheticFixture.Hash(original), payload.RootElement.GetProperty("reportSha256").GetString());
+        Assert.Equal("oanda-global-markets-mt5-demo", payload.RootElement.GetProperty("providerId").GetString());
         var view = payload.RootElement.GetProperty("diagnostic");
         Assert.Equal("Validated", view.GetProperty("integrity").GetString());
         Assert.Equal("US100", view.GetProperty("expectedSource").GetProperty("nativeSymbol").GetString());

@@ -7,7 +7,10 @@ using MoneyWay.Infrastructure.MarketData.Mt5;
 namespace MoneyWay.Infrastructure.Strategies.Nasdaq;
 
 public sealed record NasdaqReceiptCutRegistration(string Id, string File, long Sequence, string Sha256, string? StandardSessionKey = null);
-public sealed record NasdaqReceiptCutReportView(string Id, string ReportSha256, Mt5ReceiptCutReport Diagnostic);
+public sealed record NasdaqReceiptCutReportView(string Id, string ReportSha256, Mt5ReceiptCutReport Diagnostic)
+{
+    public string ProviderId => "oanda-global-markets-mt5-demo";
+}
 
 /// <summary>Read a registered Worker report, independently of canonical or supervised attempt inputs.</summary>
 public sealed class ReadNasdaqReceiptCutReport

@@ -6,7 +6,7 @@ import {
     within,
 } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { NasdaqReceiptCutExplorer } from "./NasdaqReceiptCutExplorer";
+import { NasdaqReceiptCutExplorer, type Cut } from "./NasdaqReceiptCutExplorer";
 
 const route = "/api/nasdaq/historical-demo/receipt-cuts";
 const entries = [
@@ -20,6 +20,7 @@ const sample = {
     localReceiptClockLabel: "2026-11-25T11:56:24.086372Z",
     laterHistoricalRevisions: 0,
     firstUsableHistorical: {
+        usable: true,
         sourcePosition: 1,
         receipt: {
             sequence: 4911,
@@ -35,6 +36,7 @@ function response(index: number) {
     return {
         id: entry.id,
         reportSha256: entry.reportSha256,
+        providerId: "oanda-global-markets-mt5-demo",
         diagnostic: {
             expectedSource: {
                 company: "OANDA Global Markets Limited",
@@ -169,3 +171,114 @@ it("shows verification failures and clears the previous cut when selection chang
     );
     expect(screen.queryByRole("article", { name: "Corte 5178" })).toBeNull();
 });
+
+const realApi = process.env.MONEYWAY_NATIVE_CHART_API;
+it.runIf(Boolean(realApi))(
+    "renders both real Development cuts over HTTP without mixing their samples",
+    async () => {
+        const originalFetch = globalThis.fetch.bind(globalThis);
+        const requests = vi.fn(originalFetch);
+        vi.stubGlobal("fetch", requests);
+        const before: Cut = await (
+            await originalFetch(`${realApi}${route}/nov25_5094`)
+        ).json();
+        const after: Cut = await (
+            await originalFetch(`${realApi}${route}/nov25_5178`)
+        ).json();
+        expect(before.diagnostic.samples).toHaveLength(283);
+        expect(after.diagnostic.samples).toHaveLength(393);
+        const known = new Set(
+            before.diagnostic.samples
+                .filter((sample) => sample.timeframe === "M1")
+                .map((sample) => sample.openTimeNative.raw),
+        );
+        const newOpen = after.diagnostic.samples.find(
+            (sample) =>
+                sample.timeframe === "M1" &&
+                !known.has(sample.openTimeNative.raw),
+        )!.openTimeNative.raw;
+
+        render(<NasdaqReceiptCutExplorer apiBaseUrl={realApi!} />);
+        fireEvent.click(
+            screen.getByRole("button", { name: "Explorar cortes de recibos" }),
+        );
+        const first = await screen.findByRole("article", {
+            name: "Corte 5094",
+        });
+        const allCharts = (
+            article: HTMLElement,
+            expected: Record<string, number>,
+        ) => {
+            const counts: Record<string, number> = {};
+            const m1: string[] = [];
+            for (const [frame, count] of Object.entries(expected)) {
+                fireEvent.change(
+                    within(article).getByRole("combobox", {
+                        name: "Temporalidad",
+                    }),
+                    { target: { value: frame } },
+                );
+                const chart = within(article).getByRole("region", {
+                    name: new RegExp(`Gráfico nativo ${frame}`),
+                });
+                expect(
+                    within(chart).getByText(
+                        new RegExp(`de ${count} velas ${frame}`),
+                    ),
+                ).toBeTruthy();
+                if (frame === "H1")
+                    expect(
+                        within(chart).getByText(
+                            /7200 s nativos entre aperturas/,
+                        ),
+                    ).toBeTruthy();
+                const ids: string[] = [];
+                const next = within(chart).getByRole<HTMLButtonElement>(
+                    "button",
+                    { name: "Velas siguientes" },
+                );
+                do {
+                    ids.push(
+                        ...within(chart)
+                            .getAllByRole("button", {
+                                name: new RegExp(`^Vela ${frame} `),
+                            })
+                            .map((button) =>
+                                button.getAttribute("data-native-open")!,
+                            ),
+                    );
+                    if (next.disabled) break;
+                    fireEvent.click(next);
+                } while (ids.length < count);
+                expect(ids).toHaveLength(count);
+                expect(new Set(ids).size).toBe(count);
+                counts[frame] = ids.length;
+                if (frame === "M1") m1.push(...ids);
+            }
+            expect(counts).toEqual(expected);
+            return m1;
+        };
+        expect(
+            allCharts(first, { H4: 16, H1: 18, M5: 51, M1: 198 }),
+        ).not.toContain(String(newOpen));
+        fireEvent.change(
+            screen.getByRole("combobox", { name: "Corte de recibos" }),
+            { target: { value: "nov25_5178" } },
+        );
+        const second = await screen.findByRole("article", {
+            name: "Corte 5178",
+        });
+        expect(
+            screen.queryByRole("article", { name: "Corte 5094" }),
+        ).toBeNull();
+        expect(
+            allCharts(second, { H4: 16, H1: 20, M5: 69, M1: 288 }),
+        ).toContain(String(newOpen));
+        expect(
+            requests.mock.calls.every(
+                ([, init]) => !init?.method || init.method === "GET",
+            ),
+        ).toBeTruthy();
+    },
+    15000,
+);

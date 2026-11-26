@@ -116,3 +116,28 @@ observations, zero missing or changed, and 110 added samples. The explorer
 reports the common scope and anchor required for comparison. Dashboard counts
 come from the verified samples. The UTC and admission limitations remain
 visible on both cuts.
+
+### Inspect native OHLC candles
+
+In a loaded cut, select H4, H1, M5 or M1 under **Temporalidad**. Each chart page
+contains up to 48 frozen samples ordered by native opening coordinate. The
+price scale uses only lows and highs on that page. A dashed separator and its
+native delta identify adjoining openings that depart from the declared period,
+including across pages. Spacing is an ordinal layout and gaps carry no implied
+cause or market continuity. The exact original strings are retained in the
+candle details and the existing native sample table.
+
+Select a candle by clicking it or using Enter, Space or the arrow keys.
+**Copiar referencia nativa** copies JSON with the API's registered provider ID,
+symbol, exact opening and clock domain, precision, cut pins, and first receipt
+and probe identities. If clipboard access is unavailable, the same JSON is
+shown as selectable text. This supplies documentary identifiers only.
+For a preparation reference, the existing contract accepts exact H4/H1
+documentary coordinates; M5/M1 remain inspectable here. The chart neither
+saves observations nor computes a strategy result.
+
+With the real November 25 report registry loaded in a local Development API,
+set `MONEYWAY_NATIVE_CHART_API` to its base URL and run
+`npm run test:run -- src/NasdaqReceiptCutExplorer.test.tsx` from the frontend.
+The opt-in HTTP case traverses all four frames of cuts 5094 and 5178 and
+checks that an M1 sample added after 5094 is absent from its chart.
