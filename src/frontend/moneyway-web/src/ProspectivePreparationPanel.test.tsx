@@ -111,12 +111,56 @@ it("captures partial H4 and reference claims without inventing a native ID, pric
     expect(d.references[0].localReferenceId).toMatch(/^documentary-/);
     expect(d.references[0].nativeReferenceId).toBeNull();
     expect(d.references[0].price).toBeNull();
+    expect(d.references[0].sourceProviderId).toBeNull();
+    expect(d.references[0].originalSymbol).toBeNull();
     expect(d.receivedAtUtc).toBeUndefined();
     expect(d.observedAtUtc).toBeUndefined();
     expect(d.canonicalAdmissionApproved).toBeUndefined();
     expect(screen.getByText(/HumanStructuralReferenceMissing/)).not.toBeNull();
     expect(screen.getByText(/Resultado de regla: No evaluado/)).not.toBeNull();
     expect(screen.getByText(/2026-11-18T13:01:00Z/)).not.toBeNull();
+});
+it("submits the exact native source on the individual preparation reference", async () => {
+    const fetcher = vi.fn().mockImplementation(async (_url, options) => ({
+        ok: true,
+        json: async () => view(JSON.parse(options.body).evidence),
+    }));
+    vi.stubGlobal("fetch", fetcher);
+    render(<ProspectivePreparationPanel apiBaseUrl="" session={session} />);
+    fill();
+    fireEvent.click(
+        screen.getByRole("button", {
+            name: "Añadir referencia humana de preparación",
+        }),
+    );
+    for (const [label, value] of [
+        ["proveedor original (opcional)", "synthetic-provider"],
+        ["instrumento original (opcional)", "US100"],
+        ["timeframe original", "4h"],
+        ["timestamp original (opcional)", "2026.11.18 12:00:00"],
+        ["reloj original (opcional)", "MT5Native"],
+        ["precisión", "ExactNativeRecord"],
+        ["fuente (opcional, note: o https://)", "note:synthetic reference"],
+    ]) {
+        fireEvent.change(screen.getByLabelText(`Referencia 1: ${label}`), {
+            target: { value },
+        });
+    }
+    submit();
+    await screen.findByRole("region", { name: "Preparación persistida" });
+
+    const draft = JSON.parse(fetcher.mock.calls[0][1].body).evidence;
+    expect(draft.sourceProviderId).toBeNull();
+    expect(draft.originalSymbol).toBeNull();
+    expect(draft.references[0]).toMatchObject({
+        sourceProviderId: "synthetic-provider",
+        originalSymbol: "US100",
+        timeframe: "4h",
+        originalTime: "2026.11.18 12:00:00",
+        originalClockDomain: "MT5Native",
+        timePrecision: "ExactNativeRecord",
+        sourceReference: "note:synthetic reference",
+    });
 });
 it("revises and reloads immutable originals with an expected hash and reported time separate from receipt", async () => {
     const history: ReturnType<typeof view>[] = [];

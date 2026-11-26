@@ -136,3 +136,40 @@ it("reopens saved documentary links without requiring an active registration", a
         screen.queryByRole("button", { name: "Guardar vínculo documental" }),
     ).toBeNull();
 });
+
+it("retries a busy evidence read for the exact same revision", async () => {
+    const fetch = vi
+        .fn()
+        .mockResolvedValueOnce(
+            Response.json(
+                { detail: "EvidenceStoreBusy_RetrySameSubmission" },
+                { status: 409 },
+            ),
+        )
+        .mockResolvedValueOnce(
+            Response.json({ availableCuts: [cut], bindings: [] }),
+        );
+    vi.stubGlobal("fetch", fetch);
+    render(
+        <PreparationReceiptBindingPanel
+            apiBaseUrl=""
+            preparation={preparation}
+        />,
+    );
+    fireEvent.click(
+        screen.getByRole("button", {
+            name: "Vincular esta revisión a un corte MT5",
+        }),
+    );
+    expect(
+        await screen.findByRole("combobox", {
+            name: "Corte registrado de la sesión",
+        }),
+    ).toBeTruthy();
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch.mock.calls[1]).toEqual(fetch.mock.calls[0]);
+    expect(fetch.mock.calls[1][0]).toContain(
+        "/preparation/prep-id/revisions/2/receipt-cuts",
+    );
+    expect(fetch.mock.calls[1][1].method).toBeUndefined();
+});

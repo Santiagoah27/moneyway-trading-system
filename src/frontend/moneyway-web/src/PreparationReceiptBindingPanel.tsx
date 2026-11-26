@@ -88,18 +88,37 @@ function Bindings({
     const [busy, setBusy] = useState(false);
     useEffect(() => {
         const controller = new AbortController();
-        void fetch(route, { signal: controller.signal, cache: "no-store" })
-            .then(async (response) => {
+        const options: RequestInit = {
+            signal: controller.signal,
+            cache: "no-store",
+        };
+        async function load() {
+            try {
+                let response = await fetch(route, options);
+                if (response.status === 409) {
+                    const problem = await response.json();
+                    if (
+                        problem.detail ===
+                        "EvidenceStoreBusy_RetrySameSubmission"
+                    ) {
+                        await new Promise((resolve) =>
+                            setTimeout(resolve, 100),
+                        );
+                        if (controller.signal.aborted) return;
+                        response = await fetch(route, options);
+                    }
+                }
                 if (!response.ok) throw new Error();
                 const data: Index = await response.json();
                 if (!controller.signal.aborted) setIndex(data);
-            })
-            .catch(() => {
+            } catch {
                 if (!controller.signal.aborted)
                     setError(
                         "No se pudieron leer los vínculos de la revisión.",
                     );
-            });
+            }
+        }
+        void load();
         return () => controller.abort();
     }, [route]);
 

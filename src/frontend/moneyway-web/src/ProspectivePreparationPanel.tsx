@@ -617,6 +617,16 @@ export function ProspectivePreparationPanel({
                             </label>
                             {referenceField(
                                 i,
+                                "proveedor original (opcional)",
+                                "sourceProviderId",
+                            )}
+                            {referenceField(
+                                i,
+                                "instrumento original (opcional)",
+                                "originalSymbol",
+                            )}
+                            {referenceField(
+                                i,
                                 "ID nativo original (opcional)",
                                 "nativeReferenceId",
                             )}
