@@ -82,3 +82,37 @@ earlier report byte-identical. Cut 5178 produced 393 usable samples (H4 16,
 H1 20, M5 69, M1 288). It preserved the 7,200-second native H1 gap and the
 M5/M1 head advances that skipped observed periods. Standard remained
 `NotEvaluated` at both cuts.
+
+## Read-only explorer in Nasdaq Historical Demo
+
+Open `/#nasdaq-historical-demo` and choose **Explorar cortes de recibos**.
+The local Development API exposes a registry at
+`GET /api/nasdaq/historical-demo/receipt-cuts` and a verified report at
+`GET /api/nasdaq/historical-demo/receipt-cuts/{id}`. The registry lists configured
+pins. A report becomes available to the explorer after byte, schema, source and
+cut identity validation. External origins and non-loopback requests are
+rejected. There are no writes, client file paths, or attempt bindings.
+
+Configure a server-owned directory containing only authorized Development
+artifacts, and register each exact file name, sequence and SHA-256. Keep the
+configuration local to the API process. For the retained November 25 reports:
+
+```powershell
+$env:ASPNETCORE_ENVIRONMENT = 'Development'
+$env:NasdaqReceiptCuts__DevelopmentDirectory = 'C:\absolute\authorized-development-directory'
+$env:NasdaqReceiptCuts__Reports__nov25_5094__File = 'cut-5094-before.json'
+$env:NasdaqReceiptCuts__Reports__nov25_5094__Sequence = '5094'
+$env:NasdaqReceiptCuts__Reports__nov25_5094__Sha256 = 'a51642b506cba5dac5803c1d032addbe67e06c328f73d8086a53f9283d0f42e1'
+$env:NasdaqReceiptCuts__Reports__nov25_5178__File = 'cut-5178.json'
+$env:NasdaqReceiptCuts__Reports__nov25_5178__Sequence = '5178'
+$env:NasdaqReceiptCuts__Reports__nov25_5178__Sha256 = '1228c8dd0b8dd833ad033f80bd28c97e569bb23ea8c222547a6c7b53247c2d93'
+dotnet run --no-launch-profile --project src/backend/MoneyWay.Api --urls http://localhost:5080
+```
+
+Use lowercase registry IDs with letters, digits, hyphens or underscores. Start
+the web frontend with its normal `npm run dev -- --host localhost` command.
+Select 5094 and 5178. Their comparison should show 283 retained first
+observations, zero missing or changed, and 110 added samples. The explorer
+reports the common scope and anchor required for comparison. Dashboard counts
+come from the verified samples. The UTC and admission limitations remain
+visible on both cuts.

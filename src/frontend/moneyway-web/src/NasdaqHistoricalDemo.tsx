@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { SupervisedExecutionCapture } from "./SupervisedExecutionCapture";
+import { NasdaqReceiptCutExplorer } from "./NasdaqReceiptCutExplorer";
 import {
     getNasdaqHistoricalReport,
     HistoricalReportError,
@@ -781,6 +782,7 @@ function HistoricalDemoContent({ apiBaseUrl }: { apiBaseUrl: string }) {
                 vivo.
             </p>
             <SupervisedExecutionCapture apiBaseUrl={apiBaseUrl} />
+            <NasdaqReceiptCutExplorer apiBaseUrl={apiBaseUrl} />
             {!report && !error && (
                 <p role="status">Cargando reporte histórico.</p>
             )}

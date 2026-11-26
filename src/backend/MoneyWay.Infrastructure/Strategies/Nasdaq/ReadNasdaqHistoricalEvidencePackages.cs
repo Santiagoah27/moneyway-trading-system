@@ -18,7 +18,7 @@ public sealed class ReadNasdaqHistoricalEvidencePackages(string? registryDirecto
     private static void Require(bool condition, string reason) { if (!condition) throw new InvalidDataException(reason); }
     private static bool Digest(string? value) => value is { Length: 64 } && value.All(char.IsAsciiHexDigit);
     private static string Hash(Stream stream) => Convert.ToHexStringLower(SHA256.HashData(stream));
-    private static string Resolve(string root, string relative)
+    internal static string ResolveArtifactPath(string root, string relative)
     {
         Require(Path.IsPathFullyQualified(root) && !root.StartsWith(@"\\", StringComparison.Ordinal) && !root.StartsWith("//", StringComparison.Ordinal), "Local server root required.");
         Require(!string.IsNullOrWhiteSpace(relative) && !Path.IsPathRooted(relative) && !relative.Contains(':') && !relative.Split('/', '\\').Contains(".."), "Invalid registered relative artifact path.");
@@ -50,7 +50,7 @@ public sealed class ReadNasdaqHistoricalEvidencePackages(string? registryDirecto
     public IReadOnlyList<NasdaqHistoricalPackageRegistration> List()
     {
         if (string.IsNullOrWhiteSpace(registryDirectory)) throw new KeyNotFoundException("HistoricalPackageRegistryNotConfigured");
-        var registry = Document<NasdaqHistoricalPackageRegistry>(Resolve(registryDirectory, "registry.json"));
+        var registry = Document<NasdaqHistoricalPackageRegistry>(ResolveArtifactPath(registryDirectory, "registry.json"));
         Require(registry.SchemaVersion == 1 && registry.Packages is { Count: <= 32 } && registry.Packages.All(p => p is not null
             && p.PackageId is { Length: > 0 and <= 100 } && p.PackageId.All(c => char.IsAsciiLetterOrDigit(c) || c == '-') && p.PackageVersion > 0 && Digest(p.ManifestSha256)), "Invalid registry identity.");
         Require(registry.Packages.Select(p => p.PackageId).Distinct(StringComparer.Ordinal).Count() == registry.Packages.Count, "Duplicate registered package ID.");
@@ -62,7 +62,7 @@ public sealed class ReadNasdaqHistoricalEvidencePackages(string? registryDirecto
         var found = new List<string>();
         foreach (var p in List())
         {
-            var manifest = Document<NasdaqHistoricalEvidencePackage>(Resolve(registryDirectory!, p.ManifestFile), p.ManifestSha256);
+            var manifest = Document<NasdaqHistoricalEvidencePackage>(ResolveArtifactPath(registryDirectory!, p.ManifestFile), p.ManifestSha256);
             var declaredArtifacts = manifest.Artifacts ?? throw new InvalidDataException("Missing artifact declarations.");
             Require(declaredArtifacts.All(a => a is not null && Digest(a.Sha256)), "Invalid artifact declarations.");
             if (declaredArtifacts.Any(a => a.Kind == "HistoricalReport" && a.Sha256.Equals(sha256, StringComparison.OrdinalIgnoreCase))) found.Add(p.PackageId);
@@ -90,7 +90,7 @@ public sealed class ReadNasdaqHistoricalEvidencePackages(string? registryDirecto
     private async Task<NasdaqHistoricalPackageInspection> InspectCore(string id, long? frameStep, CancellationToken cancellationToken)
     {
         var registration = List().SingleOrDefault(p => p.PackageId == id) ?? throw new KeyNotFoundException("RegisteredPackageMissing");
-        var package = Document<NasdaqHistoricalEvidencePackage>(Resolve(registryDirectory!, registration.ManifestFile), registration.ManifestSha256);
+        var package = Document<NasdaqHistoricalEvidencePackage>(ResolveArtifactPath(registryDirectory!, registration.ManifestFile), registration.ManifestSha256);
         var invalid = new List<string>(); var blockers = new List<string> { "HistoricalAvailabilityNotEstablished", "NoTrustedExportAvailabilityAdmissionContract",
             "CandleTimestampAndCloseAreNotPublicationOrCaptureTime", "RetrospectiveHumanReviewCannotBackdateAvailability", "TradingWindow1130Vs1100SpecificationConflict", "HistoricalReportRuntimeAndSourcesNotRevalidatedAsNewAdmission" };
         blockers.Add("PackageAdmissionApprovalNotIndependentlyEstablished");
@@ -114,7 +114,7 @@ public sealed class ReadNasdaqHistoricalEvidencePackages(string? registryDirecto
             {
                 if (a.Kind is not ("RawCandles" or "NormalizedCandles" or "NormalizationProvenance" or "Adapter" or "HumanReviewText" or "EvidenceLedger" or "HistoricalReport")) invalid.Add("UnsupportedArtifactKind:" + a.Id);
                 if (!roots.TryGetValue(a.Root, out var root)) throw new InvalidDataException("UnknownRegisteredRoot");
-                var path = Resolve(root, a.RelativePath);
+                var path = ResolveArtifactPath(root, a.RelativePath);
                 using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
                 Require(stream.Length > 0 && stream.Length <= (a.Kind == "HistoricalReport" ? 512L * 1024 * 1024 : 16L * 1024 * 1024), "Artifact size limit.");
                 actual = Hash(stream); verified = Digest(a.Sha256) && actual.Equals(a.Sha256, StringComparison.OrdinalIgnoreCase);
@@ -164,7 +164,7 @@ public sealed class ReadNasdaqHistoricalEvidencePackages(string? registryDirecto
             var a = stored[0];
             try
             {
-                report = await reader.ExecuteAsync(Resolve(roots[a.Root], a.RelativePath), a.Sha256, cancellationToken, frameStep);
+                report = await reader.ExecuteAsync(ResolveArtifactPath(roots[a.Root], a.RelativePath), a.Sha256, cancellationToken, frameStep);
                 if (report.StrategyId != package.StrategyId || report.StrategyVersion != package.StrategyVersion || report.ProviderId != package.ProviderId
                     || report.Symbol != package.OriginalSymbol || report.TradingDay != package.TradingDay || report.SessionId != package.SessionId) invalid.Add("HistoricalReportIdentityMismatch");
                 if (report.SelectedFrame is null) invalid.Add("HistoricalFrameUnavailable");

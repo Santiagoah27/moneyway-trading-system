@@ -23,6 +23,7 @@ builder.Services.AddSingleton(s => new ReadNasdaqHistoricalEvidencePackages(buil
 
 if (builder.Environment.IsDevelopment())
 {
+    builder.Services.AddSingleton<ReadNasdaqReceiptCutReport>();
     builder.Services.AddCors(options => options.AddPolicy("DevelopmentFrontend", policy =>
         policy.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()));
 }
@@ -34,6 +35,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.UseCors("DevelopmentFrontend");
     app.MapNasdaqHistoricalDemoEndpoints();
+    app.MapNasdaqReceiptCutEndpoints();
     app.MapNasdaqExecutionEvidenceEndpoints();
     app.MapNasdaqHistoricalPackageEndpoints();
     app.MapNasdaqPreparationEndpoints();

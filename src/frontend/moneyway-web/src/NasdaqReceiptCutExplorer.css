@@ -1,0 +1,50 @@
+.receipt-cut {
+    margin-block: 1rem;
+}
+
+.receipt-cut-select {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+}
+
+.receipt-cut label {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-block: 0.35rem;
+}
+
+.receipt-cut-detail,
+.receipt-cut-comparison {
+    margin-block: 1rem;
+    padding-inline-start: 1rem;
+    border-inline-start: 2px solid currentColor;
+}
+
+.receipt-cut code {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.receipt-cut-table {
+    overflow: auto;
+}
+
+.receipt-cut table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.receipt-cut td,
+.receipt-cut th {
+    padding: 0.4rem 0.65rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.receipt-cut details {
+    margin-block: 0.65rem;
+}

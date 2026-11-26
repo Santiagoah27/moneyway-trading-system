@@ -98,10 +98,7 @@ public static partial class NasdaqExecutionEvidenceEndpoints
     private static async Task<IResult> Execute(HttpContext c, Func<Task<IResult>> operation)
     {
         c.Response.Headers.CacheControl = "no-store";
-        var origin = c.Request.Headers.Origin.ToString();
-        if (c.Request.Host.Host is not ("localhost" or "127.0.0.1" or "::1" or "[::1]")
-            || c.Connection.RemoteIpAddress is { } ip && !IPAddress.IsLoopback(ip)
-            || origin.Length > 0 && origin != "http://localhost:5173" && origin != $"{c.Request.Scheme}://{c.Request.Host}")
+        if (!IsLocalEvidenceRequest(c))
             return Problem(403, "LocalCaptureOnly", "Use the local supervised application.");
         try { return await operation(); }
         catch (NasdaqEvidenceConflictException e) { return Problem(409, "EvidenceConflict", e.Message); }
@@ -116,6 +113,14 @@ public static partial class NasdaqExecutionEvidenceEndpoints
         catch (InvalidDataException) { return Problem(422, "EvidenceIntegrityFailure", "Stored evidence could not be validated. Original files preserved."); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
         { return Problem(503, "EvidenceStorageUnavailable", "Local persistence unavailable. Retry with the same submission ID; do not assume save succeeded."); }
+    }
+
+    internal static bool IsLocalEvidenceRequest(HttpContext context)
+    {
+        var origin = context.Request.Headers.Origin.ToString();
+        return context.Request.Host.Host is ("localhost" or "127.0.0.1" or "::1" or "[::1]")
+            && (context.Connection.RemoteIpAddress is not { } ip || IPAddress.IsLoopback(ip))
+            && (origin.Length == 0 || origin == "http://localhost:5173" || origin == $"{context.Request.Scheme}://{context.Request.Host}");
     }
     private static IResult Problem(int status, string code, string detail) => Results.Problem(statusCode: status,
         title: "Supervised evidence capture", detail: detail, extensions: new Dictionary<string, object?> { ["code"] = code });
