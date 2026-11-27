@@ -428,6 +428,63 @@ public sealed class NasdaqEndToEndResearchTests
         run.Execute(altered, Cutoff, mode, expected: 2);
     }
 
+    [Fact]
+    public void TriggerAnchoredDownstreamUsesPinnedDevelopmentAndPreservesPublishedReports()
+    {
+        const string mode = "--compare-trigger-anchored-downstream-v1";
+        const string filename = "nasdaq-trigger-anchored-downstream-v1.json";
+        using var run = new ResearchRun();
+        var bytes = File.ReadAllBytes(Path.Combine(run.Execute(run.Source, Cutoff, mode), filename));
+        Assert.Equal(bytes, File.ReadAllBytes(Path.Combine(run.Execute(run.Source, Cutoff, mode), filename)));
+        var baseline = File.ReadAllBytes(Path.Combine(run.Execute(run.Source, Cutoff), "nasdaq-end-to-end-research.json"));
+        var optional = File.ReadAllBytes(Path.Combine(run.Execute(run.Source, Cutoff, "--compare-m5-to-m1-optional-fvg-v2"),
+            "nasdaq-m5-to-m1-optional-fvg-v2.json"));
+        Assert.Equal("d19c506bbce9609a8d3237e9f21b527d4d0150a1ed0339dc3a86f04735b8cb61", Convert.ToHexStringLower(SHA256.HashData(baseline)));
+        Assert.Equal("2f9687c2dc812f5623b3085d5b012d32c71b5e621c534f12911379c7c4bea345", Convert.ToHexStringLower(SHA256.HashData(optional)));
+        using var document = JsonDocument.Parse(bytes);
+        using var v2 = JsonDocument.Parse(optional);
+        var report = document.RootElement.GetProperty("research");
+        Assert.Equal("EXP-NQ-TRIGGER-ANCHORED-DOWNSTREAM-RESEARCH-V1", report.GetProperty("candidateId").GetString());
+        Assert.Equal("H4ContextUnavailable", report.GetProperty("baselineOutcome").GetString());
+        Assert.True(JsonElement.DeepEquals(v2.RootElement.GetProperty("research").GetProperty("summary"), report.GetProperty("v2Summary")));
+        foreach (var flag in new[] { "h4ContextAvailable", "independentHumanValidation", "authenticatedTemporalAvailability",
+                     "canonicalAdmissionPermitted", "operationalSignal" })
+            Assert.False(report.GetProperty(flag).GetBoolean());
+        var summary = report.GetProperty("summary");
+        Assert.Equal(6, summary.GetProperty("realignment").GetProperty("distinctM1Realignments").GetInt32());
+        Assert.Equal(3, summary.GetProperty("sharedM1WithFvgAnchored").GetArrayLength());
+        Assert.Equal(3, summary.GetProperty("triggerOnlyM1").GetArrayLength());
+        var geometry = report.GetProperty("geometryByMarketRealignmentId");
+        Assert.Equal(6, geometry.EnumerateObject().Count());
+        Assert.Equal(3, summary.GetProperty("both").GetProperty("distinctM1Realignments").GetInt32());
+        Assert.Equal(40, summary.GetProperty("realignmentWithoutSlAssociations").GetInt32());
+        Assert.Equal(0, summary.GetProperty("realignmentWithoutTpAssociations").GetInt32());
+        using var prefix = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(
+            run.Execute(run.Source, "2026-06-23T13:58:00Z", mode), filename)));
+        Assert.All(prefix.RootElement.GetProperty("research").GetProperty("geometryByMarketRealignmentId").EnumerateObject(),
+            snapshot => Assert.True(JsonElement.DeepEquals(snapshot.Value, geometry.GetProperty(snapshot.Name))));
+        var paths = report.GetProperty("paths").EnumerateArray().ToArray();
+        Assert.Equal(256, paths.Count(row => row.GetProperty("m1RealignmentObserved").GetBoolean()));
+        Assert.Equal(16, paths.Count(row => row.GetProperty("m1RealignmentObserved").GetBoolean() &&
+            row.GetProperty("triggers").EnumerateArray().Any(t => t.GetProperty("validityAtAssessment").GetString() == "Invalidated")));
+        Assert.All(paths.Where(row => row.GetProperty("m1RealignmentObserved").GetBoolean()), row =>
+        {
+            var key = row.GetProperty("marketRealignmentId").GetString()!;
+            var cutoff = row.GetProperty("assessmentUtc").GetDateTimeOffset();
+            var snapshot = geometry.GetProperty(key);
+            Assert.All(snapshot.GetProperty("stops").EnumerateArray(), stop =>
+                Assert.Equal(cutoff, stop.GetProperty("asOfUtc").GetDateTimeOffset()));
+            Assert.All(snapshot.GetProperty("targets").EnumerateArray(), target =>
+                Assert.Equal(cutoff, target.GetProperty("asOfUtc").GetDateTimeOffset()));
+            Assert.All(row.GetProperty("triggers").EnumerateArray().SelectMany(t => t.GetProperty("optionalFvgs").EnumerateArray()),
+                fvg => Assert.True(fvg.GetProperty("availableAtUtc").GetDateTimeOffset() <= cutoff));
+        });
+        Assert.DoesNotContain("strategyVerdict", document.RootElement.GetRawText(), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("\"Passed\"", document.RootElement.GetRawText(), StringComparison.Ordinal);
+        Assert.DoesNotContain("hypotheticalRewardRisk", document.RootElement.GetRawText(), StringComparison.OrdinalIgnoreCase);
+        run.Execute(run.WriteInput("non-pinned", new JsonObject { ["tradingDay"] = "2026-06-23" }), Cutoff, mode, expected: 2);
+    }
+
     private static DateTimeOffset At(int hour, int minute = 0) => new(2026, 6, 23, hour, minute, 0, TimeSpan.Zero);
 
     private sealed class ResearchRun : IDisposable

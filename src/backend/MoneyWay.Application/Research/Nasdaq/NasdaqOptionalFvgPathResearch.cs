@@ -53,9 +53,11 @@ public sealed record NasdaqOptionalFvgPathReport(string DatasetId, DateOnly Oper
 
 public sealed class CompareNasdaqOptionalFvgPathsUseCase
 {
-    public NasdaqOptionalFvgPathReport Execute(NasdaqResearchReplayRequest request)
+    public NasdaqOptionalFvgPathReport Execute(NasdaqResearchReplayRequest request) => Execute(request, out _);
+
+    internal NasdaqOptionalFvgPathReport Execute(NasdaqResearchReplayRequest request, out NasdaqEndToEndResearchResult baseline)
     {
-        var baseline = new EvaluateNasdaqEndToEndResearchUseCase().Execute(request, out var m1);
+        baseline = new EvaluateNasdaqEndToEndResearchUseCase().Execute(request, out var m1);
         var sequence = baseline.Sequence;
         var control = baseline.Realignment;
         var report = Compare(sequence, control, m1);

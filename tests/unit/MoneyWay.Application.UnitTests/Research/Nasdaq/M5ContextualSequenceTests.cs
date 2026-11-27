@@ -322,6 +322,127 @@ public sealed class M5ContextualSequenceTests
             JsonSerializer.Serialize(new { result.Scans, result.Comparisons, result.Summary, result.ByPolicy });
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TriggerAnchoredDownstreamUsesExistingProtectiveAndFavorableGeometryWithoutFvg(bool sell)
+    {
+        var direction = sell ? M5FvgDirection.Bearish : M5FvgDirection.Bullish;
+        var row = Run(0, [Event("sc", 5, direction: direction)], cutoff: 7, high: sell);
+        var minutes = Minutes(5, 7, 5).Select(c => sell ? Mirror(c) : c).ToArray();
+        var report = Downstream(row, minutes, StructuralBars(sell));
+        Assert.All(report.Paths, path =>
+        {
+            Assert.True(path.M5TriggerObserved && path.M1PullbackObserved && path.M1RealignmentObserved);
+            Assert.Equal(At(7), path.AssessmentUtc);
+            Assert.Null(path.FvgAnchoredMarketRealignmentId);
+            Assert.Empty(Assert.Single(path.Triggers).OptionalFvgs);
+            Assert.True(path.StructuralSlCandidateAvailable && path.StructuralTpCandidateAvailable);
+        });
+        var geometry = Assert.Single(report.GeometryByMarketRealignmentId).Value;
+        var stop = geometry.Stops.Single(s => s.Profile.LeftBars == 1);
+        Assert.Equal(direction, stop.Direction);
+        Assert.Equal(sell ? 108 : 92, stop.Selected!.Pivot.Price);
+        Assert.Equal(sell ? M5StructuralPivotKind.High : M5StructuralPivotKind.Low, stop.Selected.Pivot.Kind);
+        Assert.Contains(geometry.Targets, t => t.Profile.Policy == StructuralTargetPolicy.NearestConfirmedM5Swing &&
+            t.SelectedIds.Count > 0 && (sell ? t.TargetPrice < t.CloseReference.Price : t.TargetPrice > t.CloseReference.Price));
+        Assert.Equal(StructuralTargetOutcome.ReferencesUnavailable,
+            geometry.Targets.Single(t => t.Profile.Policy == StructuralTargetPolicy.NearestAuditedSessionExtreme).Outcome);
+        Assert.Equal(new NasdaqDownstreamEventCount(1, 1), report.Summary.Both);
+        Assert.False(report.H4ContextAvailable || report.IndependentHumanValidation || report.AuthenticatedTemporalAvailability ||
+            report.CanonicalAdmissionPermitted || report.OperationalSignal);
+    }
+
+    [Fact]
+    public void DownstreamKeepsTiesAndInvalidatedHistoryWithoutBackfillingOptionalFvg()
+    {
+        var origin = Zone("origin", -10, M5FvgDirection.Bearish, 5, 10);
+        var events = new[] { Event("sc", 5), Event("ifvg", 5, M5ConfirmationKind.IFVG, origin: origin), Event("later-sc", 20) };
+        var candidate = Run(0, events, [Zone("late", 10)], cutoff: 12);
+        var minutes = Minutes(5, 12, 5);
+        var report = Downstream(candidate, minutes, StructuralBars(false));
+        Assert.All(report.Paths, p =>
+        {
+            Assert.Equal("SimultaneousScAndIfvg", p.TriggerOrdering);
+            Assert.Equal(["ifvg", "sc"], p.Triggers.Select(t => t.ConfirmationId));
+            var ifvg = p.Triggers[0];
+            Assert.Equal("NotInvalidatedWithinObservableEvidence", ifvg.ValidityAtAssessment);
+            Assert.Equal("Invalidated", ifvg.ValidityAtReportCutoff);
+            Assert.Equal(At(10), ifvg.OriginInvalidationAtReportCutoff);
+            Assert.Null(ifvg.OriginZone!.InvalidationUtc);
+            Assert.All(p.Triggers, t => Assert.Empty(t.OptionalFvgs));
+            var late = Assert.Single(p.Triggers.Single(t => t.ConfirmationId == "sc").LaterOptionalFvgs);
+            Assert.Equal("late", late.Formation.Id);
+            Assert.Equal("AfterRealignment", late.RelationToRealignment);
+            Assert.Null(late.StateAtRealignment);
+        });
+        var invalidBeforeM1 = Downstream(Run(0, [Event("ifvg", 5, M5ConfirmationKind.IFVG, origin: origin),
+            Event("later-sc", 20)], cutoff: 25), Minutes(5, 25, 14), StructuralBars(false));
+        Assert.All(invalidBeforeM1.Paths, p =>
+        {
+            var trigger = Assert.Single(p.Triggers);
+            Assert.Equal("ifvg", trigger.ConfirmationId);
+            Assert.Equal("Invalidated", trigger.ValidityAtAssessment);
+            Assert.Equal(At(10), trigger.OriginZone!.InvalidationUtc);
+        });
+        var withSupport = Downstream(Run(0, [Event("sc", 5)], [Zone("support", 10)], cutoff: 16),
+            Minutes(5, 16, 13), StructuralBars(false));
+        Assert.All(withSupport.Paths, p =>
+        {
+            var support = Assert.Single(Assert.Single(p.Triggers).OptionalFvgs);
+            Assert.Equal("support", support.Formation.Id);
+            Assert.Equal(At(10), support.AvailableAtUtc);
+            Assert.Equal("NotInvalidatedWithinObservableEvidence", support.StateAtRealignment);
+        });
+    }
+
+    [Fact]
+    public void DownstreamReportsCoverageGapsAndPreservesFixedCutoffWithFutureChanges()
+    {
+        var row = Run(0, [Event("sc", 5)], cutoff: 7);
+        var original = Downstream(row, Minutes(5, 7, 5), StructuralBars(false));
+        var future = Run(0, [Event("sc", 5), Event("future", 10)], [Zone("future", 10)], cutoff: 7);
+        Assert.Equal(JsonSerializer.Serialize(original), JsonSerializer.Serialize(Downstream(future,
+            Minutes(5, 11, 5, 9), StructuralBars(false).Append(Bar(10)).Append(Bar(15)).ToArray())));
+        var gaps = Downstream(row, Minutes(6, 8, 6), StructuralBars(false));
+        Assert.Empty(gaps.GeometryByMarketRealignmentId);
+        Assert.All(gaps.Paths, p =>
+        {
+            Assert.Equal("InsufficientEvidence", p.M1Outcome);
+            Assert.NotEmpty(p.M1SourceGaps);
+            Assert.False(p.M1RealignmentObserved);
+        });
+        var missingM5 = Downstream(row, Minutes(5, 7, 5), StructuralBars(false)[..^1]);
+        var references = Assert.Single(missingM5.GeometryByMarketRealignmentId).Value;
+        Assert.All(references.Stops, s => Assert.Equal("ExpectedM5CloseMissingAtCutoff", s.ReasonCode));
+        Assert.False(references.StructuralSlCandidateAvailable || references.StructuralTpCandidateAvailable);
+    }
+
+    private static NasdaqTriggerAnchoredDownstreamReport Downstream(M5SequenceResult row, Candle[] minutes, Candle[] bars)
+    {
+        var paths = Paths(row, minutes);
+        var report = new NasdaqOptionalFvgPathReport("fixture", Day, Provider.Value, Symbol.Value, "fixture",
+            new(row.AsOfUtc, null, null, [], []), NasdaqTradingWindowAlignment.Evaluate(row.AsOfUtc, row.AsOfUtc),
+            NasdaqResearchChainOutcome.H4ContextUnavailable, 0, "Compared", [row], [], [],
+            paths.Scans, paths.Comparisons, paths.Summary, paths.ByPolicy);
+        return EvaluateNasdaqTriggerAnchoredDownstreamUseCase.Project(report, [],
+            new(Provider, Symbol, M5, bars), new(Provider, Symbol, new(1, TimeframeUnit.Hour), []));
+    }
+
+    private static Candle[] StructuralBars(bool mirror)
+    {
+        int[] lows = [94, 80, 95, 85, 96, 92, 97];
+        int[] highs = [108, 106, 112, 105, 115, 107, 109];
+        return lows.Select((low, i) =>
+        {
+            var bar = new Candle(Provider, Symbol, M5, At(-30 + 5 * i), At(-25 + 5 * i), 100, highs[i], low, 100, null);
+            return mirror ? Mirror(bar) : bar;
+        }).ToArray();
+    }
+
+    private static Candle Mirror(Candle c) => new(c.ProviderId, c.Symbol, c.Timeframe, c.OpenTimeUtc, c.CloseTimeUtc,
+        200 - c.Open, 200 - c.Low, 200 - c.High, 200 - c.Close, c.Volume);
+
     private static (IReadOnlyList<M1RealignmentScan> Scans, IReadOnlyList<NasdaqM1PathComparison> Comparisons,
         NasdaqPathCounts Summary, IReadOnlyList<NasdaqPathPolicyCounts> ByPolicy) Paths(M5SequenceResult row, Candle[] candles)
     {
